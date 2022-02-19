@@ -83,7 +83,7 @@ int32_t memcmp(const void *left, const void *right, uint64_t n);
 #define ENOSYS 38 // Invalid system call number
 #define ENOTEMPTY 39 // Directory not empty
 #define ELOOP 40 // Too many symbolic links encountered
-#define EWOULDBLOCK EAGAIN // Operation would block
+#define EWOULDBLOCK 11 // Operation would block
 #define ENOMSG 42 // No message of desired type
 #define EIDRM 43 // Identifier removed
 #define ECHRNG 44 // Channel number out of range
@@ -100,7 +100,7 @@ int32_t memcmp(const void *left, const void *right, uint64_t n);
 #define ENOANO 55 // No anode
 #define EBADRQC 56 // Invalid request code
 #define EBADSLT 57 // Invalid slot
-#define EDEADLOCK EDEADLK
+#define EDEADLOCK 35
 #define EBFONT 59 // Bad font file format
 #define ENOSTR 60 // Device not a stream
 #define ENODATA 61 // No data available
@@ -215,8 +215,8 @@ int32_t memcmp(const void *left, const void *right, uint64_t n);
 #define SO_BSDCOMPAT 14
 #define SO_REUSEPORT 15
 
-#define SOCK_CLOEXEC O_CLOEXEC
-#define SOCK_NONBLOCK O_NONBLOCK
+#define SOCK_CLOEXEC 02000000
+#define SOCK_NONBLOCK 00004000
 
 #define MSG_OOB 1
 #define MSG_PEEK 2
@@ -294,12 +294,21 @@ struct sockaddr_in {
 #define O_NONBLOCK 00004000
 #define O_DSYNC 00010000
 #define FASYNC 00020000
-#define O_DIRECT 00040000
-#define O_LARGEFILE 00100000
-#define O_DIRECTORY 00200000
-#define O_NOFOLLOW 00400000
 #define O_NOATIME 01000000
 #define O_CLOEXEC 02000000
+#if hc_AARCH64
+#define O_DIRECTORY 040000 // must be a directory
+#define O_NOFOLLOW 0100000 // don't follow links
+#define O_DIRECT 0200000 // direct disk access hint - currently ignored
+#define O_LARGEFILE 0400000
+#else
+#define O_DIRECTORY 00200000
+#define O_NOFOLLOW 00400000
+#define O_DIRECT 00040000
+#define O_LARGEFILE 00100000
+#endif
+
+#define AT_FDCWD -100 // Special value used to indicate openat should use the current working directory.
 
 // time.h
 #define CLOCK_REALTIME 0
@@ -326,12 +335,12 @@ struct itimerspec {
 // timerfd.h
 #define TFD_TIMER_ABSTIME (1 << 0)
 #define TFD_TIMER_CANCEL_ON_SET (1 << 1)
-#define TFD_CLOEXEC O_CLOEXEC
-#define TFD_NONBLOCK O_NONBLOCK
+#define TFD_CLOEXEC 02000000
+#define TFD_NONBLOCK 00004000
 
 // eventpoll.h
-#define EPOLL_CLOEXEC O_CLOEXEC
-#define EPOLL_NONBLOCK O_NONBLOCK
+#define EPOLL_CLOEXEC 02000000
+#define EPOLL_NONBLOCK 00004000
 
 #define EPOLLIN 0x001
 #define EPOLLPRI 0x002
@@ -466,6 +475,23 @@ struct sockaddr_alg {
 #define SIGIO 29
 #define SIGPOLL SIGIO
 
+#define SA_RESTORER 0x04000000
+#define SA_NOCLDSTOP 0x00000001 // flag to turn off SIGCHLD when children stop.
+#define SA_NOCLDWAIT 0x00000002 // flag on SIGCHLD to inhibit zombies.
+#define SA_SIGINFO 0x00000004 // delivers the signal with SIGINFO structs.
+#define SA_EXPOSE_TAGBITS 0x00000800 // exposes an architecture-defined set of tag bits in siginfo.si_addr.
+#define SA_ONSTACK 0x08000000 // indicates that a registered stack_t will be used.
+#define SA_RESTART 0x10000000 // flag to get restarting signals (which were the default long ago)
+#define SA_NODEFER 0x40000000 // prevents the current signal from being masked in the handler.
+#define SA_RESETHAND 0x80000000 // clears the handler when the signal is delivered.
+
+#define SA_NOMASK 0x40000000
+#define SA_ONESHOT 0x80000000
+
+#define SIG_BLOCK 0 // for blocking signals
+#define SIG_UNBLOCK 1 // for unblocking signals
+#define SIG_SETMASK 2 // for setting the signal mask
+
 // random.h
 #define GRND_NONBLOCK 0x0001
 #define GRND_RANDOM 0x0002
@@ -572,3 +598,182 @@ struct clone_args {
 #define FUTEX_WAKE_BITSET_PRIVATE (FUTEX_WAKE_BITSET | FUTEX_PRIVATE_FLAG)
 #define FUTEX_WAIT_REQUEUE_PI_PRIVATE (FUTEX_WAIT_REQUEUE_PI | FUTEX_PRIVATE_FLAG)
 #define FUTEX_CMP_REQUEUE_PI_PRIVATE (FUTEX_CMP_REQUEUE_PI | FUTEX_PRIVATE_FLAG)
+
+// ioctls.h
+#define TCGETS 0x5401
+#define TCSETS 0x5402
+#define TCSETSW 0x5403
+#define TCSETSF 0x5404
+#define TCGETA 0x5405
+#define TCSETA 0x5406
+#define TCSETAW 0x5407
+#define TCSETAF 0x5408
+#define TCSBRK 0x5409
+#define TCXONC 0x540A
+#define TCFLSH 0x540B
+#define TIOCEXCL 0x540C
+#define TIOCNXCL 0x540D
+#define TIOCSCTTY 0x540E
+#define TIOCGPGRP 0x540F
+#define TIOCSPGRP 0x5410
+#define TIOCOUTQ 0x5411
+#define TIOCSTI 0x5412
+#define TIOCGWINSZ 0x5413
+#define TIOCSWINSZ 0x5414
+#define TIOCMGET 0x5415
+#define TIOCMBIS 0x5416
+#define TIOCMBIC 0x5417
+#define TIOCMSET 0x5418
+#define TIOCGSOFTCAR 0x5419
+#define TIOCSSOFTCAR 0x541A
+#define FIONREAD 0x541B
+#define TIOCINQ FIONREAD
+#define TIOCLINUX 0x541C
+#define TIOCCONS 0x541D
+#define TIOCGSERIAL 0x541E
+#define TIOCSSERIAL 0x541F
+#define TIOCPKT 0x5420
+#define FIONBIO 0x5421
+#define TIOCNOTTY 0x5422
+#define TIOCSETD 0x5423
+#define TIOCGETD 0x5424
+#define TCSBRKP 0x5425 // Needed for POSIX tcsendbreak()
+#define TIOCSBRK 0x5427 // BSD compatibility
+#define TIOCCBRK 0x5428 // BSD compatibility
+#define TIOCGSID 0x5429 // Return the session ID of FD
+
+// vt.h
+#define MIN_NR_CONSOLES 1
+#define MAX_NR_CONSOLES 63 // serial lines start at 64
+#define VT_OPENQRY 0x5600 // find available vt
+
+struct vt_mode {
+    uint8_t mode; // vt mode
+    uint8_t waitv; // if set, hang on writes if not active
+    int16_t relsig; // signal to raise on release req
+    int16_t acqsig; // signal to raise on acquisition
+    int16_t frsig; // unused (set to 0)
+};
+#define VT_GETMODE 0x5601 // get mode of active vt
+#define VT_SETMODE 0x5602 // set mode of active vt
+#define VT_AUTO 0x00 // auto vt switching
+#define VT_PROCESS 0x01 // process controls switching
+#define VT_ACKACQ 0x02 // acknowledge switch
+
+struct vt_stat {
+    uint16_t v_active; // active vt
+    uint16_t v_signal; // signal to send
+    uint16_t v_state; // vt bitmask
+};
+#define VT_GETSTATE 0x5603 // get global vt state info
+#define VT_SENDSIG 0x5604 // signal to send to bitmask of vts
+
+#define VT_RELDISP 0x5605 // release display
+
+#define VT_ACTIVATE 0x5606 // make vt active
+#define VT_WAITACTIVE 0x5607 // wait for vt active
+#define VT_DISALLOCATE 0x5608  // free memory associated to vt
+
+struct vt_sizes {
+    uint16_t v_rows; // number of rows
+    uint16_t v_cols; // number of columns
+    uint16_t v_scrollsize; // number of lines of scrollback
+};
+#define VT_RESIZE 0x5609 // set kernel's idea of screensize
+
+struct vt_consize {
+    uint16_t v_rows; // number of rows
+    uint16_t v_cols; // number of columns
+    uint16_t v_vlin; // number of pixel rows on screen
+    uint16_t v_clin; // number of pixel rows per character
+    uint16_t v_vcol; // number of pixel columns on screen
+    uint16_t v_ccol; // number of pixel columns per character
+};
+#define VT_RESIZEX      0x560A  // set kernel's idea of screensize + more
+#define VT_LOCKSWITCH   0x560B  // disallow vt switching
+#define VT_UNLOCKSWITCH 0x560C  // allow vt switching
+#define VT_GETHIFONTMASK 0x560D  // return hi font mask
+
+#define VT_EVENT_SWITCH 0x0001 // Console switch
+#define VT_EVENT_BLANK 0x0002 // Screen blank
+#define VT_EVENT_UNBLANK 0x0004 // Screen unblank
+#define VT_EVENT_RESIZE 0x0008 // Resize display
+#define VT_MAX_EVENT 0x000F
+struct vt_event {
+    uint32_t event;
+    uint32_t oldev; // Old console
+    uint32_t newev; // New console (if changing)
+    uint32_t __pad[4]; // Padding for expansion
+};
+
+#define VT_WAITEVENT 0x560E // Wait for an event
+
+struct vt_setactivate {
+    uint32_t console;
+    struct vt_mode mode;
+};
+
+#define VT_SETACTIVATE 0x560F // Activate and set the mode of a console
+
+// kd.h
+#define KDSETMODE 0x4B3A // set text/graphics mode
+#define KD_TEXT 0x00
+#define KD_GRAPHICS 0x01
+#define KD_TEXT0 0x02 // obsolete
+#define KD_TEXT1 0x03 // obsolete
+#define KDGETMODE 0x4B3B // get current mode
+
+#define K_RAW 0x00
+#define K_XLATE 0x01
+#define K_MEDIUMRAW 0x02
+#define K_UNICODE 0x03
+#define K_OFF 0x04
+#define KDGKBMODE 0x4B44 // gets current keyboard mode
+#define KDSKBMODE 0x4B45 // sets current keyboard mode
+
+#define K_METABIT 0x03
+#define K_ESCPREFIX 0x04
+#define KDGKBMETA 0x4B62 // gets meta key handling mode
+#define KDSKBMETA 0x4B63 // sets meta key handling mode
+
+struct kbentry {
+    uint8_t kb_table;
+    uint8_t kb_index;
+    uint16_t kb_value;
+};
+#define K_NORMTAB 0x00
+#define K_SHIFTTAB 0x01
+#define K_ALTTAB 0x02
+#define K_ALTSHIFTTAB 0x03
+
+#define KDGKBENT 0x4B46 // gets one entry in translation table
+#define KDSKBENT 0x4B47 // sets one entry in translation table
+
+// signalfd.h
+#define SFD_CLOEXEC 02000000
+#define SFD_NONBLOCK 00004000
+
+struct signalfd_siginfo {
+    uint32_t ssi_signo;
+    int32_t ssi_errno;
+    int32_t ssi_code;
+    uint32_t ssi_pid;
+    uint32_t ssi_uid;
+    int32_t ssi_fd;
+    uint32_t ssi_tid;
+    uint32_t ssi_band;
+    uint32_t ssi_overrun;
+    uint32_t ssi_trapno;
+    int32_t ssi_status;
+    int32_t ssi_int;
+    uint64_t ssi_ptr;
+    uint64_t ssi_utime;
+    uint64_t ssi_stime;
+    uint64_t ssi_addr;
+    uint16_t ssi_addr_lsb;
+    uint16_t __pad2;
+    int32_t ssi_syscall;
+    uint64_t ssi_call_addr;
+    uint32_t ssi_arch;
+    uint8_t __pad[28];
+};
