@@ -6,8 +6,15 @@
 
 int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     if (argc < 2) {
-        static const char usageString[] = "Usage: ./program TTY_NUM\n";
-        hc_write(STDOUT_FILENO, &usageString, sizeof(usageString) - 1);
+        static const char usageStart[] = "Usage: ";
+        static const char usageArgs[] = " TTY_NUM\n";
+        hc_write(STDOUT_FILENO, &usageStart, sizeof(usageStart) - 1);
+        if (argv[0] != NULL) {
+            int32_t len = 0;
+            for (; argv[0][len] != '\0'; ++len);
+            hc_write(STDOUT_FILENO, &argv[0][0], len);
+        }
+        hc_write(STDOUT_FILENO, &usageArgs, sizeof(usageArgs) - 1);
         return 0;
     }
 
