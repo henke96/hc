@@ -76,12 +76,21 @@ int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     };
     status = hc_ioctl(ttyFd, VT_SETMODE, &vtMode);
     if (status < 0) {
-        static const char error[] = "Failed to set controlling terminal mode\n";
+        static const char error[] = "Failed to set tty mode\n";
         hc_write(STDOUT_FILENO, &error, sizeof(error) - 1);
         return -status;
     }
 
-    bool active = false;
+    // Check if our tty is already active.
+    struct vt_stat vtState;
+    status = hc_ioctl(ttyFd, VT_GETSTATE, &vtState);
+    if (status < 0) {
+        static const char error[] = "Failed to get tty state\n";
+        hc_write(STDOUT_FILENO, &error, sizeof(error) - 1);
+        return -status;
+    }
+
+    bool active = vtState.v_active == ttyNumber;
     for (;;) {
         struct signalfd_siginfo info;
         int64_t numRead = hc_read(signalFd, &info, sizeof(info));
