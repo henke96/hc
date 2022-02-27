@@ -1,8 +1,43 @@
 #include "../../hc/hc.h"
 #include "../../hc/libc.h"
-#include "../../hc/libc/libc.c"
+#include "../../hc/libc/musl.c"
 #include "../../hc/wrappers.c"
+#include "../../hc/libhc/debug.c"
+#include "../../hc/libhc/drmKms.c"
 
+static int32_t init_graphics(struct drmKms *graphics) {
+    // Set up frame buffer.
+    int32_t status = drmKms_init(graphics, "/dev/dri/card0");
+    if (status < 0) {
+        debug_printNum("Failed to set up frame buffer (", status, ")\n");
+        return 1;
+    }
+    // Print all available modes.
+    for (uint32_t i = 0; i < graphics->connector.count_modes; ++i) {
+        debug_printStr("Mode \"", graphics->modeInfos[i].name, "\"\n", DRM_DISPLAY_MODE_LEN);
+        debug_printNum("  Pixel clock: ", graphics->modeInfos[i].clock, " Khz\n");
+        debug_printNum("  Width: ", graphics->modeInfos[i].hdisplay, " pixels\n");
+        debug_printNum("  Height: ", graphics->modeInfos[i].vdisplay, " pixels\n");
+        debug_printNum("  Hsync: start=", graphics->modeInfos[i].hsync_start, ", ");
+        debug_printNum("end=", graphics->modeInfos[i].hsync_end, ", ");
+        debug_printNum("total=", graphics->modeInfos[i].htotal, "\n");
+        debug_printNum("  Vsync: start=", graphics->modeInfos[i].vsync_start, ", ");
+        debug_printNum("end=", graphics->modeInfos[i].vsync_end, ", ");
+        debug_printNum("total=", graphics->modeInfos[i].vtotal, "\n");
+        debug_printNum("  Refresh rate: ", graphics->modeInfos[i].vrefresh, " hz\n\n");
+    }
+
+    // Do some drawing.
+    memset(&graphics->frameBuffer[0], 127, (uint64_t)graphics->frameBufferSize);
+    int32_t x = 100;
+    int32_t y = 100;
+    graphics->frameBuffer[(y * (int32_t)graphics->frameBufferInfo.width) + x] = 0x00FFFFFF;
+    return 0;
+}
+
+static inline void deinit_graphics(struct drmKms *graphics) {
+    drmKms_deinit(graphics);
+}
 
 int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     if (argc < 2) {
@@ -98,6 +133,11 @@ int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     }
 
     bool active = vtState.v_active == ttyNumber;
+
+    struct drmKms graphics;
+    if (active) {
+        if (init_graphics(&graphics) < 0) return 1;
+    }
     for (;;) {
         struct signalfd_siginfo info;
         int64_t numRead = hc_read(signalFd, &info, sizeof(info));
@@ -112,8 +152,12 @@ int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
             active = true;
             static const char message[] = "Acquired!\n";
             hc_write(STDOUT_FILENO, &message, sizeof(message) - 1);
+
+            if (init_graphics(&graphics) < 0) return 1;
         } else if (info.ssi_signo == SIGUSR2) {
             if (!active) return 2;
+
+            deinit_graphics(&graphics);
 
             status = hc_ioctl(ttyFd, VT_RELDISP, (void *)1);
             if (status < 0) {
