@@ -10,7 +10,7 @@ static int32_t init_graphics(struct drmKms *graphics) {
     int32_t status = drmKms_init(graphics, "/dev/dri/card0");
     if (status < 0) {
         debug_printNum("Failed to set up frame buffer (", status, ")\n");
-        return 1;
+        return -1;
     }
     // Print all available modes.
     for (uint32_t i = 0; i < graphics->connector.count_modes; ++i) {
