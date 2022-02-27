@@ -2075,28 +2075,28 @@ struct drm_mode_rect {
 
 // drm_connector.h
 enum drm_connector_status {
-	/**
-	 * @DRM_CONNECTOR_STATUS_CONNECTED: The connector is definitely connected to
-	 * a sink device, and can be enabled.
-	 */
-	DRM_CONNECTOR_STATUS_CONNECTED = 1,
-	/**
-	 * @DRM_CONNECTOR_STATUS_DISCONNECTED: The connector isn't connected to a
-	 * sink device which can be autodetect. For digital outputs like DP or
-	 * HDMI (which can be realiable probed) this means there's really
-	 * nothing there. It is driver-dependent whether a connector with this
-	 * status can be lit up or not.
-	 */
-	DRM_CONNECTOR_STATUS_DISCONNECTED = 2,
-	/**
-	 * @DRM_CONNECTOR_STATUS_UNKNOWN: The connector's status could not be
-	 * reliably detected. This happens when probing would either cause
-	 * flicker (like load-detection when the connector is in use), or when a
-	 * hardware resource isn't available (like when load-detection needs a
-	 * free CRTC). It should be possible to light up the connector with one
-	 * of the listed fallback modes. For default configuration userspace
-	 * should only try to light up connectors with unknown status when
-	 * there's not connector with @connector_status_connected.
-	 */
-	DRM_CONNECTOR_STATUS_UNKNOWN = 3,
+    /**
+     * @DRM_CONNECTOR_STATUS_CONNECTED: The connector is definitely connected to
+     * a sink device, and can be enabled.
+     */
+    DRM_CONNECTOR_STATUS_CONNECTED = 1,
+    /**
+     * @DRM_CONNECTOR_STATUS_DISCONNECTED: The connector isn't connected to a
+     * sink device which can be autodetect. For digital outputs like DP or
+     * HDMI (which can be realiable probed) this means there's really
+     * nothing there. It is driver-dependent whether a connector with this
+     * status can be lit up or not.
+     */
+    DRM_CONNECTOR_STATUS_DISCONNECTED = 2,
+    /**
+     * @DRM_CONNECTOR_STATUS_UNKNOWN: The connector's status could not be
+     * reliably detected. This happens when probing would either cause
+     * flicker (like load-detection when the connector is in use), or when a
+     * hardware resource isn't available (like when load-detection needs a
+     * free CRTC). It should be possible to light up the connector with one
+     * of the listed fallback modes. For default configuration userspace
+     * should only try to light up connectors with unknown status when
+     * there's not connector with @connector_status_connected.
+     */
+    DRM_CONNECTOR_STATUS_UNKNOWN = 3,
 };
