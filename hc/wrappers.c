@@ -250,6 +250,18 @@ static hc_ALWAYS_INLINE int32_t hc_setsid(void) {
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int32_t hc_setpgid(int32_t pid, int32_t pgid) {
+    hc_SYSCALL2(hc_NR_setpgid, pid, pgid);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t hc_getpgid(int32_t pid) {
+    hc_SYSCALL1(hc_NR_getpgid, pid);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE int32_t hc_ioctl(int32_t fd, uint32_t cmd, void *arg) {
     hc_SYSCALL3(hc_NR_ioctl, fd, cmd, arg);
     return (int32_t)ret;

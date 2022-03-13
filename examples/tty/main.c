@@ -33,6 +33,7 @@ static int32_t init_graphics(struct drmKms *graphics) {
     int32_t x = 100;
     int32_t y = 100;
     graphics->frameBuffer[(y * (int32_t)graphics->frameBufferInfo.width) + x] = 0x00FFFFFF;
+    drmKms_markFbDirty(graphics);
     return 0;
 }
 

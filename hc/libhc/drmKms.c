@@ -144,6 +144,12 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     return status;
 }
 
+// Call after updating framebuffer to make sure it gets displayed on screen.
+static inline void drmKms_markFbDirty(struct drmKms *self) {
+    struct drm_mode_fb_dirty_cmd fbDirty = { .fb_id = self->frameBufferInfo.fb_id };
+    hc_ioctl(self->cardFd, DRM_IOCTL_MODE_DIRTYFB, &fbDirty);
+}
+
 static inline void drmKms_deinit(struct drmKms *self) {
     hc_munmap(self->frameBuffer, self->frameBufferSize);
     hc_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id);
