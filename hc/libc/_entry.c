@@ -23,6 +23,6 @@ asm(
     "and sp, x1, -16\n"           // sp must be 16-byte aligned in the callee
     "bl main\n"                   // main() returns the status code, we'll exit with it
     "mov x8, 94\n"                // NR_exit_group == 94
-    "svc #0\n"
+    "svc 0\n"
 );
 #endif
