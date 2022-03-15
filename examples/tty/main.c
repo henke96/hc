@@ -75,7 +75,7 @@ int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     if (status < 0) return 3;
 
     // Open tty.
-    int32_t ttyFd = hc_openat(AT_FDCWD, &ttyPath, O_RDWR, 0);
+    int32_t ttyFd = hc_openat(-1, &ttyPath, O_RDWR, 0);
     if (ttyFd < 0) {
         static const char error[] = "Failed to open tty\n";
         hc_write(STDOUT_FILENO, &error, sizeof(error) - 1);
