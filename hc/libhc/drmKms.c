@@ -3,11 +3,9 @@
 
 struct drmKms {
     int32_t cardFd;
-    struct drm_mode_modeinfo modeInfos[drmKms_MAX_MODES];
-    char __pad[4];
-    struct drm_mode_get_connector connector;
-    struct drm_mode_get_encoder encoder;
     struct drm_mode_fb_cmd frameBufferInfo;
+    struct drm_mode_get_connector connector;
+    struct drm_mode_modeinfo modeInfos[drmKms_MAX_MODES];
     uint32_t *frameBuffer;
     int64_t frameBufferSize;
 };
@@ -16,16 +14,24 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     self->cardFd = hc_openat(-1, driCardPath, O_RDWR, 0);
     if (self->cardFd < 0) return -1;
 
-    // Get a list of connectors for this card.
+    // Get a list of connectors and one crtc for this card.
     uint32_t connectorIds[drmKms_MAX_CONNECTORS];
+    uint32_t firstCrtcId;
 
     struct drm_mode_card_res cardResources = {
         .connector_id_ptr = &connectorIds[0],
-        .count_connectors = drmKms_MAX_CONNECTORS
+        .count_connectors = drmKms_MAX_CONNECTORS,
+        .crtc_id_ptr = &firstCrtcId,
+        .count_crtcs = 1
     };
     int32_t status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_GETRESOURCES, &cardResources);
     if (status < 0) {
         status = -2;
+        goto cleanup_cardFd;
+    }
+
+    if (cardResources.count_crtcs < 1) {
+        status = -3;
         goto cleanup_cardFd;
     }
 
@@ -38,32 +44,22 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
 
         status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_GETCONNECTOR, &self->connector);
         if (status < 0) {
-            status = -3;
+            status = -4;
             goto cleanup_cardFd;
         }
 
         if (
             self->connector.connection == DRM_CONNECTOR_STATUS_CONNECTED &&
-            self->connector.count_modes > 0 &&
-            self->connector.encoder_id != 0
+            self->connector.count_modes > 0
         ) goto foundConnector;
     }
     // Did not find suitable connector.
-    status = -4;
+    status = -5;
     goto cleanup_cardFd;
 
     foundConnector:
     // Kernel is silly and doesn't fill out any modes if it can't fit all of them..
     if (self->connector.count_modes > drmKms_MAX_MODES) {
-        status = -5;
-        goto cleanup_cardFd;
-    }
-
-    // Get encoder for connector.
-    memset(&self->encoder, 0, sizeof(self->encoder));
-    self->encoder.encoder_id = self->connector.encoder_id;
-    status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_GETENCODER, &self->encoder);
-    if (status < 0) {
         status = -6;
         goto cleanup_cardFd;
     }
@@ -119,10 +115,8 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     struct drm_mode_crtc setCrtc = {
         .set_connectors_ptr = &self->connector.connector_id,
         .count_connectors = 1,
-        .crtc_id = self->encoder.crtc_id,
+        .crtc_id = firstCrtcId,
         .fb_id = self->frameBufferInfo.fb_id,
-        .x = 0,
-        .y = 0,
         .mode_valid = 1,
         .mode = self->modeInfos[selectedModeIndex]
     };
