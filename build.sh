@@ -1,5 +1,5 @@
 set -e
-compile_flags="-Wall -Wextra -Wconversion -Wshadow -Wpadded -Werror -fno-pie -nostdlib -ffreestanding -static -fno-asynchronous-unwind-tables"
+compile_flags="-Wall -Wextra -Wconversion -Wshadow -Wpadded -Werror -Wno-maybe-uninitialized -Wno-unknown-warning-option -fno-pie -nostdlib -ffreestanding -static -fno-asynchronous-unwind-tables"
 link_flags="-nostartfiles -Wl,--gc-sections -Wl,--build-id=none"
 debug_compile_flags="$compile_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g -O2 $CFLAGS"
 debug_link_flags="$link_flags $LFLAGS"
