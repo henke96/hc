@@ -1,7 +1,9 @@
 #include "../../hc/hc.h"
 #include "../../hc/libc.h"
-#include "../../hc/libc/libc.c"
-#include "../../hc/wrappers.c"
+#include "../../hc/libc/_start.c"
+#include "../../hc/libc/small.c"
+#include "../../hc/syscalls.c"
+#include "../../hc/helpers/hc_clone.c"
 #include "../../hc/libhc/util.c"
 #include "../../hc/libhc/debug.c"
 

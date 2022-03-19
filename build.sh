@@ -1,12 +1,11 @@
 set -e
-compile_flags="-Wall -Wextra -Wconversion -Wshadow -Wpadded -Werror -Wno-maybe-uninitialized -Wno-unknown-warning-option -fno-pie -nostdlib -ffreestanding -static -fno-asynchronous-unwind-tables"
-link_flags="-nostartfiles -Wl,--gc-sections -Wl,--build-id=none"
-debug_compile_flags="$compile_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g -O2 $CFLAGS"
-debug_link_flags="$link_flags $LFLAGS"
-release_compile_flags="$compile_flags -Ddebug_NDEBUG -O2 $CFLAGS"
-release_link_flags="$link_flags -s $LFLAGS"
+flags="-Wall -Wextra -Wconversion -Wshadow -Wpadded -Werror -Wno-maybe-uninitialized -Wno-unknown-warning-option -Wno-unused-command-line-argument \
+-fno-pie -nostdlib -ffreestanding -static -fno-asynchronous-unwind-tables \
+-nostartfiles -Wl,--gc-sections -Wl,--build-id=none"
+debug_flags="$flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g -O2 $FLAGS"
+release_flags="$flags -Ddebug_NDEBUG -O2 -s $FLAGS"
 CC=${CC:-gcc}
-$CC $debug_compile_flags -fverbose-asm -S -o debug.bin.s main.c
-$CC $debug_compile_flags $debug_link_flags -o debug.bin main.c
-$CC $release_compile_flags -fverbose-asm -S -o release.bin.s main.c
-$CC $release_compile_flags $release_link_flags -o release.bin main.c
+$CC $debug_flags -fverbose-asm -S -o debug.bin.s main.c
+$CC $debug_flags -o debug.bin main.c
+$CC $release_flags -fverbose-asm -S -o release.bin.s main.c
+$CC $release_flags -o release.bin main.c

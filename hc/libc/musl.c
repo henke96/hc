@@ -265,6 +265,4 @@ int32_t memcmp(const void *vl, const void *vr, uint64_t n)
     for (; n && *l == *r; n--, l++, r++);
     return n ? *l-*r : 0;
 }
-
-#include "_entry.c"
 #endif

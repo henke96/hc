@@ -1,4 +1,3 @@
-// Syscall wrappers
 hc_UNUSED
 static hc_ALWAYS_INLINE int64_t hc_write(int32_t fd, const void *buf, int64_t count) {
     hc_SYSCALL3(hc_NR_write, fd, buf, count);
@@ -191,75 +190,6 @@ static hc_ALWAYS_INLINE int64_t hc_getrandom(void *buf, int64_t buflen, uint32_t
     hc_SYSCALL3(hc_NR_getrandom, buf, buflen, flags);
     return ret;
 }
-
-// Returns pid, or negative error code.
-int32_t hc_clone(struct clone_args *args, uint64_t size, void (*childfunc)(void *), void *childarg);
-#if hc_X86_64
-asm(
-    ".section .text.hc_clone\n"
-    ".local hc_clone\n"
-    ".type hc_clone, @function\n"
-    "hc_clone:\n"
-    "mov %rcx, %r10\n"
-    "mov $435, %eax\n"
-    "syscall\n"
-    "test %eax, %eax\n"
-    "jnz 1f\n"
-    "xor %ebp, %ebp\n"
-    "mov %r10, %rdi\n"
-    "call *%rdx\n"
-    "1: ret\n"
-);
-#elif hc_AARCH64
-asm(
-    ".section .text.hc_clone\n"
-    ".local hc_clone\n"
-    ".type hc_clone, @function\n"
-    "hc_clone:\n"
-    "mov x8, 435\n"
-    "svc 0\n"
-    "cbz x0, 1f\n"
-    "ret\n"
-    "1: mov x0, x3\n"
-    "blr x2\n"
-);
-#endif
-
-// Doesn't return in parent if successful, else returns negative error. Returns 0 in child.
-// Safe to use with CLONE_VM.
-int32_t hc_clone_exit(struct clone_args *args, uint64_t size);
-#if hc_X86_64
-asm(
-    ".section .text.hc_clone_exit\n"
-    ".local hc_clone_exit\n"
-    ".type hc_clone_exit, @function\n"
-    "hc_clone_exit:\n"
-    "mov %rcx, %r10\n"
-    "mov $435, %eax\n"
-    "syscall\n"
-    "test %eax, %eax\n"
-    "jle 1f\n"
-    "xor %edi, %edi\n"
-    "mov $231, %eax\n"
-    "syscall\n"
-    "1: ret\n"
-);
-#elif hc_AARCH64
-asm(
-    ".section .text.hc_clone_exit\n"
-    ".local hc_clone_exit\n"
-    ".type hc_clone_exit, @function\n"
-    "hc_clone_exit:\n"
-    "mov x8, 435\n"
-    "svc 0\n"
-    "cmp x0, 0\n"
-    "ble 1f\n"
-    "mov x0, 0\n"
-    "mov x8, 94\n"
-    "svc 0\n"
-    "1: ret\n"
-);
-#endif
 
 hc_UNUSED
 static hc_ALWAYS_INLINE int32_t hc_clone3(struct clone_args *args, uint64_t size) {

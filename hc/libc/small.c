@@ -35,14 +35,13 @@ hc_SECTION(".text.memcmp")
 int32_t memcmp(const void *left, const void *right, uint64_t n) {
     const char *l = left;
     const char *r = right;
-    int32_t diff = 0;
-    for (; n != 0; --n) {
-        diff = *l - *r;
-        if (diff != 0) break;
+    for (;;) {
+        if (n == 0) return 0;
+        int32_t diff = *l - *r;
+        if (diff != 0) return diff;
         ++l;
         ++r;
+        --n;
     }
-    return diff;
 }
-#include "_entry.c"
 #endif
