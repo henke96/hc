@@ -6,8 +6,10 @@ struct drmKms {
     struct drm_mode_fb_cmd frameBufferInfo;
     struct drm_mode_get_connector connector;
     struct drm_mode_modeinfo modeInfos[drmKms_MAX_MODES];
-    uint32_t *frameBuffer;
+    uint32_t *frameBuffer; // If not NULL, a framebuffer is setup.
     int64_t frameBufferSize;
+    uint32_t crtcId;
+    int32_t __pad;
 };
 
 static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
@@ -16,12 +18,11 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
 
     // Get a list of connectors and one crtc for this card.
     uint32_t connectorIds[drmKms_MAX_CONNECTORS];
-    uint32_t firstCrtcId;
 
     struct drm_mode_card_res cardResources = {
         .connector_id_ptr = &connectorIds[0],
         .count_connectors = drmKms_MAX_CONNECTORS,
-        .crtc_id_ptr = &firstCrtcId,
+        .crtc_id_ptr = &self->crtcId,
         .count_crtcs = 1
     };
     int32_t status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_GETRESOURCES, &cardResources);
@@ -37,7 +38,7 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
 
     // Iterate over the connectors to find a suitable one.
     for (uint32_t i = 0; i < cardResources.count_connectors; ++i) {
-        memset(&self->connector, 0, sizeof(self->connector));
+        hc_MEMSET(&self->connector, 0, sizeof(self->connector));
         self->connector.connector_id = connectorIds[i];
         self->connector.modes_ptr = &self->modeInfos[0];
         self->connector.count_modes = drmKms_MAX_MODES;
@@ -64,26 +65,27 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
         goto cleanup_cardFd;
     }
 
-    // Decide what mode to use..
-    // TODO: Maybe this function should be split into two to give user chance to decide.
-    //       Could also add support for more than 1 connector.
-    int32_t selectedModeIndex = 0;
+    self->frameBuffer = NULL; // No framebuffer setup yet.
+    return 0;
 
+    cleanup_cardFd:
+    hc_close(self->cardFd);
+    return status;
+}
+
+static int32_t drmKms_setupFb(struct drmKms *self, int32_t modeIndex) {
     // Create dumb buffer.
     struct drm_mode_create_dumb dumbBuffer = {
-        .width = self->modeInfos[selectedModeIndex].hdisplay,
-        .height = self->modeInfos[selectedModeIndex].vdisplay,
+        .width = self->modeInfos[modeIndex].hdisplay,
+        .height = self->modeInfos[modeIndex].vdisplay,
         .bpp = 32
     };
-    status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_CREATE_DUMB, &dumbBuffer);
-    if (status < 0) {
-        status = -7;
-        goto cleanup_cardFd;
-    }
-    self->frameBufferSize = (int64_t)dumbBuffer.size;  // The only dumbBuffer info that is not also in frameBufferInfo.
+    int32_t status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_CREATE_DUMB, &dumbBuffer);
+    if (status < 0) return -1;
+    self->frameBufferSize = (int64_t)dumbBuffer.size;
 
     // Create frame buffer based on the dumb buffer.
-    memset(&self->frameBufferInfo, 0, sizeof(self->frameBufferInfo));
+    hc_MEMSET(&self->frameBufferInfo, 0, sizeof(self->frameBufferInfo));
     self->frameBufferInfo.width = dumbBuffer.width;
     self->frameBufferInfo.height = dumbBuffer.height;
     self->frameBufferInfo.pitch = dumbBuffer.pitch;
@@ -92,22 +94,24 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     self->frameBufferInfo.handle = dumbBuffer.handle;
     status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_ADDFB, &self->frameBufferInfo);
     if (status < 0) {
-        status = -8;
+        status = -2;
         goto cleanup_dumbBuffer;
     }
+
     // Prepare dumb buffer for mapping.
     struct drm_mode_map_dumb mapDumpBuffer = {
         .handle = dumbBuffer.handle
     };
     status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_MAP_DUMB, &mapDumpBuffer);
     if (status < 0) {
-        status = -9;
+        status = -3;
         goto cleanup_frameBufferInfo;
     }
+
     // Map the buffer.
     self->frameBuffer = hc_mmap(NULL, self->frameBufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, self->cardFd, (int64_t)mapDumpBuffer.offset);
     if ((int64_t)self->frameBuffer < 0) {
-        status = -10;
+        status = -4;
         goto cleanup_frameBufferInfo;
     }
 
@@ -115,26 +119,25 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     struct drm_mode_crtc setCrtc = {
         .set_connectors_ptr = &self->connector.connector_id,
         .count_connectors = 1,
-        .crtc_id = firstCrtcId,
+        .crtc_id = self->crtcId,
         .fb_id = self->frameBufferInfo.fb_id,
         .mode_valid = 1,
-        .mode = self->modeInfos[selectedModeIndex]
+        .mode = self->modeInfos[modeIndex]
     };
     status = hc_ioctl(self->cardFd, DRM_IOCTL_MODE_SETCRTC, &setCrtc);
     if (status < 0) {
-        status = -11;
+        status = -5;
         goto cleanup_frameBuffer;
     }
-
     return 0;
+
     cleanup_frameBuffer:
     hc_munmap(self->frameBuffer, self->frameBufferSize);
+    self->frameBuffer = NULL;
     cleanup_frameBufferInfo:
     hc_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id);
     cleanup_dumbBuffer:
     hc_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = dumbBuffer.handle });
-    cleanup_cardFd:
-    hc_close(self->cardFd);
     return status;
 }
 
@@ -145,8 +148,10 @@ static inline void drmKms_markFbDirty(struct drmKms *self) {
 }
 
 static inline void drmKms_deinit(struct drmKms *self) {
-    hc_munmap(self->frameBuffer, self->frameBufferSize);
-    hc_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id);
-    hc_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = self->frameBufferInfo.handle });
+    if (self->frameBuffer != NULL) {
+        hc_munmap(self->frameBuffer, self->frameBufferSize);
+        hc_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id);
+        hc_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = self->frameBufferInfo.handle });
+    }
     hc_close(self->cardFd);
 }

@@ -1126,7 +1126,7 @@ struct drm_mode_modeinfo {
     uint16_t vtotal;
     uint16_t vscan;
 
-    uint32_t vrefresh;
+    int32_t vrefresh;
 
     uint32_t flags;
     uint32_t type;
@@ -1341,11 +1341,11 @@ struct drm_mode_get_connector {
     uint64_t *prop_values_ptr;
 
     /** @count_modes: Number of modes. */
-    uint32_t count_modes;
+    int32_t count_modes;
     /** @count_props: Number of properties. */
-    uint32_t count_props;
+    int32_t count_props;
     /** @count_encoders: Number of encoders. */
-    uint32_t count_encoders;
+    int32_t count_encoders;
 
     /** @encoder_id: Object ID of the current encoder. */
     uint32_t encoder_id;

@@ -12,13 +12,16 @@ static int32_t init_graphics(struct drmKms *graphics) {
     // Set up frame buffer.
     int32_t status = drmKms_init(graphics, "/dev/dri/card0");
     if (status < 0) {
-        debug_printNum("Failed to set up frame buffer (", status, ")\n");
+        debug_printNum("Failed to initialise graphics (", status, ")\n");
         return -1;
     }
-    // Print all available modes.
-    for (uint32_t i = 0; i < graphics->connector.count_modes; ++i) {
+
+    // Select the first display mode sharing the highest refresh rate.
+    int32_t selectedModeIndex;
+    int32_t selectedModeHz = 0;
+    for (int32_t i = 0; i < graphics->connector.count_modes; ++i) {
         debug_printStr("Mode \"", graphics->modeInfos[i].name, "\"\n", DRM_DISPLAY_MODE_LEN);
-        debug_printNum("  Pixel clock: ", graphics->modeInfos[i].clock, " Khz\n");
+        debug_printNum("  Pixel clock: ", graphics->modeInfos[i].clock, " KHz\n");
         debug_printNum("  Width: ", graphics->modeInfos[i].hdisplay, " pixels\n");
         debug_printNum("  Height: ", graphics->modeInfos[i].vdisplay, " pixels\n");
         debug_printNum("  Hsync: start=", graphics->modeInfos[i].hsync_start, ", ");
@@ -27,7 +30,21 @@ static int32_t init_graphics(struct drmKms *graphics) {
         debug_printNum("  Vsync: start=", graphics->modeInfos[i].vsync_start, ", ");
         debug_printNum("end=", graphics->modeInfos[i].vsync_end, ", ");
         debug_printNum("total=", graphics->modeInfos[i].vtotal, "\n");
-        debug_printNum("  Refresh rate: ", graphics->modeInfos[i].vrefresh, " hz\n\n");
+        debug_printNum("  Refresh rate: ", graphics->modeInfos[i].vrefresh, " Hz\n");
+
+        if (graphics->modeInfos[i].vrefresh > selectedModeHz) {
+            selectedModeIndex = i;
+            selectedModeHz = graphics->modeInfos[i].vrefresh;
+        }
+    }
+    debug_printStr("Selected mode \"", graphics->modeInfos[selectedModeIndex].name, "\" at ", DRM_DISPLAY_MODE_LEN);
+    debug_printNum("", selectedModeHz, " Hz.\n");
+
+    // Setup framebuffer using the selected mode.
+    status = drmKms_setupFb(graphics, selectedModeIndex);
+    if (status < 0) {
+        debug_printNum("Failed to setup framebuffer (", status, ")\n");
+        return -1;
     }
 
     return 0;

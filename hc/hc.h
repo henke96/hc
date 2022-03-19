@@ -27,6 +27,7 @@ _Static_assert((-1 >> 1) == -1, "not arithmetic shift right");
 #define hc_MEMCPY(DEST, SRC, N) __builtin_memcpy((DEST), (SRC), (N))
 #define hc_MEMMOVE(DEST, SRC, N) __builtin_memmove((DEST), (SRC), (N))
 #define hc_MEMCMP(LEFT, RIGHT, N) __builtin_memcmp((LEFT), (RIGHT), (N))
+#define hc_MEMSET(DEST, VALUE, N) __builtin_memset((DEST), (VALUE), (N))
 
 // Atomics
 #define hc_ATOMIC_RELAXED __ATOMIC_RELAXED
