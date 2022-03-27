@@ -32,4 +32,18 @@ asm(
     "svc 0\n"
     "1: ret\n"
 );
+#elif hc_RISCV
+asm(
+    ".section .text\n"
+    ".local hc_clone_exit\n"
+    ".type hc_clone_exit, @function\n"
+    "hc_clone_exit:\n"
+    "li a7, 435\n"
+    "ecall\n"
+    "ble a0, x0, 1f\n"
+    "li a0, 0\n"
+    "li a7, 94\n"
+    "ecall\n"
+    "1: ret\n"
+);
 #endif

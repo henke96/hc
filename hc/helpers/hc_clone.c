@@ -10,11 +10,11 @@ asm(
     "mov $435, %eax\n"
     "syscall\n"
     "test %eax, %eax\n"
-    "jnz 1f\n"
-    "xor %ebp, %ebp\n"
+    "jz 1f\n"
+    "ret\n"
+    "1: xor %ebp, %ebp\n"
     "mov %r10, %rdi\n"
     "call *%rdx\n"
-    "1: ret\n"
 );
 #elif hc_AARCH64
 asm(
@@ -28,5 +28,18 @@ asm(
     "ret\n"
     "1: mov x0, x3\n"
     "blr x2\n"
+);
+#elif hc_RISCV
+asm(
+    ".section .text\n"
+    ".local hc_clone\n"
+    ".type hc_clone, @function\n"
+    "hc_clone:\n"
+    "li a7, 435\n"
+    "ecall\n"
+    "beq a0, x0, 1f\n"
+    "ret\n"
+    "1: mv a0, a3\n"
+    "jalr a2\n"
 );
 #endif

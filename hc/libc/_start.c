@@ -24,5 +24,21 @@ asm(
     "mov x8, 94\n"
     "svc 0\n"           // Run exit_group with the return from main.
 );
+#elif hc_RISCV
+asm(
+    ".section .text\n"
+    ".global _start\n"
+    "_start:\n"
+    ".option push\n"
+    ".option norelax\n"           // `norelax` option has to be set for the following instruction.
+    "lla gp, __global_pointer$\n" // Set gp to `__global_pointer$` which is provided by linker.
+    ".option pop\n"               // Reset options.
+    "ld a0, 0(sp)\n"              // argc -> a0
+    "addi a1, sp, 8\n"            // argv -> a1
+    "andi sp, sp, -16\n"          // Make sure stack is 16 byte aligned.
+    "call main\n"
+    "li a7, 94\n"
+    "ecall\n"                     // Run exit_group with the return from main.
+);
 #endif
 #endif

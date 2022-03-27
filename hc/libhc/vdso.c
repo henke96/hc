@@ -4,6 +4,9 @@
 #elif hc_AARCH64
 #define vdso_CLOCK_GETTIME "__kernel_clock_gettime"
 #define vdso_GETTIMEOFDAY "__kernel_gettimeofday"
+#elif hc_RISCV
+#define vdso_CLOCK_GETTIME "__vdso_clock_gettime"
+#define vdso_GETTIMEOFDAY "__vdso_gettimeofday"
 #endif
 
 static void *vdso_lookup(const uint64_t *auxv, const char *symbolName) {
