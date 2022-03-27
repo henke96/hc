@@ -16,6 +16,16 @@ static int64_t util_cstrLen(const char *cstring) {
     return c - cstring;
 }
 
+hc_UNUSED
+static int32_t util_cstrCmp(const char *left, const char *right) {
+    for (;;) {
+        int32_t diff = *left - *right;
+        if (diff != 0 || *left == '\0') return diff;
+        ++left;
+        ++right;
+    }
+}
+
 #define util_INT32_MAX_CHARS 11
 #define util_UINT32_MAX_CHARS 10
 #define util_INT64_MAX_CHARS 20
