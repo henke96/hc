@@ -521,6 +521,7 @@ struct sockaddr_alg {
 #define AT_RANDOM 25 // address of 16 random bytes
 #define AT_HWCAP2 26 // extension of AT_HWCAP
 #define AT_EXECFN 31 // filename of program
+#define AT_SYSINFO_EHDR 33 // vDSO address
 #define AT_MINSIGSTKSZ 51 // minimal stack size for signal delivery
 
 // sched.h

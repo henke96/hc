@@ -54,14 +54,28 @@ static inline void deinit_graphics(struct drmKms *graphics) {
     drmKms_deinit(graphics);
 }
 
-int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
+int32_t main(int32_t argc, char **argv) {
+    uint64_t *auxv = util_getAuxv(util_getEnvp(argc, argv));
+
+    // Find program name from the auxiliary vector.
+    char *programName;
+    for (int32_t i = 0;; i += 2) {
+        if (auxv[i] == AT_NULL) return 1; // Did not find it.
+        if (auxv[i] == AT_EXECFN) {
+            programName = (char *)auxv[i + 1];
+            break;
+        }
+    }
+
     // Argument parsing.
     if (argc != 2) {
-        static const char usageStart[] = "Usage: ";
-        static const char usageArgs[] = " TTY_NUM\n";
-        hc_write(STDOUT_FILENO, &usageStart, sizeof(usageStart) - 1);
-        if (argv[0] != NULL) hc_write(STDOUT_FILENO, argv[0], util_cstrLen(argv[0]));
-        hc_write(STDOUT_FILENO, &usageArgs, sizeof(usageArgs) - 1);
+        static const char usageStart[7] = "Usage: ";
+        static const char usageArgs[9] = " TTY_NUM\n";
+        hc_writev(STDOUT_FILENO, (struct iovec[3]) {
+            { .iov_base = (char *)&usageStart[0], .iov_len = sizeof(usageStart) },
+            { .iov_base = (char *)programName,    .iov_len = util_cstrLen(programName) },
+            { .iov_base = (char *)&usageArgs[0],  .iov_len = sizeof(usageArgs) }
+        }, 3);
         return 0;
     }
 
