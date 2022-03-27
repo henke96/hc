@@ -38,7 +38,7 @@ hc_UNUSED static char *util_uintToStr(char *bufferEnd, uint64_t number) {
 // Expects `buffer` to have 1 or more digits followed by `terminator`.
 // Returns the number of characters in the parsed number (0 on errors).
 // Sets `*number` to the parsed value if successful.
-hc_UNUSED static int32_t util_strToUint(char *buffer, char terminator, uint64_t *number) {
+hc_UNUSED static int32_t util_strToUint(const char *buffer, char terminator, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
     do {
@@ -59,7 +59,7 @@ hc_UNUSED static int32_t util_strToUint(char *buffer, char terminator, uint64_t 
 // Expects `buffer` to have 1 or more digits followed by `terminator`, optionally starting with a minus sign.
 // Returns the number of characters in the parsed number (0 on errors).
 // Sets `*number` to the parsed value if successful.
-hc_UNUSED static int32_t util_strToInt(char *buffer, char terminator, int64_t *number) {
+hc_UNUSED static int32_t util_strToInt(const char *buffer, char terminator, int64_t *number) {
     if (buffer[0] == '-') {
         uint64_t value;
         int32_t parsed = util_strToUint(&buffer[1], terminator, &value);
