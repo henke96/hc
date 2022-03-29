@@ -28,8 +28,8 @@ static struct elf_programHeader *tls_findProgramHeader(const uint64_t *auxv) {
 }
 
 // Initialise a tls area.
-// `tlsArea` should have an alignment of at least `tlsProgramHeader->segmentAlignment`,
-// and should be zero filled with a length of at least `tlsProgramHeader->segmentMemorySize`.
+// `tlsArea` must have an alignment of at least `tlsProgramHeader->segmentAlignment` and must be
+// at least `tlsProgramHeader->segmentMemorySize` bytes long. Bytes at `tlsProgramHeader->segmentFileSize` and after must be zero.
 // Returns the thread pointer for the area.
 hc_UNUSED static uint64_t tls_initArea(struct elf_programHeader *tlsProgramHeader, void *tlsArea) {
     hc_MEMCPY(tlsArea, tlsProgramHeader->virtualAddress, tlsProgramHeader->segmentFileSize);
