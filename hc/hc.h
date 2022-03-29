@@ -57,7 +57,7 @@ _Static_assert((-1 >> 1) == -1, "not arithmetic shift right");
 #if hc_X86_64
 #define hc_SYSCALL0(NUM) \
 register long ret asm("rax") = (NUM); \
-asm volatile ( \
+asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
     : \
@@ -67,7 +67,7 @@ asm volatile ( \
 #define hc_SYSCALL1(NUM, ARG1) \
 register long ret asm("rax") = (NUM); \
 register long arg1 asm("rdi") = (long)(ARG1); \
-asm volatile ( \
+asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
     : "r"(arg1) \
@@ -78,7 +78,7 @@ asm volatile ( \
 register long ret asm("rax") = (NUM); \
 register long arg1 asm("rdi") = (long)(ARG1); \
 register long arg2 asm("rsi") = (long)(ARG2); \
-asm volatile ( \
+asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
     : "r"(arg1), "r"(arg2) \
@@ -90,7 +90,7 @@ register long ret asm("rax") = (NUM); \
 register long arg1 asm("rdi") = (long)(ARG1); \
 register long arg2 asm("rsi") = (long)(ARG2); \
 register long arg3 asm("rdx") = (long)(ARG3); \
-asm volatile ( \
+asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
     : "r"(arg1), "r"(arg2), "r"(arg3) \
@@ -103,7 +103,7 @@ register long arg1 asm("rdi") = (long)(ARG1); \
 register long arg2 asm("rsi") = (long)(ARG2); \
 register long arg3 asm("rdx") = (long)(ARG3); \
 register long arg4 asm("r10") = (long)(ARG4); \
-asm volatile ( \
+asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
     : "r"(arg1), "r"(arg2), "r"(arg3), "r"(arg4) \
@@ -117,7 +117,7 @@ register long arg2 asm("rsi") = (long)(ARG2); \
 register long arg3 asm("rdx") = (long)(ARG3); \
 register long arg4 asm("r10") = (long)(ARG4); \
 register long arg5 asm("r8") = (long)(ARG5); \
-asm volatile ( \
+asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
     : "r"(arg1), "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5) \
@@ -132,7 +132,7 @@ register long arg3 asm("rdx") = (long)(ARG3); \
 register long arg4 asm("r10") = (long)(ARG4); \
 register long arg5 asm("r8") = (long)(ARG5); \
 register long arg6 asm("r9") = (long)(ARG6); \
-asm volatile ( \
+asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
     : "r"(arg1), "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5), "r"(arg6) \
@@ -811,7 +811,7 @@ asm volatile ( \
 #define hc_SYSCALL0(NUM) \
 register long num asm("x8") = (NUM); \
 register long ret asm("x0"); \
-asm volatile ( \
+asm volatile( \
     "svc 0\n" \
     : "=r"(ret) \
     : "r"(num) \
@@ -821,7 +821,7 @@ asm volatile ( \
 #define hc_SYSCALL1(NUM, ARG1) \
 register long num asm("x8") = (NUM); \
 register long ret asm("x0") = (long)(ARG1); \
-asm volatile ( \
+asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
     : "r"(num) \
@@ -832,7 +832,7 @@ asm volatile ( \
 register long num asm("x8") = (NUM); \
 register long ret asm("x0") = (long)(ARG1); \
 register long arg2 asm("x1") = (long)(ARG2); \
-asm volatile ( \
+asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(num) \
@@ -844,7 +844,7 @@ register long num asm("x8") = (NUM); \
 register long ret asm("x0") = (long)(ARG1); \
 register long arg2 asm("x1") = (long)(ARG2); \
 register long arg3 asm("x2") = (long)(ARG3); \
-asm volatile ( \
+asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(num) \
@@ -857,7 +857,7 @@ register long ret asm("x0") = (long)(ARG1); \
 register long arg2 asm("x1") = (long)(ARG2); \
 register long arg3 asm("x2") = (long)(ARG3); \
 register long arg4 asm("x3") = (long)(ARG4); \
-asm volatile ( \
+asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(arg4), "r"(num) \
@@ -871,7 +871,7 @@ register long arg2 asm("x1") = (long)(ARG2); \
 register long arg3 asm("x2") = (long)(ARG3); \
 register long arg4 asm("x3") = (long)(ARG4); \
 register long arg5 asm("x4") = (long)(ARG5); \
-asm volatile ( \
+asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5), "r"(num) \
@@ -886,7 +886,7 @@ register long arg3 asm("x2") = (long)(ARG3); \
 register long arg4 asm("x3") = (long)(ARG4); \
 register long arg5 asm("x4") = (long)(ARG5); \
 register long arg6 asm("x5") = (long)(ARG6); \
-asm volatile ( \
+asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5), "r"(arg6), "r"(num) \
@@ -897,7 +897,7 @@ asm volatile ( \
 #define hc_SYSCALL0(NUM) \
 register long num asm("a7") = (NUM); \
 register long ret asm("a0"); \
-asm volatile ( \
+asm volatile( \
     "ecall\n" \
     : "=r"(ret) \
     : "r"(num) \
@@ -907,7 +907,7 @@ asm volatile ( \
 #define hc_SYSCALL1(NUM, ARG1) \
 register long num asm("a7") = (NUM); \
 register long ret asm("a0") = (long)(ARG1); \
-asm volatile ( \
+asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
     : "r"(num) \
@@ -918,7 +918,7 @@ asm volatile ( \
 register long num asm("a7") = (NUM); \
 register long ret asm("a0") = (long)(ARG1); \
 register long arg2 asm("a1") = (long)(ARG2); \
-asm volatile ( \
+asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(num) \
@@ -930,7 +930,7 @@ register long num asm("a7") = (NUM); \
 register long ret asm("a0") = (long)(ARG1); \
 register long arg2 asm("a1") = (long)(ARG2); \
 register long arg3 asm("a2") = (long)(ARG3); \
-asm volatile ( \
+asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(num) \
@@ -943,7 +943,7 @@ register long ret asm("a0") = (long)(ARG1); \
 register long arg2 asm("a1") = (long)(ARG2); \
 register long arg3 asm("a2") = (long)(ARG3); \
 register long arg4 asm("a3") = (long)(ARG4); \
-asm volatile ( \
+asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(arg4), "r"(num) \
@@ -957,7 +957,7 @@ register long arg2 asm("a1") = (long)(ARG2); \
 register long arg3 asm("a2") = (long)(ARG3); \
 register long arg4 asm("a3") = (long)(ARG4); \
 register long arg5 asm("a4") = (long)(ARG5); \
-asm volatile ( \
+asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5), "r"(num) \
@@ -972,7 +972,7 @@ register long arg3 asm("a2") = (long)(ARG3); \
 register long arg4 asm("a3") = (long)(ARG4); \
 register long arg5 asm("a4") = (long)(ARG5); \
 register long arg6 asm("a5") = (long)(ARG6); \
-asm volatile ( \
+asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
     : "r"(arg2), "r"(arg3), "r"(arg4), "r"(arg5), "r"(arg6), "r"(num) \

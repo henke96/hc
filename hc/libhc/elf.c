@@ -81,41 +81,41 @@
 #define elf_PF_X 0x1
 
 // Values for `elf_sectionHeader.type`.
-#define SHT_NULL 0
-#define SHT_PROGBITS 1
-#define SHT_SYMTAB 2
-#define SHT_STRTAB 3
-#define SHT_RELA 4
-#define SHT_HASH 5
-#define SHT_DYNAMIC 6
-#define SHT_NOTE 7
-#define SHT_NOBITS 8
-#define SHT_REL 9
-#define SHT_SHLIB 10
-#define SHT_DYNSYM 11
-#define SHT_NUM 12
-#define SHT_LOPROC 0x70000000
-#define SHT_HIPROC 0x7fffffff
-#define SHT_LOUSER 0x80000000
-#define SHT_HIUSER 0xffffffff
+#define elf_SHT_NULL 0
+#define elf_SHT_PROGBITS 1
+#define elf_SHT_SYMTAB 2
+#define elf_SHT_STRTAB 3
+#define elf_SHT_RELA 4
+#define elf_SHT_HASH 5
+#define elf_SHT_DYNAMIC 6
+#define elf_SHT_NOTE 7
+#define elf_SHT_NOBITS 8
+#define elf_SHT_REL 9
+#define elf_SHT_SHLIB 10
+#define elf_SHT_DYNSYM 11
+#define elf_SHT_NUM 12
+#define elf_SHT_LOPROC 0x70000000
+#define elf_SHT_HIPROC 0x7fffffff
+#define elf_SHT_LOUSER 0x80000000
+#define elf_SHT_HIUSER 0xffffffff
 
 // Bit flags for `elf_sectionHeader.flags`.
-#define SHF_WRITE 0x1
-#define SHF_ALLOC 0x2
-#define SHF_EXECINSTR 0x4
-#define SHF_RELA_LIVEPATCH 0x00100000
-#define SHF_RO_AFTER_INIT 0x00200000
-#define SHF_MASKPROC 0xf0000000
+#define elf_SHF_WRITE 0x1
+#define elf_SHF_ALLOC 0x2
+#define elf_SHF_EXECINSTR 0x4
+#define elf_SHF_RELA_LIVEPATCH 0x00100000
+#define elf_SHF_RO_AFTER_INIT 0x00200000
+#define elf_SHF_MASKPROC 0xf0000000
 
 // Special indices for the section header table.
-#define SHN_UNDEF 0
-#define SHN_LORESERVE 0xff00
-#define SHN_LOPROC 0xff00
-#define SHN_HIPROC 0xff1f
-#define SHN_LIVEPATCH 0xff20
-#define SHN_ABS 0xfff1
-#define SHN_COMMON 0xfff2
-#define SHN_HIRESERVE 0xffff
+#define elf_SHN_UNDEF 0
+#define elf_SHN_LORESERVE 0xff00
+#define elf_SHN_LOPROC 0xff00
+#define elf_SHN_HIPROC 0xff1f
+#define elf_SHN_LIVEPATCH 0xff20
+#define elf_SHN_ABS 0xfff1
+#define elf_SHN_COMMON 0xfff2
+#define elf_SHN_HIRESERVE 0xffff
 
 struct elf_header {
     uint8_t magic[16];
