@@ -11,8 +11,7 @@ asm(
     "test %eax, %eax\n"
     "jz 1f\n"
     "ret\n"
-    "1: xor %ebp, %ebp\n"
-    "mov %r10, %rdi\n"
+    "1: mov %r10, %rdi\n"
     "call *%rdx\n"
 );
 #elif hc_AARCH64
