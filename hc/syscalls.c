@@ -66,6 +66,12 @@ static hc_ALWAYS_INLINE int32_t hc_signalfd4(int32_t fd, const uint64_t *mask, u
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int32_t hc_rt_sigaction(int32_t sig, const struct sigaction *act, struct sigaction *oldact) {
+    hc_SYSCALL4(hc_NR_rt_sigaction, sig, act, oldact, 8);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE int32_t hc_socket(int32_t family, int32_t type, int32_t protocol) {
     hc_SYSCALL3(hc_NR_socket, family, type, protocol);
     return (int32_t)ret;

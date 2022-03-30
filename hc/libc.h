@@ -443,7 +443,7 @@ struct sockaddr_alg {
 #define MADV_POPULATE_READ 22 // populate (prefault) page tables readable
 #define MADV_POPULATE_WRITE 23 // populate (prefault) page tables writable
 
-// signal.h
+// signal.h + siginfo.h
 #define SIGHUP 1
 #define SIGINT 2
 #define SIGQUIT 3
@@ -492,6 +492,154 @@ struct sockaddr_alg {
 #define SIG_BLOCK 0 // for blocking signals
 #define SIG_UNBLOCK 1 // for unblocking signals
 #define SIG_SETMASK 2 // for setting the signal mask
+
+union sigval {
+    int32_t sival_int;
+    void *sival_ptr;
+};
+
+struct siginfo {
+    int32_t si_signo;
+    int32_t si_code;
+    int32_t si_errno;
+    int32_t __pad;
+    union {
+        char __pad[128 - 16];
+        // kill()
+        struct {
+            int32_t _pid; // sender's pid
+            uint32_t _uid; // sender's uid
+        } _kill;
+
+        // POSIX.1b timers
+        struct {
+            int32_t _tid; // timer id
+            int32_t _overrun; // overrun count
+            union sigval _sigval; // same as below
+            int32_t _sys_private; // not to be passed to user
+            int32_t __pad;
+        } _timer;
+
+        // POSIX.1b signals
+        struct {
+            int32_t _pid; // sender's pid
+            uint32_t _uid; // sender's uid
+            union sigval _sigval;
+        } _rt;
+
+        // SIGCHLD
+        struct {
+            int32_t _pid; // which child
+            uint32_t _uid; // sender's uid
+            int32_t _status; // exit code
+            int32_t __pad;
+            int64_t _utime;
+            int64_t _stime;
+        } _sigchld;
+
+        // SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT
+        struct {
+            void *_addr; // faulting insn/memory ref.
+
+            union {
+                // used on alpha and sparc
+                int32_t _trapno; // TRAP # which caused the signal
+                /*
+                * used when si_code=BUS_MCEERR_AR or
+                * used when si_code=BUS_MCEERR_AO
+                */
+                int16_t _addr_lsb; // LSB of the reported address
+                // used when si_code=SEGV_BNDERR
+                struct {
+                    char _dummy_bnd[8];
+                    void *_lower;
+                    void *_upper;
+                } _addr_bnd;
+                // used when si_code=SEGV_PKUERR
+                struct {
+                    char _dummy_pkey[8];
+                    uint32_t _pkey;
+                } _addr_pkey;
+                // used when si_code=TRAP_PERF
+                struct {
+                    uint64_t _data;
+                    uint32_t _type;
+                    int32_t __pad;
+                } _perf;
+            };
+        } _sigfault;
+
+        // SIGPOLL
+        struct {
+            int64_t _band; // POLL_IN, POLL_OUT, POLL_MSG
+            int32_t _fd;
+            int32_t __pad;
+        } _sigpoll;
+
+        // SIGSYS
+        struct {
+            void *_call_addr; // calling user insn
+            int32_t _syscall; // triggering system call number
+            uint32_t _arch; // AUDIT_ARCH_* of syscall
+        } _sigsys;
+    } _sifields;
+}
+#if hc_X86_64
+hc_ALIGNED(8)
+#endif
+;
+
+#define si_pid _sifields._kill._pid
+#define si_uid _sifields._kill._uid
+#define si_tid _sifields._timer._tid
+#define si_overrun _sifields._timer._overrun
+#define si_sys_private  _sifields._timer._sys_private
+#define si_status _sifields._sigchld._status
+#define si_utime _sifields._sigchld._utime
+#define si_stime _sifields._sigchld._stime
+#define si_value _sifields._rt._sigval
+#define si_int _sifields._rt._sigval.sival_int
+#define si_ptr _sifields._rt._sigval.sival_ptr
+#define si_addr _sifields._sigfault._addr
+#define si_trapno _sifields._sigfault._trapno
+#define si_addr_lsb _sifields._sigfault._addr_lsb
+#define si_lower _sifields._sigfault._addr_bnd._lower
+#define si_upper _sifields._sigfault._addr_bnd._upper
+#define si_pkey _sifields._sigfault._addr_pkey._pkey
+#define si_perf_data _sifields._sigfault._perf._data
+#define si_perf_type _sifields._sigfault._perf._type
+#define si_band _sifields._sigpoll._band
+#define si_fd _sifields._sigpoll._fd
+#define si_call_addr _sifields._sigsys._call_addr
+#define si_syscall _sifields._sigsys._syscall
+#define si_arch _sifields._sigsys._arch
+
+/*
+ * si_code values
+ * Digital reserves positive values for kernel-generated signals.
+ */
+#define SI_USER 0 // sent by kill, sigsend, raise
+#define SI_KERNEL 0x80 // sent by the kernel from somewhere
+#define SI_QUEUE -1 // sent by sigqueue
+#define SI_TIMER -2 // sent by timer expiration
+#define SI_MESGQ -3 // sent by real time mesq state change
+#define SI_ASYNCIO -4 // sent by AIO completion
+#define SI_SIGIO -5 // sent by queued SIGIO
+#define SI_TKILL -6 // sent by tkill system call
+#define SI_DETHREAD -7 // sent by execve() killing subsidiary threads
+#define SI_ASYNCNL -60 // sent by glibc async name lookup completion
+
+struct sigaction {
+    union {
+        void (*sa_handler)(int32_t sig);
+        void (*sa_sigaction)(int32_t sig, struct siginfo *info, void *ucontext);
+    };
+    uint64_t sa_flags;
+#if hc_X86_64
+    void (*sa_restorer)(void);
+#endif
+    uint64_t sa_mask;
+};
 
 // random.h
 #define GRND_NONBLOCK 0x0001

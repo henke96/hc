@@ -5,7 +5,6 @@ int32_t hc_clone_exit(struct clone_args *args, uint64_t size);
 asm(
     ".section .text\n"
     ".local hc_clone_exit\n"
-    ".type hc_clone_exit, @function\n"
     "hc_clone_exit:\n"
     "mov %rcx, %r10\n"
     "mov $435, %eax\n"
@@ -21,7 +20,6 @@ asm(
 asm(
     ".section .text\n"
     ".local hc_clone_exit\n"
-    ".type hc_clone_exit, @function\n"
     "hc_clone_exit:\n"
     "mov x8, 435\n"
     "svc 0\n"
@@ -36,7 +34,6 @@ asm(
 asm(
     ".section .text\n"
     ".local hc_clone_exit\n"
-    ".type hc_clone_exit, @function\n"
     "hc_clone_exit:\n"
     "li a7, 435\n"
     "ecall\n"
