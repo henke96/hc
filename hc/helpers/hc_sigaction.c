@@ -4,8 +4,8 @@ asm(
     ".section .text\n"
     ".local hc_sigaction_restore\n"
     "hc_sigaction_restore:\n"
-	"mov $15, %rax\n"
-	"syscall\n"
+    "mov $15, %rax\n"
+    "syscall\n"
 );
 #endif
 

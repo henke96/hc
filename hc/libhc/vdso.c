@@ -43,7 +43,7 @@ static void *vdso_lookup(const uint64_t *auxv, const char *symbolName) {
             case elf_DT_STRTAB: strings = pointer; break;
             case elf_DT_SYMTAB: symbols = pointer; break;
             case elf_DT_HASH: hashTable = pointer; break;
-		}
+        }
     }
     if (strings == NULL || symbols == NULL || hashTable == NULL) return NULL;
 
