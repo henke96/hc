@@ -2,6 +2,7 @@
 _Static_assert(sizeof(long) == 8, "long not 8 bytes");
 _Static_assert(-1 == ~0, "not two's complement");
 _Static_assert((-1 >> 1) == -1, "not arithmetic shift right");
+_Static_assert(sizeof(L""[0]) == 2, "wide char not 2 bytes");
 
 #if defined(__x86_64__)
 #define hc_X86_64 1
