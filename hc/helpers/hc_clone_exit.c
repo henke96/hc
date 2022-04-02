@@ -30,7 +30,7 @@ asm(
     "svc 0\n"
     "1: ret\n"
 );
-#elif hc_RISCV
+#elif hc_RISCV64
 asm(
     ".section .text\n"
     ".local hc_clone_exit\n"

@@ -26,7 +26,7 @@ asm(
     "1: mov x0, x3\n"
     "blr x2\n"
 );
-#elif hc_RISCV
+#elif hc_RISCV64
 asm(
     ".section .text\n"
     ".local hc_clone\n"

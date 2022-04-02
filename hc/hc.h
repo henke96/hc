@@ -11,7 +11,7 @@ _Static_assert(sizeof(L""[0]) == 2, "wide char not 2 bytes");
 #elif defined(__aarch64__)
 #define hc_AARCH64 1
 #elif defined(__riscv)
-#define hc_RISCV 1
+#define hc_RISCV64 1
 #else
 #error "Unsupported architecture"
 #endif
@@ -52,7 +52,7 @@ _Static_assert(sizeof(L""[0]) == 2, "wide char not 2 bytes");
 #define hc_ATOMIC_PAUSE asm volatile("pause" ::: "memory")
 #elif hc_AARCH64
 #define hc_ATOMIC_PAUSE asm volatile("yield" ::: "memory")
-#elif hc_RISCV
+#elif hc_RISCV64
 // This is `pause`, but assemblers don't support it as of now.
 #define hc_ATOMIC_PAUSE asm volatile(".insn i 0x0F, 0, x0, x0, 0x010" ::: "memory")
 #endif
@@ -898,7 +898,7 @@ asm volatile( \
     : "memory", "cc" \
 );
 
-#elif hc_RISCV
+#elif hc_RISCV64
 #define hc_SYSCALL0(NUM) \
 register long long num asm("a7") = (NUM); \
 register long long ret asm("a0"); \

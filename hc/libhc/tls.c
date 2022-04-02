@@ -37,7 +37,7 @@ hc_UNUSED static uint64_t tls_initArea(struct elf_programHeader *tlsProgramHeade
     return (uint64_t)tlsArea + hc_ALIGN_FORWARD(tlsProgramHeader->segmentMemorySize, tlsProgramHeader->segmentAlignment);
 #elif hc_AARCH64
     return (uint64_t)tlsArea - 16;
-#elif hc_RISCV
+#elif hc_RISCV64
     return (uint64_t)tlsArea;
 #endif
 }
@@ -52,7 +52,7 @@ hc_UNUSED static hc_ALWAYS_INLINE void tls_setThreadPointer(uint64_t threadPoint
         :
         : "r"(threadPointer)
     );
-#elif hc_RISCV
+#elif hc_RISCV64
     asm volatile(
         "mv tp, %0\n"
         :

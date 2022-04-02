@@ -4,7 +4,7 @@
 #elif hc_AARCH64
 #define vdso_CLOCK_GETTIME "__kernel_clock_gettime"
 #define vdso_GETTIMEOFDAY "__kernel_gettimeofday"
-#elif hc_RISCV
+#elif hc_RISCV64
 #define vdso_CLOCK_GETTIME "__vdso_clock_gettime"
 #define vdso_GETTIMEOFDAY "__vdso_gettimeofday"
 #endif

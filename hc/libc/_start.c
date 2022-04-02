@@ -24,7 +24,7 @@ asm(
     "mov x8, 94\n"
     "svc 0\n"           // Run exit_group with the return from main.
 );
-#elif hc_RISCV
+#elif hc_RISCV64
 asm(
     ".section .text\n"
     ".global _start\n"
