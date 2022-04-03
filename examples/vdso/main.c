@@ -1,11 +1,13 @@
-#include "../../hc/hc.h"
-#include "../../hc/libc.h"
-#include "../../hc/libc/_start.c"
-#include "../../hc/libc/small.c"
-#include "../../hc/syscalls.c"
-#include "../../hc/libhc/util.c"
-#include "../../hc/libhc/elf.c"
-#include "../../hc/libhc/vdso.c"
+#include "../../src/hc.h"
+#include "../../src/elf.h"
+#include "../../src/util.c"
+#include "../../src/libc/small.c"
+#include "../../src/linux/linux.h"
+#include "../../src/linux/util.c"
+#include "../../src/linux/sys.c"
+#include "../../src/linux/debug.c"
+#include "../../src/linux/vdso.c"
+#include "../../src/linux/helpers/_start.c"
 
 int32_t main(int32_t argc, char **argv) {
     // Find the clock_gettime() function in the shared object "vDSO" provided to us by Linux.
@@ -26,10 +28,10 @@ int32_t main(int32_t argc, char **argv) {
 
     // Do the same test but using the syscall.
     uint64_t countSyscall = 0;
-    hc_clock_gettime(CLOCK_MONOTONIC, &start);
+    sys_clock_gettime(CLOCK_MONOTONIC, &start);
     for (;;) {
         struct timespec current;
-        hc_clock_gettime(CLOCK_MONOTONIC, &current);
+        sys_clock_gettime(CLOCK_MONOTONIC, &current);
         ++countSyscall;
         if (current.tv_sec > start.tv_sec && current.tv_nsec >= start.tv_nsec) break;
     }
@@ -39,7 +41,7 @@ int32_t main(int32_t argc, char **argv) {
     char resultSyscall[34] = "With syscall:                    \n";
     util_uintToStr(&result[sizeof(result) - 1], count);
     util_uintToStr(&resultSyscall[sizeof(resultSyscall) - 1], countSyscall);
-    hc_writev(STDOUT_FILENO, (struct iovec[2]) {
+    sys_writev(STDOUT_FILENO, (struct iovec[2]) {
         { .iov_base = &result[0], .iov_len = sizeof(result) },
         { .iov_base = &resultSyscall[0], .iov_len = sizeof(resultSyscall) }
     }, 2);

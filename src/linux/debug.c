@@ -3,7 +3,7 @@ static void debug_printNum(const char *pre, int64_t num, const char *post) {
     char buffer[util_INT64_MAX_CHARS];
     char *numStr = util_intToStr(&buffer[util_INT64_MAX_CHARS], num);
 
-    hc_writev(STDOUT_FILENO, (struct iovec[3]) {
+    sys_writev(STDOUT_FILENO, (struct iovec[3]) {
         { .iov_base = (char *)pre,  .iov_len = util_cstrLen(pre) },
         { .iov_base = numStr,       .iov_len = (int64_t)(&buffer[util_INT64_MAX_CHARS] - numStr) },
         { .iov_base = (char *)post, .iov_len = util_cstrLen(post) }
@@ -12,7 +12,7 @@ static void debug_printNum(const char *pre, int64_t num, const char *post) {
 
 hc_UNUSED
 static void debug_printStr(const char *pre, const char *str, const char *post, int64_t strlen) {
-    hc_writev(STDOUT_FILENO, (struct iovec[3]) {
+    sys_writev(STDOUT_FILENO, (struct iovec[3]) {
         { .iov_base = (char *)pre,  .iov_len = util_cstrLen(pre) },
         { .iov_base = (char *)str,  .iov_len = strlen },
         { .iov_base = (char *)post, .iov_len = util_cstrLen(post) }
@@ -32,7 +32,7 @@ static noreturn void debug_failAssert(const char *expression, const char *file, 
     static const char colon[2] = ": ";
     static const char end[2] = ")\n";
 
-    hc_writev(STDOUT_FILENO, (struct iovec[9]) {
+    sys_writev(STDOUT_FILENO, (struct iovec[9]) {
         { .iov_base = (char *)&start[0],      .iov_len = sizeof(start) },
         { .iov_base = (char *)expression,     .iov_len = util_cstrLen(expression) },
         { .iov_base = (char *)&parenStart[0], .iov_len = sizeof(parenStart) },
@@ -43,8 +43,8 @@ static noreturn void debug_failAssert(const char *expression, const char *file, 
         { .iov_base = (char *)function,       .iov_len = util_cstrLen(function) },
         { .iov_base = (char *)&end[0],        .iov_len = sizeof(end) }
     }, 9);
-    hc_kill(hc_getpid(), SIGABRT);
-    hc_exit_group(137);
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
 }
 #define debug_ASSERT(X) ((void)((X) || (debug_failAssert(#X, __FILE__, __func__, __LINE__), 0)))
 #endif

@@ -1,6 +1,5 @@
-#include "../../hc/hc.h"
-#include "../../hc/libc.h"
-#include "../../hc/efi/efi.h"
+#include "../../src/hc.h"
+#include "../../src/efi.h"
 
 int64_t main(hc_UNUSED void *imageHandle, struct efi_systemTable *systemTable) {
     int64_t status = systemTable->consoleOut->outputString(systemTable->consoleOut, L"Hello World\r\n");

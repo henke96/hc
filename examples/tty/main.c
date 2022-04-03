@@ -1,12 +1,13 @@
-#include "../../hc/hc.h"
-#include "../../hc/libc.h"
-#include "../../hc/libc/_start.c"
-#include "../../hc/libc/musl.c"
-#include "../../hc/syscalls.c"
-#include "../../hc/helpers/hc_clone_exit.c"
-#include "../../hc/libhc/util.c"
-#include "../../hc/libhc/debug.c"
-#include "../../hc/libhc/drmKms.c"
+#include "../../src/hc.h"
+#include "../../src/util.c"
+#include "../../src/libc/musl.c"
+#include "../../src/linux/linux.h"
+#include "../../src/linux/util.c"
+#include "../../src/linux/sys.c"
+#include "../../src/linux/debug.c"
+#include "../../src/linux/drmKms.c"
+#include "../../src/linux/helpers/_start.c"
+#include "../../src/linux/helpers/sys_clone_exit.c"
 
 static int32_t init_graphics(struct drmKms *graphics) {
     // Set up frame buffer.
@@ -71,7 +72,7 @@ int32_t main(int32_t argc, char **argv) {
     if (argc != 2) {
         static const char usageStart[7] = "Usage: ";
         static const char usageArgs[9] = " TTY_NUM\n";
-        hc_writev(STDOUT_FILENO, (struct iovec[3]) {
+        sys_writev(STDOUT_FILENO, (struct iovec[3]) {
             { .iov_base = (char *)&usageStart[0], .iov_len = sizeof(usageStart) },
             { .iov_base = (char *)programName,    .iov_len = util_cstrLen(programName) },
             { .iov_base = (char *)&usageArgs[0],  .iov_len = sizeof(usageArgs) }
@@ -83,7 +84,7 @@ int32_t main(int32_t argc, char **argv) {
     uint64_t ttyNumber;
     if (util_strToUint(argv[1], '\0', &ttyNumber) == 0 || ttyNumber < 1 || ttyNumber > 63) {
         static const char error[] = "Invalid TTY_NUM argument\n";
-        hc_write(STDOUT_FILENO, &error, sizeof(error) - 1);
+        sys_write(STDOUT_FILENO, &error, sizeof(error) - 1);
         return 1;
     }
     char ttyPath[10] = "/dev/tty\0\0";
@@ -94,35 +95,35 @@ int32_t main(int32_t argc, char **argv) {
 
     // Continue in a child process, to make sure setsid() will work.
     struct clone_args args = { .flags = CLONE_VM | CLONE_FILES | CLONE_FS | CLONE_CLEAR_SIGHAND };
-    int32_t status = hc_clone_exit(&args, sizeof(args));
+    int32_t status = sys_clone_exit(&args, sizeof(args));
     if (status < 0) return 1;
 
     // Create new session.
-    status = hc_setsid();
+    status = sys_setsid();
     if (status < 0) return 1;
 
     // Open tty.
-    int32_t ttyFd = hc_openat(-1, &ttyPath, O_RDWR, 0);
+    int32_t ttyFd = sys_openat(-1, &ttyPath, O_RDWR, 0);
     if (ttyFd < 0) {
         static const char error[] = "Failed to open tty\n";
-        hc_write(STDOUT_FILENO, &error, sizeof(error) - 1);
+        sys_write(STDOUT_FILENO, &error, sizeof(error) - 1);
         return 1;
     }
 
     // Set the tty as our controlling terminal.
-    status = hc_ioctl(ttyFd, TIOCSCTTY, 0);
+    status = sys_ioctl(ttyFd, TIOCSCTTY, 0);
     if (status < 0) {
         static const char error[] = "Failed to set controlling terminal\n";
-        hc_write(STDOUT_FILENO, &error, sizeof(error) - 1);
+        sys_write(STDOUT_FILENO, &error, sizeof(error) - 1);
         return 1;
     }
 
     // Set up signalfd for SIGUSR1 and SIGUSR2.
-    uint64_t ttySignals = hc_SIGMASK(SIGUSR1) | hc_SIGMASK(SIGUSR2);
-    status = hc_rt_sigprocmask(SIG_BLOCK, &ttySignals, NULL);
+    uint64_t ttySignals = sys_SIGMASK(SIGUSR1) | sys_SIGMASK(SIGUSR2);
+    status = sys_rt_sigprocmask(SIG_BLOCK, &ttySignals, NULL);
     if (status < 0) return 1;
 
-    int32_t signalFd = hc_signalfd4(-1, &ttySignals, 0);
+    int32_t signalFd = sys_signalfd4(-1, &ttySignals, 0);
     if (signalFd < 0) return 1;
 
     // Request SIGUSR1 and SIGUSR2 when our tty is entered and left.
@@ -131,16 +132,16 @@ int32_t main(int32_t argc, char **argv) {
         .acqsig = SIGUSR1,
         .relsig = SIGUSR2
     };
-    status = hc_ioctl(ttyFd, VT_SETMODE, &vtMode);
+    status = sys_ioctl(ttyFd, VT_SETMODE, &vtMode);
     if (status < 0) return 1;
 
     // Set tty to graphics mode.
-    status = hc_ioctl(ttyFd, KDSETMODE, (void *)KD_GRAPHICS);
+    status = sys_ioctl(ttyFd, KDSETMODE, (void *)KD_GRAPHICS);
     if (status < 0) return 1;
 
     // Check if our tty is already active.
     struct vt_stat vtState;
-    status = hc_ioctl(ttyFd, VT_GETSTATE, &vtState);
+    status = sys_ioctl(ttyFd, VT_GETSTATE, &vtState);
     if (status < 0) return 1;
 
     bool active = vtState.v_active == ttyNumber;
@@ -150,13 +151,13 @@ int32_t main(int32_t argc, char **argv) {
     }
 
     // Set up epoll.
-    int32_t epollFd = hc_epoll_create1(0);
+    int32_t epollFd = sys_epoll_create1(0);
     if (epollFd < 0) return 1;
 
     struct epoll_event signalFdEvent = {
         .events = EPOLLIN
     };
-    if (hc_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
+    if (sys_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
 
     int64_t frameCounter;
     struct timespec prev;
@@ -166,20 +167,20 @@ int32_t main(int32_t argc, char **argv) {
     for (;;) {
         int32_t timeout = active ? 0 : -1; // Only block if not active.
         struct epoll_event event;
-        status = hc_epoll_pwait(epollFd, &event, 1, timeout, NULL);
+        status = sys_epoll_pwait(epollFd, &event, 1, timeout, NULL);
         if (status < 0) return 1;
 
         if (status > 0) {
             // Handle event.
             struct signalfd_siginfo info;
-            int64_t numRead = hc_read(signalFd, &info, sizeof(info));
+            int64_t numRead = sys_read(signalFd, &info, sizeof(info));
             if (numRead != sizeof(info)) return 1;
 
             if (info.ssi_signo == SIGUSR1) {
                 if (active) return 1;
                 active = true;
                 static const char message[] = "Acquired!\n";
-                hc_write(STDOUT_FILENO, &message, sizeof(message) - 1);
+                sys_write(STDOUT_FILENO, &message, sizeof(message) - 1);
 
                 if (init_graphics(&graphics) < 0) return 1;
 
@@ -188,17 +189,17 @@ int32_t main(int32_t argc, char **argv) {
                 green = 0;
                 blue = 0;
                 frameCounter = 0;
-                hc_clock_gettime(CLOCK_MONOTONIC, &prev);
+                sys_clock_gettime(CLOCK_MONOTONIC, &prev);
             } else if (info.ssi_signo == SIGUSR2) {
                 if (!active) return 1;
 
                 deinit_graphics(&graphics);
-                status = hc_ioctl(ttyFd, VT_RELDISP, (void *)1);
+                status = sys_ioctl(ttyFd, VT_RELDISP, (void *)1);
                 if (status < 0) return 1;
 
                 active = false;
                 static const char message[] = "Released!\n";
-                hc_write(STDOUT_FILENO, &message, sizeof(message) - 1);
+                sys_write(STDOUT_FILENO, &message, sizeof(message) - 1);
                 continue; // Skip drawing.
             }
         }
@@ -211,7 +212,7 @@ int32_t main(int32_t argc, char **argv) {
 
         ++frameCounter;
         struct timespec now;
-        hc_clock_gettime(CLOCK_MONOTONIC, &now);
+        sys_clock_gettime(CLOCK_MONOTONIC, &now);
         if (now.tv_sec > prev.tv_sec) {
             debug_printNum("FPS: ", frameCounter, "\n");
             frameCounter = 0;

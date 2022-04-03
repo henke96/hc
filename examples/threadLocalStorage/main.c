@@ -1,13 +1,14 @@
-#include "../../hc/hc.h"
-#include "../../hc/libc.h"
-#include "../../hc/libc/_start.c"
-#include "../../hc/libc/small.c"
-#include "../../hc/syscalls.c"
-#include "../../hc/helpers/hc_clone.c"
-#include "../../hc/libhc/util.c"
-#include "../../hc/libhc/elf.c"
-#include "../../hc/libhc/tls.c"
-#include "../../hc/libhc/debug.c"
+#include "../../src/hc.h"
+#include "../../src/elf.h"
+#include "../../src/util.c"
+#include "../../src/libc/small.c"
+#include "../../src/linux/linux.h"
+#include "../../src/linux/util.c"
+#include "../../src/linux/sys.c"
+#include "../../src/linux/tls.c"
+#include "../../src/linux/debug.c"
+#include "../../src/linux/helpers/_start.c"
+#include "../../src/linux/helpers/sys_clone.c"
 
 static thread_local int32_t test1 = 1;
 static thread_local char test2 = 2;
@@ -37,10 +38,10 @@ static noreturn void thread(void *arg) {
 
     // Notify parent we are done.
     hc_ATOMIC_STORE(&childDone, CHILD_DONE, hc_ATOMIC_RELEASE);
-    int32_t hc_UNUSED status = hc_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+    int32_t hc_UNUSED status = sys_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
     debug_ASSERT(status >= 0);
 
-    hc_exit(0);
+    sys_exit(0);
 }
 
 int32_t main(int32_t argc, char **argv) {
@@ -63,7 +64,7 @@ int32_t main(int32_t argc, char **argv) {
         int64_t stackSize = 4096; // Tls area must be aligned to at least `tlsProgramHeader->segmentAlignment`,
                                   // so we make the stack size a nice power of 2 at put the tls area right after it.
         int64_t allocSize = stackSize + (int64_t)tlsProgramHeader->segmentMemorySize;
-        char *threadArea = hc_mmap(NULL, allocSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+        char *threadArea = sys_mmap(NULL, allocSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
         if ((int64_t)threadArea < 0) return 2;
 
         uint64_t threadPointer = tls_initArea(tlsProgramHeader, &threadArea[stackSize]);
@@ -73,7 +74,7 @@ int32_t main(int32_t argc, char **argv) {
             .stack = threadArea,
             .stack_size = stackSize
         };
-        int32_t ret = hc_clone(&args, sizeof(args), thread, (void *)-6);
+        int32_t ret = sys_clone(&args, sizeof(args), thread, (void *)-6);
         if (ret < 0) return 3;
     }
 
@@ -87,7 +88,7 @@ int32_t main(int32_t argc, char **argv) {
     // Wait for child to finish.
     for (;;) {
         if (hc_ATOMIC_LOAD(&childDone, hc_ATOMIC_ACQUIRE) == CHILD_DONE) break;
-        int32_t hc_UNUSED status = hc_futex(&childDone, FUTEX_WAIT_PRIVATE, CHILD_NOT_DONE, NULL, NULL, 0);
+        int32_t hc_UNUSED status = sys_futex(&childDone, FUTEX_WAIT_PRIVATE, CHILD_NOT_DONE, NULL, NULL, 0);
         debug_ASSERT(status == 0 || status == -EAGAIN);
     }
 

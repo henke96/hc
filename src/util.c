@@ -1,15 +1,4 @@
 hc_UNUSED
-static inline char **util_getEnvp(int32_t argc, char **argv) {
-    return argv + argc + 1;
-}
-
-hc_UNUSED
-static uint64_t *util_getAuxv(char **envp) {
-    for (; *envp != NULL; ++envp);
-    return (uint64_t *)(envp + 1);
-}
-
-hc_UNUSED
 static int64_t util_cstrLen(const char *cstring) {
     const char *c = cstring;
     for (; *c != '\0'; ++c);

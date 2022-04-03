@@ -45,7 +45,7 @@ hc_UNUSED static uint64_t tls_initArea(struct elf_programHeader *tlsProgramHeade
 // Set thread pointer for current thread.
 hc_UNUSED static hc_ALWAYS_INLINE void tls_setThreadPointer(uint64_t threadPointer) {
 #if hc_X86_64
-    hc_SYSCALL2(hc_NR_arch_prctl, ARCH_SET_FS, threadPointer)
+    sys_SYSCALL2(sys_NR_arch_prctl, ARCH_SET_FS, threadPointer)
 #elif hc_AARCH64
     asm volatile(
         "msr tpidr_el0, %0\n"

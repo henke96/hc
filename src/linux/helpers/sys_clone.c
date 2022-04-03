@@ -1,10 +1,10 @@
 // Returns pid, or negative error code.
-int32_t hc_clone(struct clone_args *args, uint64_t size, void (*childfunc)(void *), void *childarg);
+int32_t sys_clone(struct clone_args *args, uint64_t size, void (*childfunc)(void *), void *childarg);
 #if hc_X86_64
 asm(
     ".section .text\n"
-    ".local hc_clone\n"
-    "hc_clone:\n"
+    ".local sys_clone\n"
+    "sys_clone:\n"
     "mov %rcx, %r10\n"
     "mov $435, %eax\n"
     "syscall\n"
@@ -17,8 +17,8 @@ asm(
 #elif hc_AARCH64
 asm(
     ".section .text\n"
-    ".local hc_clone\n"
-    "hc_clone:\n"
+    ".local sys_clone\n"
+    "sys_clone:\n"
     "mov x8, 435\n"
     "svc 0\n"
     "cbz x0, 1f\n"
@@ -29,8 +29,8 @@ asm(
 #elif hc_RISCV64
 asm(
     ".section .text\n"
-    ".local hc_clone\n"
-    "hc_clone:\n"
+    ".local sys_clone\n"
+    "sys_clone:\n"
     "li a7, 435\n"
     "ecall\n"
     "beq a0, x0, 1f\n"
