@@ -10,7 +10,7 @@ asm volatile( \
 
 #define sys_SYSCALL1(NUM, ARG1) \
 register int64_t ret asm("rax") = (NUM); \
-register uint64_t arg1 asm("rdi") = (uint64_t)(ARG1); \
+register int64_t arg1 asm("rdi") = (int64_t)(ARG1); \
 asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
@@ -20,8 +20,8 @@ asm volatile( \
 
 #define sys_SYSCALL2(NUM, ARG1, ARG2) \
 register int64_t ret asm("rax") = (NUM); \
-register uint64_t arg1 asm("rdi") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("rsi") = (uint64_t)(ARG2); \
+register int64_t arg1 asm("rdi") = (int64_t)(ARG1); \
+register int64_t arg2 asm("rsi") = (int64_t)(ARG2); \
 asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
@@ -31,9 +31,9 @@ asm volatile( \
 
 #define sys_SYSCALL3(NUM, ARG1, ARG2, ARG3) \
 register int64_t ret asm("rax") = (NUM); \
-register uint64_t arg1 asm("rdi") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("rsi") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("rdx") = (uint64_t)(ARG3); \
+register int64_t arg1 asm("rdi") = (int64_t)(ARG1); \
+register int64_t arg2 asm("rsi") = (int64_t)(ARG2); \
+register int64_t arg3 asm("rdx") = (int64_t)(ARG3); \
 asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
@@ -43,10 +43,10 @@ asm volatile( \
 
 #define sys_SYSCALL4(NUM, ARG1, ARG2, ARG3, ARG4) \
 register int64_t ret asm("rax") = (NUM); \
-register uint64_t arg1 asm("rdi") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("rsi") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("rdx") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("r10") = (uint64_t)(ARG4); \
+register int64_t arg1 asm("rdi") = (int64_t)(ARG1); \
+register int64_t arg2 asm("rsi") = (int64_t)(ARG2); \
+register int64_t arg3 asm("rdx") = (int64_t)(ARG3); \
+register int64_t arg4 asm("r10") = (int64_t)(ARG4); \
 asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
@@ -56,11 +56,11 @@ asm volatile( \
 
 #define sys_SYSCALL5(NUM, ARG1, ARG2, ARG3, ARG4, ARG5) \
 register int64_t ret asm("rax") = (NUM); \
-register uint64_t arg1 asm("rdi") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("rsi") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("rdx") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("r10") = (uint64_t)(ARG4); \
-register uint64_t arg5 asm("r8") = (uint64_t)(ARG5); \
+register int64_t arg1 asm("rdi") = (int64_t)(ARG1); \
+register int64_t arg2 asm("rsi") = (int64_t)(ARG2); \
+register int64_t arg3 asm("rdx") = (int64_t)(ARG3); \
+register int64_t arg4 asm("r10") = (int64_t)(ARG4); \
+register int64_t arg5 asm("r8") = (int64_t)(ARG5); \
 asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
@@ -70,12 +70,12 @@ asm volatile( \
 
 #define sys_SYSCALL6(NUM, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) \
 register int64_t ret asm("rax") = (NUM); \
-register uint64_t arg1 asm("rdi") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("rsi") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("rdx") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("r10") = (uint64_t)(ARG4); \
-register uint64_t arg5 asm("r8") = (uint64_t)(ARG5); \
-register uint64_t arg6 asm("r9") = (uint64_t)(ARG6); \
+register int64_t arg1 asm("rdi") = (int64_t)(ARG1); \
+register int64_t arg2 asm("rsi") = (int64_t)(ARG2); \
+register int64_t arg3 asm("rdx") = (int64_t)(ARG3); \
+register int64_t arg4 asm("r10") = (int64_t)(ARG4); \
+register int64_t arg5 asm("r8") = (int64_t)(ARG5); \
+register int64_t arg6 asm("r9") = (int64_t)(ARG6); \
 asm volatile( \
     "syscall\n" \
     : "+r"(ret) \
@@ -753,7 +753,7 @@ asm volatile( \
 
 #if hc_AARCH64
 #define sys_SYSCALL0(NUM) \
-register uint64_t num asm("x8") = (NUM); \
+register int64_t num asm("x8") = (NUM); \
 register int64_t ret asm("x0"); \
 asm volatile( \
     "svc 0\n" \
@@ -763,8 +763,8 @@ asm volatile( \
 );
 
 #define sys_SYSCALL1(NUM, ARG1) \
-register uint64_t num asm("x8") = (NUM); \
-register int64_t ret asm("x0") = (uint64_t)(ARG1); \
+register int64_t num asm("x8") = (NUM); \
+register int64_t ret asm("x0") = (int64_t)(ARG1); \
 asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
@@ -773,9 +773,9 @@ asm volatile( \
 );
 
 #define sys_SYSCALL2(NUM, ARG1, ARG2) \
-register uint64_t num asm("x8") = (NUM); \
-register int64_t ret asm("x0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("x1") = (uint64_t)(ARG2); \
+register int64_t num asm("x8") = (NUM); \
+register int64_t ret asm("x0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("x1") = (int64_t)(ARG2); \
 asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
@@ -784,10 +784,10 @@ asm volatile( \
 );
 
 #define sys_SYSCALL3(NUM, ARG1, ARG2, ARG3) \
-register uint64_t num asm("x8") = (NUM); \
-register int64_t ret asm("x0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("x1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("x2") = (uint64_t)(ARG3); \
+register int64_t num asm("x8") = (NUM); \
+register int64_t ret asm("x0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("x1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("x2") = (int64_t)(ARG3); \
 asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
@@ -796,11 +796,11 @@ asm volatile( \
 );
 
 #define sys_SYSCALL4(NUM, ARG1, ARG2, ARG3, ARG4) \
-register uint64_t num asm("x8") = (NUM); \
-register int64_t ret asm("x0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("x1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("x2") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("x3") = (uint64_t)(ARG4); \
+register int64_t num asm("x8") = (NUM); \
+register int64_t ret asm("x0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("x1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("x2") = (int64_t)(ARG3); \
+register int64_t arg4 asm("x3") = (int64_t)(ARG4); \
 asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
@@ -809,12 +809,12 @@ asm volatile( \
 );
 
 #define sys_SYSCALL5(NUM, ARG1, ARG2, ARG3, ARG4, ARG5) \
-register uint64_t num asm("x8") = (NUM); \
-register int64_t ret asm("x0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("x1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("x2") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("x3") = (uint64_t)(ARG4); \
-register uint64_t arg5 asm("x4") = (uint64_t)(ARG5); \
+register int64_t num asm("x8") = (NUM); \
+register int64_t ret asm("x0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("x1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("x2") = (int64_t)(ARG3); \
+register int64_t arg4 asm("x3") = (int64_t)(ARG4); \
+register int64_t arg5 asm("x4") = (int64_t)(ARG5); \
 asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
@@ -823,13 +823,13 @@ asm volatile( \
 );
 
 #define sys_SYSCALL6(NUM, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) \
-register uint64_t num asm("x8") = (NUM); \
-register int64_t ret asm("x0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("x1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("x2") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("x3") = (uint64_t)(ARG4); \
-register uint64_t arg5 asm("x4") = (uint64_t)(ARG5); \
-register uint64_t arg6 asm("x5") = (uint64_t)(ARG6); \
+register int64_t num asm("x8") = (NUM); \
+register int64_t ret asm("x0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("x1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("x2") = (int64_t)(ARG3); \
+register int64_t arg4 asm("x3") = (int64_t)(ARG4); \
+register int64_t arg5 asm("x4") = (int64_t)(ARG5); \
+register int64_t arg6 asm("x5") = (int64_t)(ARG6); \
 asm volatile( \
     "svc 0\n" \
     : "+r"(ret) \
@@ -839,7 +839,7 @@ asm volatile( \
 
 #elif hc_RISCV64
 #define sys_SYSCALL0(NUM) \
-register uint64_t num asm("a7") = (NUM); \
+register int64_t num asm("a7") = (NUM); \
 register int64_t ret asm("a0"); \
 asm volatile( \
     "ecall\n" \
@@ -849,8 +849,8 @@ asm volatile( \
 );
 
 #define sys_SYSCALL1(NUM, ARG1) \
-register uint64_t num asm("a7") = (NUM); \
-register int64_t ret asm("a0") = (uint64_t)(ARG1); \
+register int64_t num asm("a7") = (NUM); \
+register int64_t ret asm("a0") = (int64_t)(ARG1); \
 asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
@@ -859,9 +859,9 @@ asm volatile( \
 );
 
 #define sys_SYSCALL2(NUM, ARG1, ARG2) \
-register uint64_t num asm("a7") = (NUM); \
-register int64_t ret asm("a0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("a1") = (uint64_t)(ARG2); \
+register int64_t num asm("a7") = (NUM); \
+register int64_t ret asm("a0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("a1") = (int64_t)(ARG2); \
 asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
@@ -870,10 +870,10 @@ asm volatile( \
 );
 
 #define sys_SYSCALL3(NUM, ARG1, ARG2, ARG3) \
-register uint64_t num asm("a7") = (NUM); \
-register int64_t ret asm("a0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("a1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("a2") = (uint64_t)(ARG3); \
+register int64_t num asm("a7") = (NUM); \
+register int64_t ret asm("a0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("a1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("a2") = (int64_t)(ARG3); \
 asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
@@ -882,11 +882,11 @@ asm volatile( \
 );
 
 #define sys_SYSCALL4(NUM, ARG1, ARG2, ARG3, ARG4) \
-register uint64_t num asm("a7") = (NUM); \
-register int64_t ret asm("a0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("a1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("a2") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("a3") = (uint64_t)(ARG4); \
+register int64_t num asm("a7") = (NUM); \
+register int64_t ret asm("a0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("a1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("a2") = (int64_t)(ARG3); \
+register int64_t arg4 asm("a3") = (int64_t)(ARG4); \
 asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
@@ -895,12 +895,12 @@ asm volatile( \
 );
 
 #define sys_SYSCALL5(NUM, ARG1, ARG2, ARG3, ARG4, ARG5) \
-register uint64_t num asm("a7") = (NUM); \
-register int64_t ret asm("a0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("a1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("a2") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("a3") = (uint64_t)(ARG4); \
-register uint64_t arg5 asm("a4") = (uint64_t)(ARG5); \
+register int64_t num asm("a7") = (NUM); \
+register int64_t ret asm("a0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("a1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("a2") = (int64_t)(ARG3); \
+register int64_t arg4 asm("a3") = (int64_t)(ARG4); \
+register int64_t arg5 asm("a4") = (int64_t)(ARG5); \
 asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
@@ -909,13 +909,13 @@ asm volatile( \
 );
 
 #define sys_SYSCALL6(NUM, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6) \
-register uint64_t num asm("a7") = (NUM); \
-register int64_t ret asm("a0") = (uint64_t)(ARG1); \
-register uint64_t arg2 asm("a1") = (uint64_t)(ARG2); \
-register uint64_t arg3 asm("a2") = (uint64_t)(ARG3); \
-register uint64_t arg4 asm("a3") = (uint64_t)(ARG4); \
-register uint64_t arg5 asm("a4") = (uint64_t)(ARG5); \
-register uint64_t arg6 asm("a5") = (uint64_t)(ARG6); \
+register int64_t num asm("a7") = (NUM); \
+register int64_t ret asm("a0") = (int64_t)(ARG1); \
+register int64_t arg2 asm("a1") = (int64_t)(ARG2); \
+register int64_t arg3 asm("a2") = (int64_t)(ARG3); \
+register int64_t arg4 asm("a3") = (int64_t)(ARG4); \
+register int64_t arg5 asm("a4") = (int64_t)(ARG5); \
+register int64_t arg6 asm("a5") = (int64_t)(ARG6); \
 asm volatile( \
     "ecall\n" \
     : "+r"(ret) \
