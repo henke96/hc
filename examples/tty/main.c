@@ -20,6 +20,7 @@ static int32_t init_graphics(struct drmKms *graphics) {
     // Select the first display mode sharing the highest refresh rate.
     int32_t selectedModeIndex;
     int32_t selectedModeHz = 0;
+    int32_t selectedModeWidth = 0;
     for (int32_t i = 0; i < graphics->connector.count_modes; ++i) {
         debug_printStr("Mode \"", graphics->modeInfos[i].name, "\"\n", DRM_DISPLAY_MODE_LEN);
         debug_printNum("  Pixel clock: ", graphics->modeInfos[i].clock, " KHz\n");
@@ -33,9 +34,10 @@ static int32_t init_graphics(struct drmKms *graphics) {
         debug_printNum("total=", graphics->modeInfos[i].vtotal, "\n");
         debug_printNum("  Refresh rate: ", graphics->modeInfos[i].vrefresh, " Hz\n");
 
-        if (graphics->modeInfos[i].vrefresh > selectedModeHz) {
+        if (graphics->modeInfos[i].hdisplay >= selectedModeWidth && graphics->modeInfos[i].vrefresh > selectedModeHz) {
             selectedModeIndex = i;
             selectedModeHz = graphics->modeInfos[i].vrefresh;
+            selectedModeWidth = graphics->modeInfos[i].hdisplay;
         }
     }
     debug_printStr("Selected mode \"", graphics->modeInfos[selectedModeIndex].name, "\" at ", DRM_DISPLAY_MODE_LEN);
