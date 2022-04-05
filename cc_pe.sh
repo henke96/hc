@@ -1,4 +1,8 @@
 #!/bin/sh
 set -e
 script_dir="$(dirname $0)"
-BINFMT="windows-coff" "$script_dir/cc_elf.sh" -Wl,-entry:main -L"$script_dir/src/windows/lib" "$@"
+flags="$(cat $script_dir/flags)"
+CC="${CC:-clang}"
+LD="${LD:-lld}"
+ARCH="${ARCH:-x86_64}"
+"$CC" $flags -target $ARCH-unknown-windows-coff -fuse-ld="$LD" -Wl,-entry:main -L"$script_dir/src/windows/lib" "$@"
