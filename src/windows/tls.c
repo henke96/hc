@@ -22,7 +22,8 @@ hc_SECTION(".CRT$XLZ") tls_imageTlsCallback __xl_z = NULL;
 hc_SECTION(".tls") uint64_t _tls_start;
 hc_SECTION(".tls$ZZZ") uint64_t _tls_end;
 
-// TODO: Figure out how to pass /GA flag to clang..
+// When building with `-ftls-model=local-exec` this doesn't actually get used by code generation.
+// If using tls in a .dll or similar, change that option to `global-dynamic`.
 uint32_t _tls_index;
 
 const struct tls_imageTlsDirectory _tls_used = {
