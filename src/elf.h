@@ -33,7 +33,7 @@
 #define elf_DT_SONAME 14
 #define elf_DT_RPATH  15
 #define elf_DT_SYMBOLIC 16
-#define elf_DT_REL         17
+#define elf_DT_REL 17
 #define elf_DT_RELSZ 18
 #define elf_DT_RELENT 19
 #define elf_DT_PLTREL 20
@@ -122,7 +122,7 @@ struct elf_header {
     uint16_t type;
     uint16_t machine;
     uint32_t version;
-    void *entry;
+    uint64_t entryAddress;
     uint64_t programHeadersOffset;
     uint64_t sectionHeadersOffset;
     uint32_t flags;
@@ -138,8 +138,8 @@ struct elf_programHeader {
     uint32_t type;
     uint32_t flags;
     uint64_t fileOffset;
-    void *virtualAddress;
-    void *physicalAddress;
+    uint64_t virtualAddress;
+    uint64_t physicalAddress;
     uint64_t segmentFileSize;
     uint64_t segmentMemorySize;
     uint64_t segmentAlignment;
@@ -149,7 +149,7 @@ struct elf_sectionHeader {
     uint32_t nameIndex; // Index into the section names table.
     uint32_t type;
     uint64_t flags;
-    void *address;
+    uint64_t address;
     uint64_t fileOffset;
     uint64_t size;
     uint32_t link;

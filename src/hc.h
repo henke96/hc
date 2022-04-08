@@ -2,18 +2,30 @@
 _Static_assert(sizeof(long long) == 8, "long long not 8 bytes");
 _Static_assert(sizeof(int) == 4, "int not 4 bytes");
 _Static_assert(sizeof(short) == 2, "short not 2 bytes");
+_Static_assert(sizeof(void *) == 4 || sizeof(void *) == 8, "void * not 4 or 8 bytes");
 _Static_assert(-1 == ~0, "not two's complement");
 _Static_assert((-1 >> 1) == -1, "not arithmetic shift right");
-_Static_assert(sizeof(L""[0]) == 2, "wide char not 2 bytes");
+_Static_assert(sizeof(u""[0]) == 2, "u string literal not 2 bytes");
+// Don't use `long` or `L""` types, they differ between targets.
 
 #if defined(__x86_64__)
-#define hc_X86_64 1
+    #define hc_X86_64 1
 #elif defined(__aarch64__)
-#define hc_AARCH64 1
-#elif defined(__riscv)
-#define hc_RISCV64 1
+    #define hc_AARCH64 1
+#elif defined(__riscv) && __riscv_xlen == 64
+    #define hc_RISCV64 1
+#elif defined(__wasm32__)
+    #define hc_WASM32 1
+    #define hc_WASM_IMPORT(MODULE, NAME) __attribute__((import_module(MODULE), import_name(NAME)))
+    #define hc_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
 #else
-#error "Unsupported architecture"
+    #error "Unsupported architecture"
+#endif
+
+#if defined(__ILP32__)
+    #define hc_32BIT_PTR 1
+#else
+    #define hc_32BIT_PTR 0
 #endif
 
 #define hc_UNREACHABLE __builtin_unreachable()
@@ -47,12 +59,14 @@ _Static_assert(sizeof(L""[0]) == 2, "wide char not 2 bytes");
 #define hc_ATOMIC_LOAD(PTR, MEMORDER) __atomic_load_n((PTR), (MEMORDER))
 
 #if hc_X86_64
-#define hc_ATOMIC_PAUSE asm volatile("pause" ::: "memory")
+    #define hc_ATOMIC_PAUSE asm volatile("pause" ::: "memory")
 #elif hc_AARCH64
-#define hc_ATOMIC_PAUSE asm volatile("yield" ::: "memory")
+    #define hc_ATOMIC_PAUSE asm volatile("yield" ::: "memory")
 #elif hc_RISCV64
-// This is `pause`, but assemblers don't support it as of now.
-#define hc_ATOMIC_PAUSE asm volatile(".insn i 0x0F, 0, x0, x0, 0x010" ::: "memory")
+    // This is `pause`, but assemblers don't support it as of now.
+    #define hc_ATOMIC_PAUSE asm volatile(".insn i 0x0F, 0, x0, x0, 0x010" ::: "memory")
+#elif hc_WASM32
+    #define hc_ATOMIC_PAUSE
 #endif
 
 // ALIGN must be power of 2.
@@ -83,6 +97,20 @@ typedef long long int64_t;
 #define UINT32_MAX (0xffffffffU)
 #define UINT64_MAX (0xffffffffffffffffU)
 
+#if hc_32BIT_PTR
+    typedef int32_t ssize_t;
+    typedef uint32_t size_t;
+    #define SIZE_MAX UINT32_MAX
+    #define SSIZE_MAX INT32_MAX
+    #define SSIZE_MIN INT32_MIN
+#else
+    typedef int64_t ssize_t;
+    typedef uint64_t size_t;
+    #define SIZE_MAX UINT64_MAX
+    #define SSIZE_MAX INT64_MAX
+    #define SSIZE_MIN INT64_MIN
+#endif
+
 #define bool _Bool
 #define false 0
 #define true 1
@@ -92,9 +120,3 @@ typedef long long int64_t;
 #define alignas _Alignas
 #define alignof _Alignof
 #define thread_local _Thread_local
-
-// These need to exist even when compiling for freestanding.
-void *memset(void *dest, int32_t c, uint64_t n);
-void *memmove(void *dest, const void *src, uint64_t n);
-void *memcpy(void *restrict dest, const void *restrict src, uint64_t n);
-int32_t memcmp(const void *left, const void *right, uint64_t n);

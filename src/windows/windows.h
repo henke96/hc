@@ -1,3 +1,5 @@
+_Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
+
 // winnt.h
 #define DLL_PROCESS_ATTACH 1
 #define DLL_THREAD_ATTACH 2

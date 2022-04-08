@@ -1,3 +1,5 @@
+_Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
+
 struct efi_guid {
     uint32_t data1;
     uint16_t data2;
