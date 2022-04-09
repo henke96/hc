@@ -27,14 +27,24 @@ static struct elf_programHeader *tls_findProgramHeader(const uint64_t *auxv) {
     return NULL;
 }
 
+#if hc_X86_64
+    // X86_64 ABI has the thread pointer point to its own value, so we need 8 more bytes.
+    #define tls_AREA_SIZE(SEGMENT_MEMORY_SIZE) (SEGMENT_MEMORY_SIZE + 8)
+#else
+    #define tls_AREA_SIZE(SEGMENT_MEMORY_SIZE) (SEGMENT_MEMORY_SIZE)
+#endif
+
 // Initialise a tls area.
 // `tlsArea` must have an alignment of at least `tlsProgramHeader->segmentAlignment` and must be
-// at least `tlsProgramHeader->segmentMemorySize` bytes long. Bytes at `tlsProgramHeader->segmentFileSize` and after must be zero.
+// at least `tls_AREA_SIZE(tlsProgramHeader->segmentMemorySize)` bytes long.
+// Bytes at `tlsProgramHeader->segmentFileSize` and after must be zero.
 // Returns the thread pointer for the area.
 hc_UNUSED static uint64_t tls_initArea(struct elf_programHeader *tlsProgramHeader, void *tlsArea) {
     hc_MEMCPY(tlsArea, (void *)tlsProgramHeader->virtualAddress, tlsProgramHeader->segmentFileSize);
 #if hc_X86_64
-    return (uint64_t)tlsArea + hc_ALIGN_FORWARD(tlsProgramHeader->segmentMemorySize, tlsProgramHeader->segmentAlignment);
+    uint64_t threadPointer = (uint64_t)tlsArea + hc_ALIGN_FORWARD(tlsProgramHeader->segmentMemorySize, tlsProgramHeader->segmentAlignment);
+    *(uint64_t *)threadPointer = threadPointer;
+    return threadPointer;
 #elif hc_AARCH64
     return (uint64_t)tlsArea - 16;
 #elif hc_RISCV64
