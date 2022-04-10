@@ -28,14 +28,21 @@ _Static_assert(sizeof(u""[0]) == 2, "u string literal not 2 bytes");
     #define hc_32BIT_PTR 0
 #endif
 
+// Attributes
 #define hc_UNREACHABLE __builtin_unreachable()
 #define hc_UNUSED __attribute__((unused))
 #define hc_PACKED __attribute__((packed))
 #define hc_FALLTHROUGH __attribute__((fallthrough))
 #define hc_ALIGNED(N) __attribute__((aligned(N)))
-#define hc_ALWAYS_INLINE __attribute__((always_inline)) inline
 #define hc_SECTION(NAME) __attribute__((section(NAME)))
 #define hc_WEAK __attribute__((weak))
+#define hc_ALWAYS_INLINE __attribute__((always_inline)) inline
+#define hc_MS_ABI __attribute__((ms_abi))
+#define hc_STDCALL __attribute__((stdcall))
+#define hc_SYSV_ABI __attribute__((sysv_abi))
+#define hc_DLLIMPORT __attribute__((dllimport))
+
+// Builtins
 #define hc_ABS(N) __builtin_abs((N))
 #define hc_ABS64(N) __builtin_labs((N))
 #define hc_BSWAP16(N) __builtin_bswap16((N))

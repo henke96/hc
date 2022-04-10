@@ -56,16 +56,16 @@ _Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
 #define MB_MISCMASK 0x0000C000
 
 // kernel32.lib
-__declspec(dllimport) int32_t __stdcall AllocConsole(void);
-__declspec(dllimport) int32_t __stdcall FreeConsole(void);
-__declspec(dllimport) int32_t __stdcall AttachConsole(uint32_t processId);
+hc_DLLIMPORT int32_t hc_STDCALL AllocConsole(void);
+hc_DLLIMPORT int32_t hc_STDCALL FreeConsole(void);
+hc_DLLIMPORT int32_t hc_STDCALL AttachConsole(uint32_t processId);
 
-__declspec(dllimport) noreturn void __stdcall ExitProcess(uint32_t exitCode);
-__declspec(dllimport) int32_t __stdcall TerminateProcess(void *handle, uint32_t exitCode);
-__declspec(dllimport) void *__stdcall GetCurrentProcess(void);
+hc_DLLIMPORT noreturn void hc_STDCALL ExitProcess(uint32_t exitCode);
+hc_DLLIMPORT int32_t hc_STDCALL TerminateProcess(void *handle, uint32_t exitCode);
+hc_DLLIMPORT void *hc_STDCALL GetCurrentProcess(void);
 
-__declspec(dllimport) void *__stdcall GetStdHandle(uint32_t type);
-__declspec(dllimport) int32_t __stdcall WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
+hc_DLLIMPORT void *hc_STDCALL GetStdHandle(uint32_t type);
+hc_DLLIMPORT int32_t hc_STDCALL WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
 
 // user32.lib
-__declspec(dllimport) int32_t __stdcall MessageBoxA(void *windowHandle, const char *text, const char *caption, uint32_t type);
+hc_DLLIMPORT int32_t hc_STDCALL MessageBoxA(void *windowHandle, const char *text, const char *caption, uint32_t type);

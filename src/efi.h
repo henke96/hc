@@ -42,8 +42,8 @@ struct efi_inputKey {
 };
 
 struct efi_simpleTextInputProtocol {
-    int64_t (*reset)(struct efi_simpleTextInputProtocol *self, uint8_t extendedVerification);
-    int64_t (*readKeyStroke)(struct efi_simpleTextInputProtocol *self, struct efi_inputKey *key);
+    int64_t (hc_MS_ABI *reset)(struct efi_simpleTextInputProtocol *self, uint8_t extendedVerification);
+    int64_t (hc_MS_ABI *readKeyStroke)(struct efi_simpleTextInputProtocol *self, struct efi_inputKey *key);
     void *waitForKeyEvent;
 };
 
@@ -58,15 +58,15 @@ struct efi_simpleTextOutputMode {
 };
 
 struct efi_simpleTextOutputProtocol {
-    int64_t (*reset)(struct efi_simpleTextOutputProtocol *self, uint8_t extendedVerification);
-    int64_t (*outputString)(struct efi_simpleTextOutputProtocol *self, uint16_t *string);
-    int64_t (*testString)(struct efi_simpleTextOutputProtocol *self, uint16_t *string);
-    int64_t (*queryMode)(struct efi_simpleTextOutputProtocol *self, uint64_t modeNumber, uint64_t *columns, uint64_t *rows);
-    int64_t (*setMode)(struct efi_simpleTextOutputProtocol *self, uint64_t modeNumber);
-    int64_t (*setAttribute)(struct efi_simpleTextOutputProtocol *self, uint64_t attribute);
-    int64_t (*clearScreen)(struct efi_simpleTextOutputProtocol *self);
-    int64_t (*setCursorPosition)(struct efi_simpleTextOutputProtocol *self, uint64_t column, uint64_t row);
-    int64_t (*enableCursor)(struct efi_simpleTextOutputProtocol *self, uint8_t visible);
+    int64_t (hc_MS_ABI *reset)(struct efi_simpleTextOutputProtocol *self, uint8_t extendedVerification);
+    int64_t (hc_MS_ABI *outputString)(struct efi_simpleTextOutputProtocol *self, uint16_t *string);
+    int64_t (hc_MS_ABI *testString)(struct efi_simpleTextOutputProtocol *self, uint16_t *string);
+    int64_t (hc_MS_ABI *queryMode)(struct efi_simpleTextOutputProtocol *self, uint64_t modeNumber, uint64_t *columns, uint64_t *rows);
+    int64_t (hc_MS_ABI *setMode)(struct efi_simpleTextOutputProtocol *self, uint64_t modeNumber);
+    int64_t (hc_MS_ABI *setAttribute)(struct efi_simpleTextOutputProtocol *self, uint64_t attribute);
+    int64_t (hc_MS_ABI *clearScreen)(struct efi_simpleTextOutputProtocol *self);
+    int64_t (hc_MS_ABI *setCursorPosition)(struct efi_simpleTextOutputProtocol *self, uint64_t column, uint64_t row);
+    int64_t (hc_MS_ABI *enableCursor)(struct efi_simpleTextOutputProtocol *self, uint8_t visible);
     struct efi_simpleTextOutputMode *mode;
 };
 
@@ -95,55 +95,55 @@ struct efi_capsuleHeader {
 
 struct efi_runtimeServices {
     struct efi_tableHeader header;
-    int64_t (*getTime)(struct efi_time *time, struct efi_timeCapabilities *capabilities);
-    int64_t (*setTime)(struct efi_time *time);
-    int64_t (*getWakeupTime)(uint8_t *enabled, uint8_t *pending, struct efi_time *time);
-    int64_t (*setWakeupTime)(uint8_t enable, struct efi_time *time);
-    int64_t (*setVirtualAddressMap)(
+    int64_t (hc_MS_ABI *getTime)(struct efi_time *time, struct efi_timeCapabilities *capabilities);
+    int64_t (hc_MS_ABI *setTime)(struct efi_time *time);
+    int64_t (hc_MS_ABI *getWakeupTime)(uint8_t *enabled, uint8_t *pending, struct efi_time *time);
+    int64_t (hc_MS_ABI *setWakeupTime)(uint8_t enable, struct efi_time *time);
+    int64_t (hc_MS_ABI *setVirtualAddressMap)(
         uint64_t memoryMapSize,
         uint64_t descriptorSize,
         uint32_t descriptorVersion,
         struct efi_memoryDescriptor *virtualMap
     );
-    int64_t (*convertPointer)(uint64_t debugDisposition, void **address);
-    int64_t (*getVariable)(
+    int64_t (hc_MS_ABI *convertPointer)(uint64_t debugDisposition, void **address);
+    int64_t (hc_MS_ABI *getVariable)(
         uint16_t *variableName,
         struct efi_guid *vendorGuid,
         uint32_t *attributes,
         uint64_t *dataSize,
         void *data
     );
-    int64_t (*getNextVariableName)(
+    int64_t (hc_MS_ABI *getNextVariableName)(
         uint64_t *variableNameSize,
         uint16_t *variableName,
         struct efi_guid *vendorGuid
     );
-    int64_t (*setVariable)(
+    int64_t (hc_MS_ABI *setVariable)(
         uint16_t *variableName,
         struct efi_guid *vendorGuid,
         uint32_t attributes,
         uint64_t dataSize,
         void *data
     );
-    int64_t (*getNextHighMonotonicCount)(uint32_t *highCount);
-    void (*resetSystem)(
+    int64_t (hc_MS_ABI *getNextHighMonotonicCount)(uint32_t *highCount);
+    void (hc_MS_ABI *resetSystem)(
         enum efi_resetType type,
         int64_t resetStatus,
         uint64_t dataSize,
         void *resetData
     );
-    int64_t (*updateCapsule)(
+    int64_t (hc_MS_ABI *updateCapsule)(
         struct efi_capsuleHeader **capsuleHeaderArray,
         uint64_t capsuleCount,
         uint64_t scatterGatherList
     );
-    int64_t (*queryCapsuleCapabilities)(
+    int64_t (hc_MS_ABI *queryCapsuleCapabilities)(
         struct efi_capsuleHeader **capsuleHeaderArray,
         uint64_t capsuleCount,
         uint64_t *maximumCapsuleSize,
         enum efi_resetType *resetType
     );
-    int64_t (*queryVariableInfo)(
+    int64_t (hc_MS_ABI *queryVariableInfo)(
         uint32_t attributes,
         uint64_t *maximumVariableStorageSize,
         uint64_t *remainingVariableStorageSize,
@@ -208,66 +208,66 @@ struct efi_openProtocolInformationEntry {
 
 struct efi_bootServices {
     struct efi_tableHeader header;
-    uint64_t (*raiseTpl)(uint64_t newTpl);
-    void (*restoreTpl)(uint64_t oldTpl);
-    int64_t (*allocatePages)(
+    uint64_t (hc_MS_ABI *raiseTpl)(uint64_t newTpl);
+    void (hc_MS_ABI *restoreTpl)(uint64_t oldTpl);
+    int64_t (hc_MS_ABI *allocatePages)(
         enum efi_allocateType type,
         enum efi_memoryType memoryType,
         uint64_t pages,
         uint64_t *memoryAddress
     );
-    int64_t (*freePages)(uint64_t memoryAddress, uint64_t pages);
-    int64_t (*getMemoryMap)(
+    int64_t (hc_MS_ABI *freePages)(uint64_t memoryAddress, uint64_t pages);
+    int64_t (hc_MS_ABI *getMemoryMap)(
         uint64_t *memoryMapSize,
         struct efi_memoryDescriptor *memoryMap,
         uint64_t *mapKey,
         uint64_t descriptorSize,
         uint32_t *descriptorVersion
     );
-    int64_t (*allocatePool)(enum efi_memoryType type, uint64_t size, void **buffer);
-    int64_t (*freePool)(void *buffer);
-    int64_t (*createEvent)(
+    int64_t (hc_MS_ABI *allocatePool)(enum efi_memoryType type, uint64_t size, void **buffer);
+    int64_t (hc_MS_ABI *freePool)(void *buffer);
+    int64_t (hc_MS_ABI *createEvent)(
         uint32_t type,
         uint64_t notifyTpl,
-        void (*notifyFunction)(void *event, void *context),
+        void (hc_MS_ABI *notifyFunction)(void *event, void *context),
         void *notifyContext,
         void *event
     );
-    int64_t (*setTimer)(void *event, enum efi_timerDelay type, uint64_t triggerTime);
-    int64_t (*waitForEvent)(uint64_t numberOfEvents, void *event, uint64_t *index);
-    int64_t (*signalEvent)(void *event);
-    int64_t (*closeEvent)(void *event);
-    int64_t (*checkEvent)(void *event);
-    int64_t (*installProtocolInterface)(
+    int64_t (hc_MS_ABI *setTimer)(void *event, enum efi_timerDelay type, uint64_t triggerTime);
+    int64_t (hc_MS_ABI *waitForEvent)(uint64_t numberOfEvents, void *event, uint64_t *index);
+    int64_t (hc_MS_ABI *signalEvent)(void *event);
+    int64_t (hc_MS_ABI *closeEvent)(void *event);
+    int64_t (hc_MS_ABI *checkEvent)(void *event);
+    int64_t (hc_MS_ABI *installProtocolInterface)(
         void *handle,
         struct efi_guid *protocol,
         enum efi_interfaceType interfaceType,
         void *interface
     );
-    int64_t (*reinstallProtocolInterface)(
+    int64_t (hc_MS_ABI *reinstallProtocolInterface)(
         void *handle,
         struct efi_guid *protocol,
         void *oldInterface,
         void *newInterface
     );
-    int64_t (*uninstallProtocolInterface)(void *handle, struct efi_guid *protocol, void *interface);
-    int64_t (*handleProtocol)(void *handle, struct efi_guid *protocol, void **interface);
+    int64_t (hc_MS_ABI *uninstallProtocolInterface)(void *handle, struct efi_guid *protocol, void *interface);
+    int64_t (hc_MS_ABI *handleProtocol)(void *handle, struct efi_guid *protocol, void **interface);
     void *reserved;
-    int64_t (*registerProtocolNotify)(struct efi_guid *protocol, void *event, void **registration);
-    int64_t (*locateHandle)(
+    int64_t (hc_MS_ABI *registerProtocolNotify)(struct efi_guid *protocol, void *event, void **registration);
+    int64_t (hc_MS_ABI *locateHandle)(
         enum efi_locateSearchType searchType,
         struct efi_guid *protocol,
         void *searchKey,
         uint64_t *bufferSize,
         void **bufferHandle
     );
-    int64_t (*locateDevicePath)(
+    int64_t (hc_MS_ABI *locateDevicePath)(
         struct efi_guid *protocol,
         struct efi_devicePathProtocol **devicePath,
         void **deviceHandle
     );
-    int64_t (*installConfigurationTable)(struct efi_guid *guid, void *table);
-    int64_t (*loadImage)(
+    int64_t (hc_MS_ABI *installConfigurationTable)(struct efi_guid *guid, void *table);
+    int64_t (hc_MS_ABI *loadImage)(
         uint8_t bootPolicy,
         void *parentImageHandle,
         struct efi_devicePathProtocol *devicePath,
@@ -275,26 +275,26 @@ struct efi_bootServices {
         uint64_t sourceSize,
         void **imageHandle
     );
-    int64_t (*startImage)(void *imageHandle, uint64_t *exitDataSize, uint16_t **exitData);
-    int64_t (*exit)(void *imageHandle, int64_t exitStatus, uint64_t exitDataSize, uint16_t *exitData);
-    int64_t (*unloadImage)(void *imageHandle);
-    int64_t (*exitBootServices)(void *imageHandle, uint64_t mapKey);
-    int64_t (*getNextMonotonicCount)(uint64_t *count);
-    int64_t (*stall)(uint64_t microseconds);
-    int64_t (*setWatchdogTimer)(
+    int64_t (hc_MS_ABI *startImage)(void *imageHandle, uint64_t *exitDataSize, uint16_t **exitData);
+    int64_t (hc_MS_ABI *exit)(void *imageHandle, int64_t exitStatus, uint64_t exitDataSize, uint16_t *exitData);
+    int64_t (hc_MS_ABI *unloadImage)(void *imageHandle);
+    int64_t (hc_MS_ABI *exitBootServices)(void *imageHandle, uint64_t mapKey);
+    int64_t (hc_MS_ABI *getNextMonotonicCount)(uint64_t *count);
+    int64_t (hc_MS_ABI *stall)(uint64_t microseconds);
+    int64_t (hc_MS_ABI *setWatchdogTimer)(
         uint64_t timeout,
         uint64_t watchdogCode,
         uint64_t dataSize,
         uint16_t *watchdogData
     );
-    int64_t (*connectController)(
+    int64_t (hc_MS_ABI *connectController)(
         void *controllerHandle,
         void **driverImageHandle,
         struct efi_devicePathProtocol *remainingDevicePath,
         uint8_t recursive
     );
-    int64_t (*disconnectController)(void *controllerHandle, void *driverImageHandle, void *childHandle);
-    int64_t (*openProtocol)(
+    int64_t (hc_MS_ABI *disconnectController)(void *controllerHandle, void *driverImageHandle, void *childHandle);
+    int64_t (hc_MS_ABI *openProtocol)(
         void *handle,
         struct efi_guid *protocol,
         void **interface,
@@ -302,36 +302,36 @@ struct efi_bootServices {
         void *controllerHandle,
         uint32_t attributes
     );
-    int64_t (*closeProtocol)(
+    int64_t (hc_MS_ABI *closeProtocol)(
         void *handle,
         struct efi_guid *protocol,
         void *agentHandle,
         void *controllerHandle
     );
-    int64_t (*openProtocolInformation)(
+    int64_t (hc_MS_ABI *openProtocolInformation)(
         void *handle,
         struct efi_guid *protocol,
         struct efi_openProtocolInformationEntry **entryBuffer,
         uint64_t *entryCount
     );
-    int64_t (*protocolsPerHandle)(void *handle, struct efi_guid ***protocolBuffer, uint64_t *protocolBufferCount);
-    int64_t (*locateHandleBuffer)(
+    int64_t (hc_MS_ABI *protocolsPerHandle)(void *handle, struct efi_guid ***protocolBuffer, uint64_t *protocolBufferCount);
+    int64_t (hc_MS_ABI *locateHandleBuffer)(
         enum efi_locateSearchType searchType,
         struct efi_guid *protocol,
         void *searchKey,
         uint64_t *noHandles,
         void ***bufferHandle
     );
-    int64_t (*locateProtocol)(struct efi_guid *protocol, void *registration, void **interface);
-    int64_t (*installMultipleProtocolInterfaces)(void **handle, ...);
-    int64_t (*uninstallMultipleProtocolInterfaces)(void *handle, ...);
-    int64_t (*calculateCrc32)(void *data, uint64_t dataSize, uint32_t *crc32);
-    void (*copyMem)(void *destination, void *source, uint64_t length);
-    void (*setMem)(void *buffer, uint64_t size, uint8_t value);
-    int64_t (*createEventEx)(
+    int64_t (hc_MS_ABI *locateProtocol)(struct efi_guid *protocol, void *registration, void **interface);
+    int64_t (hc_MS_ABI *installMultipleProtocolInterfaces)(void **handle, ...);
+    int64_t (hc_MS_ABI *uninstallMultipleProtocolInterfaces)(void *handle, ...);
+    int64_t (hc_MS_ABI *calculateCrc32)(void *data, uint64_t dataSize, uint32_t *crc32);
+    void (hc_MS_ABI *copyMem)(void *destination, void *source, uint64_t length);
+    void (hc_MS_ABI *setMem)(void *buffer, uint64_t size, uint8_t value);
+    int64_t (hc_MS_ABI *createEventEx)(
         uint32_t type,
         uint64_t notifyTpl,
-        void (*notifyFunction)(void *event, void *context),
+        void (hc_MS_ABI *notifyFunction)(void *event, void *context),
         const void *notifyContext,
         const struct efi_guid *eventGroup,
         void **event
