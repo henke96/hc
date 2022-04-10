@@ -6,6 +6,7 @@ _Static_assert(sizeof(void *) == 4 || sizeof(void *) == 8, "void * not 4 or 8 by
 _Static_assert(-1 == ~0, "not two's complement");
 _Static_assert((-1 >> 1) == -1, "not arithmetic shift right");
 _Static_assert(sizeof(u""[0]) == 2, "u string literal not 2 bytes");
+_Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 // Don't use `long` or `L""` types, they differ between targets.
 
 #if defined(__x86_64__)

@@ -70,8 +70,27 @@ struct efi_simpleTextOutputProtocol {
     struct efi_simpleTextOutputMode *mode;
 };
 
+enum efi_memoryType {
+    efi_RESERVED_MEMORY_TYPE,
+    efi_LOADER_CODE,
+    efi_LOADER_DATA,
+    efi_BOOT_SERVICES_CODE,
+    efi_BOOT_SERVICES_DATA,
+    efi_RUNTIME_SERVICES_CODE,
+    efi_RUNTIME_SERVICES_DATA,
+    efi_CONVENTIONAL_MEMORY,
+    efi_UNUSABLE_MEMORY,
+    efi_ACPI_RECLAIM_MEMORY,
+    efi_ACPI_MEMORY_NVS,
+    efi_MEMORY_MAPPED_IO,
+    efi_MEMORY_MAPPED_IO_PORT_SPACE,
+    efi_PAL_CODE,
+    efi_PERSISTENT_MEMORY,
+    efi_MAX_MEMORY_TYPE
+};
+
 struct efi_memoryDescriptor {
-    uint32_t type;
+    enum efi_memoryType type;
     uint32_t __pad;
     uint64_t physicalStart;
     uint64_t virtualStart;
@@ -158,25 +177,6 @@ enum efi_allocateType {
     efi_MAX_ALLOCATE_TYPE
 };
 
-enum efi_memoryType {
-    efi_RESERVED_MEMORY_TYPE,
-    efi_LOADER_CODE,
-    efi_LOADER_DATA,
-    efi_BOOT_SERVICES_CODE,
-    efi_BOOT_SERVICES_DATA,
-    efi_RUNTIME_SERVICES_CODE,
-    efi_RUNTIME_SERVICES_DATA,
-    efi_CONVENTIONAL_MEMORY,
-    efi_UNUSABLE_MEMORY,
-    efi_ACPI_RECLAIM_MEMORY,
-    efi_ACPI_MEMORY_NVS,
-    efi_MEMORY_MAPPED_IO,
-    efi_MEMORY_MAPPED_IO_PORT_SPACE,
-    efi_PAL_CODE,
-    efi_PERSISTENT_MEMORY,
-    efi_MAX_MEMORY_TYPE
-};
-
 enum efi_timerDelay {
     efi_TIMER_CANCEL,
     efi_TIMER_PERIODIC,
@@ -219,9 +219,9 @@ struct efi_bootServices {
     int64_t (hc_MS_ABI *freePages)(uint64_t memoryAddress, uint64_t pages);
     int64_t (hc_MS_ABI *getMemoryMap)(
         uint64_t *memoryMapSize,
-        struct efi_memoryDescriptor *memoryMap,
+        void *memoryMap,
         uint64_t *mapKey,
-        uint64_t descriptorSize,
+        uint64_t *descriptorSize,
         uint32_t *descriptorVersion
     );
     int64_t (hc_MS_ABI *allocatePool)(enum efi_memoryType type, uint64_t size, void **buffer);
