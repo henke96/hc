@@ -1,5 +1,9 @@
 _Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
 
+#define efi_guid_GRAPHICS_OUTPUT_PROTOCOL { \
+    0x9042a9de, 0x23dc, 0x4a38, { 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a } \
+}
+
 struct efi_guid {
     uint32_t data1;
     uint16_t data2;
@@ -59,8 +63,8 @@ struct efi_simpleTextOutputMode {
 
 struct efi_simpleTextOutputProtocol {
     int64_t (hc_MS_ABI *reset)(struct efi_simpleTextOutputProtocol *self, uint8_t extendedVerification);
-    int64_t (hc_MS_ABI *outputString)(struct efi_simpleTextOutputProtocol *self, uint16_t *string);
-    int64_t (hc_MS_ABI *testString)(struct efi_simpleTextOutputProtocol *self, uint16_t *string);
+    int64_t (hc_MS_ABI *outputString)(struct efi_simpleTextOutputProtocol *self, const uint16_t *string);
+    int64_t (hc_MS_ABI *testString)(struct efi_simpleTextOutputProtocol *self, const uint16_t *string);
     int64_t (hc_MS_ABI *queryMode)(struct efi_simpleTextOutputProtocol *self, uint64_t modeNumber, uint64_t *columns, uint64_t *rows);
     int64_t (hc_MS_ABI *setMode)(struct efi_simpleTextOutputProtocol *self, uint64_t modeNumber);
     int64_t (hc_MS_ABI *setAttribute)(struct efi_simpleTextOutputProtocol *self, uint64_t attribute);
@@ -320,7 +324,7 @@ struct efi_bootServices {
         struct efi_guid *protocol,
         void *searchKey,
         uint64_t *noHandles,
-        void ***bufferHandle
+        void ***handleBuffer
     );
     int64_t (hc_MS_ABI *locateProtocol)(struct efi_guid *protocol, void *registration, void **interface);
     int64_t (hc_MS_ABI *installMultipleProtocolInterfaces)(void **handle, ...);
@@ -360,3 +364,77 @@ struct efi_systemTable {
     struct efi_configurationTable *configurationTable;
 };
 
+// Graphics output protocol
+enum efi_graphicsPixelFormat {
+    efi_PIXEL_RED_GREEN_BLUE_RESERVED_8BIT_PER_COLOR,
+    efi_PIXEL_BLUE_GREEN_RED_RESERVED_8BIT_PER_COLOR,
+    efi_PIXEL_BIT_MASK,
+    efi_PIXEL_BLT_ONLY,
+    efi_PIXEL_FORMAT_MAX
+};
+
+struct efi_pixelBitmask {
+    uint32_t redMask;
+    uint32_t greenMask;
+    uint32_t blueMask;
+    uint32_t reservedMask;
+};
+
+struct efi_graphicsOutputModeInformation {
+    uint32_t version;
+    uint32_t horizontalResolution;
+    uint32_t verticalResolution;
+    enum efi_graphicsPixelFormat pixelFormat;
+    struct efi_pixelBitmask pixelInformation;
+    uint32_t pixelsPerScanLine;
+};
+
+enum efi_graphicsOutputBltOperation {
+    efi_BLT_VIDEO_FILL,
+    efi_BLT_VIDEO_TO_BLT_BUFFER,
+    efi_BLT_BUFFER_TO_VIDEO,
+    efi_BLT_VIDEO_TO_VIDEO,
+    efi_GRAPHICS_OUTPUT_BLT_OPERATION_MAX
+};
+
+struct efi_graphicsOutputBltPixel {
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+    uint8_t reserved;
+};
+
+struct efi_graphicsOutputProtocolMode {
+    uint32_t maxMode;
+    uint32_t mode;
+    struct efi_graphicsOutputModeInformation *info;
+    uint64_t sizeOfInfo;
+    uint64_t frameBufferBase;
+    uint64_t frameBufferSize;
+};
+
+struct efi_graphicsOutputProtocol {
+    int64_t (hc_MS_ABI *queryMode)(
+        struct efi_graphicsOutputProtocol *self,
+        uint32_t modeNumber,
+        uint64_t *sizeOfInfo,
+        struct efi_graphicsOutputModeInformation **info
+    );
+    int64_t (hc_MS_ABI *setMode)(
+        struct efi_graphicsOutputProtocol *self,
+        uint32_t modeNumber
+    );
+    int64_t (hc_MS_ABI *blt)(
+        struct efi_graphicsOutputProtocol *self,
+        struct efi_graphicsOutputBltPixel *bltBuffer,
+        enum efi_graphicsOutputBltOperation bltOperation,
+        uint64_t sourceX,
+        uint64_t sourceY,
+        uint64_t destinationX,
+        uint64_t destinationY,
+        uint64_t width,
+        uint64_t height,
+        uint64_t delta
+    );
+    struct efi_graphicsOutputProtocolMode *mode;
+};
