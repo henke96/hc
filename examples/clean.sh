@@ -9,3 +9,4 @@ find . -name "*.bin*" -type f -delete
 find . -name "*.efi*" -type f -delete
 find . -name "*.exe*" -type f -delete
 find . -name "*.wasm*" -type f -delete
+find . -name "*.img" -type f -delete
