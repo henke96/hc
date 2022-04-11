@@ -238,7 +238,7 @@ struct efi_bootServices {
         void *event
     );
     int64_t (hc_MS_ABI *setTimer)(void *event, enum efi_timerDelay type, uint64_t triggerTime);
-    int64_t (hc_MS_ABI *waitForEvent)(uint64_t numberOfEvents, void *event, uint64_t *index);
+    int64_t (hc_MS_ABI *waitForEvent)(uint64_t numberOfEvents, void **event, uint64_t *index);
     int64_t (hc_MS_ABI *signalEvent)(void *event);
     int64_t (hc_MS_ABI *closeEvent)(void *event);
     int64_t (hc_MS_ABI *checkEvent)(void *event);

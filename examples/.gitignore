@@ -2,3 +2,4 @@
 *.efi*
 *.exe*
 *.wasm*
+*.img
