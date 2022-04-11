@@ -7,7 +7,7 @@ cleanup() {
     losetup -d $dev
 }
 
-dd if=/dev/zero of="$script_dir/disk.img" bs=512 count=204800
+dd if=/dev/zero of="$script_dir/disk.img" bs=1024 count=35000
 
 dev=`sudo losetup --show -f "$script_dir/disk.img"`
 trap cleanup EXIT
