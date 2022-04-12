@@ -17,12 +17,10 @@ SECTIONS {
         KEEP(*(.bss));
         kernel_bssEnd = .;
     }
-    .stack : {
-        kernel_stackBottom = .;
-        . = . + 1M;
-        . = ALIGN(16);
-        kernel_stackTop = .;
-    }
+    kernel_stackBottom = .;
+    . = . + 1M;
+    . = ALIGN(16);
+    kernel_stackTop = .;
     /DISCARD/ : {
         *(.comment);
     }
