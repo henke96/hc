@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 script_dir="$(dirname $0)"
 cleanup() {
     set +e
@@ -8,8 +9,9 @@ cleanup() {
 }
 
 dd if=/dev/zero of="$script_dir/disk.img" bs=1024 count=35000
+chmod a+rw "$script_dir/disk.img"
 
-dev=`sudo losetup --show -f "$script_dir/disk.img"`
+dev=`losetup --show -f "$script_dir/disk.img"`
 trap cleanup EXIT
 
 parted -s $dev \
