@@ -6,7 +6,7 @@ asm(
     ".global kernelBin\n"
     ".align 8\n"
     "kernelBin:\n"
-    ".incbin \"kernel/kernel.bin\"\n"
+    ".incbin \"kernel.bin\"\n"
     "kernelBinEnd:\n"
     ".global kernelBin_size\n"
     ".align 4\n"
