@@ -50,7 +50,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 
 // Builtins
 #define hc_ABS(N) __builtin_abs((N))
-#define hc_ABS64(N) __builtin_labs((N))
+#define hc_ABS64(N) __builtin_llabs((N))
 #define hc_BSWAP16(N) __builtin_bswap16((N))
 #define hc_BSWAP32(N) __builtin_bswap32((N))
 #define hc_BSWAP64(N) __builtin_bswap64((N))
