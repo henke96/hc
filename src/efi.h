@@ -1,4 +1,4 @@
-_Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
+_Static_assert(!hc_ILP32, "Pointers not 64 bit");
 
 #define efi_guid_GRAPHICS_OUTPUT_PROTOCOL { \
     0x9042a9de, 0x23dc, 0x4a38, { 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a } \

@@ -1,4 +1,4 @@
-_Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
+_Static_assert(!hc_ILP32, "Pointers not 64 bit");
 
 // winnt.h
 #define DLL_PROCESS_ATTACH 1
@@ -56,16 +56,16 @@ _Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
 #define MB_MISCMASK 0x0000C000
 
 // kernel32.lib
-hc_DLLIMPORT int32_t hc_STDCALL AllocConsole(void);
-hc_DLLIMPORT int32_t hc_STDCALL FreeConsole(void);
-hc_DLLIMPORT int32_t hc_STDCALL AttachConsole(uint32_t processId);
+hc_DLLIMPORT int32_t AllocConsole(void);
+hc_DLLIMPORT int32_t FreeConsole(void);
+hc_DLLIMPORT int32_t AttachConsole(uint32_t processId);
 
-hc_DLLIMPORT noreturn void hc_STDCALL ExitProcess(uint32_t exitCode);
-hc_DLLIMPORT int32_t hc_STDCALL TerminateProcess(void *handle, uint32_t exitCode);
-hc_DLLIMPORT void *hc_STDCALL GetCurrentProcess(void);
+hc_DLLIMPORT noreturn void ExitProcess(uint32_t exitCode);
+hc_DLLIMPORT int32_t TerminateProcess(void *handle, uint32_t exitCode);
+hc_DLLIMPORT void *GetCurrentProcess(void);
 
-hc_DLLIMPORT void *hc_STDCALL GetStdHandle(uint32_t type);
-hc_DLLIMPORT int32_t hc_STDCALL WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
+hc_DLLIMPORT void *GetStdHandle(uint32_t type);
+hc_DLLIMPORT int32_t WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
 
 // user32.lib
-hc_DLLIMPORT int32_t hc_STDCALL MessageBoxA(void *windowHandle, const char *text, const char *caption, uint32_t type);
+hc_DLLIMPORT int32_t MessageBoxA(void *windowHandle, const char *text, const char *caption, uint32_t type);

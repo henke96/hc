@@ -1,4 +1,4 @@
-_Static_assert(!hc_32BIT_PTR, "Pointers not 64 bit");
+_Static_assert(!hc_ILP32, "Pointers not 64 bit");
 
 #define STDIN_FILENO 0
 #define STDOUT_FILENO 1

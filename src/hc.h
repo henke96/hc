@@ -23,10 +23,11 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #error "Unsupported architecture"
 #endif
 
+// Are size_t, int, long and pointer types 32 bit?
 #if defined(__ILP32__)
-    #define hc_32BIT_PTR 1
+    #define hc_ILP32 1
 #else
-    #define hc_32BIT_PTR 0
+    #define hc_ILP32 0
 #endif
 
 // Attributes
@@ -38,10 +39,14 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_SECTION(NAME) __attribute__((section(NAME)))
 #define hc_WEAK __attribute__((weak))
 #define hc_ALWAYS_INLINE __attribute__((always_inline)) inline
-#define hc_MS_ABI __attribute__((ms_abi))
-#define hc_STDCALL __attribute__((stdcall))
-#define hc_SYSV_ABI __attribute__((sysv_abi))
 #define hc_DLLIMPORT __attribute__((dllimport))
+#if hc_X86_64
+    #define hc_MS_ABI __attribute__((ms_abi))
+    #define hc_SYSV_ABI __attribute__((sysv_abi))
+#else
+    #define hc_MS_ABI
+    #define hc_SYSV_ABI
+#endif
 
 // Builtins
 #define hc_ABS(N) __builtin_abs((N))
@@ -105,7 +110,7 @@ typedef long long int64_t;
 #define UINT32_MAX (0xffffffffU)
 #define UINT64_MAX (0xffffffffffffffffU)
 
-#if hc_32BIT_PTR
+#if hc_ILP32
     typedef int32_t ssize_t;
     typedef uint32_t size_t;
     #define SIZE_MAX UINT32_MAX

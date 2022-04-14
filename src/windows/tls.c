@@ -10,7 +10,7 @@ struct tls_imageTlsDirectory {
     uint32_t characteristics;
 };
 
-typedef void (__stdcall *tls_imageTlsCallback)(void *dllHandle, uint32_t reason, void *reserved);
+typedef void (*tls_imageTlsCallback)(void *dllHandle, uint32_t reason, void *reserved);
 
 #pragma section(".CRT", read)
 #pragma comment(linker, "/merge:.CRT=.rdata")
