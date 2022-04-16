@@ -96,7 +96,7 @@ int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
     struct efi_inputKey key;
     readKey(systemTable, &key);
     if (key.unicodeChar == u'a') {
-        if (graphics->setMode(graphics, (uint32_t)0) < 0) return 1;
+        if (graphics->setMode(graphics, (uint32_t)status) < 0) return 1;
     }
 
     // Fetch memory map.

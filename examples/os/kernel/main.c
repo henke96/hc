@@ -36,10 +36,9 @@ asm(
     "lea kernel_stackTop(%rip), %esp\n"
     // Call the main function.
     "call main\n"
-    "hlt\n"
 );
 
-void main(struct efi_graphicsOutputProtocol *graphics) {
+void noreturn main(struct efi_graphicsOutputProtocol *graphics) {
     // Do some drawing.
     uint32_t red = 0;
     uint32_t green = 0;
