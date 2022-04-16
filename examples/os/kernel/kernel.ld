@@ -9,13 +9,17 @@ SECTIONS {
     .rodata : {
         *(.rodata);
     }
-    .data : ALIGN(4K) {
+    . = ALIGN(4K);
+    .data : {
         *(.data);
     }
     .bss : {
         kernel_bssStart = .;
-        KEEP(*(.bss));
+        *(.bss);
         kernel_bssEnd = .;
+    }
+    .uninit : {
+        *(.uninit);
     }
     kernel_stackBottom = .;
     . = . + 1M;

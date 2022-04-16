@@ -7,9 +7,9 @@ asm(
     ".align 8\n"
     "kernelBin:\n"
     ".incbin \"kernel.bin\"\n"
-    "kernelBinEnd:\n"
+    "kernelBin_end:\n"
     ".global kernelBin_size\n"
     ".align 4\n"
     "kernelBin_size:\n"
-    ".int kernelBinEnd - kernelBin\n"
+    ".int kernelBin_end - kernelBin\n"
 );

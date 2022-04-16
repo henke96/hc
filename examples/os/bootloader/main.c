@@ -15,12 +15,10 @@ static void printNum(struct efi_simpleTextOutputProtocol *consoleOut, int64_t nu
     consoleOut->outputString(consoleOut, &string[0]);
 }
 
-static void waitAnyKey(struct efi_systemTable *systemTable) {
-    systemTable->consoleOut->outputString(systemTable->consoleOut, u"Press any key to continue...");
+static void readKey(struct efi_systemTable *systemTable, struct efi_inputKey *key) {
     uint64_t keyEventIndex;
     systemTable->bootServices->waitForEvent(1, &systemTable->consoleIn->waitForKeyEvent, &keyEventIndex);
-    systemTable->consoleIn->reset(systemTable->consoleIn, 0);
-    systemTable->consoleOut->outputString(systemTable->consoleOut, u"\r\n");
+    systemTable->consoleIn->readKeyStroke(systemTable->consoleIn, key);
 }
 
 static int64_t setupGraphics(struct efi_systemTable *systemTable, struct efi_graphicsOutputProtocol **graphics) {
@@ -45,8 +43,8 @@ static int64_t setupGraphics(struct efi_systemTable *systemTable, struct efi_gra
     systemTable->bootServices->freePool(handleBuffer);
     if (status < 0) return -2;
 
-    int32_t selectedModeIndex = -1;
-    uint32_t selectedModeWidth = 0;
+    int32_t bestModeIndex = -1;
+    uint64_t bestModeArea = 0;
     for (int32_t i = 0; i < (int32_t)graphicsProtocol->mode->maxMode; ++i) {
         uint64_t infoSize;
         struct efi_graphicsOutputModeInformation *info;
@@ -54,32 +52,30 @@ static int64_t setupGraphics(struct efi_systemTable *systemTable, struct efi_gra
             graphicsProtocol->queryMode(graphicsProtocol, (uint32_t)i, &infoSize, &info) < 0
         ) continue;
 
+        bool isOk = (
+            info->pixelFormat == efi_PIXEL_BLUE_GREEN_RED_RESERVED_8BIT_PER_COLOR &&
+            info->horizontalResolution == info->pixelsPerScanLine // Don't wanna deal with this weirdness.
+        );
+
         systemTable->consoleOut->outputString(systemTable->consoleOut, u"Index: ");
         printNum(systemTable->consoleOut, i);
         systemTable->consoleOut->outputString(systemTable->consoleOut, u", Width: ");
-        printNum(systemTable->consoleOut, graphicsProtocol->mode->info->horizontalResolution);
+        printNum(systemTable->consoleOut, info->horizontalResolution);
         systemTable->consoleOut->outputString(systemTable->consoleOut, u", Height: ");
-        printNum(systemTable->consoleOut, graphicsProtocol->mode->info->verticalResolution);
-        systemTable->consoleOut->outputString(systemTable->consoleOut, u"\r\n");
+        printNum(systemTable->consoleOut, info->verticalResolution);
+        if (isOk) systemTable->consoleOut->outputString(systemTable->consoleOut, u" OK\r\n");
+        else      systemTable->consoleOut->outputString(systemTable->consoleOut, u"\r\n");
 
-        if (info->pixelFormat != efi_PIXEL_BLUE_GREEN_RED_RESERVED_8BIT_PER_COLOR) continue;
-        if (info->horizontalResolution != info->pixelsPerScanLine) continue; // Don't wanna deal with this weirdness.
-        if (graphicsProtocol->mode->info->horizontalResolution > selectedModeWidth) {
-            selectedModeIndex = i;
-            selectedModeWidth = graphicsProtocol->mode->info->horizontalResolution;
+        uint64_t area = (uint64_t)info->horizontalResolution * (uint64_t)info->verticalResolution;
+        if (area > bestModeArea) {
+            bestModeIndex = i;
+            bestModeArea = area;
         }
     }
-    if (selectedModeIndex < 0) return -3;
-
-    systemTable->consoleOut->outputString(systemTable->consoleOut, u"Selected: ");
-    printNum(systemTable->consoleOut, selectedModeIndex);
-    systemTable->consoleOut->outputString(systemTable->consoleOut, u"\r\n");
-
-    // Make sure it's at least 4 byte aligned so we can assume that later.
-    if ((graphicsProtocol->mode->frameBufferBase & 0x3) != 0) return -5;
+    if (bestModeIndex < 0) return -3;
 
     *graphics = graphicsProtocol;
-    return selectedModeIndex;
+    return bestModeIndex;
 }
 
 int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
@@ -93,11 +89,15 @@ int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
         return 1;
     }
 
-    // Wait for user to press any key before we clear the screen.
-    waitAnyKey(systemTable);
-
-    status = graphics->setMode(graphics, (uint32_t)status);
-    if (status < 0) return -4;
+    // Ask user about screen mode.
+    systemTable->consoleOut->outputString(systemTable->consoleOut, u"Press 'a' to use mode ");
+    printNum(systemTable->consoleOut, status);
+    systemTable->consoleOut->outputString(systemTable->consoleOut, u", any other key to keep current.");
+    struct efi_inputKey key;
+    readKey(systemTable, &key);
+    if (key.unicodeChar == u'a') {
+        if (graphics->setMode(graphics, (uint32_t)0) < 0) return 1;
+    }
 
     // Fetch memory map.
     uint64_t memoryMapSize = sizeof(memoryMap);

@@ -7,6 +7,9 @@ extern uint8_t kernel_bssEnd;
 extern uint8_t kernel_stackTop;
 extern uint8_t kernel_stackBottom;
 
+// Section for uninitialized data. Like `.bss` but doesn't get zeroed at runtime.
+asm(".section .uninit,\"aw\",@nobits\n");
+
 // Entry point.
 asm(
     ".section .start,\"ax\",@progbits\n"
