@@ -74,7 +74,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #if hc_X86_64
     #define hc_ATOMIC_PAUSE asm volatile("pause" ::: "memory")
 #elif hc_AARCH64
-    #define hc_ATOMIC_PAUSE asm volatile("yield" ::: "memory")
+    #define hc_ATOMIC_PAUSE asm volatile("isb" ::: "memory")
 #elif hc_RISCV64
     // This is `pause`, but assemblers don't support it as of now.
     #define hc_ATOMIC_PAUSE asm volatile(".insn i 0x0F, 0, x0, x0, 0x010" ::: "memory")
