@@ -1,3 +1,7 @@
+// ALIGN must be power of 2.
+#define util_ALIGN_FORWARD(X, ALIGN) (((X) + ((ALIGN) - 1)) & ~((ALIGN) - 1))
+#define util_RANGES_OVERLAP(X1, X2, Y1, Y2) ((X1) <= (Y2) && (Y1) <= (X2))
+
 hc_UNUSED
 static int64_t util_cstrLen(const char *cstring) {
     const char *c = cstring;

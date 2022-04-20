@@ -82,9 +82,6 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_ATOMIC_PAUSE
 #endif
 
-// ALIGN must be power of 2.
-#define hc_ALIGN_FORWARD(X, ALIGN) (((X) + ((ALIGN) - 1)) & ~((ALIGN) - 1))
-
 // Standard C
 #define NULL ((void *)0)
 

@@ -1,6 +1,8 @@
 #include "../../../src/hc.h"
 #include "../../../src/efi.h"
+#include "../../../src/util.c"
 #include "../../../src/libc/musl.c"
+#include "x86.c"
 
 extern uint8_t kernel_bssStart;
 extern uint8_t kernel_bssEnd;
@@ -38,13 +40,52 @@ asm(
     "call main\n"
 );
 
+#define IDENTIY_MAP_SIZE_GIB 32
+hc_SECTION(".uninit")
+hc_ALIGNED(4096)
+uint64_t pageMapL4;
+hc_SECTION(".uninit")
+hc_ALIGNED(0x200000)
+static uint64_t pageMapL3[IDENTIY_MAP_SIZE_GIB];
+hc_SECTION(".uninit")
+hc_ALIGNED(4096)
+static uint64_t pageMapL2[IDENTIY_MAP_SIZE_GIB * 512];
+
+static void initPaging(uint64_t frameBufferAddr, uint64_t frameBufferSize) {
+    uint64_t pat = x86_rdmsr(0x277);
+    uint8_t *entries = (uint8_t *)&pat;
+    entries[7] = 0x01; // Write-combine
+    x86_wrmsr(0x277, pat);
+
+    pageMapL4 = (uint64_t)&pageMapL3 | 0b11;
+    for (uint64_t i = 0; i < IDENTIY_MAP_SIZE_GIB; ++i) {
+        pageMapL3[i] = (uint64_t)&pageMapL2[i * 512] | 0b11;
+    }
+    for (uint64_t i = 0; i < IDENTIY_MAP_SIZE_GIB * 512; ++i) {
+        uint64_t base = 0x200000 * i;
+        if (util_RANGES_OVERLAP(base, base + 0x200000, frameBufferAddr, frameBufferAddr + frameBufferSize)) {
+            pageMapL2[i] = base | 0b1000010011011; // Enable write-combine for framebuffer pages.
+        } else {
+            pageMapL2[i] = base | 0b10000011;
+        }
+    }
+    asm volatile(
+        "lea pageMapL4(%%rip), %%rax\n"
+        "mov %%rax, %%cr3\n"
+        ::: "rax", "memory"
+    );
+}
+
 void noreturn main(struct efi_graphicsOutputProtocol *graphics) {
+    int32_t numPixels = (int32_t)(graphics->mode->info->verticalResolution * graphics->mode->info->horizontalResolution);
+    uint32_t *frameBuffer = (uint32_t *)graphics->mode->frameBufferBase;
+
+    initPaging((uint64_t)frameBuffer, (uint64_t)numPixels * sizeof(frameBuffer[0]));
+
     // Do some drawing.
     uint32_t red = 0;
     uint32_t green = 0;
     uint32_t blue = 0;
-    int32_t numPixels = (int32_t)(graphics->mode->info->verticalResolution * graphics->mode->info->horizontalResolution);
-    uint32_t *frameBuffer = (uint32_t *)graphics->mode->frameBufferBase;
     for (;;) {
         uint32_t colour = (red << 16) | (green << 8) | blue;
         for (int32_t i = 0; i < numPixels; ++i) frameBuffer[i] = colour;
