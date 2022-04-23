@@ -192,7 +192,7 @@ int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
     // Jump to kernel start.
     asm volatile(
         "mov %0, %%rcx\n"
-        "jmp *%1"
+        "jmp *%1\n"
         :
         : "r"(finalPageAddress + offsetof(struct finalPage, pageTableL4)), "r"(kernelAddress)
         : "rcx", "memory"
