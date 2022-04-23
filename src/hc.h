@@ -130,3 +130,4 @@ typedef long long int64_t;
 #define alignas _Alignas
 #define alignof _Alignof
 #define thread_local _Thread_local
+#define offsetof(TYPE, MEMBER) __builtin_offsetof(TYPE, MEMBER)

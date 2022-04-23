@@ -2,9 +2,9 @@
 #include "../../../src/efi.h"
 #include "../../../src/util.c"
 #include "../../../src/libc/small.c"
+#include "../../../src/x86_64/msr.c"
+#include "../common/finalPage.c"
 #include "kernelBin.c"
-
-static uint8_t memoryMap[16384];
 
 static void printNum(struct efi_simpleTextOutputProtocol *consoleOut, int64_t number) {
     uint16_t string[util_INT64_MAX_CHARS + 1];
@@ -78,12 +78,39 @@ static int64_t setupGraphics(struct efi_systemTable *systemTable, struct efi_gra
     return bestModeIndex;
 }
 
+static int64_t getMemoryMap(struct efi_systemTable *systemTable, uint8_t **memoryMap, uint64_t *memoryMapSize, uint64_t *memoryMapKey, uint64_t *descriptorSize) {
+    *memoryMapSize = 0;
+    uint32_t descriptorVersion;
+    int64_t status = systemTable->bootServices->getMemoryMap(
+        memoryMapSize,
+        NULL,
+        memoryMapKey,
+        descriptorSize,
+        &descriptorVersion
+    );
+    if (status != efi_BUFFER_TOO_SMALL) return -1;
+
+    *memoryMapSize += *descriptorSize * 2; // The `allocatePool` call might increase the size.
+    status = systemTable->bootServices->allocatePool(efi_LOADER_DATA, *memoryMapSize, (void **)memoryMap);
+    if (status < 0) return -2;
+
+    status = systemTable->bootServices->getMemoryMap(
+        memoryMapSize,
+        *memoryMap,
+        memoryMapKey,
+        descriptorSize,
+        &descriptorVersion
+    );
+    if (status < 0) return -3;
+    return 0;
+}
+
 int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
     // Setup graphics.
     struct efi_graphicsOutputProtocol *graphics;
     int64_t status = setupGraphics(systemTable, &graphics);
     if (status < 0) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed to setup graphics (\r\n");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed to setup graphics (");
         printNum(systemTable->consoleOut, status);
         systemTable->consoleOut->outputString(systemTable->consoleOut, u")\r\n");
         return 1;
@@ -99,40 +126,76 @@ int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
         if (graphics->setMode(graphics, (uint32_t)status) < 0) return 1;
     }
 
-    // Fetch memory map.
-    uint64_t memoryMapSize = sizeof(memoryMap);
+    // Get memory map.
+    uint8_t *memoryMap;
+    uint64_t memoryMapSize;
     uint64_t memoryMapKey;
     uint64_t descriptorSize;
-    uint32_t descriptorVersion;
-    status = systemTable->bootServices->getMemoryMap(
-        &memoryMapSize,
-        &memoryMap[0],
-        &memoryMapKey,
-        &descriptorSize,
-        &descriptorVersion
-    );
+    status = getMemoryMap(systemTable, &memoryMap, &memoryMapSize, &memoryMapKey, &descriptorSize);
     if (status < 0) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed to get memory map (\r\n");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed to get memory map (");
         printNum(systemTable->consoleOut, status);
         systemTable->consoleOut->outputString(systemTable->consoleOut, u")\r\n");
+        return 1;
+    }
+
+    // Make sure there's enough available memory for the reserved pages.
+    if (finalPage_getReservedPageAddress(memoryMap, memoryMapSize, descriptorSize, 2) < 0) {
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Not enough available memory!\r\n");
+        return 1;
+    }
+
+    // Make sure the memory map will fit in the final page.
+    uint64_t memoryMapLength = memoryMapSize / descriptorSize;
+    if (memoryMapLength * sizeof(struct efi_memoryDescriptor) > 0x200000u - offsetof(struct finalPage, memoryMap)) {
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Memory map too big!\r\n");
         return 1;
     }
 
     // Exit boot services.
     status = systemTable->bootServices->exitBootServices(imageHandle, memoryMapKey);
     if (status < 0) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed exit boot services (\r\n");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed exit boot services (");
         printNum(systemTable->consoleOut, status);
         systemTable->consoleOut->outputString(systemTable->consoleOut, u")\r\n");
         return 1;
     }
     // We are on our own!
 
-    // Load kernel into correct memory location.
-    hc_MEMCPY((void *)0x100000, &kernelBin[0], kernelBin_size);
+    uint64_t finalPageAddress = (uint64_t)finalPage_getReservedPageAddress(memoryMap, memoryMapSize, descriptorSize, 1);
+    uint64_t kernelAddress = (uint64_t)finalPage_getReservedPageAddress(memoryMap, memoryMapSize, descriptorSize, 2);
 
-    // Call the kernel start function.
-    void (hc_SYSV_ABI *start)(struct efi_graphicsOutputProtocol *graphics) = (void *)0x100000;
-    start(graphics);
+    // Load kernel where we want it in physical memory.
+    hc_MEMCPY((void *)kernelAddress, &kernelBin[0], kernelBin_size);
+
+    // Fill out contents of final page.
+    struct finalPage *finalPage = (void *)finalPageAddress;
+    finalPage->frameBufferWidth = graphics->mode->info->horizontalResolution;
+    finalPage->frameBufferHeight = graphics->mode->info->verticalResolution;
+    finalPage->frameBufferBase = graphics->mode->frameBufferBase;
+    finalPage->memoryMapLength = memoryMapLength;
+    for (uint64_t i = 0; i < memoryMapLength; ++i) {
+        struct efi_memoryDescriptor *descriptor = (void *)&memoryMap[descriptorSize * i];
+        finalPage->memoryMap[i] = *descriptor;
+    }
+    // Create page tables.
+    finalPage->pageTableL4 = (uint64_t)&finalPage->pageTableL3 | 0b11;
+    for (uint64_t i = 0; i < 4; ++i) {
+        finalPage->pageTableL3[i] = (uint64_t)&finalPage->pageTableL2[i * 512] | 0b11;
+    }
+    hc_MEMSET(&finalPage->pageTableL2, 0, 4 * 512 * sizeof(finalPage->pageTableL2[0]));
+    finalPage->pageTableL2[0] = kernelAddress | 0b10000011;
+    finalPage->pageTableL2[finalPage_VIRTUAL_ADDRESS / 0x200000u] = finalPageAddress | 0b10000011;
+    // Identity map the page containing the kernel start code, since that's where we enable paging.
+    finalPage->pageTableL2[kernelAddress / 0x200000u] = kernelAddress | 0b10000011;
+
+    // Jump to kernel start.
+    asm volatile(
+        "mov %0, %%rcx\n"
+        "jmp *%1"
+        :
+        : "r"(finalPageAddress + offsetof(struct finalPage, pageTableL4)), "r"(kernelAddress)
+        : "rcx", "memory"
+    );
     hc_UNREACHABLE;
 }

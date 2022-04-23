@@ -2,7 +2,8 @@
 #include "../../../src/efi.h"
 #include "../../../src/util.c"
 #include "../../../src/libc/musl.c"
-#include "x86.c"
+#include "../../../src/x86_64/msr.c"
+#include "../common/finalPage.c"
 
 extern uint8_t kernel_bssStart;
 extern uint8_t kernel_bssEnd;
@@ -15,6 +16,11 @@ asm(".section .uninit,\"aw\",@nobits\n");
 // Entry point.
 asm(
     ".section .start,\"ax\",@progbits\n"
+    // Apply the page tables set up by bootloader (address in rcx).
+    "mov %rcx, %cr3\n"
+    // Jump from the temporary identity mapping to the real mapping.
+    "mov $start, %rax\n"
+    "jmp *%rax\n"
     "start:\n"
     // Clear direction and interrupt flags.
     "cld\n"
@@ -27,60 +33,73 @@ asm(
     "mov %eax, %fs\n"
     "mov %eax, %gs\n"
     // Clear bss segment.
-    "mov %rdi, %r8\n"
     "lea kernel_bssStart(%rip), %rdi\n"
     "lea kernel_bssEnd(%rip), %rcx\n"
     "sub %rdi, %rcx\n"
     "shr $3, %rcx\n"
     "rep stosq\n"
-    "mov %r8, %rdi\n"
     // Setup stack.
     "lea kernel_stackTop(%rip), %esp\n"
     // Call the main function.
     "call main\n"
 );
 
-#define IDENTIY_MAP_SIZE_GIB 32
-hc_SECTION(".uninit")
-hc_ALIGNED(4096)
-uint64_t pageMapL4;
-hc_SECTION(".uninit")
-hc_ALIGNED(0x200000)
-static uint64_t pageMapL3[IDENTIY_MAP_SIZE_GIB];
-hc_SECTION(".uninit")
-hc_ALIGNED(4096)
-static uint64_t pageMapL2[IDENTIY_MAP_SIZE_GIB * 512];
+#define FRAMEBUFFER_VIRTUAL_ADDRESS 0x80000000
 
-static void initPaging(uint64_t frameBufferAddr, uint64_t frameBufferSize) {
-    uint64_t pat = x86_rdmsr(0x277);
-    uint8_t *entries = (uint8_t *)&pat;
-    entries[7] = 0x01; // Write-combine
-    x86_wrmsr(0x277, pat);
+static void initPaging(void) {
+    // Setup PAT.
+    uint64_t pat = (
+        ((uint64_t)msr_MEM_TYPE_WB       << 0 * 8) |
+        ((uint64_t)msr_MEM_TYPE_WT       << 1 * 8) |
+        ((uint64_t)msr_MEM_TYPE_UC_MINUS << 2 * 8) |
+        ((uint64_t)msr_MEM_TYPE_UC       << 3 * 8) |
+        ((uint64_t)msr_MEM_TYPE_WB       << 4 * 8) |
+        ((uint64_t)msr_MEM_TYPE_WT       << 5 * 8) |
+        ((uint64_t)msr_MEM_TYPE_UC_MINUS << 6 * 8) |
+        ((uint64_t)msr_MEM_TYPE_WC       << 7 * 8)
+    );
+    msr_wrmsr(msr_PAT, pat);
 
-    pageMapL4 = (uint64_t)&pageMapL3 | 0b11;
-    for (uint64_t i = 0; i < IDENTIY_MAP_SIZE_GIB; ++i) {
-        pageMapL3[i] = (uint64_t)&pageMapL2[i * 512] | 0b11;
+    struct finalPage *finalPage = (void *)finalPage_VIRTUAL_ADDRESS;
+    uint64_t finalPagePhysicalAddress = (uint64_t)finalPage_getReservedPageAddress(
+        &finalPage->memoryMap,
+        finalPage->memoryMapLength * sizeof(finalPage->memoryMap[0]),
+        sizeof(finalPage->memoryMap[0]),
+        1
+    );
+    uint64_t kernelPhysicalAddress = (uint64_t)finalPage_getReservedPageAddress(
+        &finalPage->memoryMap,
+        finalPage->memoryMapLength * sizeof(finalPage->memoryMap[0]),
+        sizeof(finalPage->memoryMap[0]),
+        2
+    );
+
+    // Remove the temporary identity mapping of kernel start code.
+    finalPage->pageTableL2[kernelPhysicalAddress / 0x200000u] = 0;
+
+    // Map the frame buffer.
+    uint64_t frameBufferMapStart = finalPage->frameBufferBase & ~(0x200000u - 1);
+    uint64_t frameBufferSize = sizeof(uint32_t) * finalPage->frameBufferWidth * finalPage->frameBufferHeight;
+    uint64_t frameBufferMapEnd = util_ALIGN_FORWARD(finalPage->frameBufferBase + frameBufferSize, 0x200000u);
+    uint64_t numPages = (frameBufferMapEnd - frameBufferMapStart) / 0x200000u;
+    for (uint64_t i = 0; i < numPages; ++i) {
+        // Enable write-combine for framebuffer pages.
+        finalPage->pageTableL2[(FRAMEBUFFER_VIRTUAL_ADDRESS / 0x200000u) + i] = (frameBufferMapStart + i * 0x200000u) | 0b1000010011011;
     }
-    for (uint64_t i = 0; i < IDENTIY_MAP_SIZE_GIB * 512; ++i) {
-        uint64_t base = 0x200000 * i;
-        if (util_RANGES_OVERLAP(base, base + 0x200000, frameBufferAddr, frameBufferAddr + frameBufferSize)) {
-            pageMapL2[i] = base | 0b1000010011011; // Enable write-combine for framebuffer pages.
-        } else {
-            pageMapL2[i] = base | 0b10000011;
-        }
-    }
+
     asm volatile(
-        "lea pageMapL4(%%rip), %%rax\n"
-        "mov %%rax, %%cr3\n"
-        ::: "rax", "memory"
+        "mov %0, %%cr3\n"
+        :
+        : "r"(finalPagePhysicalAddress + offsetof(struct finalPage, pageTableL4))
+        : "memory"
     );
 }
 
-void noreturn main(struct efi_graphicsOutputProtocol *graphics) {
-    int32_t numPixels = (int32_t)(graphics->mode->info->verticalResolution * graphics->mode->info->horizontalResolution);
-    uint32_t *frameBuffer = (uint32_t *)graphics->mode->frameBufferBase;
+void noreturn main(void) {
+    initPaging();
 
-    initPaging((uint64_t)frameBuffer, (uint64_t)numPixels * sizeof(frameBuffer[0]));
+    struct finalPage *finalPage = (void *)finalPage_VIRTUAL_ADDRESS;
+    uint32_t numPixels = finalPage->frameBufferWidth * finalPage->frameBufferHeight;
 
     // Do some drawing.
     uint32_t red = 0;
@@ -88,7 +107,7 @@ void noreturn main(struct efi_graphicsOutputProtocol *graphics) {
     uint32_t blue = 0;
     for (;;) {
         uint32_t colour = (red << 16) | (green << 8) | blue;
-        for (int32_t i = 0; i < numPixels; ++i) frameBuffer[i] = colour;
+        for (uint32_t i = 0; i < numPixels; ++i) ((uint32_t *)FRAMEBUFFER_VIRTUAL_ADDRESS)[i] = colour;
 
         // Continuous iteration of colours.
         if (red == 0 && green == 0 && blue != 255) ++blue;

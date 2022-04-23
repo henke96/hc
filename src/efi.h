@@ -1,5 +1,38 @@
-_Static_assert(!hc_ILP32, "Pointers not 64 bit");
+enum efi_memoryType {
+    efi_RESERVED_MEMORY_TYPE,
+    efi_LOADER_CODE,
+    efi_LOADER_DATA,
+    efi_BOOT_SERVICES_CODE,
+    efi_BOOT_SERVICES_DATA,
+    efi_RUNTIME_SERVICES_CODE,
+    efi_RUNTIME_SERVICES_DATA,
+    efi_CONVENTIONAL_MEMORY,
+    efi_UNUSABLE_MEMORY,
+    efi_ACPI_RECLAIM_MEMORY,
+    efi_ACPI_MEMORY_NVS,
+    efi_MEMORY_MAPPED_IO,
+    efi_MEMORY_MAPPED_IO_PORT_SPACE,
+    efi_PAL_CODE,
+    efi_PERSISTENT_MEMORY,
+    efi_MAX_MEMORY_TYPE
+};
 
+struct efi_memoryDescriptor {
+    enum efi_memoryType type;
+    uint32_t __pad;
+    uint64_t physicalStart;
+    uint64_t virtualStart;
+    uint64_t numberOfPages;
+    uint64_t attribute;
+};
+
+// Most stuff isn't relevant if pointers are 32 bit.
+#if !hc_ILP32
+
+// Error codes.
+#define efi_BUFFER_TOO_SMALL (int64_t)(0x8000000000000000u + 5)
+
+// GUIDs.
 #define efi_guid_GRAPHICS_OUTPUT_PROTOCOL { \
     0x9042a9de, 0x23dc, 0x4a38, { 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a } \
 }
@@ -72,34 +105,6 @@ struct efi_simpleTextOutputProtocol {
     int64_t (hc_MS_ABI *setCursorPosition)(struct efi_simpleTextOutputProtocol *self, uint64_t column, uint64_t row);
     int64_t (hc_MS_ABI *enableCursor)(struct efi_simpleTextOutputProtocol *self, uint8_t visible);
     struct efi_simpleTextOutputMode *mode;
-};
-
-enum efi_memoryType {
-    efi_RESERVED_MEMORY_TYPE,
-    efi_LOADER_CODE,
-    efi_LOADER_DATA,
-    efi_BOOT_SERVICES_CODE,
-    efi_BOOT_SERVICES_DATA,
-    efi_RUNTIME_SERVICES_CODE,
-    efi_RUNTIME_SERVICES_DATA,
-    efi_CONVENTIONAL_MEMORY,
-    efi_UNUSABLE_MEMORY,
-    efi_ACPI_RECLAIM_MEMORY,
-    efi_ACPI_MEMORY_NVS,
-    efi_MEMORY_MAPPED_IO,
-    efi_MEMORY_MAPPED_IO_PORT_SPACE,
-    efi_PAL_CODE,
-    efi_PERSISTENT_MEMORY,
-    efi_MAX_MEMORY_TYPE
-};
-
-struct efi_memoryDescriptor {
-    enum efi_memoryType type;
-    uint32_t __pad;
-    uint64_t physicalStart;
-    uint64_t virtualStart;
-    uint64_t numberOfPages;
-    uint64_t attribute;
 };
 
 enum efi_resetType {
@@ -438,3 +443,5 @@ struct efi_graphicsOutputProtocol {
     );
     struct efi_graphicsOutputProtocolMode *mode;
 };
+
+#endif

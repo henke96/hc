@@ -1,7 +1,7 @@
 ENTRY(0)
 
 SECTIONS {
-    . = 0x100000;
+    . = 0;
     .text : {
         KEEP(*(.start));
         *(.text);
@@ -22,9 +22,10 @@ SECTIONS {
         *(.uninit);
     }
     kernel_stackBottom = .;
-    . = . + 1M;
+    . = . + 16K;
     . = ALIGN(16);
     kernel_stackTop = .;
+    ASSERT(. <= 0x200000, "Using too much memory")
     /DISCARD/ : {
         *(.comment);
     }
