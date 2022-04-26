@@ -4,6 +4,7 @@
 #include "../../../src/libc/musl.c"
 #include "../../../src/x86_64/msr.c"
 #include "../common/finalPage.c"
+#include "paging.c"
 
 extern uint8_t kernel_bssStart;
 extern uint8_t kernel_bssEnd;
@@ -44,59 +45,8 @@ asm(
     "call main\n"
 );
 
-#define FRAMEBUFFER_VIRTUAL_ADDRESS 0x80000000
-
-static void initPaging(void) {
-    // Setup PAT.
-    uint64_t pat = (
-        ((uint64_t)msr_MEM_TYPE_WB       << 0 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WT       << 1 * 8) |
-        ((uint64_t)msr_MEM_TYPE_UC_MINUS << 2 * 8) |
-        ((uint64_t)msr_MEM_TYPE_UC       << 3 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WB       << 4 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WT       << 5 * 8) |
-        ((uint64_t)msr_MEM_TYPE_UC_MINUS << 6 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WC       << 7 * 8)
-    );
-    msr_wrmsr(msr_PAT, pat);
-
-    struct finalPage *finalPage = (void *)finalPage_VIRTUAL_ADDRESS;
-    uint64_t finalPagePhysicalAddress = (uint64_t)finalPage_getReservedPageAddress(
-        &finalPage->memoryMap,
-        finalPage->memoryMapLength * sizeof(finalPage->memoryMap[0]),
-        sizeof(finalPage->memoryMap[0]),
-        1
-    );
-    uint64_t kernelPhysicalAddress = (uint64_t)finalPage_getReservedPageAddress(
-        &finalPage->memoryMap,
-        finalPage->memoryMapLength * sizeof(finalPage->memoryMap[0]),
-        sizeof(finalPage->memoryMap[0]),
-        2
-    );
-
-    // Remove the temporary identity mapping of kernel start code.
-    finalPage->pageTableL2[kernelPhysicalAddress / 0x200000u] = 0;
-
-    // Map the frame buffer.
-    uint64_t frameBufferMapStart = finalPage->frameBufferBase & ~(0x200000u - 1);
-    uint64_t frameBufferSize = sizeof(uint32_t) * finalPage->frameBufferWidth * finalPage->frameBufferHeight;
-    uint64_t frameBufferMapEnd = util_ALIGN_FORWARD(finalPage->frameBufferBase + frameBufferSize, 0x200000u);
-    uint64_t numPages = (frameBufferMapEnd - frameBufferMapStart) / 0x200000u;
-    for (uint64_t i = 0; i < numPages; ++i) {
-        // Enable write-combine for framebuffer pages.
-        finalPage->pageTableL2[(FRAMEBUFFER_VIRTUAL_ADDRESS / 0x200000u) + i] = (frameBufferMapStart + i * 0x200000u) | 0b1000010011011;
-    }
-
-    asm volatile(
-        "mov %0, %%cr3\n"
-        :
-        : "r"(finalPagePhysicalAddress + offsetof(struct finalPage, pageTableL4))
-        : "memory"
-    );
-}
-
 void noreturn main(void) {
-    initPaging();
+    paging_init();
 
     struct finalPage *finalPage = (void *)finalPage_VIRTUAL_ADDRESS;
     uint32_t numPixels = finalPage->frameBufferWidth * finalPage->frameBufferHeight;
@@ -107,7 +57,7 @@ void noreturn main(void) {
     uint32_t blue = 0;
     for (;;) {
         uint32_t colour = (red << 16) | (green << 8) | blue;
-        for (uint32_t i = 0; i < numPixels; ++i) ((uint32_t *)FRAMEBUFFER_VIRTUAL_ADDRESS)[i] = colour;
+        for (uint32_t i = 0; i < numPixels; ++i) ((uint32_t *)paging_FRAMEBUFFER_ADDRESS)[i] = colour;
 
         // Continuous iteration of colours.
         if (red == 0 && green == 0 && blue != 255) ++blue;
