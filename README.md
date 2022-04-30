@@ -1,11 +1,11 @@
 ## HC
-Cross compile freestanding C programs with clang and lld.
+Cross compile freestanding C with clang and lld.
 
 ### Targets:
-| Binary Format | Architectures             | Library Support |
-| ------------- | ------------------------- | --------------- |
-| Elf           | x86_64, aarch64, riscv64  | Linux           |
-| Pe            | x86_64, aarch64, riscv64* | Windows, Uefi   |
-| Wasm          | wasm32                    | Wasi            |
+| Binary Format | Architectures             | OS Support    |
+| ------------- | ------------------------- | ------------- |
+| Elf           | x86_64, aarch64, riscv64  | Linux         |
+| Pe            | x86_64, aarch64, riscv64* | Windows, Uefi |
+| Wasm          | wasm32                    | Wasi          |
 
-\* Missing support in LLVM as of now.
+\* Missing support in LLVM currently.
