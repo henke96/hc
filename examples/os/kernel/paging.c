@@ -1,6 +1,3 @@
-#define paging_PAGE_SIZE 0x200000u
-#define paging_FRAMEBUFFER_ADDRESS 0x80000000u
-
 static void paging_init(void) {
     // Setup PAT.
     uint64_t pat = (
@@ -15,37 +12,38 @@ static void paging_init(void) {
     );
     msr_wrmsr(msr_PAT, pat);
 
-    struct finalPage *finalPage = (void *)finalPage_VIRTUAL_ADDRESS;
-    uint64_t finalPagePhysicalAddress = (uint64_t)finalPage_getReservedPageAddress(
-        &finalPage->memoryMap,
-        finalPage->memoryMapLength * sizeof(finalPage->memoryMap[0]),
-        sizeof(finalPage->memoryMap[0]),
-        1
+    struct bootloaderPage *bootloaderPage = (void *)paging_BOOTLOADER_PAGE_ADDRESS;
+    // Use same logic as bootloader to get same physical addresses.
+    uint64_t bootloaderPagePhysicalAddress = (uint64_t)bootloaderPage_getFreePageAddress(
+        &bootloaderPage->memoryMap,
+        bootloaderPage->memoryMapLength * sizeof(bootloaderPage->memoryMap[0]),
+        sizeof(bootloaderPage->memoryMap[0]),
+        0
     );
-    uint64_t kernelPhysicalAddress = (uint64_t)finalPage_getReservedPageAddress(
-        &finalPage->memoryMap,
-        finalPage->memoryMapLength * sizeof(finalPage->memoryMap[0]),
-        sizeof(finalPage->memoryMap[0]),
-        2
+    uint64_t kernelPagePhysicalAddress = (uint64_t)bootloaderPage_getFreePageAddress(
+        &bootloaderPage->memoryMap,
+        bootloaderPage->memoryMapLength * sizeof(bootloaderPage->memoryMap[0]),
+        sizeof(bootloaderPage->memoryMap[0]),
+        bootloaderPagePhysicalAddress + paging_PAGE_SIZE
     );
 
     // Remove the temporary identity mapping of kernel start code.
-    finalPage->pageTableL2[kernelPhysicalAddress / paging_PAGE_SIZE] = 0;
+    bootloaderPage->pageTableL2[kernelPagePhysicalAddress / paging_PAGE_SIZE] = 0;
 
     // Map the frame buffer.
-    uint64_t frameBufferMapStart = finalPage->frameBufferBase & ~(paging_PAGE_SIZE - 1);
-    uint64_t frameBufferSize = sizeof(uint32_t) * finalPage->frameBufferWidth * finalPage->frameBufferHeight;
-    uint64_t frameBufferMapEnd = util_ALIGN_FORWARD(finalPage->frameBufferBase + frameBufferSize, paging_PAGE_SIZE);
+    uint64_t frameBufferMapStart = bootloaderPage->frameBufferBase & ~(paging_PAGE_SIZE - 1);
+    uint64_t frameBufferSize = sizeof(uint32_t) * bootloaderPage->frameBufferWidth * bootloaderPage->frameBufferHeight;
+    uint64_t frameBufferMapEnd = util_ALIGN_FORWARD(bootloaderPage->frameBufferBase + frameBufferSize, paging_PAGE_SIZE);
     uint64_t numPages = (frameBufferMapEnd - frameBufferMapStart) / paging_PAGE_SIZE;
     for (uint64_t i = 0; i < numPages; ++i) {
         // Enable write-combine for framebuffer pages.
-        finalPage->pageTableL2[(paging_FRAMEBUFFER_ADDRESS / paging_PAGE_SIZE) + i] = (frameBufferMapStart + i * paging_PAGE_SIZE) | 0b1000010011011;
+        bootloaderPage->pageTableL2[(paging_FRAMEBUFFER_ADDRESS / paging_PAGE_SIZE) + i] = (frameBufferMapStart + i * paging_PAGE_SIZE) | 0b1000010011011;
     }
 
     asm volatile(
         "mov %0, %%cr3\n"
         :
-        : "r"(finalPagePhysicalAddress + offsetof(struct finalPage, pageTableL4))
+        : "r"(bootloaderPagePhysicalAddress + offsetof(struct bootloaderPage, pageTableL4))
         : "memory"
     );
 }

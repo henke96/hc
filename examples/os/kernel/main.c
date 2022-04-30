@@ -3,7 +3,8 @@
 #include "../../../src/util.c"
 #include "../../../src/libc/musl.c"
 #include "../../../src/x86_64/msr.c"
-#include "../common/finalPage.c"
+#include "../common/paging.h"
+#include "../common/bootloaderPage.c"
 #include "paging.c"
 
 extern uint8_t kernel_bssStart;
@@ -48,8 +49,8 @@ asm(
 void noreturn main(void) {
     paging_init();
 
-    struct finalPage *finalPage = (void *)finalPage_VIRTUAL_ADDRESS;
-    uint32_t numPixels = finalPage->frameBufferWidth * finalPage->frameBufferHeight;
+    struct bootloaderPage *bootloaderPage = (void *)paging_BOOTLOADER_PAGE_ADDRESS;
+    uint32_t numPixels = bootloaderPage->frameBufferWidth * bootloaderPage->frameBufferHeight;
 
     // Do some drawing.
     uint32_t red = 0;

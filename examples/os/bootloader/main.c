@@ -3,7 +3,8 @@
 #include "../../../src/util.c"
 #include "../../../src/libc/small.c"
 #include "../../../src/x86_64/msr.c"
-#include "../common/finalPage.c"
+#include "../common/paging.h"
+#include "../common/bootloaderPage.c"
 #include "kernelBin.c"
 
 static void printNum(struct efi_simpleTextOutputProtocol *consoleOut, int64_t number) {
@@ -139,18 +140,21 @@ int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
         return 1;
     }
 
-    // Make sure there's enough available memory for the reserved pages.
-    if (finalPage_getReservedPageAddress(memoryMap, memoryMapSize, descriptorSize, 2) < 0) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Not enough available memory!\r\n");
-        return 1;
-    }
-
-    // Make sure the memory map will fit in the final page.
+    // Make sure the memory map will fit in the bootloader page.
     uint64_t memoryMapLength = memoryMapSize / descriptorSize;
-    if (memoryMapLength * sizeof(struct efi_memoryDescriptor) > 0x200000u - offsetof(struct finalPage, memoryMap)) {
+    if (memoryMapLength * sizeof(struct efi_memoryDescriptor) > paging_PAGE_SIZE - offsetof(struct bootloaderPage, memoryMap)) {
         systemTable->consoleOut->outputString(systemTable->consoleOut, u"Memory map too big!\r\n");
         return 1;
     }
+
+    // Allocate the kernel and bootloader pages.
+    uint64_t bootloaderPageAddress = (uint64_t)bootloaderPage_getFreePageAddress(memoryMap, memoryMapSize, descriptorSize, 0);
+    if ((int64_t)bootloaderPageAddress < 0) return 1;
+    uint64_t kernelPageAddress = (uint64_t)bootloaderPage_getFreePageAddress(memoryMap, memoryMapSize, descriptorSize, bootloaderPageAddress + paging_PAGE_SIZE);
+    if ((int64_t)kernelPageAddress < 0) return 1;
+    // We can't have the kernel page physical address collide with the bootloader page virtual address.
+    // This is because we need to identity map the kernel page temporarily when enabling our page tables.
+    if (kernelPageAddress == paging_BOOTLOADER_PAGE_ADDRESS) return 1;
 
     // Exit boot services.
     status = systemTable->bootServices->exitBootServices(imageHandle, memoryMapKey);
@@ -162,39 +166,36 @@ int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
     }
     // We are on our own!
 
-    uint64_t finalPageAddress = (uint64_t)finalPage_getReservedPageAddress(memoryMap, memoryMapSize, descriptorSize, 1);
-    uint64_t kernelAddress = (uint64_t)finalPage_getReservedPageAddress(memoryMap, memoryMapSize, descriptorSize, 2);
-
     // Load kernel where we want it in physical memory.
-    hc_MEMCPY((void *)kernelAddress, &kernelBin[0], kernelBin_size);
+    hc_MEMCPY((void *)kernelPageAddress, &kernelBin[0], kernelBin_size);
 
-    // Fill out contents of final page.
-    struct finalPage *finalPage = (void *)finalPageAddress;
-    finalPage->frameBufferWidth = graphics->mode->info->horizontalResolution;
-    finalPage->frameBufferHeight = graphics->mode->info->verticalResolution;
-    finalPage->frameBufferBase = graphics->mode->frameBufferBase;
-    finalPage->memoryMapLength = memoryMapLength;
+    // Fill out contents of bootloader page.
+    struct bootloaderPage *bootloaderPage = (void *)bootloaderPageAddress;
+    bootloaderPage->frameBufferWidth = graphics->mode->info->horizontalResolution;
+    bootloaderPage->frameBufferHeight = graphics->mode->info->verticalResolution;
+    bootloaderPage->frameBufferBase = graphics->mode->frameBufferBase;
+    bootloaderPage->memoryMapLength = memoryMapLength;
     for (uint64_t i = 0; i < memoryMapLength; ++i) {
         struct efi_memoryDescriptor *descriptor = (void *)&memoryMap[descriptorSize * i];
-        finalPage->memoryMap[i] = *descriptor;
+        bootloaderPage->memoryMap[i] = *descriptor;
     }
     // Create page tables.
-    finalPage->pageTableL4 = (uint64_t)&finalPage->pageTableL3 | 0b11;
+    bootloaderPage->pageTableL4 = (uint64_t)&bootloaderPage->pageTableL3 | 0b11;
     for (uint64_t i = 0; i < 4; ++i) {
-        finalPage->pageTableL3[i] = (uint64_t)&finalPage->pageTableL2[i * 512] | 0b11;
+        bootloaderPage->pageTableL3[i] = (uint64_t)&bootloaderPage->pageTableL2[i * 512] | 0b11;
     }
-    hc_MEMSET(&finalPage->pageTableL2, 0, 4 * 512 * sizeof(finalPage->pageTableL2[0]));
-    finalPage->pageTableL2[0] = kernelAddress | 0b10000011;
-    finalPage->pageTableL2[finalPage_VIRTUAL_ADDRESS / 0x200000u] = finalPageAddress | 0b10000011;
+    hc_MEMSET(&bootloaderPage->pageTableL2, 0, 4 * 512 * sizeof(bootloaderPage->pageTableL2[0]));
+    bootloaderPage->pageTableL2[0] = kernelPageAddress | 0b10000011;
+    bootloaderPage->pageTableL2[paging_BOOTLOADER_PAGE_ADDRESS / paging_PAGE_SIZE] = bootloaderPageAddress | 0b10000011;
     // Identity map the page containing the kernel start code, since that's where we enable paging.
-    finalPage->pageTableL2[kernelAddress / 0x200000u] = kernelAddress | 0b10000011;
+    bootloaderPage->pageTableL2[kernelPageAddress / paging_PAGE_SIZE] = kernelPageAddress | 0b10000011;
 
     // Jump to kernel start.
     asm volatile(
         "mov %0, %%rcx\n"
         "jmp *%1\n"
         :
-        : "r"(finalPageAddress + offsetof(struct finalPage, pageTableL4)), "r"(kernelAddress)
+        : "r"(bootloaderPageAddress + offsetof(struct bootloaderPage, pageTableL4)), "r"(kernelPageAddress)
         : "rcx", "memory"
     );
     hc_UNREACHABLE;
