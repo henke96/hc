@@ -9,5 +9,6 @@ fi
 
 script_dir="$(dirname $0)"
 CC="${CC:-clang}"
+LD="${LD:-lld}"
 ARCH="${ARCH:-x86_64}"
-"$CC" -shared -target $ARCH-unknown-linux-elf -o "$2/$1" "$script_dir/$1.c"
+"$CC" -target $ARCH-unknown-linux-elf -fuse-ld="$LD" -shared -nostdlib -o "$2/$1" "$script_dir/$1.c"
