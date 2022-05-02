@@ -5,23 +5,23 @@
 #include "../../src/linux/util.c"
 #include "../../src/linux/sys.c"
 #include "../../src/linux/helpers/_start.c"
-#include "../../src/linux/gnu/libdl.so.2.h"
+#include "../../src/linux/gnulinux/libdl.h"
 
 static noreturn void stage1(uint64_t *auxv) {
-    // Find program file.
-    char *programFile;
+    // Find program path.
+    char *programPath;
     for (uint64_t *current = auxv; current[0] != AT_NULL; current += 2) {
         if (current[0] == AT_EXECFN) {
-            programFile = (char *)current[1];
-            goto foundProgramFile;
+            programPath = (char *)current[1];
+            goto foundProgramPath;
         }
     }
     // Not found.
     sys_exit(1);
 
-    foundProgramFile:;
+    foundProgramPath:;
     const char *argv[3];
-    argv[1] = programFile;
+    argv[1] = programPath;
     argv[2] = NULL;
     const char *envp[] = {
         "STAGE2=1",
