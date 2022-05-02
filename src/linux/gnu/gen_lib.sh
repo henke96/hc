@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-if test -z "$1"
+if test -z "$1" || test -z "$2"
 then
-    echo "Usage: $0 LIB_NAME PROJECT_PATH"
+    echo "Usage: $0 LIB_NAME OUTPUT_PATH"
     exit 1
 fi
 

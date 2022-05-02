@@ -1131,6 +1131,12 @@ static hc_ALWAYS_INLINE int32_t sys_clone3(struct clone_args *args, uint64_t siz
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_execveat(int32_t fd, const char *filename, const char **argv, const char **envp, uint32_t flags) {
+    sys_SYSCALL5(sys_NR_execveat, fd, filename, argv, envp, flags);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE int32_t sys_wait4(int32_t pid, int32_t *status, int32_t options) {
     sys_SYSCALL4(sys_NR_wait4, pid, status, options, NULL);
     return (int32_t)ret;
