@@ -42,7 +42,7 @@ int32_t main(int32_t argc, char **argv) {
     if ((int64_t)newArgv < 0) return 1;
     const char **newEnvp = &newArgv[newArgvCount + 1];
 
-    // Populate new argv and enpv.
+    // Populate new argv and envp.
     for (int64_t i = 0; i < argc; ++i) {
         newArgv[i + 1] = argv[i];
     }
