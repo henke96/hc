@@ -73,6 +73,6 @@ int32_t main(int32_t argc, char **argv) {
     newArgv[0] = "/lib/ld-musl-riscv64.so.1";
     sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
 #endif
-    // None of the worked.
+    // None of them worked.
     return 1;
 }
