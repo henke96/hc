@@ -1,9 +1,6 @@
 
 static int32_t gnuMain(int32_t argc, char **argv, char **envp);
 
-#define STAGE2_ENV "STAGE2=1"
-static void *mainLibcHandle;
-
 int32_t main(int32_t argc, char **argv) {
     if (argc < 1) return 1; // First argument should be program itself.
 
@@ -12,23 +9,10 @@ int32_t main(int32_t argc, char **argv) {
     // Check if we have re-executed ourself through the dynamic linker yet (stage2).
     int64_t envpCount = 0;
     for (char **current = envp; *current != NULL; ++current) {
-        if (util_cstrCmp(*current, STAGE2_ENV) == 0) {
-            // Yep, run `__libc_start_main` function which will call `gnuMain`.
-            mainLibcHandle = dlopen("libc.so.6", RTLD_NOW);
-            if (dlerror() != NULL) return 1;
-
-            void (*__libc_start_main)(
-                void *main,
-                int32_t argc,
-                char **argv,
-                void *init,
-                void *fini,
-                void *rtldFini
-            ) = dlsym(mainLibcHandle, "__libc_start_main");
-            if (dlerror() != NULL) return 1;
-
+        if (util_cstrCmp(*current, "STAGE2=1") == 0) {
+            // Yep, run `__libc_start_main` like a normal C program would.
             __libc_start_main(gnuMain, argc, argv, NULL, NULL, NULL);
-            return 1; // Should never get here.
+            return 1;
         }
         ++envpCount;
     }
@@ -48,7 +32,7 @@ int32_t main(int32_t argc, char **argv) {
     }
     newArgv[newArgvCount] = NULL;
 
-    newEnvp[0] = STAGE2_ENV;
+    newEnvp[0] = "STAGE2=1";
     for (int64_t i = 0; i < envpCount; ++i) {
         newEnvp[i + 1] = envp[i];
     }
