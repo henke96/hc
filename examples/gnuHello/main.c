@@ -5,11 +5,11 @@
 #include "../../src/linux/util.c"
 #include "../../src/linux/sys.c"
 #include "../../src/linux/helpers/_start.c"
-#include "../../src/linux/gnulinux/libc.h"
-#include "../../src/linux/gnulinux/libdl.h"
-#include "../../src/linux/gnulinux/main.c"
+#include "../../src/linux/gnulinux/dynamic/libc.so.6.h"
+#include "../../src/linux/gnulinux/dynamic/libdl.so.2.h"
+#include "../../src/linux/gnulinux/dynamic/main.c"
 
-static int32_t gnuMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
     void *libcHandle = dlopen("libc.so.6", RTLD_NOW);
     if (dlerror() != NULL) return 1;
 

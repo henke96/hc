@@ -1,5 +1,5 @@
-
-static int32_t gnuMain(int32_t argc, char **argv, char **envp);
+// The main function called after re-running through dynamic linker.
+static int32_t libcMain(int32_t argc, char **argv, char **envp);
 
 int32_t main(int32_t argc, char **argv) {
     if (argc < 1) return 1; // First argument should be program itself.
@@ -11,7 +11,7 @@ int32_t main(int32_t argc, char **argv) {
     for (char **current = envp; *current != NULL; ++current) {
         if (util_cstrCmp(*current, "STAGE2=1") == 0) {
             // Yep, run `__libc_start_main` like a normal C program would.
-            __libc_start_main(gnuMain, argc, argv, NULL, NULL, NULL);
+            __libc_start_main(libcMain, argc, argv, NULL, NULL, NULL);
             return 1;
         }
         ++envpCount;
