@@ -240,6 +240,14 @@ struct sockaddr_in {
     uint8_t sin_zero[8];
 };
 
+// un.h
+#define UNIX_PATH_MAX 108
+
+struct sockaddr_un {
+    uint16_t sun_family;
+    char sun_path[UNIX_PATH_MAX];
+};
+
 // tcp.h
 #define TCP_NODELAY 1
 
