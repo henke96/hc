@@ -5,14 +5,14 @@
 #include "../../src/linux/util.c"
 #include "../../src/linux/sys.c"
 #include "../../src/linux/helpers/_start.c"
-#include "../../src/linux/gnulinux/x11.c"
+#include "../../src/linux/gnulinux/x11.h"
 #include "../../src/linux/gnulinux/dynamic/libc.so.6.h"
 #include "../../src/linux/gnulinux/dynamic/libdl.so.2.h"
 #include "../../src/linux/gnulinux/dynamic/egl.h"
+#include "../../src/linux/gnulinux/dynamic/egl.c"
 #include "../../src/linux/gnulinux/dynamic/main.c"
 
 #include "x11Client.c"
-#include "egl.c"
 
 static int32_t (*printf)(const char *restrict format, ...);
 
@@ -90,16 +90,26 @@ static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED
         return 1;
     }
 
-    status = egl_init();
+    struct egl egl;
+    status = egl_init(&egl);
     if (status < 0) {
         printf("Failed to initalise EGL (%d)\n", status);
         return 1;
     }
-
-    struct eglContext eglContext;
-    status = eglContext_init(&eglContext);
+    const int32_t configAttributes[] = {
+        egl_RED_SIZE, 8,
+        egl_GREEN_SIZE, 8,
+        egl_BLUE_SIZE, 8,
+        egl_NONE
+    };
+    const int32_t contextAttributes[] = {
+        egl_CONTEXT_MAJOR_VERSION, 3,
+        egl_CONTEXT_MINOR_VERSION, 2,
+        egl_NONE
+    };
+    status = egl_createContext(&egl, egl_OPENGL_API, &configAttributes[0], &contextAttributes[0]);
     if (status < 0) {
-        printf("Failed to initalise EGL context (%d)\n", status);
+        printf("Failed to create EGL context (%d)\n", status);
         return 1;
     }
     uint32_t eglVisualId = (uint32_t)status;
@@ -110,7 +120,7 @@ static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED
         return 1;
     }
 
-    status = eglContext_setupSurface(&eglContext, (uint32_t)windowId);
+    status = egl_setupSurface(&egl, (uint32_t)windowId);
     if (status < 0) {
         printf("Failed to setup EGL surface (%d)\n", status);
         return 1;
@@ -127,9 +137,10 @@ static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED
     for (;;) {
         glClearColor(0.0, 1.0, 0.0, 1.0);
         glClear(0x00004000);
-        if (!eglSwapBuffers(eglContext.display, eglContext.surface)) return 1;
+        if (!egl_swapBuffers(&egl)) return 1;
     }
 
+    egl_deinit(&egl);
     x11Client_deinit(&x11Client);
     return 0;
 }
