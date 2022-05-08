@@ -1171,3 +1171,9 @@ static hc_ALWAYS_INLINE int32_t sys_ioctl(int32_t fd, uint32_t cmd, void *arg) {
     sys_SYSCALL3(sys_NR_ioctl, fd, cmd, arg);
     return (int32_t)ret;
 }
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_statx(int32_t dfd, const char *filename, uint32_t flags, uint32_t mask, struct statx *stat) {
+    sys_SYSCALL5(sys_NR_statx, dfd, filename, flags, mask, stat);
+    return (int32_t)ret;
+}

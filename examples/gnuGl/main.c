@@ -6,6 +6,7 @@
 #include "../../src/linux/sys.c"
 #include "../../src/linux/helpers/_start.c"
 #include "../../src/linux/gnulinux/x11.h"
+#include "../../src/linux/gnulinux/xauth.c"
 #include "../../src/linux/gnulinux/dynamic/libc.so.6.h"
 #include "../../src/linux/gnulinux/dynamic/libdl.so.2.h"
 #include "../../src/linux/gnulinux/dynamic/egl.h"
@@ -76,15 +77,25 @@ static int64_t openX11Window(struct x11Client *x11Client, uint32_t visualId) {
     return windowRequests.createWindow.windowId;
 }
 
-static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     void *libcHandle = dlopen("libc.so.6", RTLD_NOW);
     if (dlerror() != NULL) return 1;
 
     printf = dlsym(libcHandle, "printf");
     if (dlerror() != NULL) return 1;
 
+    int32_t status;
     struct x11Client x11Client;
-    int32_t status = x11Client_init(&x11Client);
+    struct xauth xauth;
+    char *xAuthorityFile = util_getEnv(envp, "XAUTHORITY");
+    if (xAuthorityFile != NULL && xauth_init(&xauth, xAuthorityFile) == 0) {
+        struct xauth_entry entry = {0}; // Zeroed in case `xauth_nextEntry` fails.
+        xauth_nextEntry(&xauth, &entry);
+        status = x11Client_init(&x11Client, &entry);
+        xauth_deinit(&xauth);
+    } else {
+        status = x11Client_init(&x11Client, &(struct xauth_entry) {0});
+    }
     if (status < 0) {
         printf("Failed to initialise x11Client (%d)\n", status);
         return 1;

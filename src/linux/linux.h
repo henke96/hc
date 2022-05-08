@@ -279,6 +279,16 @@ struct sockaddr_un {
 #endif
 
 #define AT_FDCWD -100 // Special value used to indicate openat should use the current working directory.
+#define AT_SYMLINK_NOFOLLOW 0x100 /* Do not follow symbolic links.  */
+#define AT_EACCESS 0x200 /* Test access permitted for effective IDs, not real IDs.  */
+#define AT_REMOVEDIR 0x200 /* Remove directory instead of unlinking file.  */
+#define AT_SYMLINK_FOLLOW 0x400 /* Follow symbolic links.  */
+#define AT_NO_AUTOMOUNT 0x800 /* Suppress terminal automount traversal */
+#define AT_EMPTY_PATH 0x1000 /* Allow empty relative pathname */
+#define AT_STATX_SYNC_TYPE 0x6000 /* Type of synchronisation required from statx() */
+#define AT_STATX_FORCE_SYNC 0x2000 /* - Force the attributes to be sync'd with the server */
+#define AT_STATX_DONT_SYNC 0x4000 /* - Don't sync attributes with the server */
+#define AT_RECURSIVE 0x8000 /* Apply to the entire subtree */
 
 // time.h
 #define CLOCK_REALTIME 0
@@ -2227,3 +2237,63 @@ enum drm_connector_status {
 #define ARCH_GET_GS 0x1004
 #define ARCH_GET_CPUID 0x1011
 #define ARCH_SET_CPUID 0x1012
+
+// stat.h
+struct statx_timestamp {
+    int64_t tv_sec;
+    uint32_t tv_nsec;
+    int32_t __reserved;
+};
+
+struct statx {
+    uint32_t stx_mask; /* What results were written [uncond] */
+    uint32_t stx_blksize; /* Preferred general I/O size [uncond] */
+    uint64_t stx_attributes; /* Flags conveying information about the file [uncond] */
+    uint32_t stx_nlink; /* Number of hard links */
+    uint32_t stx_uid; /* User ID of owner */
+    uint32_t stx_gid; /* Group ID of owner */
+    uint16_t stx_mode; /* File mode */
+    uint16_t __spare0[1];
+    uint64_t stx_ino; /* Inode number */
+    uint64_t stx_size; /* File size */
+    uint64_t stx_blocks; /* Number of 512-byte blocks allocated */
+    uint64_t stx_attributes_mask; /* Mask to show what's supported in stx_attributes */
+    struct statx_timestamp stx_atime; /* Last access time */
+    struct statx_timestamp stx_btime; /* File creation time */
+    struct statx_timestamp stx_ctime; /* Last attribute change time */
+    struct statx_timestamp stx_mtime; /* Last data modification time */
+    uint32_t stx_rdev_major; /* Device ID of special file [if bdev/cdev] */
+    uint32_t stx_rdev_minor;
+    uint32_t stx_dev_major; /* ID of device containing file [uncond] */
+    uint32_t stx_dev_minor;
+    uint64_t stx_mnt_id;
+    uint64_t __spare2;
+    uint64_t __spare3[12]; /* Spare space for future expansion */
+};
+
+// Bits for mask argument and `stx_mask`.
+#define STATX_TYPE 0x00000001U /* Want/got stx_mode & S_IFMT */
+#define STATX_MODE 0x00000002U /* Want/got stx_mode & ~S_IFMT */
+#define STATX_NLINK 0x00000004U /* Want/got stx_nlink */
+#define STATX_UID 0x00000008U /* Want/got stx_uid */
+#define STATX_GID 0x00000010U /* Want/got stx_gid */
+#define STATX_ATIME 0x00000020U /* Want/got stx_atime */
+#define STATX_MTIME 0x00000040U /* Want/got stx_mtime */
+#define STATX_CTIME 0x00000080U /* Want/got stx_ctime */
+#define STATX_INO 0x00000100U /* Want/got stx_ino */
+#define STATX_SIZE 0x00000200U /* Want/got stx_size */
+#define STATX_BLOCKS 0x00000400U /* Want/got stx_blocks */
+#define STATX_BASIC_STATS 0x000007ffU /* The stuff in the normal stat struct */
+#define STATX_BTIME 0x00000800U /* Want/got stx_btime */
+#define STATX_MNT_ID 0x00001000U /* Got stx_mnt_id */
+
+// Bits in `stx_attributes` and `stx_attributes_mask`.
+#define STATX_ATTR_COMPRESSED 0x00000004 /* [I] File is compressed by the fs */
+#define STATX_ATTR_IMMUTABLE 0x00000010 /* [I] File is marked immutable */
+#define STATX_ATTR_APPEND 0x00000020 /* [I] File is append-only */
+#define STATX_ATTR_NODUMP 0x00000040 /* [I] File is not to be dumped */
+#define STATX_ATTR_ENCRYPTED 0x00000800 /* [I] File requires key to decrypt in fs */
+#define STATX_ATTR_AUTOMOUNT 0x00001000 /* Dir: Automount trigger */
+#define STATX_ATTR_MOUNT_ROOT 0x00002000 /* Root of a mount */
+#define STATX_ATTR_VERITY 0x00100000 /* [I] Verity protected file */
+#define STATX_ATTR_DAX 0x00200000 /* File is currently in DAX state */

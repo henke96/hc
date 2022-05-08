@@ -7,7 +7,7 @@ struct x11Client {
     uint8_t __pad[2];
 };
 
-static int32_t x11Client_init(struct x11Client *self) {
+static int32_t x11Client_init(struct x11Client *self, struct xauth_entry *authEntry) {
     self->sequenceNumber = 1;
     self->nextId = 0;
 
@@ -25,13 +25,22 @@ static int32_t x11Client_init(struct x11Client *self) {
         status = -2;
         goto cleanup_socket;
     }
-
     struct x11_setupRequest request = {
         .byteOrder = x11_setupRequest_LITTLE_ENDIAN,
         .protocolMajorVersion = x11_setupRequest_PROTOCOL_MAJOR_VERSION,
-        .protocolMinorVersion = x11_setupRequest_PROTOCOL_MINOR_VERSION
+        .protocolMinorVersion = x11_setupRequest_PROTOCOL_MINOR_VERSION,
+        .authProtocolNameLength = authEntry->nameLength,
+        .authProtocolDataLength = authEntry->dataLength
     };
-    if (sys_sendto(self->socketFd, &request, sizeof(request), MSG_NOSIGNAL, NULL, 0) != sizeof(request)) {
+    struct iovec iov[5] = {
+        { .iov_base = &request,        .iov_len = sizeof(request) },
+        { .iov_base = authEntry->name, .iov_len = request.authProtocolNameLength },
+        { .iov_base = &request,        .iov_len = util_PAD_BYTES(request.authProtocolNameLength, 4) },
+        { .iov_base = authEntry->data, .iov_len = request.authProtocolDataLength },
+        { .iov_base = &request,        .iov_len = util_PAD_BYTES(request.authProtocolDataLength, 4) }
+    };
+    int64_t sendLength = sizeof(request) + util_ALIGN_FORWARD(request.authProtocolNameLength, 4) + util_ALIGN_FORWARD(request.authProtocolDataLength, 4);
+    if (sys_sendmsg(self->socketFd, &(struct msghdr) { .msg_iov = &iov[0], .msg_iovlen = 5 }, MSG_NOSIGNAL) != sendLength) {
         status = -3;
         goto cleanup_socket;
     }

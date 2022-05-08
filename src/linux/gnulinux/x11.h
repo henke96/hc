@@ -60,13 +60,13 @@ struct x11_setupRequest {
     uint8_t __pad;
     uint16_t protocolMajorVersion;
     uint16_t protocolMinorVersion;
-    uint16_t authorizationProtocolNameLength;
-    uint16_t authorizationProtocolDataLength;
+    uint16_t authProtocolNameLength;
+    uint16_t authProtocolDataLength;
     uint8_t __pad2[2];
-    uint8_t data[]; // char authorizationProtocolName[authorizationProtocolNameLength];
-                    // __pad3[util_PAD_LENGTH(authorizationProtocolNameLength, 4)];
-                    // uint8_t authorizationProtocolData[authorizationProtocolDataLength];
-                    // __pad4[util_PAD_LENGTH(authorizationProtocolNameLength, 4)];
+    uint8_t data[]; // char authProtocolName[authProtocolNameLength];
+                    // __pad3[util_PAD_BYTES(authProtocolNameLength, 4)];
+                    // uint8_t authProtocolData[authProtocolDataLength];
+                    // __pad4[util_PAD_BYTES(authProtocolDataLength, 4)];
 };
 
 #define x11_setupResponse_SUCCESS 1
@@ -92,7 +92,7 @@ struct x11_setupResponse {
     uint8_t maxKeycode;
     uint8_t __pad2[4];
     uint8_t data[]; // char vendor[vendorLength];
-                    // uint8_t __pad[util_PAD_LENGTH(vendorLength, 4)];
+                    // uint8_t __pad[util_PAD_BYTES(vendorLength, 4)];
                     // struct x11_format pixmapFormats[numPixmapFormats];
                     // struct x11_screen roots[numRoots]; (x11_screen is variable length!)
 };
