@@ -1,9 +1,39 @@
+// First byte from server describes message type. Values 2-127 are events.
 #define x11_TYPE_ERROR 0
 #define x11_TYPE_REPLY 1
+#define x11_TYPE_SYNTHETIC_BIT 0x80
+#define x11_TYPE_MASK 0x7F
 
 #define x11_COPY_FROM_PARENT 0
 #define x11_INPUT_OUTPUT 1
 #define x11_INPUT_ONLY 2
+
+// Set-of-event bits.
+#define x11_EVENT_KEY_PRESS_BIT 0x1
+#define x11_EVENT_KEY_RELEASE_BIT 0x2
+#define x11_EVENT_BUTTON_PRESS_BIT 0x4
+#define x11_EVENT_BUTTON_RELEASE_BIT 0x8
+#define x11_EVENT_ENTER_WINDOW_BIT 0x10
+#define x11_EVENT_LEAVE_WINDOW_BIT 0x20
+#define x11_EVENT_POINTER_MOTION_BIT 0x40
+#define x11_EVENT_POINTER_MOTION_HINT_BIT 0x80
+#define x11_EVENT_BUTTON1_MOTION_BIT 0x100
+#define x11_EVENT_BUTTON2_MOTION_BIT 0x200
+#define x11_EVENT_BUTTON3_MOTION_BIT 0x400
+#define x11_EVENT_BUTTON4_MOTION_BIT 0x800
+#define x11_EVENT_BUTTON5_MOTION_BIT 0x1000
+#define x11_EVENT_BUTTON_MOTION_BIT 0x2000
+#define x11_EVENT_KEYMAP_STATE_BIT 0x4000
+#define x11_EVENT_EXPOSURE_BIT 0x8000
+#define x11_EVENT_VISIBILITY_CHANGE_BIT 0x10000
+#define x11_EVENT_STRUCTURE_NOTIFY_BIT 0x20000
+#define x11_EVENT_RESIZE_REDIRECT_BIT 0x40000
+#define x11_EVENT_SUBSTRUCTURE_NOTIFY_BIT 0x80000
+#define x11_EVENT_SUBSTRUCTURE_REDIRECT_BIT 0x100000
+#define x11_EVENT_FOCUS_CHANGE_BIT 0x200000
+#define x11_EVENT_PROPERTY_CHANGE_BIT 0x400000
+#define x11_EVENT_COLORMAP_CHANGE_BIT 0x800000
+#define x11_EVENT_OWNER_GRAB_BUTTON_BIT 0x1000000
 
 struct x11_format {
     uint8_t depth;
@@ -97,8 +127,26 @@ struct x11_setupResponse {
                     // struct x11_screen roots[numRoots]; (x11_screen is variable length!)
 };
 
-// Protocol requests and responses.
+// Protocol requests, responses and events.
+
 #define x11_createWindow_OPCODE 1
+// Bits for valueMask.
+#define x11_createWindow_BACKGROUND_PIXMAP 0x1
+#define x11_createWindow_BACKGROUND_PIXEL 0x2
+#define x11_createWindow_BORDER_PIXMAP 0x3
+#define x11_createWindow_BORDER_PIXEL 0x8
+#define x11_createWindow_BIT_GRAVITY 0x10
+#define x11_createWindow_WIN_GRAVITY 0x20
+#define x11_createWindow_BACKING_STORE 0x40
+#define x11_createWindow_BACKING_PLANES 0x80
+#define x11_createWindow_BACKING_PIXEL 0x100
+#define x11_createWindow_OVERRIDE_REDIRECT 0x200
+#define x11_createWindow_SAVE_UNDER 0x400
+#define x11_createWindow_EVENT_MASK 0x800
+#define x11_createWindow_DO_NOT_PROPAGATE_MASK 0x1000
+#define x11_createWindow_COLORMAP 0x2000
+#define x11_createWindow_CURSOR 0x4000
+
 struct x11_createWindow {
     uint8_t opcode;
     uint8_t depth;
@@ -152,4 +200,46 @@ struct x11_mapWindow {
     uint8_t __pad;
     uint16_t length;
     uint32_t windowId;
+};
+
+#define x11_mapNotify_TYPE 19
+struct x11_mapNotify {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t eventWindowId;
+    uint32_t windowId;
+    uint8_t overrideRedirect;
+    uint8_t __pad2[19];
+};
+
+#define x11_configureNotify_TYPE 22
+struct x11_configureNotify {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t eventWindowId;
+    uint32_t windowId;
+    uint32_t aboveSiblingWindowId;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
+    uint16_t borderWidth;
+    uint8_t overrideRedirect;
+    uint8_t __pad2[5];
+};
+
+#define x11_expose_TYPE 12
+struct x11_expose {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t windowId;
+    uint16_t x;
+    uint16_t y;
+    uint16_t width;
+    uint16_t height;
+    uint16_t count;
+    uint8_t __pad2[14];
 };

@@ -2,14 +2,17 @@ struct x11Client {
     struct x11_setupResponse *setupResponse;
     int32_t setupResponseLength;
     int32_t socketFd;
+    uint8_t receiveBuffer[4096];
+    uint32_t receiveLength;
     uint32_t nextId;
     uint16_t sequenceNumber;
-    uint8_t __pad[2];
+    uint8_t __pad[6];
 };
 
 static int32_t x11Client_init(struct x11Client *self, struct xauth_entry *authEntry) {
     self->sequenceNumber = 1;
     self->nextId = 0;
+    self->receiveLength = 0;
 
     // TODO: Don't hardcode socket type and address.
     self->socketFd = sys_socket(AF_UNIX, SOCK_STREAM, 0);
@@ -124,6 +127,32 @@ static int32_t x11Client_sendRequests(struct x11Client *self, void *requests, in
     int32_t sequenceNumber = self->sequenceNumber;
     self->sequenceNumber += numRequests;
     return sequenceNumber;
+}
+
+static int32_t x11Client_receive(struct x11Client *self) {
+    int32_t numRead = (int32_t)sys_recvfrom(self->socketFd, &self->receiveBuffer[0], sizeof(self->receiveBuffer) - self->receiveLength, 0, NULL, NULL);
+    if (numRead <= 0) return numRead;
+    self->receiveLength += (uint32_t)numRead;
+    return numRead;
+}
+
+// Returns length of next message, 0 if no messages are buffered.
+static int32_t x11Client_nextMessage(struct x11Client *self) {
+    if (self->receiveLength < 1) return 0;
+    if (self->receiveBuffer[0] != x11_TYPE_REPLY) {
+        // Errors and events are all 32 bytes.
+        return self->receiveLength >= 32 ? 32 : 0;
+    }
+    // 8 bytes must have been read to figure out reply length.
+    if (self->receiveLength < 8) return 0;
+    uint32_t length = *(uint32_t *)&self->receiveBuffer[4];
+    return self->receiveLength >= length ? (int32_t)length : 0;
+}
+
+// Acks a message of length `length`, so that the next one can be read.
+static void x11Client_ackMessage(struct x11Client *self, int32_t length) {
+    self->receiveLength -= (uint32_t)length;
+    hc_MEMMOVE(&self->receiveBuffer[0], &self->receiveBuffer[length], self->receiveLength);
 }
 
 static void x11Client_deinit(struct x11Client *self) {

@@ -16,39 +16,34 @@ struct egl {
     uint32_t (*eglTerminate)(void *display);
     uint32_t (*eglDestroySurface)(void *display, void *surface);
     uint32_t (*eglDestroyContext)(void *display, void *context);
+    void *(*eglGetProcAddress)(const char *procName);
 };
 
 static int32_t egl_init(struct egl *self) {
     self->context = egl_NO_CONTEXT;
     self->surface = egl_NO_SURFACE;
 
-    int32_t status = -2; // -2 means one of the dlsym's failed.
     self->dlHandle = dlopen("libEGL.so.1", RTLD_NOW);
     if (dlerror() != NULL) return -1;
+
     self->eglGetDisplay = dlsym(self->dlHandle, "eglGetDisplay");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglInitialize = dlsym(self->dlHandle, "eglInitialize");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglChooseConfig = dlsym(self->dlHandle, "eglChooseConfig");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglBindAPI = dlsym(self->dlHandle, "eglBindAPI");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglCreateContext = dlsym(self->dlHandle, "eglCreateContext");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglGetConfigAttrib = dlsym(self->dlHandle, "eglGetConfigAttrib");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglCreateWindowSurface = dlsym(self->dlHandle, "eglCreateWindowSurface");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglMakeCurrent = dlsym(self->dlHandle, "eglMakeCurrent");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglSwapBuffers = dlsym(self->dlHandle, "eglSwapBuffers");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglTerminate = dlsym(self->dlHandle, "eglTerminate");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglDestroySurface = dlsym(self->dlHandle, "eglDestroySurface");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
     self->eglDestroyContext = dlsym(self->dlHandle, "eglDestroyContext");
-    if (dlerror() != NULL) goto cleanup_dlHandle;
+    self->eglGetProcAddress = dlsym(self->dlHandle, "eglGetProcAddress");
+    int32_t status;
+    if (dlerror() != NULL) {
+        status = -2;
+        goto cleanup_dlHandle;
+    }
 
     self->display = self->eglGetDisplay(egl_DEFAULT_DISPLAY); // TODO: What happens on XWayland? Could consider eglGetPlatformDisplay().
     if (self->display == egl_NO_DISPLAY) {
@@ -98,6 +93,10 @@ static int32_t egl_setupSurface(struct egl *self, uint32_t windowId) {
 // Returns boolean of success.
 static inline uint32_t egl_swapBuffers(struct egl *self) {
     return self->eglSwapBuffers(self->display, self->surface);
+}
+
+static inline void *egl_getProcAddress(struct egl *self, const char *procName) {
+    return self->eglGetProcAddress(procName);
 }
 
 static void egl_deinit(struct egl *self) {
