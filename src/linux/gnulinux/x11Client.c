@@ -9,21 +9,16 @@ struct x11Client {
     uint8_t __pad[6];
 };
 
-static int32_t x11Client_init(struct x11Client *self, struct xauth_entry *authEntry) {
+static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t sockaddrLen, struct xauth_entry *authEntry) {
     self->sequenceNumber = 1;
     self->nextId = 0;
     self->receiveLength = 0;
 
-    // TODO: Don't hardcode socket type and address.
-    self->socketFd = sys_socket(AF_UNIX, SOCK_STREAM, 0);
+    uint16_t sockaddrFamily = *(uint16_t *)sockaddr;
+    self->socketFd = sys_socket(sockaddrFamily, SOCK_STREAM, 0);
     if (self->socketFd < 0) return -1;
 
-    struct sockaddr_un serverAddr;
-    serverAddr.sun_family = AF_UNIX;
-    static const char address[] = "/tmp/.X11-unix/X0";
-    hc_MEMCPY(&serverAddr.sun_path[0], &address[0], sizeof(address));
-
-    int32_t status = sys_connect(self->socketFd, &serverAddr, sizeof(serverAddr));
+    int32_t status = sys_connect(self->socketFd, sockaddr, sockaddrLen);
     if (status < 0) {
         status = -2;
         goto cleanup_socket;

@@ -38,15 +38,19 @@ static int32_t window_init(struct window *self, char **envp) {
     uint32_t eglVisualId = (uint32_t)status;
 
     // Initialise x11.
-    struct xauth xauth;
+    struct sockaddr_un serverAddr;
+    serverAddr.sun_family = AF_UNIX;
+    static const char address[] = "/tmp/.X11-unix/X0";
+    hc_MEMCPY(&serverAddr.sun_path[0], &address[0], sizeof(address));
     char *xAuthorityFile = util_getEnv(envp, "XAUTHORITY");
+    struct xauth xauth;
     if (xAuthorityFile != NULL && xauth_init(&xauth, xAuthorityFile) == 0) {
         struct xauth_entry entry = {0}; // Zeroed in case `xauth_nextEntry` fails.
         xauth_nextEntry(&xauth, &entry);
-        status = x11Client_init(&self->x11Client, &entry);
+        status = x11Client_init(&self->x11Client, &serverAddr, sizeof(serverAddr), &entry);
         xauth_deinit(&xauth);
     } else {
-        status = x11Client_init(&self->x11Client, &(struct xauth_entry) {0});
+        status = x11Client_init(&self->x11Client, &serverAddr, sizeof(serverAddr), &(struct xauth_entry) {0});
     }
     if (status < 0) {
         printf("Failed to initialise x11Client (%d)\n", status);
