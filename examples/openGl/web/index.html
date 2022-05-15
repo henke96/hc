@@ -2,6 +2,7 @@
 <html>
     <body>
         <script>
+            "use strict";
             let textDecoder = new TextDecoder("utf8");
             let glObjects = [null];
             let wasmMemoryU8;
@@ -45,17 +46,15 @@
                         gl_linkProgram: program => gl.linkProgram(glObjects[program]),
                         gl_deleteShader: shader => gl.deleteShader(glPop(shader)),
                         gl_genBuffers: (n, buffers) => {
-                            buffersU32 = buffers >> 2;
                             while (n) {
                                 --n;
-                                wasmMemoryU32[buffersU32 + n] = glPush(gl.createBuffer());
+                                wasmMemoryU32[(buffers >> 2) + n] = glPush(gl.createBuffer());
                             }
                         },
                         gl_genVertexArrays: (n, arrays) => {
-                            arraysU32 = arrays >> 2;
                             while (n) {
                                 --n;
-                                wasmMemoryU32[arraysU32 + n] = glPush(gl.createVertexArray());
+                                wasmMemoryU32[(arrays >> 2) + n] = glPush(gl.createVertexArray());
                             }
                         },
                         gl_bindBuffer: (target, buffer) => gl.bindBuffer(target, glObjects[buffer]),
@@ -65,17 +64,15 @@
                         gl_enableVertexAttribArray: index => gl.enableVertexAttribArray(index),
                         gl_useProgram: program => gl.useProgram(glObjects[program]),
                         gl_deleteBuffers: (n, buffers) => {
-                            buffersU32 = buffers >> 2;
                             while (n) {
                                 --n;
-                                gl.deleteBuffer(glPop(wasmMemoryU32[buffersU32 + n]));
+                                gl.deleteBuffer(glPop(wasmMemoryU32[(buffers >> 2) + n]));
                             }
                         },
                         gl_deleteVertexArrays: (n, arrays) => {
-                            arraysU32 = arrays >> 2;
                             while (n) {
                                 --n;
-                                gl.deleteVertexArray(glPop(wasmMemoryU32[arraysU32 + n]));
+                                gl.deleteVertexArray(glPop(wasmMemoryU32[(arrays >> 2) + n]));
                             }
                         },
                         gl_deleteProgram: program => gl.deleteProgram(glPop(program)),
