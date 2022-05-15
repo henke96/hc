@@ -27,7 +27,7 @@ static int32_t window_init(struct window *self, char **envp) {
     };
     const int32_t contextAttributes[] = {
         egl_CONTEXT_MAJOR_VERSION, 3,
-        egl_CONTEXT_MINOR_VERSION, 2,
+        egl_CONTEXT_MINOR_VERSION, 3,
         egl_NONE
     };
     status = egl_createContext(&self->egl, egl_OPENGL_API, &configAttributes[0], &contextAttributes[0]);
@@ -59,7 +59,10 @@ static int32_t window_init(struct window *self, char **envp) {
 
     // Send requests to create and map X11 window.
     self->windowId = x11Client_nextId(&self->x11Client);
-    uint64_t rootsOffset = util_ALIGN_FORWARD(self->x11Client.setupResponse->vendorLength, 4) + sizeof(struct x11_format) * self->x11Client.setupResponse->numPixmapFormats;
+    uint64_t rootsOffset = (
+        util_ALIGN_FORWARD(self->x11Client.setupResponse->vendorLength, 4) +
+        sizeof(struct x11_format) * self->x11Client.setupResponse->numPixmapFormats
+    );
     struct x11_screen *screen = (void *)&self->x11Client.setupResponse->data[rootsOffset]; // Use first screen.
     uint32_t parentId = screen->windowId;
 
@@ -76,8 +79,6 @@ static int32_t window_init(struct window *self, char **envp) {
             .length = (sizeof(windowRequests.createWindow) + sizeof(windowRequests.createWindowValues)) / 4,
             .windowId = self->windowId,
             .parentId = parentId,
-            .x = 100,
-            .y = 100,
             .width = 200,
             .height = 200,
             .borderWidth = 1,
@@ -109,8 +110,6 @@ static int32_t window_init(struct window *self, char **envp) {
 }
 
 static int32_t window_run(struct window *self) {
-    void (*glClear)(uint32_t mask);
-    void (*glClearColor)(float red, float green, float blue, float alpha);
     for (;;) {
         int32_t msgLength = x11Client_nextMessage(&self->x11Client);
         if (msgLength == 0) {
@@ -134,23 +133,27 @@ static int32_t window_run(struct window *self) {
                     printf("Failed to setup EGL surface (%d)\n", status);
                     return -3;
                 }
-                glClear = egl_getProcAddress(&self->egl, "glClear");
-                if (glClear == NULL) return -4;
-                glClearColor = egl_getProcAddress(&self->egl, "glClearColor");
-                if (glClearColor == NULL) return -5;
+                status = gl_init(&self->egl);
+                if (status < 0) {
+                    printf("Failed to initialise GL (%d)\n", status);
+                    return -4;
+                }
                 self->state = window_MAPPED;
                 break;
             }
             case window_MAPPED: {
                 printf("MAPPED: Got message type: %d\n", msgType);
-                if (
+                if (msgType == x11_configureNotify_TYPE) {
+                    struct x11_configureNotify *configureNotify = (void *)&self->x11Client.receiveBuffer[0];
+                    gl_viewport(0, 0, configureNotify->width, configureNotify->height);
+                } else if (
                     msgType == x11_expose_TYPE &&
                     ((struct x11_expose *)&self->x11Client.receiveBuffer[0])->count == 0
                 ) {
                     // Do some drawing.
-                    glClearColor(0.0, 1.0, 0.0, 1.0);
-                    glClear(0x00004000);
-                    if (!egl_swapBuffers(&self->egl)) return -6;
+                    gl_clearColor(0.0, 1.0, 0.0, 1.0);
+                    gl_clear(gl_COLOR_BUFFER_BIT);
+                    if (!egl_swapBuffers(&self->egl)) return -5;
                 }
                 break;
             }

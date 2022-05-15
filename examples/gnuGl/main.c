@@ -1,5 +1,6 @@
 #include "../../src/hc.h"
 #include "../../src/util.c"
+#include "../../src/gl.h"
 #include "../../src/libc/small.c"
 #include "../../src/linux/linux.h"
 #include "../../src/linux/util.c"
@@ -16,6 +17,7 @@
 
 static int32_t (*printf)(const char *restrict format, ...);
 
+#include "gl.c"
 #include "window.c"
 
 static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
