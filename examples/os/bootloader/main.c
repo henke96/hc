@@ -2,7 +2,6 @@
 #include "../../../src/efi.h"
 #include "../../../src/util.c"
 #include "../../../src/libc/small.c"
-#include "../../../src/x86_64/msr.c"
 #include "../common/paging.h"
 #include "../common/bootloaderPage.c"
 #include "kernelBin.c"
