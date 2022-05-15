@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <script>
+            let textDecoder = new TextDecoder("utf8");
+            let glObjects = [null];
+            let wasmMemoryU8;
+            let wasmMemoryS32;
+            let wasmMemoryU32;
+
+            function glPush(object) {
+                return glObjects.push(object) - 1;
+            }
+            function glPop(index) {
+                let object = glObjects[index];
+                glObjects[index] = null;
+                return object;
+            }
+            function main() {
+                // Initialise webGL.
+                let canvas = document.getElementById("gameCanvas");
+                let gl = canvas.getContext("webgl2", { antialias: false });
+                if (gl === null) throw "Failed to initialise webgl2 context.";
+
+                let importObject = {
+                    env: {
+                        gl_getError: () => gl.getError(),
+                        gl_createShader: type => glPush(gl.createShader(type)),
+                        gl_shaderSource: (shader, count, string, length) => {
+                            while (count) {
+                                --count;
+                                let start = wasmMemoryS32[(string >> 2) + count];
+                                let end;
+                                if (!length) {
+                                    for (end = start; wasmMemoryU8[end]; ++end);
+                                } else {
+                                    end = start + wasmMemoryS32[length >> 2];
+                                }
+                                gl.shaderSource(glObjects[shader], textDecoder.decode(wasmMemoryU8.subarray(start, end)));
+                            }
+                        },
+                        gl_compileShader: shader => gl.compileShader(glObjects[shader]),
+                        gl_createProgram: () => glPush(gl.createProgram()),
+                        gl_attachShader: (program, shader) => gl.attachShader(glObjects[program], glObjects[shader]),
+                        gl_linkProgram: program => gl.linkProgram(glObjects[program]),
+                        gl_deleteShader: shader => gl.deleteShader(glPop(shader)),
+                        gl_genBuffers: (n, buffers) => {
+                            buffersU32 = buffers >> 2;
+                            while (n) {
+                                --n;
+                                wasmMemoryU32[buffersU32 + n] = glPush(gl.createBuffer());
+                            }
+                        },
+                        gl_genVertexArrays: (n, arrays) => {
+                            arraysU32 = arrays >> 2;
+                            while (n) {
+                                --n;
+                                wasmMemoryU32[arraysU32 + n] = glPush(gl.createVertexArray());
+                            }
+                        },
+                        gl_bindBuffer: (target, buffer) => gl.bindBuffer(target, glObjects[buffer]),
+                        gl_bufferData: (target, size, data, usage) => gl.bufferData(target, wasmMemoryU8.subarray(data, data + size), usage),
+                        gl_bindVertexArray: array => gl.bindVertexArray(glObjects[array]),
+                        gl_vertexAttribPointer: (index, size, type, normalized, stride, pointer) => gl.vertexAttribPointer(index, size, type, normalized, stride, pointer),
+                        gl_enableVertexAttribArray: index => gl.enableVertexAttribArray(index),
+                        gl_useProgram: program => gl.useProgram(glObjects[program]),
+                        gl_deleteBuffers: (n, buffers) => {
+                            buffersU32 = buffers >> 2;
+                            while (n) {
+                                --n;
+                                gl.deleteBuffer(glPop(wasmMemoryU32[buffersU32 + n]));
+                            }
+                        },
+                        gl_deleteVertexArrays: (n, arrays) => {
+                            arraysU32 = arrays >> 2;
+                            while (n) {
+                                --n;
+                                gl.deleteVertexArray(glPop(wasmMemoryU32[arraysU32 + n]));
+                            }
+                        },
+                        gl_deleteProgram: program => gl.deleteProgram(glPop(program)),
+                        gl_clearColor: (red, green, blue, alpha) => gl.clearColor(red, green, blue, alpha),
+                        gl_clear: mask => gl.clear(mask),
+                        gl_drawArrays: (mode, first, count) => gl.drawArrays(mode, first, count)
+                    }
+                };
+                WebAssembly.instantiateStreaming(fetch("release.wasm"), importObject).then(
+                    object => {
+                        let wasmMemory = object.instance.exports.memory;
+                        wasmMemoryU8 = new Uint8Array(wasmMemory.buffer);
+                        wasmMemoryS32 = new Int32Array(wasmMemory.buffer);
+                        wasmMemoryU32 = new Uint32Array(wasmMemory.buffer);
+                        let exports = object.instance.exports;
+
+                        let status = exports.game_init();
+                        if (status < 0) throw "Failed to initialise game (" + status + ")";
+                        status = exports.game_draw();
+                        if (status < 0) throw "Failed to draw game (" + status + ")";
+                        exports.game_deinit();
+                    }
+                );
+            }
+            window.onload = main;
+        </script>
+        <canvas width="800" height="600" id="gameCanvas"></canvas>
+    </body>
+</html>

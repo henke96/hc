@@ -1,0 +1,43 @@
+#include "../../../src/hc.h"
+#include "../../../src/util.c"
+#include "../../../src/gl.h"
+#include "../../../src/libc/small.c"
+#include "../../../src/linux/linux.h"
+#include "../../../src/linux/util.c"
+#include "../../../src/linux/sys.c"
+#include "../../../src/linux/helpers/_start.c"
+#include "../../../src/linux/gnulinux/x11.h"
+#include "../../../src/linux/gnulinux/xauth.c"
+#include "../../../src/linux/gnulinux/x11Client.c"
+#include "../../../src/linux/gnulinux/dynamic/libc.so.6.h"
+#include "../../../src/linux/gnulinux/dynamic/libdl.so.2.h"
+#include "../../../src/linux/gnulinux/dynamic/egl.h"
+#include "../../../src/linux/gnulinux/dynamic/egl.c"
+#include "../../../src/linux/gnulinux/dynamic/main.c"
+
+static int32_t (*printf)(const char *restrict format, ...);
+
+#include "gl.c"
+#define game_EXPORT(NAME) static
+#include "../game.c"
+#include "window.c"
+
+static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
+    void *libcHandle = dlopen("libc.so.6", RTLD_NOW);
+    if (dlerror() != NULL) return 1;
+
+    printf = dlsym(libcHandle, "printf");
+    if (dlerror() != NULL) return 1;
+
+    struct window window;
+    int32_t status = window_init(&window, envp);
+    if (status < 0) return 1;
+
+    status = window_run(&window);
+    window_deinit(&window);
+    if (status < 0) {
+        printf("Error while running (%d)\n", status);
+        return 1;
+    }
+    return 0;
+}

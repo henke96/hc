@@ -1,3 +1,7 @@
+#if !defined(game_EXPORT)
+    #error "`#define game_EXPORT(NAME)` before including"
+#endif
+
 #define game_POSITION_INDEX 0
 static const char *game_vertexShader =
     "#version 300 es\n"
@@ -29,7 +33,8 @@ static struct {
     uint32_t vertexArrays[game_NUM_VERTEX_ARRAYS];
 } game;
 
-static int32_t game_init(void) {
+game_EXPORT("game_init")
+int32_t game_init(void) {
     // Compile shader program.
     uint32_t vertexShader = gl_createShader(gl_VERTEX_SHADER);
     gl_shaderSource(vertexShader, 1, &game_vertexShader, NULL);
@@ -87,6 +92,7 @@ static int32_t game_init(void) {
 
     // For now we only have one program, so use it from here.
     gl_useProgram(game.shaderProgram);
+    gl_clearColor(0.0, 0.0, 0.0, 1.0);
 
     if (gl_getError() != gl_NO_ERROR) {
         status = -5;
@@ -103,15 +109,16 @@ static int32_t game_init(void) {
     return status;
 }
 
-static int32_t game_draw(void) {
-    gl_clearColor(0.0, 0.0, 0.0, 1.0);
+game_EXPORT("game_draw")
+int32_t game_draw(void) {
     gl_clear(gl_COLOR_BUFFER_BIT);
     gl_drawArrays(gl_TRIANGLES, 0, 3);
     if (gl_getError() != gl_NO_ERROR) return -1;
     return 0;
 }
 
-static void game_deinit(void) {
+game_EXPORT("game_deinit")
+void game_deinit(void) {
     gl_deleteVertexArrays(game_NUM_VERTEX_ARRAYS, &game.vertexArrays[0]);
     gl_deleteBuffers(game_NUM_BUFFERS, &game.buffers[0]);
     gl_deleteProgram(game.shaderProgram);
