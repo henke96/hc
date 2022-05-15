@@ -17,8 +17,6 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_RISCV64 1
 #elif defined(__wasm32__)
     #define hc_WASM32 1
-    #define hc_WASM_IMPORT(MODULE, NAME) __attribute__((import_module(MODULE), import_name(NAME)))
-    #define hc_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
 #else
     #error "Unsupported architecture"
 #endif
@@ -49,6 +47,13 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #else
     #define hc_MS_ABI
     #define hc_SYSV_ABI
+#endif
+#if hc_WASM32
+    #define hc_WASM_IMPORT(MODULE, NAME) __attribute__((import_module(MODULE), import_name(NAME)))
+    #define hc_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
+#else
+    #define hc_WASM_IMPORT(MODULE, NAME)
+    #define hc_WASM_EXPORT(NAME)
 #endif
 
 // Builtins

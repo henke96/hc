@@ -1,12 +1,13 @@
 #define game_POSITION_INDEX 0
 static const char *game_vertexShader =
-    "#version 330 core\n"
+    "#version 300 es\n"
     "layout (location = " hc_XSTR(game_POSITION_INDEX) ") in vec3 inPosition;\n"
     "void main() {\n"
     "    gl_Position = vec4(inPosition, 1.0);\n"
     "}\n";
 static const char *game_fragmentShader =
-    "#version 330 core\n"
+    "#version 300 es\n"
+    "precision mediump float;\n"
     "out vec4 outColor;\n"
     "void main() {\n"
     "    outColor = vec4(1.0, 0.6, 0.2, 1.0);\n"

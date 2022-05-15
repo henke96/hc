@@ -27,10 +27,10 @@ static int32_t window_init(struct window *self, char **envp) {
     };
     const int32_t contextAttributes[] = {
         egl_CONTEXT_MAJOR_VERSION, 3,
-        egl_CONTEXT_MINOR_VERSION, 3,
+        egl_CONTEXT_MINOR_VERSION, 0,
         egl_NONE
     };
-    status = egl_createContext(&self->egl, egl_OPENGL_API, &configAttributes[0], &contextAttributes[0]);
+    status = egl_createContext(&self->egl, egl_OPENGL_ES_API, &configAttributes[0], &contextAttributes[0]);
     if (status < 0) {
         printf("Failed to create EGL context (%d)\n", status);
         goto cleanup_egl;
