@@ -30,6 +30,10 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_ILP32 0
 #endif
 
+// Preprocessor helpers.
+#define hc_STR(X) #X
+#define hc_XSTR(X) hc_STR(X)
+
 // Attributes
 #define hc_UNREACHABLE __builtin_unreachable()
 #define hc_UNUSED __attribute__((unused))

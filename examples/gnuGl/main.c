@@ -18,6 +18,7 @@
 static int32_t (*printf)(const char *restrict format, ...);
 
 #include "gl.c"
+#include "game.c"
 #include "window.c"
 
 static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {

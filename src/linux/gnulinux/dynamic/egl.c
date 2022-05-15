@@ -17,6 +17,7 @@ struct egl {
     uint32_t (*eglDestroySurface)(void *display, void *surface);
     uint32_t (*eglDestroyContext)(void *display, void *context);
     void *(*eglGetProcAddress)(const char *procName);
+    uint32_t (*eglSwapInterval)(void *display, int32_t interval);
 };
 
 static int32_t egl_init(struct egl *self) {
@@ -39,6 +40,7 @@ static int32_t egl_init(struct egl *self) {
     self->eglDestroySurface = dlsym(self->dlHandle, "eglDestroySurface");
     self->eglDestroyContext = dlsym(self->dlHandle, "eglDestroyContext");
     self->eglGetProcAddress = dlsym(self->dlHandle, "eglGetProcAddress");
+    self->eglSwapInterval = dlsym(self->dlHandle, "eglSwapInterval");
     int32_t status;
     if (dlerror() != NULL) {
         status = -2;
@@ -97,6 +99,10 @@ static inline uint32_t egl_swapBuffers(struct egl *self) {
 
 static inline void *egl_getProcAddress(struct egl *self, const char *procName) {
     return self->eglGetProcAddress(procName);
+}
+
+static inline uint32_t egl_swapInterval(struct egl *self, int32_t interval) {
+    return self->eglSwapInterval(self->display, interval);
 }
 
 static void egl_deinit(struct egl *self) {

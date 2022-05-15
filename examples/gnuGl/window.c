@@ -1,6 +1,6 @@
 enum window_state {
     window_INIT,
-    window_MAPPED
+    window_RUNNING
 };
 
 struct window {
@@ -138,11 +138,19 @@ static int32_t window_run(struct window *self) {
                     printf("Failed to initialise GL (%d)\n", status);
                     return -4;
                 }
-                self->state = window_MAPPED;
+                // Try to disable vsync.
+                egl_swapInterval(&self->egl, 0);
+
+                status = game_init();
+                if (status < 0) {
+                    printf("Failed to initialise game (%d)\n", status);
+                    return -5;
+                }
+                self->state = window_RUNNING;
                 break;
             }
-            case window_MAPPED: {
-                printf("MAPPED: Got message type: %d\n", msgType);
+            case window_RUNNING: {
+                printf("RUNNING: Got message type: %d\n", msgType);
                 if (msgType == x11_configureNotify_TYPE) {
                     struct x11_configureNotify *configureNotify = (void *)&self->x11Client.receiveBuffer[0];
                     gl_viewport(0, 0, configureNotify->width, configureNotify->height);
@@ -150,10 +158,8 @@ static int32_t window_run(struct window *self) {
                     msgType == x11_expose_TYPE &&
                     ((struct x11_expose *)&self->x11Client.receiveBuffer[0])->count == 0
                 ) {
-                    // Do some drawing.
-                    gl_clearColor(0.0, 1.0, 0.0, 1.0);
-                    gl_clear(gl_COLOR_BUFFER_BIT);
-                    if (!egl_swapBuffers(&self->egl)) return -5;
+                    if (game_draw() < 0) return -6;
+                    if (!egl_swapBuffers(&self->egl)) return -7;
                 }
                 break;
             }
@@ -164,6 +170,7 @@ static int32_t window_run(struct window *self) {
 }
 
 static void window_deinit(struct window *self) {
+    if (self->state == window_RUNNING) game_deinit();
     x11Client_deinit(&self->x11Client);
     egl_deinit(&self->egl);
 }
