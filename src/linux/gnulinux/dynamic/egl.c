@@ -68,14 +68,15 @@ static int32_t egl_init(struct egl *self) {
 static int32_t egl_createContext(struct egl *self, uint32_t api, const int32_t *configAttributes, const int32_t *contextAttributes) {
     int32_t numConfigs;
     if (!self->eglChooseConfig(self->display, configAttributes, &self->config, 1, &numConfigs)) return -1;
+    if (numConfigs != 1) return -2;
 
-    if (!self->eglBindAPI(api)) return -2;
+    if (!self->eglBindAPI(api)) return -3;
 
     int32_t visualId;
-    if (!self->eglGetConfigAttrib(self->display, self->config, egl_NATIVE_VISUAL_ID, &visualId)) return -3;
+    if (!self->eglGetConfigAttrib(self->display, self->config, egl_NATIVE_VISUAL_ID, &visualId)) return -4;
 
     self->context = self->eglCreateContext(self->display, self->config, egl_NO_CONTEXT, contextAttributes);
-    if (self->context == egl_NO_CONTEXT) return -4;
+    if (self->context == egl_NO_CONTEXT) return -5;
     return visualId;
 }
 

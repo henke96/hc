@@ -23,6 +23,8 @@ static int32_t window_init(struct window *self, char **envp) {
         egl_RED_SIZE, 8,
         egl_GREEN_SIZE, 8,
         egl_BLUE_SIZE, 8,
+        egl_DEPTH_SIZE, 24,
+        egl_STENCIL_SIZE, 8,
         egl_NONE
     };
     const int32_t contextAttributes[] = {
