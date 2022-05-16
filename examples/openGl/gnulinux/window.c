@@ -30,7 +30,7 @@ static int32_t window_init(struct window *self, char **envp) {
         egl_CONTEXT_MINOR_VERSION, 0,
         egl_NONE
     };
-    status = egl_createContext(&self->egl, egl_OPENGL_ES_API, &configAttributes[0], &contextAttributes[0]);
+    status = egl_createContext(&self->egl, egl_OPENGL_API, &configAttributes[0], &contextAttributes[0]);
     if (status < 0) {
         printf("Failed to create EGL context (%d)\n", status);
         goto cleanup_egl;
@@ -119,7 +119,12 @@ static int32_t window_run(struct window *self) {
             continue;
         }
         uint8_t msgType = self->x11Client.receiveBuffer[0];
-        if (msgType == x11_TYPE_ERROR) return -2; // For now we always exit on X11 errors.
+        if (msgType == x11_TYPE_ERROR) {
+            uint8_t errorCode = self->x11Client.receiveBuffer[1];
+            uint16_t sequenceNumber = *(uint16_t *)&self->x11Client.receiveBuffer[2];
+            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
+            return -2; // For now we always exit on X11 errors.
+        }
 
         switch (self->state) {
             case window_INIT: {
