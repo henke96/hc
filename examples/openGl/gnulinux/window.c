@@ -160,7 +160,7 @@ static int32_t window_run(struct window *self) {
                 printf("RUNNING: Got message type: %d\n", msgType);
                 if (msgType == x11_configureNotify_TYPE) {
                     struct x11_configureNotify *configureNotify = (void *)&self->x11Client.receiveBuffer[0];
-                    gl_viewport(0, 0, configureNotify->width, configureNotify->height);
+                    game_resize(configureNotify->width, configureNotify->height);
                 } else if (
                     msgType == x11_expose_TYPE &&
                     ((struct x11_expose *)&self->x11Client.receiveBuffer[0])->count == 0

@@ -17,6 +17,64 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define STD_OUTPUT_HANDLE ((uint32_t)-11)
 #define STD_ERROR_HANDLE ((uint32_t)-12)
 
+// wingdi.h
+#define PFD_TYPE_RGBA 0
+#define PFD_TYPE_COLORINDEX 1
+
+#define PFD_MAIN_PLANE 0
+#define PFD_OVERLAY_PLANE 1
+#define PFD_UNDERLAY_PLANE (-1)
+
+#define PFD_DOUBLEBUFFER 0x00000001
+#define PFD_STEREO 0x00000002
+#define PFD_DRAW_TO_WINDOW 0x00000004
+#define PFD_DRAW_TO_BITMAP 0x00000008
+#define PFD_SUPPORT_GDI 0x00000010
+#define PFD_SUPPORT_OPENGL 0x00000020
+#define PFD_GENERIC_FORMAT 0x00000040
+#define PFD_NEED_PALETTE 0x00000080
+#define PFD_NEED_SYSTEM_PALETTE 0x00000100
+#define PFD_SWAP_EXCHANGE 0x00000200
+#define PFD_SWAP_COPY 0x00000400
+#define PFD_SWAP_LAYER_BUFFERS 0x00000800
+#define PFD_GENERIC_ACCELERATED 0x00001000
+#define PFD_SUPPORT_DIRECTDRAW 0x00002000
+#define PFD_DIRECT3D_ACCELERATED 0x00004000
+#define PFD_SUPPORT_COMPOSITION 0x00008000
+
+#define PFD_DEPTH_DONTCARE 0x20000000
+#define PFD_DOUBLEBUFFER_DONTCARE 0x40000000
+#define PFD_STEREO_DONTCARE 0x80000000
+
+struct PIXELFORMATDESCRIPTOR {
+    uint16_t size;
+    uint16_t version;
+    uint32_t flags;
+    uint8_t pixelType;
+    uint8_t colorBits;
+    uint8_t redBits;
+    uint8_t redShift;
+    uint8_t greenBits;
+    uint8_t greenShift;
+    uint8_t blueBits;
+    uint8_t blueShift;
+    uint8_t alphaBits;
+    uint8_t alphaShift;
+    uint8_t accumBits;
+    uint8_t accumRedBits;
+    uint8_t accumGreenBits;
+    uint8_t accumBlueBits;
+    uint8_t accumAlphaBits;
+    uint8_t depthBits;
+    uint8_t stencilBits;
+    uint8_t auxBuffers;
+    uint8_t layerType;
+    uint8_t reserved;
+    uint32_t layerMask;
+    uint32_t visibleMask;
+    uint32_t damageMask;
+};
+
 // winuser.h
 #define MB_OK 0x00000000
 #define MB_OKCANCEL 0x00000001
@@ -82,6 +140,20 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define WS_OVERLAPPEDWINDOW (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX)
 #define WS_POPUPWINDOW (WS_POPUP | WS_BORDER | WS_SYSMENU)
 #define WS_CHILDWINDOW (WS_CHILD)
+
+#define CS_VREDRAW 0x0001
+#define CS_HREDRAW 0x0002
+#define CS_DBLCLKS 0x0008
+#define CS_OWNDC 0x0020
+#define CS_CLASSDC 0x0040
+#define CS_PARENTDC 0x0080
+#define CS_NOCLOSE 0x0200
+#define CS_SAVEBITS 0x0800
+#define CS_BYTEALIGNCLIENT 0x1000
+#define CS_BYTEALIGNWINDOW 0x2000
+#define CS_GLOBALCLASS 0x4000
+#define CS_IME 0x00010000
+#define CS_DROPSHADOW 0x00020000
 
 #define CW_USEDEFAULT ((int32_t)0x80000000)
 
@@ -176,6 +248,10 @@ hc_DLLIMPORT void *GetCurrentProcess(void);
 hc_DLLIMPORT void *GetStdHandle(uint32_t type);
 hc_DLLIMPORT int32_t WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
 
+hc_DLLIMPORT void *LoadLibraryW(const uint16_t *libFileName);
+hc_DLLIMPORT int32_t FreeLibrary(void *dlHandle);
+hc_DLLIMPORT void *GetProcAddress(void *moduleHandle, const char *procName);
+
 // user32.lib
 hc_DLLIMPORT int32_t MessageBoxW(void *windowHandle, const uint16_t *text, const uint16_t *caption, uint32_t type);
 hc_DLLIMPORT uint16_t RegisterClassW(const struct WNDCLASSW *windowClass);
@@ -200,3 +276,9 @@ hc_DLLIMPORT int32_t GetMessageW(struct MSG *msg, void *windowHandle, uint32_t m
 hc_DLLIMPORT int32_t TranslateMessage(const struct MSG *msg);
 hc_DLLIMPORT int64_t DispatchMessageW(const struct MSG *msg);
 hc_DLLIMPORT void PostQuitMessage(int32_t exitCode);
+hc_DLLIMPORT void *GetDC(void *windowHandle);
+
+// gdi32.lib
+hc_DLLIMPORT int32_t ChoosePixelFormat(void *dc, const struct PIXELFORMATDESCRIPTOR *pfd);
+hc_DLLIMPORT int32_t SetPixelFormat(void *dc, int32_t format, const struct PIXELFORMATDESCRIPTOR *pfd);
+hc_DLLIMPORT int32_t SwapBuffers(void *dc);

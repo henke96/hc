@@ -117,6 +117,11 @@ int32_t game_draw(void) {
     return 0;
 }
 
+game_EXPORT("game_resize")
+void game_resize(int32_t width, int32_t height) {
+    gl_viewport(0, 0, width, height);
+}
+
 game_EXPORT("game_deinit")
 void game_deinit(void) {
     gl_deleteVertexArrays(game_NUM_VERTEX_ARRAYS, &game.vertexArrays[0]);

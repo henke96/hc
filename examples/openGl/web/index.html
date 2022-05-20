@@ -78,7 +78,8 @@
                         gl_deleteProgram: program => gl.deleteProgram(glPop(program)),
                         gl_clearColor: (red, green, blue, alpha) => gl.clearColor(red, green, blue, alpha),
                         gl_clear: mask => gl.clear(mask),
-                        gl_drawArrays: (mode, first, count) => gl.drawArrays(mode, first, count)
+                        gl_drawArrays: (mode, first, count) => gl.drawArrays(mode, first, count),
+                        gl_viewport: (x, y, width, height) => gl.viewport(x, y, width, height)
                     }
                 };
                 WebAssembly.instantiateStreaming(fetch("release.wasm"), importObject).then(
@@ -93,12 +94,17 @@
                         if (status < 0) throw "Failed to initialise game (" + status + ")";
                         status = exports.game_draw();
                         if (status < 0) throw "Failed to draw game (" + status + ")";
+                        canvas.width = 800;
+                        canvas.height = 600;
+                        exports.game_resize(canvas.width, canvas.height);
+                        status = exports.game_draw();
+                        if (status < 0) throw "Failed to draw resized game (" + status + ")";
                         exports.game_deinit();
                     }
                 );
             }
             window.onload = main;
         </script>
-        <canvas width="800" height="600" id="gameCanvas"></canvas>
+        <canvas width="600" height="480" id="gameCanvas"></canvas>
     </body>
 </html>
