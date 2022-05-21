@@ -5,6 +5,7 @@
 #include "../../../src/linux/linux.h"
 #include "../../../src/linux/util.c"
 #include "../../../src/linux/sys.c"
+#include "../../../src/linux/debug.c"
 #include "../../../src/linux/helpers/_start.c"
 #include "../../../src/linux/gnulinux/x11.h"
 #include "../../../src/linux/gnulinux/xauth.c"
@@ -34,7 +35,7 @@ static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **en
 
     status = window_run();
     window_deinit();
-    dlclose(libcHandle);
+    debug_CHECK(dlclose(libcHandle), == 0);
     if (status < 0) {
         printf("Error while running (%d)\n", status);
         return 1;

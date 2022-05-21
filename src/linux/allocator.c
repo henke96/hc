@@ -14,7 +14,7 @@ static int32_t allocator_resize(struct allocator *self, int64_t newSize) {
     if (self->size == newSize) return 0;
 
     if (newSize == 0) {
-        sys_munmap(self->mem, self->size);
+        debug_CHECK(sys_munmap(self->mem, self->size), == 0);
     } else {
         void *newMem;
         if (self->size == 0) {

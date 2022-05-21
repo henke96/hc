@@ -20,8 +20,11 @@ static void debug_printStr(const char *pre, const char *str, const char *post, i
 }
 
 #ifdef debug_NDEBUG
-#define debug_ASSERT(X) ((void)0)
+    #define debug_ASSERT(EXPR) ((void)0)
+    #define debug_CHECK(EXPR, COND) EXPR
 #else
+    #define debug_ASSERT(EXPR) ((void)((EXPR) || (debug_failAssert(#EXPR, __FILE__, __func__, __LINE__), 0)))
+    #define debug_CHECK(EXPR, COND) ((void)((EXPR COND) || (debug_failAssert(#EXPR " " #COND, __FILE__, __func__, __LINE__), 0)))
 hc_UNUSED
 static noreturn void debug_failAssert(const char *expression, const char *file, const char *function, int32_t line) {
     char buffer[util_INT32_MAX_CHARS];
@@ -46,5 +49,4 @@ static noreturn void debug_failAssert(const char *expression, const char *file, 
     sys_kill(sys_getpid(), SIGABRT);
     sys_exit_group(137);
 }
-#define debug_ASSERT(X) ((void)((X) || (debug_failAssert(#X, __FILE__, __func__, __LINE__), 0)))
 #endif

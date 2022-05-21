@@ -194,7 +194,7 @@ int32_t main(int32_t argc, char **argv) {
                 green = 0;
                 blue = 0;
                 frameCounter = 0;
-                sys_clock_gettime(CLOCK_MONOTONIC, &prev);
+                debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), == 0);
             } else if (info.ssi_signo == SIGUSR2) {
                 if (!active) return 1;
 
@@ -217,7 +217,7 @@ int32_t main(int32_t argc, char **argv) {
 
         ++frameCounter;
         struct timespec now;
-        sys_clock_gettime(CLOCK_MONOTONIC, &now);
+        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), == 0);
         if (now.tv_sec > prev.tv_sec) {
             debug_printNum("FPS: ", frameCounter, "\n");
             frameCounter = 0;

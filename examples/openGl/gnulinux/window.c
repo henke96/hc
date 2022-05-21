@@ -148,7 +148,7 @@ static int32_t window_run(void) {
                     return -4;
                 }
                 // Try to disable vsync.
-                egl_swapInterval(&window.egl, 0);
+                debug_CHECK(egl_swapInterval(&window.egl, 0), == egl_TRUE);
 
                 status = game_init();
                 if (status < 0) {

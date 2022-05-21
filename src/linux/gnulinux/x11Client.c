@@ -95,9 +95,9 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     return 0;
 
     cleanup_setupResponse:
-    sys_munmap(self->setupResponse, self->setupResponseLength);
+    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseLength), == 0);
     cleanup_socket:
-    sys_close(self->socketFd);
+    debug_CHECK(sys_close(self->socketFd), == 0);
     return status;
 }
 
@@ -151,6 +151,6 @@ static void x11Client_ackMessage(struct x11Client *self, int32_t length) {
 }
 
 static void x11Client_deinit(struct x11Client *self) {
-    sys_munmap(self->setupResponse, self->setupResponseLength);
-    sys_close(self->socketFd);
+    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseLength), == 0);
+    debug_CHECK(sys_close(self->socketFd), == 0);
 }

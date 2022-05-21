@@ -43,7 +43,7 @@ static int32_t xauth_init(struct xauth *self, const char *xAuthorityFile) {
     return 0;
 
     cleanup_fd:
-    sys_close(self->fd);
+    debug_CHECK(sys_close(self->fd), == 0);
     return status;
 }
 
@@ -87,6 +87,6 @@ static int32_t xauth_nextEntry(struct xauth *self, struct xauth_entry *entry) {
 }
 
 static void xauth_deinit(struct xauth *self) {
-    sys_munmap(self->mappedFile, self->fileSize);
-    sys_close(self->fd);
+    debug_CHECK(sys_munmap(self->mappedFile, self->fileSize), == 0);
+    debug_CHECK(sys_close(self->fd), == 0);
 }

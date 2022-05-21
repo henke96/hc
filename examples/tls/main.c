@@ -5,8 +5,8 @@
 #include "../../src/linux/linux.h"
 #include "../../src/linux/util.c"
 #include "../../src/linux/sys.c"
-#include "../../src/linux/tls.c"
 #include "../../src/linux/debug.c"
+#include "../../src/linux/tls.c"
 #include "../../src/linux/helpers/_start.c"
 #include "../../src/linux/helpers/sys_clone.c"
 
@@ -44,8 +44,7 @@ static noreturn void thread(void *arg) {
 
     // Notify parent we are done.
     hc_ATOMIC_STORE(&childDone, CHILD_DONE, hc_ATOMIC_RELEASE);
-    int32_t hc_UNUSED status = sys_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
-    debug_ASSERT(status >= 0);
+    debug_CHECK(sys_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), >= 0);
 
     sys_exit(0);
 }
