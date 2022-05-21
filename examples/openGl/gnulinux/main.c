@@ -29,12 +29,12 @@ static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **en
     printf = dlsym(libcHandle, "printf");
     if (dlerror() != NULL) return 1;
 
-    struct window window;
-    int32_t status = window_init(&window, envp);
+    int32_t status = window_init(envp);
     if (status < 0) return 1;
 
-    status = window_run(&window);
-    window_deinit(&window);
+    status = window_run();
+    window_deinit();
+    dlclose(libcHandle);
     if (status < 0) {
         printf("Error while running (%d)\n", status);
         return 1;

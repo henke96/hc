@@ -79,3 +79,7 @@ hc_UNUSED
 static inline int32_t wgl_swapInterval(struct wgl *self, int32_t interval) {
     return self->wglSwapIntervalEXT(interval);
 }
+
+static inline int32_t wgl_swapBuffers(struct wgl *self) {
+    return SwapBuffers(self->dc);
+}

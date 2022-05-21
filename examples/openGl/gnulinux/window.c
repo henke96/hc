@@ -10,11 +10,13 @@ struct window {
     uint32_t windowId;
 };
 
-static int32_t window_init(struct window *self, char **envp) {
-    self->state = window_INIT;
+static struct window window;
+
+static int32_t window_init(char **envp) {
+    window.state = window_INIT;
 
     // Initialise EGL.
-    int32_t status = egl_init(&self->egl);
+    int32_t status = egl_init(&window.egl);
     if (status < 0) {
         printf("Failed to initalise EGL (%d)\n", status);
         return -1;
@@ -32,7 +34,7 @@ static int32_t window_init(struct window *self, char **envp) {
         egl_CONTEXT_MINOR_VERSION, 0,
         egl_NONE
     };
-    status = egl_createContext(&self->egl, egl_OPENGL_ES_API, &configAttributes[0], &contextAttributes[0]);
+    status = egl_createContext(&window.egl, egl_OPENGL_ES_API, &configAttributes[0], &contextAttributes[0]);
     if (status < 0) {
         printf("Failed to create EGL context (%d)\n", status);
         goto cleanup_egl;
@@ -49,10 +51,10 @@ static int32_t window_init(struct window *self, char **envp) {
     if (xAuthorityFile != NULL && xauth_init(&xauth, xAuthorityFile) == 0) {
         struct xauth_entry entry = {0}; // Zeroed in case `xauth_nextEntry` fails.
         xauth_nextEntry(&xauth, &entry);
-        status = x11Client_init(&self->x11Client, &serverAddr, sizeof(serverAddr), &entry);
+        status = x11Client_init(&window.x11Client, &serverAddr, sizeof(serverAddr), &entry);
         xauth_deinit(&xauth);
     } else {
-        status = x11Client_init(&self->x11Client, &serverAddr, sizeof(serverAddr), &(struct xauth_entry) {0});
+        status = x11Client_init(&window.x11Client, &serverAddr, sizeof(serverAddr), &(struct xauth_entry) {0});
     }
     if (status < 0) {
         printf("Failed to initialise x11Client (%d)\n", status);
@@ -60,12 +62,12 @@ static int32_t window_init(struct window *self, char **envp) {
     }
 
     // Send requests to create and map X11 window.
-    self->windowId = x11Client_nextId(&self->x11Client);
+    window.windowId = x11Client_nextId(&window.x11Client);
     uint64_t rootsOffset = (
-        util_ALIGN_FORWARD(self->x11Client.setupResponse->vendorLength, 4) +
-        sizeof(struct x11_format) * self->x11Client.setupResponse->numPixmapFormats
+        util_ALIGN_FORWARD(window.x11Client.setupResponse->vendorLength, 4) +
+        sizeof(struct x11_format) * window.x11Client.setupResponse->numPixmapFormats
     );
-    struct x11_screen *screen = (void *)&self->x11Client.setupResponse->data[rootsOffset]; // Use first screen.
+    struct x11_screen *screen = (void *)&window.x11Client.setupResponse->data[rootsOffset]; // Use first screen.
     uint32_t parentId = screen->windowId;
 
     struct requests {
@@ -79,7 +81,7 @@ static int32_t window_init(struct window *self, char **envp) {
             .opcode = x11_createWindow_OPCODE,
             .depth = 0,
             .length = (sizeof(windowRequests.createWindow) + sizeof(windowRequests.createWindowValues)) / 4,
-            .windowId = self->windowId,
+            .windowId = window.windowId,
             .parentId = parentId,
             .width = 200,
             .height = 200,
@@ -98,86 +100,86 @@ static int32_t window_init(struct window *self, char **envp) {
         }
     };
 
-    if (x11Client_sendRequests(&self->x11Client, &windowRequests, sizeof(windowRequests), 2) < 0) {
+    if (x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 2) < 0) {
         printf("Failed to send x11 window requests\n");
         goto cleanup_x11Client;
     }
     return 0;
 
     cleanup_x11Client:
-    x11Client_deinit(&self->x11Client);
+    x11Client_deinit(&window.x11Client);
     cleanup_egl:
-    egl_deinit(&self->egl);
+    egl_deinit(&window.egl);
     return -1;
 }
 
-static int32_t window_run(struct window *self) {
+static int32_t window_run(void) {
     for (;;) {
-        int32_t msgLength = x11Client_nextMessage(&self->x11Client);
+        int32_t msgLength = x11Client_nextMessage(&window.x11Client);
         if (msgLength == 0) {
-            int32_t numRead = x11Client_receive(&self->x11Client);
+            int32_t numRead = x11Client_receive(&window.x11Client);
             if (numRead == 0) return 0;
             if (numRead < 0) return -1;
             continue;
         }
-        uint8_t msgType = self->x11Client.receiveBuffer[0];
+        uint8_t msgType = window.x11Client.receiveBuffer[0];
         if (msgType == x11_TYPE_ERROR) {
-            uint8_t errorCode = self->x11Client.receiveBuffer[1];
-            uint16_t sequenceNumber = *(uint16_t *)&self->x11Client.receiveBuffer[2];
+            uint8_t errorCode = window.x11Client.receiveBuffer[1];
+            uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
             printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
             return -2; // For now we always exit on X11 errors.
         }
 
-        switch (self->state) {
+        switch (window.state) {
             case window_INIT: {
                 // In this state we are waiting for a MapNotify event, everything else is ignored.
                 if (msgType != x11_mapNotify_TYPE) {
                     printf("INIT: Ignored message type: %d\n", msgType);
                     break;
                 }
-                int32_t status = egl_setupSurface(&self->egl, (uint32_t)self->windowId);
+                int32_t status = egl_setupSurface(&window.egl, (uint32_t)window.windowId);
                 if (status < 0) {
                     printf("Failed to setup EGL surface (%d)\n", status);
                     return -3;
                 }
-                status = gl_init(&self->egl);
+                status = gl_init(&window.egl);
                 if (status < 0) {
                     printf("Failed to initialise GL (%d)\n", status);
                     return -4;
                 }
                 // Try to disable vsync.
-                egl_swapInterval(&self->egl, 0);
+                egl_swapInterval(&window.egl, 0);
 
                 status = game_init();
                 if (status < 0) {
                     printf("Failed to initialise game (%d)\n", status);
                     return -5;
                 }
-                self->state = window_RUNNING;
+                window.state = window_RUNNING;
                 break;
             }
             case window_RUNNING: {
                 printf("RUNNING: Got message type: %d\n", msgType);
                 if (msgType == x11_configureNotify_TYPE) {
-                    struct x11_configureNotify *configureNotify = (void *)&self->x11Client.receiveBuffer[0];
+                    struct x11_configureNotify *configureNotify = (void *)&window.x11Client.receiveBuffer[0];
                     game_resize(configureNotify->width, configureNotify->height);
                 } else if (
                     msgType == x11_expose_TYPE &&
-                    ((struct x11_expose *)&self->x11Client.receiveBuffer[0])->count == 0
+                    ((struct x11_expose *)&window.x11Client.receiveBuffer[0])->count == 0
                 ) {
                     if (game_draw() < 0) return -6;
-                    if (!egl_swapBuffers(&self->egl)) return -7;
+                    if (!egl_swapBuffers(&window.egl)) return -7;
                 }
                 break;
             }
             default: hc_UNREACHABLE;
         }
-        x11Client_ackMessage(&self->x11Client, msgLength);
+        x11Client_ackMessage(&window.x11Client, msgLength);
     }
 }
 
-static void window_deinit(struct window *self) {
-    if (self->state == window_RUNNING) game_deinit();
-    x11Client_deinit(&self->x11Client);
-    egl_deinit(&self->egl);
+static void window_deinit(void) {
+    if (window.state == window_RUNNING) game_deinit();
+    x11Client_deinit(&window.x11Client);
+    egl_deinit(&window.egl);
 }

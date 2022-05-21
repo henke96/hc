@@ -207,6 +207,33 @@ struct PIXELFORMATDESCRIPTOR {
 #define WM_QUEUESYNC 0x0023
 #define WM_GETMINMAXINFO 0x0024
 
+#define QS_KEY 0x0001
+#define QS_MOUSEMOVE 0x0002
+#define QS_MOUSEBUTTON 0x0004
+#define QS_POSTMESSAGE 0x0008
+#define QS_TIMER 0x0010
+#define QS_PAINT 0x0020
+#define QS_SENDMESSAGE 0x0040
+#define QS_HOTKEY 0x0080
+#define QS_ALLPOSTMESSAGE 0x0100
+#define QS_RAWINPUT 0x0400
+#define QS_TOUCH 0x0800
+#define QS_POINTER 0x1000
+
+#define QS_MOUSE (QS_MOUSEMOVE | QS_MOUSEBUTTON)
+#define QS_INPUT (QS_MOUSE | QS_KEY | QS_RAWINPUT | QS_TOUCH | QS_POINTER)
+#define QS_ALLEVENTS (QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY)
+#define QS_ALLINPUT (QS_INPUT | QS_POSTMESSAGE | QS_TIMER | QS_PAINT | QS_HOTKEY | QS_SENDMESSAGE)
+
+#define PM_NOREMOVE 0x0000
+#define PM_REMOVE 0x0001
+#define PM_NOYIELD 0x0002
+
+#define PM_QS_INPUT (QS_INPUT << 16)
+#define PM_QS_POSTMESSAGE ((QS_POSTMESSAGE | QS_HOTKEY | QS_TIMER) << 16)
+#define PM_QS_PAINT (QS_PAINT << 16)
+#define PM_QS_SENDMESSAGE (QS_SENDMESSAGE << 16)
+
 struct WNDCLASSW {
     uint32_t style;
     int64_t (*windowProc)(void *handle, uint32_t message, uint64_t wParam, int64_t lParam);
@@ -255,6 +282,7 @@ hc_DLLIMPORT void *GetProcAddress(void *moduleHandle, const char *procName);
 // user32.lib
 hc_DLLIMPORT int32_t MessageBoxW(void *windowHandle, const uint16_t *text, const uint16_t *caption, uint32_t type);
 hc_DLLIMPORT uint16_t RegisterClassW(const struct WNDCLASSW *windowClass);
+hc_DLLIMPORT int32_t UnregisterClassW(const uint16_t *className, void *instanceHandle);
 hc_DLLIMPORT int64_t DefWindowProcW(void *windowHandle, uint32_t message, uint64_t wParam, int64_t lParam);
 hc_DLLIMPORT void *CreateWindowExW(
     uint32_t exStyle,
@@ -271,8 +299,10 @@ hc_DLLIMPORT void *CreateWindowExW(
     void *param
 );
 hc_DLLIMPORT int32_t ShowWindow(void *windowHandle, int32_t showCommand);
+hc_DLLIMPORT int32_t DestroyWindow(void *windowHandle);
 
 hc_DLLIMPORT int32_t GetMessageW(struct MSG *msg, void *windowHandle, uint32_t msgFilterMin, uint32_t msgFilterMax);
+hc_DLLIMPORT int32_t PeekMessageW(struct MSG *msg, void *windowHandle, uint32_t msgFilterMin, uint32_t msgFilterMax, uint32_t removeMsg);
 hc_DLLIMPORT int32_t TranslateMessage(const struct MSG *msg);
 hc_DLLIMPORT int64_t DispatchMessageW(const struct MSG *msg);
 hc_DLLIMPORT void PostQuitMessage(int32_t exitCode);
