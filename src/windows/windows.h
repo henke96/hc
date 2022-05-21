@@ -309,9 +309,12 @@ hc_DLLIMPORT int32_t PeekMessageW(struct MSG *msg, void *windowHandle, uint32_t 
 hc_DLLIMPORT int32_t TranslateMessage(const struct MSG *msg);
 hc_DLLIMPORT int64_t DispatchMessageW(const struct MSG *msg);
 hc_DLLIMPORT void PostQuitMessage(int32_t exitCode);
+hc_DLLIMPORT int32_t PostMessageW(void *windowHandle, uint32_t msg, uint64_t wParam, int64_t lParam);
 hc_DLLIMPORT void *GetDC(void *windowHandle);
+hc_DLLIMPORT int32_t ReleaseDC(void *windowHandle, void *dc);
 
 // gdi32.lib
 hc_DLLIMPORT int32_t ChoosePixelFormat(void *dc, const struct PIXELFORMATDESCRIPTOR *pfd);
 hc_DLLIMPORT int32_t SetPixelFormat(void *dc, int32_t format, const struct PIXELFORMATDESCRIPTOR *pfd);
+hc_DLLIMPORT int32_t DescribePixelFormat(void *dc, int32_t pixelFormat, uint32_t size, struct PIXELFORMATDESCRIPTOR *pfd);
 hc_DLLIMPORT int32_t SwapBuffers(void *dc);

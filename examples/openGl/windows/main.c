@@ -7,12 +7,14 @@
 #include "../../../src/windows/debug.c"
 #include "../../../src/windows/wgl.c"
 
-extern void *__ImageBase;
-
 #include "gl.c"
 #define game_EXPORT(NAME) static
 #include "../game.c"
 #include "window.c"
+
+// Use dedicated GPU.
+hc_DLLEXPORT uint32_t NvOptimusEnablement = 0x00000001;
+hc_DLLEXPORT uint32_t AmdPowerXpressRequestHighPerformance = 0x00000001;
 
 int32_t _fltused; // TODO: Figure out why this is needed.
 
@@ -22,9 +24,12 @@ void noreturn main(void) {
     WriteFile(stdOutHandle, "Hello!\n", 7, NULL, NULL);
 
     int32_t status = window_init();
-    if (status < 0) ExitProcess(1);
+    if (status < 0) {
+        debug_printNum("Failed to initialise window (", status, ")\n");
+        ExitProcess(1);
+    }
 
-    status = window_run();
+    window_run();
     window_deinit();
-    ExitProcess((uint32_t)status);
+    ExitProcess(0);
 }

@@ -1,5 +1,8 @@
+extern void *__ImageBase;
+
 struct window {
     struct wgl wgl;
+    void *dc;
     void *windowHandle;
 };
 
@@ -13,24 +16,22 @@ static int64_t window_proc(
 ) {
     switch (message) {
         case WM_CREATE: {
-            void *dc = GetDC(windowHandle);
-            if (dc == NULL) return -1;
+            window.dc = GetDC(windowHandle);
+            if (window.dc == NULL) return -1;
 
-            struct PIXELFORMATDESCRIPTOR pfd = {
-                .size = sizeof(pfd),
-                .version = 1,
-                .flags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
-                .pixelType = PFD_TYPE_RGBA,
-                .colorBits = 24, // TODO: 24 or 32?
-                .depthBits = 24,
-                .stencilBits = 8,
-                .layerType = PFD_MAIN_PLANE
+            int32_t formatAttributes[] = {
+                wgl_DRAW_TO_WINDOW_ARB, 1,
+                wgl_SUPPORT_OPENGL_ARB, 1,
+                wgl_DOUBLE_BUFFER_ARB, 1,
+                wgl_ACCELERATION_ARB, wgl_FULL_ACCELERATION_ARB,
+                wgl_PIXEL_TYPE_ARB, wgl_TYPE_RGBA_ARB,
+                wgl_RED_BITS_ARB, 8,
+                wgl_GREEN_BITS_ARB, 8,
+                wgl_BLUE_BITS_ARB, 8,
+                wgl_DEPTH_BITS_ARB, 24,
+                wgl_STENCIL_BITS_ARB, 8,
+                0
             };
-            int32_t format = ChoosePixelFormat(dc, &pfd);
-            if (format == 0 || !SetPixelFormat(dc, format, &pfd)) return -1;
-
-            if (wgl_init(&window.wgl, dc) < 0) return -1;
-
             // OpenGL 4.3 is compatible with OpenGL ES 3.0.
             int32_t contextAttributes[] = {
                 wgl_CONTEXT_MAJOR_VERSION_ARB, 4,
@@ -38,20 +39,32 @@ static int64_t window_proc(
                 wgl_CONTEXT_PROFILE_MASK_ARB, wgl_CONTEXT_CORE_PROFILE_BIT_ARB,
                 0
             };
-            if (wgl_updateContext(&window.wgl, &contextAttributes[0]) < 0) goto cleanup_wgl;
+            int32_t status = wgl_createContext(&window.wgl, window.dc, &formatAttributes[0], &contextAttributes[0]);
+            if (status < 0) {
+                debug_printNum("Failed to create context (", status, ")\n");
+                goto cleanup_dc;
+            }
             debug_CHECK(wgl_swapInterval(&window.wgl, 0), == 1);
 
-            if (gl_init(&window.wgl) < 0) goto cleanup_wgl;
-            if (game_init() < 0) goto cleanup_wgl;
+            if (gl_init(&window.wgl) < 0) goto cleanup_context;
+
+            status = game_init();
+            if (status < 0) {
+                debug_printNum("Failed to initialise game (", status, ")\n");
+                goto cleanup_context;
+            }
             return 0;
 
-            cleanup_wgl:
-            wgl_deinit(&window.wgl);
+            cleanup_context:
+            wgl_destroyContext(&window.wgl, window.dc);
+            cleanup_dc:
+            debug_CHECK(ReleaseDC(windowHandle, window.dc), == 1);
             return -1;
         };
         case WM_DESTROY: {
             game_deinit();
-            wgl_deinit(&window.wgl);
+            wgl_destroyContext(&window.wgl, window.dc);
+            debug_CHECK(ReleaseDC(windowHandle, window.dc), == 1);
             PostQuitMessage(0);
             return 0;
         }
@@ -66,15 +79,21 @@ static int64_t window_proc(
 }
 
 static int32_t window_init(void) {
+    if (wgl_init(&window.wgl) < 0) return -1;
+
+    int32_t status;
     struct WNDCLASSW windowClass = {
         .instanceHandle = __ImageBase,
         .className = u"gl",
         .windowProc = window_proc,
-        .style = CS_OWNDC
+        .style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW
     };
-    if (!RegisterClassW(&windowClass)) return -1;
+    if (!RegisterClassW(&windowClass)) {
+        status = -2;
+        goto cleanup_wgl;
+    }
 
-    void *windowHandle = CreateWindowExW(
+    window.windowHandle = CreateWindowExW(
         0,
         windowClass.className,
         u"",
@@ -85,14 +104,20 @@ static int32_t window_init(void) {
         windowClass.instanceHandle,
         NULL
     );
-    if (windowHandle == NULL) {
-        debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), == 1);
-        return -2;
+    if (window.windowHandle == NULL) {
+        status = -3;
+        goto cleanup_windowClass;
     }
     return 0;
+
+    cleanup_windowClass:
+    debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), == 1);
+    cleanup_wgl:
+    wgl_deinit(&window.wgl);
+    return status;
 }
 
-static int32_t window_run(void) {
+static void window_run(void) {
     int64_t frameCounter = 0;
     int64_t timerFrequency;
     QueryPerformanceFrequency(&timerFrequency);
@@ -102,11 +127,11 @@ static int32_t window_run(void) {
     struct MSG msg;
     for (;;) {
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
-            if (msg.message == WM_QUIT) return (int32_t)msg.wParam;
+            if (msg.message == WM_QUIT) return;
             DispatchMessageW(&msg);
         }
-        if (game_draw() < 0 || !wgl_swapBuffers(&window.wgl)) {
-            debug_CHECK(DestroyWindow(window.windowHandle), != 0);
+        if (game_draw() < 0 || !SwapBuffers(window.dc)) {
+            debug_CHECK(PostMessageW(window.windowHandle, WM_CLOSE, 0, 0), != 0);
             continue;
         }
 
@@ -123,4 +148,5 @@ static int32_t window_run(void) {
 
 static void window_deinit(void) {
     debug_CHECK(UnregisterClassW(u"gl", __ImageBase), == 1);
+    wgl_deinit(&window.wgl);
 }
