@@ -1,6 +1,7 @@
 #include "../../../src/hc.h"
 #include "../../../src/util.c"
 #include "../../../src/gl.h"
+#include "../../../src/libc/musl.c"
 #include "../../../src/windows/wgl.h"
 #include "../../../src/windows/windows.h"
 #include "../../../src/windows/debug.c"

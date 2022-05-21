@@ -279,6 +279,9 @@ hc_DLLIMPORT void *LoadLibraryW(const uint16_t *libFileName);
 hc_DLLIMPORT int32_t FreeLibrary(void *dlHandle);
 hc_DLLIMPORT void *GetProcAddress(void *moduleHandle, const char *procName);
 
+hc_DLLIMPORT int32_t QueryPerformanceFrequency(int64_t *frequency);
+hc_DLLIMPORT int32_t QueryPerformanceCounter(int64_t *count);
+
 // user32.lib
 hc_DLLIMPORT int32_t MessageBoxW(void *windowHandle, const uint16_t *text, const uint16_t *caption, uint32_t type);
 hc_DLLIMPORT uint16_t RegisterClassW(const struct WNDCLASSW *windowClass);

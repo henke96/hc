@@ -1,6 +1,7 @@
 *.bin*
 *.efi*
 *.exe*
+*.pdb
 *.wasm*
 *.img
 *.so.*

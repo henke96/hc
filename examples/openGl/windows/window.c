@@ -93,13 +93,31 @@ static int32_t window_init(void) {
 }
 
 static int32_t window_run(void) {
+    int64_t frameCounter = 0;
+    int64_t timerFrequency;
+    QueryPerformanceFrequency(&timerFrequency);
+    int64_t prevTime;
+    QueryPerformanceCounter(&prevTime);
+
     struct MSG msg;
     for (;;) {
         while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
             if (msg.message == WM_QUIT) return (int32_t)msg.wParam;
             DispatchMessageW(&msg);
         }
-        if (game_draw() < 0 || !wgl_swapBuffers(&window.wgl)) debug_CHECK(DestroyWindow(window.windowHandle), != 0);
+        if (game_draw() < 0 || !wgl_swapBuffers(&window.wgl)) {
+            debug_CHECK(DestroyWindow(window.windowHandle), != 0);
+            continue;
+        }
+
+        ++frameCounter;
+        int64_t currentTime;
+        QueryPerformanceCounter(&currentTime);
+        if (currentTime - prevTime >= timerFrequency) {
+            debug_printNum("FPS: ", frameCounter, "\n");
+            frameCounter = 0;
+            prevTime = currentTime;
+        }
     }
 }
 

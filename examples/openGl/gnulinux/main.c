@@ -1,7 +1,7 @@
 #include "../../../src/hc.h"
 #include "../../../src/util.c"
 #include "../../../src/gl.h"
-#include "../../../src/libc/small.c"
+#include "../../../src/libc/musl.c"
 #include "../../../src/linux/linux.h"
 #include "../../../src/linux/util.c"
 #include "../../../src/linux/sys.c"
