@@ -39,7 +39,7 @@ static int64_t window_proc(
                 0
             };
             if (wgl_updateContext(&window.wgl, &contextAttributes[0]) < 0) goto cleanup_wgl;
-            wgl_swapInterval(&window.wgl, 0);
+            debug_CHECK(wgl_swapInterval(&window.wgl, 0), == 1);
 
             if (gl_init(&window.wgl) < 0) goto cleanup_wgl;
             if (game_init() < 0) goto cleanup_wgl;
@@ -86,7 +86,7 @@ static int32_t window_init(void) {
         NULL
     );
     if (windowHandle == NULL) {
-        UnregisterClassW(u"gl", __ImageBase);
+        debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), == 1);
         return -2;
     }
     return 0;
@@ -99,10 +99,10 @@ static int32_t window_run(void) {
             if (msg.message == WM_QUIT) return (int32_t)msg.wParam;
             DispatchMessageW(&msg);
         }
-        if (game_draw() < 0 || !wgl_swapBuffers(&window.wgl)) DestroyWindow(window.windowHandle);
+        if (game_draw() < 0 || !wgl_swapBuffers(&window.wgl)) debug_CHECK(DestroyWindow(window.windowHandle), != 0);
     }
 }
 
 static void window_deinit(void) {
-    UnregisterClassW(u"gl", __ImageBase);
+    debug_CHECK(UnregisterClassW(u"gl", __ImageBase), == 1);
 }

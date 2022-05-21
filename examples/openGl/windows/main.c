@@ -3,6 +3,7 @@
 #include "../../../src/gl.h"
 #include "../../../src/windows/wgl.h"
 #include "../../../src/windows/windows.h"
+#include "../../../src/windows/debug.c"
 #include "../../../src/windows/wgl.c"
 
 extern void *__ImageBase;

@@ -42,11 +42,11 @@ static int32_t wgl_init(struct wgl *self, void *dc) {
     return 0;
 
     cleanup_context_current:
-    self->wglMakeCurrent(self->dc, NULL);
+    debug_CHECK(self->wglMakeCurrent(self->dc, NULL), == 1);
     cleanup_context:
-    self->wglDeleteContext(self->context);
+    debug_CHECK(self->wglDeleteContext(self->context), == 1);
     cleanup_dlHandle:
-    FreeLibrary(self->dlHandle);
+    debug_CHECK(FreeLibrary(self->dlHandle), != 0);
     return status;
 }
 
@@ -54,18 +54,18 @@ static int32_t wgl_updateContext(struct wgl *self, const int32_t *contextAttribu
     void *newContext = self->wglCreateContextAttribsARB(self->dc, NULL, contextAttributes);
     if (newContext == NULL) return -1;
 
-    self->wglMakeCurrent(self->dc, NULL);
-    self->wglDeleteContext(self->context);
+    debug_CHECK(self->wglMakeCurrent(self->dc, NULL), == 1);
+    debug_CHECK(self->wglDeleteContext(self->context), == 1);
 
     self->context = newContext;
-    self->wglMakeCurrent(self->dc, self->context);
+    debug_CHECK(self->wglMakeCurrent(self->dc, self->context), == 1);
     return 0;
 }
 
 static void wgl_deinit(struct wgl *self) {
-    self->wglMakeCurrent(self->dc, NULL);
-    self->wglDeleteContext(self->context);
-    FreeLibrary(self->dlHandle);
+    debug_CHECK(self->wglMakeCurrent(self->dc, NULL), == 1);
+    debug_CHECK(self->wglDeleteContext(self->context), == 1);
+    debug_CHECK(FreeLibrary(self->dlHandle), != 0);
 }
 
 hc_UNUSED
