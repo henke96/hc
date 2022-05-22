@@ -15,7 +15,6 @@
             let wasmMemoryS32;
             let wasmMemoryU32;
             let wasmExports;
-            let canvas;
 
             function glPush(object) {
                 return glObjects.push(object) - 1;
@@ -25,25 +24,9 @@
                 glObjects[index] = null;
                 return object;
             }
-
-            let mainLoopFrameCounter;
-            let mainLoopPrevTime;
-            function mainLoop() {
-                let status = wasmExports.game_draw();
-                if (status < 0) throw "Failed to draw game (" + status + ")";
-
-                ++mainLoopFrameCounter;
-                let currentTime = performance.now();
-                if (currentTime - mainLoopPrevTime >= 1000) {
-                    console.log("FPS: " + mainLoopFrameCounter);
-                    mainLoopFrameCounter = 0;
-                    mainLoopPrevTime = currentTime;
-                }
-                window.requestAnimationFrame(mainLoop);
-            }
             function main() {
                 // Initialise webGL.
-                canvas = document.getElementById("gameCanvas");
+                let canvas = document.getElementById("gameCanvas");
                 canvas.width = window.innerWidth;
                 canvas.height = window.innerHeight;
 
@@ -127,8 +110,21 @@
                             wasmExports.game_resize(width, height);
                         });
 
-                        mainLoopFrameCounter = 0;
-                        mainLoopPrevTime = performance.now();
+                        let frameCounter = 0;
+                        let prevTime = performance.now();
+                        let mainLoop = () => {
+                            let status = wasmExports.game_draw();
+                            if (status < 0) throw "Failed to draw game (" + status + ")";
+
+                            ++frameCounter;
+                            let currentTime = performance.now();
+                            if (currentTime - prevTime >= 1000) {
+                                console.log("FPS: " + frameCounter);
+                                frameCounter = 0;
+                                prevTime = currentTime;
+                            }
+                            window.requestAnimationFrame(mainLoop);
+                        };
                         mainLoop();
                     }
                 );
