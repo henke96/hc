@@ -1,20 +1,13 @@
-enum window_state {
-    window_INIT,
-    window_RUNNING
-};
-
 struct window {
     struct x11Client x11Client;
     struct egl egl;
-    enum window_state state;
+    int32_t epollFd;
     uint32_t windowId;
 };
 
 static struct window window;
 
 static int32_t window_init(char **envp) {
-    window.state = window_INIT;
-
     // Initialise EGL.
     int32_t status = egl_init(&window.egl);
     if (status < 0) {
@@ -91,7 +84,7 @@ static int32_t window_init(char **envp) {
             .valueMask = x11_createWindow_EVENT_MASK
         },
         .createWindowValues = {
-            x11_EVENT_STRUCTURE_NOTIFY_BIT | x11_EVENT_EXPOSURE_BIT
+            x11_EVENT_STRUCTURE_NOTIFY_BIT
         },
         .mapWindow = {
             .opcode = x11_mapWindow_OPCODE,
@@ -99,27 +92,21 @@ static int32_t window_init(char **envp) {
             .windowId = windowRequests.createWindow.windowId
         }
     };
-
-    if (x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 2) < 0) {
-        printf("Failed to send x11 window requests\n");
+    status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 2);
+    if (status < 0) {
+        printf("Failed to send x11 window requests (%d)\n", status);
         goto cleanup_x11Client;
     }
-    return 0;
 
-    cleanup_x11Client:
-    x11Client_deinit(&window.x11Client);
-    cleanup_egl:
-    egl_deinit(&window.egl);
-    return -1;
-}
-
-static int32_t window_run(void) {
+    // Wait for MapNotify event.
     for (;;) {
         int32_t msgLength = x11Client_nextMessage(&window.x11Client);
         if (msgLength == 0) {
             int32_t numRead = x11Client_receive(&window.x11Client);
-            if (numRead == 0) return 0;
-            if (numRead < 0) return -1;
+            if (numRead <= 0) {
+                status = -2;
+                goto cleanup_x11Client;
+            }
             continue;
         }
         uint8_t msgType = window.x11Client.receiveBuffer[0];
@@ -127,59 +114,120 @@ static int32_t window_run(void) {
             uint8_t errorCode = window.x11Client.receiveBuffer[1];
             uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
             printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
-            return -2; // For now we always exit on X11 errors.
-        }
-
-        switch (window.state) {
-            case window_INIT: {
-                // In this state we are waiting for a MapNotify event, everything else is ignored.
-                if (msgType != x11_mapNotify_TYPE) {
-                    printf("INIT: Ignored message type: %d\n", msgType);
-                    break;
-                }
-                int32_t status = egl_setupSurface(&window.egl, (uint32_t)window.windowId);
-                if (status < 0) {
-                    printf("Failed to setup EGL surface (%d)\n", status);
-                    return -3;
-                }
-                status = gl_init(&window.egl);
-                if (status < 0) {
-                    printf("Failed to initialise GL (%d)\n", status);
-                    return -4;
-                }
-                // Try to disable vsync.
-                debug_CHECK(egl_swapInterval(&window.egl, 0), == egl_TRUE);
-
-                status = game_init();
-                if (status < 0) {
-                    printf("Failed to initialise game (%d)\n", status);
-                    return -5;
-                }
-                window.state = window_RUNNING;
-                break;
-            }
-            case window_RUNNING: {
-                printf("RUNNING: Got message type: %d\n", msgType);
-                if (msgType == x11_configureNotify_TYPE) {
-                    struct x11_configureNotify *configureNotify = (void *)&window.x11Client.receiveBuffer[0];
-                    game_resize(configureNotify->width, configureNotify->height);
-                } else if (
-                    msgType == x11_expose_TYPE &&
-                    ((struct x11_expose *)&window.x11Client.receiveBuffer[0])->count == 0
-                ) {
-                    if (game_draw() < 0) return -6;
-                    if (!egl_swapBuffers(&window.egl)) return -7;
-                }
-                break;
-            }
-            default: hc_UNREACHABLE;
+            status = -3;
+            goto cleanup_x11Client;
         }
         x11Client_ackMessage(&window.x11Client, msgLength);
+        if (msgType == x11_mapNotify_TYPE) break;
+    }
+
+    // Setup EGL surface.
+    status = egl_setupSurface(&window.egl, (uint32_t)window.windowId);
+    if (status < 0) {
+        printf("Failed to setup EGL surface (%d)\n", status);
+        goto cleanup_x11Client;
+    }
+    debug_CHECK(egl_swapInterval(&window.egl, 0), == egl_TRUE);
+
+    // Load OpenGL functions.
+    status = gl_init(&window.egl);
+    if (status < 0) {
+        printf("Failed to initialise GL (%d)\n", status);
+        goto cleanup_x11Client;
+    }
+
+    // Initialise game.
+    status = game_init();
+    if (status < 0) {
+        printf("Failed to initialise game (%d)\n", status);
+        goto cleanup_x11Client;
+    }
+
+    // Setup epoll.
+    window.epollFd = sys_epoll_create1(0);
+    if (window.epollFd < 0) {
+        status = -4;
+        goto cleanup_x11Client;
+    }
+    struct epoll_event x11SocketEvent = {
+        .events = EPOLLIN,
+        .data.ptr = &window.x11Client.socketFd
+    };
+    if (sys_epoll_ctl(window.epollFd, EPOLL_CTL_ADD, window.x11Client.socketFd, &x11SocketEvent) < 0) {
+        status = -5;
+        goto cleanup_epollFd;
+    }
+
+    return 0;
+
+    cleanup_epollFd:
+    debug_CHECK(sys_close(window.epollFd), == 0);
+    cleanup_x11Client:
+    x11Client_deinit(&window.x11Client);
+    cleanup_egl:
+    egl_deinit(&window.egl);
+    return status;
+}
+
+static int32_t window_run(void) {
+    uint64_t frameCounter;
+    struct timespec prev;
+    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), == 0);
+
+    // Main loop.
+    for (;;) {
+        // Process all inputs.
+        for (;;) {
+            struct epoll_event event;
+            int32_t status = sys_epoll_pwait(window.epollFd, &event, 1, 0, NULL);
+            if (status < 0) return -1;
+            if (status == 0) break;
+
+            int32_t eventFd = *((int32_t *)event.data.ptr);
+            if (eventFd == window.x11Client.socketFd) {
+                int32_t numRead = x11Client_receive(&window.x11Client);
+                if (numRead == 0) return 0;
+                if (numRead <= 0) return -2;
+
+                // Handle all received messages.
+                for (;;) {
+                    int32_t msgLength = x11Client_nextMessage(&window.x11Client);
+                    if (msgLength == 0) break;
+
+                    uint8_t msgType = window.x11Client.receiveBuffer[0];
+                    if (msgType == x11_TYPE_ERROR) {
+                        uint8_t errorCode = window.x11Client.receiveBuffer[1];
+                        uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
+                        printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
+                        return -3; // For now we always exit on X11 errors.
+                    }
+
+                    printf("Got message type: %d\n", msgType);
+                    if (msgType == x11_configureNotify_TYPE) {
+                        struct x11_configureNotify *configureNotify = (void *)&window.x11Client.receiveBuffer[0];
+                        game_resize(configureNotify->width, configureNotify->height);
+                    }
+                    x11Client_ackMessage(&window.x11Client, msgLength);
+                }
+            }
+        }
+        // Rendering.
+        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -4;
+
+        ++frameCounter;
+        struct timespec now;
+        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), == 0);
+        if (now.tv_sec > prev.tv_sec) {
+            printf("FPS: %llu\n", frameCounter);
+            frameCounter = 0;
+            prev = now;
+        }
     }
 }
 
 static void window_deinit(void) {
-    if (window.state == window_RUNNING) game_deinit();
+    game_deinit();
+    debug_CHECK(sys_close(window.epollFd), == 0);
     x11Client_deinit(&window.x11Client);
     egl_deinit(&window.egl);
 }

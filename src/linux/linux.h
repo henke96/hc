@@ -352,7 +352,6 @@ union epoll_data {
 
 struct epoll_event {
     uint32_t events;
-    int32_t __pad1;
     union epoll_data data;
 }
 #if hc_X86_64
