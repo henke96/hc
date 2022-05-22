@@ -1,5 +1,11 @@
 <!DOCTYPE html>
 <html>
+    <head>
+        <style>
+            body { padding: 0; margin: 0; }
+            #gameCanvas { display: block; }
+        </style>
+    </head>
     <body>
         <script>
             "use strict";
@@ -8,6 +14,8 @@
             let wasmMemoryU8;
             let wasmMemoryS32;
             let wasmMemoryU32;
+            let wasmExports;
+            let canvas;
 
             function glPush(object) {
                 return glObjects.push(object) - 1;
@@ -17,9 +25,28 @@
                 glObjects[index] = null;
                 return object;
             }
+
+            let mainLoopFrameCounter;
+            let mainLoopPrevTime;
+            function mainLoop() {
+                let status = wasmExports.game_draw();
+                if (status < 0) throw "Failed to draw game (" + status + ")";
+
+                ++mainLoopFrameCounter;
+                let currentTime = performance.now();
+                if (currentTime - mainLoopPrevTime >= 1000) {
+                    console.log("FPS: " + mainLoopFrameCounter);
+                    mainLoopFrameCounter = 0;
+                    mainLoopPrevTime = currentTime;
+                }
+                window.requestAnimationFrame(mainLoop);
+            }
             function main() {
                 // Initialise webGL.
-                let canvas = document.getElementById("gameCanvas");
+                canvas = document.getElementById("gameCanvas");
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+
                 let gl = canvas.getContext("webgl2", { antialias: false });
                 if (gl === null) throw "Failed to initialise webgl2 context.";
 
@@ -84,27 +111,30 @@
                 };
                 WebAssembly.instantiateStreaming(fetch("release.wasm"), importObject).then(
                     object => {
-                        let wasmMemory = object.instance.exports.memory;
-                        wasmMemoryU8 = new Uint8Array(wasmMemory.buffer);
-                        wasmMemoryS32 = new Int32Array(wasmMemory.buffer);
-                        wasmMemoryU32 = new Uint32Array(wasmMemory.buffer);
-                        let exports = object.instance.exports;
+                        wasmExports = object.instance.exports;
+                        wasmMemoryU8 = new Uint8Array(wasmExports.memory.buffer);
+                        wasmMemoryS32 = new Int32Array(wasmExports.memory.buffer);
+                        wasmMemoryU32 = new Uint32Array(wasmExports.memory.buffer);
 
-                        let status = exports.game_init();
+                        let status = wasmExports.game_init();
                         if (status < 0) throw "Failed to initialise game (" + status + ")";
-                        status = exports.game_draw();
-                        if (status < 0) throw "Failed to draw game (" + status + ")";
-                        canvas.width = 800;
-                        canvas.height = 600;
-                        exports.game_resize(canvas.width, canvas.height);
-                        status = exports.game_draw();
-                        if (status < 0) throw "Failed to draw resized game (" + status + ")";
-                        exports.game_deinit();
+
+                        window.addEventListener("resize", () => {
+                            let width = window.innerWidth;
+                            let height = window.innerHeight;
+                            canvas.width = width;
+                            canvas.height = height;
+                            wasmExports.game_resize(width, height);
+                        });
+
+                        mainLoopFrameCounter = 0;
+                        mainLoopPrevTime = performance.now();
+                        mainLoop();
                     }
                 );
             }
             window.onload = main;
         </script>
-        <canvas width="600" height="480" id="gameCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
     </body>
 </html>
