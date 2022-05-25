@@ -7,8 +7,10 @@
 #include "../../../src/windows/debug.c"
 #include "../../../src/windows/wgl.c"
 
-#include "gl.c"
 #define game_EXPORT(NAME) static
+#include "gl.c"
+#include "../shaders.c"
+#include "../vertexArrays.c"
 #include "../game.c"
 #include "window.c"
 

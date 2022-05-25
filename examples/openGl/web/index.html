@@ -88,8 +88,9 @@
                         gl_deleteProgram: program => gl.deleteProgram(glPop(program)),
                         gl_clearColor: (red, green, blue, alpha) => gl.clearColor(red, green, blue, alpha),
                         gl_clear: mask => gl.clear(mask),
-                        gl_drawArrays: (mode, first, count) => gl.drawArrays(mode, first, count),
-                        gl_viewport: (x, y, width, height) => gl.viewport(x, y, width, height)
+                        gl_drawElementsInstanced: (mode, count, type, indices, primcount) => gl.drawElementsInstanced(mode, count, type, indices, primcount),
+                        gl_viewport: (x, y, width, height) => gl.viewport(x, y, width, height),
+                        gl_vertexAttribDivisor: (index, divisor) => gl.vertexAttribDivisor(index, divisor)
                     }
                 };
                 WebAssembly.instantiateStreaming(fetch("release.wasm"), importObject).then(

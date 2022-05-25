@@ -64,5 +64,8 @@ void gl_deleteVertexArrays(int32_t n, uint32_t *arrays);
 hc_WASM_IMPORT("env", "gl_deleteBuffers")
 void gl_deleteBuffers(int32_t n, uint32_t *buffers);
 
-hc_WASM_IMPORT("env", "gl_drawArrays")
-void gl_drawArrays(uint32_t mode, int32_t first, int32_t count);
+hc_WASM_IMPORT("env", "gl_drawElementsInstanced")
+void gl_drawElementsInstanced(uint32_t mode, int32_t count, uint32_t type, const void *indices, int32_t primcount);
+
+hc_WASM_IMPORT("env", "gl_vertexAttribDivisor")
+void gl_vertexAttribDivisor(uint32_t index, uint32_t divisor);
