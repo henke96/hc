@@ -55,31 +55,21 @@ static int32_t vertexArrays_init(void) {
         };
         gl_bufferData(gl_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], gl_STATIC_DRAW);
 
-        // Model view matrix buffer.
+        // Model-View matrix buffer.
         gl_bindBuffer(gl_ARRAY_BUFFER, vertexArrays_buffers[VERTEX_ARRAY][vertexArrays_MODELVIEW_MATRIX_BUFFER]);
         for (uint32_t i = 0; i < 4; ++i) {
             uint32_t attributeIndex = shaders_MODELVIEW_MATRIX_INDEX + i;
             gl_vertexAttribPointer(
                 attributeIndex,
                 4,
-                gl_SHORT,
-                gl_TRUE,
-                4 * 4 * sizeof(int16_t),
-                (void *)(size_t)(i * 4 * sizeof(int16_t))
+                gl_FLOAT,
+                gl_FALSE,
+                4 * 4 * sizeof(float),
+                (void *)(size_t)(i * 4 * sizeof(float))
             );
             gl_vertexAttribDivisor(attributeIndex, 1);
             gl_enableVertexAttribArray(attributeIndex);
         }
-
-        // TODO: Shouldn't fill it here.
-        int16_t matrix[] = {
-            INT16_MAX, 0, 0, 0,
-            0, INT16_MAX, 0, 0,
-            0, 0, INT16_MAX, 0,
-            0, 0, 0, INT16_MAX
-        };
-        gl_bufferData(gl_ARRAY_BUFFER, sizeof(matrix), &matrix[0], gl_STATIC_DRAW);
-
         #undef VERTEX_ARRAY
     }
 

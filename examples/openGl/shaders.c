@@ -21,6 +21,9 @@ static uint32_t shaders_mainProgram;
 
 static int32_t shaders_init(void) {
     // Compile main shader program.
+    shaders_mainProgram = gl_createProgram();
+    if (shaders_mainProgram == 0) return -1;
+
     uint32_t vertexShader = gl_createShader(gl_VERTEX_SHADER);
     gl_shaderSource(vertexShader, 1, &shaders_mainVertex, NULL);
     gl_compileShader(vertexShader);
@@ -29,8 +32,6 @@ static int32_t shaders_init(void) {
     gl_shaderSource(fragmentShader, 1, &shaders_mainFragment, NULL);
     gl_compileShader(fragmentShader);
 
-    shaders_mainProgram = gl_createProgram();
-    if (shaders_mainProgram == 0) return -1;
     gl_attachShader(shaders_mainProgram, vertexShader);
     gl_attachShader(shaders_mainProgram, fragmentShader);
     gl_linkProgram(shaders_mainProgram);
