@@ -23,7 +23,7 @@ static void mat_init(float *mat, float scale, float x, float y, float z) {
 
 // Left handed projection matrix: +X is right, +Y is up, +Z is forward.
 static void mat_init_projection(float *mat, double near, double far, double width, double height) {
-    const double fov = 1.0f; // 90 degrees.
+    const double fov = 1.0; // 90 degrees.
     mat[0] = (float)fov;
     mat[1] = 0;
     mat[2] = 0;
