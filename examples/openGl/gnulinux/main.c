@@ -22,6 +22,7 @@ static int32_t (*printf)(const char *restrict format, ...);
 #include "gl.c"
 #include "../shaders.c"
 #include "../vertexArrays.c"
+#include "../mat.c"
 #include "../game.c"
 #include "window.c"
 

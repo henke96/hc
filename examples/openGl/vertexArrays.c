@@ -32,14 +32,14 @@ static int32_t vertexArrays_init(void) {
         // Vertex buffer.
         gl_bindBuffer(gl_ARRAY_BUFFER, vertexArrays_buffers[VERTEX_ARRAY][vertexArrays_VERTEX_BUFFER]);
         gl_vertexAttribPointer(
-            shaders_POSITION_INDEX,
+            shaders_POSITION_LOC,
             3,
             gl_SHORT,
             gl_TRUE,
             0,
             0
         );
-        gl_enableVertexAttribArray(shaders_POSITION_INDEX);
+        gl_enableVertexAttribArray(shaders_POSITION_LOC);
 
         int16_t vertices[] = {
             -INT16_MAX/2, -INT16_MAX/2, 0,
@@ -58,7 +58,7 @@ static int32_t vertexArrays_init(void) {
         // Model-View matrix buffer.
         gl_bindBuffer(gl_ARRAY_BUFFER, vertexArrays_buffers[VERTEX_ARRAY][vertexArrays_MODELVIEW_MATRIX_BUFFER]);
         for (uint32_t i = 0; i < 4; ++i) {
-            uint32_t attributeIndex = shaders_MODELVIEW_MATRIX_INDEX + i;
+            uint32_t attributeIndex = shaders_MODELVIEW_MATRIX_LOC + i;
             gl_vertexAttribPointer(
                 attributeIndex,
                 4,

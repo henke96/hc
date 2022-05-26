@@ -1,3 +1,6 @@
+#define window_DEFAULT_WIDTH 640
+#define window_DEFAULT_HEIGHT 480
+
 struct window {
     struct x11Client x11Client;
     struct egl egl;
@@ -76,8 +79,8 @@ static int32_t window_init(char **envp) {
             .length = (sizeof(windowRequests.createWindow) + sizeof(windowRequests.createWindowValues)) / 4,
             .windowId = window.windowId,
             .parentId = parentId,
-            .width = 200,
-            .height = 200,
+            .width = window_DEFAULT_WIDTH,
+            .height = window_DEFAULT_HEIGHT,
             .borderWidth = 1,
             .class = x11_INPUT_OUTPUT,
             .visualId = eglVisualId,
@@ -137,7 +140,10 @@ static int32_t window_init(char **envp) {
     }
 
     // Initialise game.
-    status = game_init();
+    status = game_init(
+        windowRequests.createWindow.width,
+        windowRequests.createWindow.height
+    );
     if (status < 0) {
         printf("Failed to initialise game (%d)\n", status);
         goto cleanup_x11Client;
@@ -170,7 +176,7 @@ static int32_t window_init(char **envp) {
 }
 
 static int32_t window_run(void) {
-    uint64_t frameCounter;
+    uint64_t frameCounter = 0;
     struct timespec prev;
     debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), == 0);
 

@@ -69,3 +69,9 @@ void gl_drawElementsInstanced(uint32_t mode, int32_t count, uint32_t type, const
 
 hc_WASM_IMPORT("env", "gl_vertexAttribDivisor")
 void gl_vertexAttribDivisor(uint32_t index, uint32_t divisor);
+
+hc_WASM_IMPORT("env", "gl_uniformMatrix4fv")
+void gl_uniformMatrix4fv(int32_t location, int32_t count, uint8_t transpose, const float *value);
+
+hc_WASM_IMPORT("env", "gl_getUniformLocation")
+int32_t gl_getUniformLocation(uint32_t program, const char *name);

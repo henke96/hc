@@ -14,6 +14,7 @@
             let wasmMemoryU8;
             let wasmMemoryS32;
             let wasmMemoryU32;
+            let wasmMemoryF32;
             let wasmExports;
 
             function glPush(object) {
@@ -40,7 +41,7 @@
                         gl_shaderSource: (shader, count, string, length) => {
                             while (count) {
                                 --count;
-                                let start = wasmMemoryS32[(string >> 2) + count];
+                                let start = wasmMemoryU32[(string >> 2) + count];
                                 let end;
                                 if (!length) {
                                     for (end = start; wasmMemoryU8[end]; ++end);
@@ -90,7 +91,15 @@
                         gl_clear: mask => gl.clear(mask),
                         gl_drawElementsInstanced: (mode, count, type, indices, primcount) => gl.drawElementsInstanced(mode, count, type, indices, primcount),
                         gl_viewport: (x, y, width, height) => gl.viewport(x, y, width, height),
-                        gl_vertexAttribDivisor: (index, divisor) => gl.vertexAttribDivisor(index, divisor)
+                        gl_vertexAttribDivisor: (index, divisor) => gl.vertexAttribDivisor(index, divisor),
+                        gl_uniformMatrix4fv: (location, count, transpose, value) => {
+                            gl.uniformMatrix4fv(glObjects[location], transpose, wasmMemoryF32.subarray((value >> 2), (value >> 2) + count * 16));
+                        },
+                        gl_getUniformLocation: (program, name) => {
+                            let end;
+                            for (end = name; wasmMemoryU8[end]; ++end);
+                            return glPush(gl.getUniformLocation(glObjects[program], textDecoder.decode(wasmMemoryU8.subarray(name, end))));
+                        }
                     }
                 };
                 WebAssembly.instantiateStreaming(fetch("release.wasm"), importObject).then(
@@ -99,8 +108,9 @@
                         wasmMemoryU8 = new Uint8Array(wasmExports.memory.buffer);
                         wasmMemoryS32 = new Int32Array(wasmExports.memory.buffer);
                         wasmMemoryU32 = new Uint32Array(wasmExports.memory.buffer);
+                        wasmMemoryF32 = new Float32Array(wasmExports.memory.buffer);
 
-                        let status = wasmExports.game_init();
+                        let status = wasmExports.game_init(canvas.width, canvas.height);
                         if (status < 0) throw "Failed to initialise game (" + status + ")";
 
                         window.addEventListener("resize", () => {

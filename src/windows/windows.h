@@ -247,6 +247,21 @@ struct WNDCLASSW {
     uint16_t *className;
 };
 
+struct CREATESTRUCTW {
+    void *createParams;
+    void *instanceHandle;
+    void *menuHandle;
+    void *parentWindowHandle;
+    int32_t height;
+    int32_t width;
+    int32_t y;
+    int32_t x;
+    int32_t style;
+    uint16_t *name;
+    uint16_t *className;
+    uint32_t exStyle;
+};
+
 struct POINT {
     int32_t x;
     int32_t y;

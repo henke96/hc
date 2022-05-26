@@ -5,4 +5,5 @@
 #include "gl.h"
 #include "../shaders.c"
 #include "../vertexArrays.c"
+#include "../mat.c"
 #include "../game.c"

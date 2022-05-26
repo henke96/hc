@@ -22,6 +22,8 @@ static void (*gl_deleteVertexArrays)(int32_t n, uint32_t *arrays);
 static void (*gl_deleteBuffers)(int32_t n, uint32_t *buffers);
 static void (*gl_drawElementsInstanced)(uint32_t mode, int32_t count, uint32_t type, const void *indices, int32_t primcount);
 static void (*gl_vertexAttribDivisor)(uint32_t index, uint32_t divisor);
+static void (*gl_uniformMatrix4fv)(int32_t location, int32_t count, uint8_t transpose, const float *value);
+static int32_t (*gl_getUniformLocation)(uint32_t program, const char *name);
 
 static int32_t gl_init(struct wgl *wgl) {
     if ((gl_getError = wgl_getProcAddress(wgl, "glGetError")) == NULL) return -1;
@@ -48,5 +50,7 @@ static int32_t gl_init(struct wgl *wgl) {
     if ((gl_deleteBuffers = wgl_getProcAddress(wgl, "glDeleteBuffers")) == NULL) return -1;
     if ((gl_drawElementsInstanced = wgl_getProcAddress(wgl, "glDrawElementsInstanced")) == NULL) return -1;
     if ((gl_vertexAttribDivisor = wgl_getProcAddress(wgl, "glVertexAttribDivisor")) == NULL) return -1;
+    if ((gl_uniformMatrix4fv = wgl_getProcAddress(wgl, "glUniformMatrix4fv")) == NULL) return -1;
+    if ((gl_getUniformLocation = wgl_getProcAddress(wgl, "glGetUniformLocation")) == NULL) return -1;
     return 0;
 }

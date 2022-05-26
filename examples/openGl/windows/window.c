@@ -1,3 +1,6 @@
+#define window_DEFAULT_WIDTH 640
+#define window_DEFAULT_HEIGHT 480
+
 extern void *__ImageBase;
 
 struct window {
@@ -16,6 +19,7 @@ static int64_t window_proc(
 ) {
     switch (message) {
         case WM_CREATE: {
+            struct CREATESTRUCTW *createStruct = (void *)lParam;
             window.dc = GetDC(windowHandle);
             if (window.dc == NULL) return -1;
 
@@ -48,7 +52,7 @@ static int64_t window_proc(
 
             if (gl_init(&window.wgl) < 0) goto cleanup_context;
 
-            status = game_init();
+            status = game_init(createStruct->width, createStruct->height);
             if (status < 0) {
                 debug_printNum("Failed to initialise game (", status, ")\n");
                 goto cleanup_context;
@@ -98,7 +102,7 @@ static int32_t window_init(void) {
         windowClass.className,
         u"",
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        CW_USEDEFAULT, CW_USEDEFAULT, 200, 200,
+        CW_USEDEFAULT, CW_USEDEFAULT, window_DEFAULT_WIDTH, window_DEFAULT_HEIGHT,
         NULL,
         NULL,
         windowClass.instanceHandle,

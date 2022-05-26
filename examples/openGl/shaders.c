@@ -1,12 +1,13 @@
-#define shaders_POSITION_INDEX 0
-#define shaders_MODELVIEW_MATRIX_INDEX 1
+#define shaders_POSITION_LOC 0
+#define shaders_MODELVIEW_MATRIX_LOC 1
 
 static const char *shaders_mainVertex =
     "#version 300 es\n"
-    "layout (location = " hc_XSTR(shaders_POSITION_INDEX) ") in vec3 position;\n"
-    "layout (location = " hc_XSTR(shaders_MODELVIEW_MATRIX_INDEX) ") in mat4 modelViewMatrix;\n"
+    "layout (location = " hc_XSTR(shaders_POSITION_LOC) ") in vec3 position;\n"
+    "layout (location = " hc_XSTR(shaders_MODELVIEW_MATRIX_LOC) ") in mat4 modelViewMatrix;\n"
+    "uniform mat4 projectionMatrix;\n"
     "void main() {\n"
-    "    gl_Position = modelViewMatrix * vec4(position, 1.0);\n"
+    "    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
     "}\n";
 
 static const char *shaders_mainFragment =
@@ -18,6 +19,7 @@ static const char *shaders_mainFragment =
     "}\n";
 
 static uint32_t shaders_mainProgram;
+static int32_t shaders_mainProjectionMatrixLoc;
 
 static int32_t shaders_init(void) {
     // Compile main shader program.
@@ -38,6 +40,8 @@ static int32_t shaders_init(void) {
 
     gl_deleteShader(vertexShader);
     gl_deleteShader(fragmentShader);
+
+    shaders_mainProjectionMatrixLoc = gl_getUniformLocation(shaders_mainProgram, "projectionMatrix");
     if (gl_getError() != gl_NO_ERROR) goto cleanup_mainProgram;
 
     return 0;
