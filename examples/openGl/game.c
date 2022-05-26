@@ -4,8 +4,12 @@
 
 game_EXPORT("game_draw")
 int32_t game_draw(void) {
+    static uint32_t i = 0; // TODO: remove.
+
     float matrix[16];
-    mat_init(&matrix[0], 1.0f, -2.0f, 1.0f, 3.5f);
+    mat_init(&matrix[0], 1.0f);
+    mat_rotateY(&matrix[0], ++i & 4095);
+    mat_translate(&matrix[0], -2.0f, -0.5f, 3.5f);
     gl_bufferData(gl_ARRAY_BUFFER, sizeof(matrix), &matrix[0], gl_STREAM_DRAW);
 
     gl_clear(gl_COLOR_BUFFER_BIT);

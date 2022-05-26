@@ -1,5 +1,5 @@
 
-static void mat_init(float *mat, float scale, float x, float y, float z) {
+static void mat_init(float *mat, float scale) {
     mat[0] = scale;
     mat[1] = 0;
     mat[2] = 0;
@@ -15,10 +15,40 @@ static void mat_init(float *mat, float scale, float x, float y, float z) {
     mat[10] = scale;
     mat[11] = 0;
 
-    mat[12] = x;
-    mat[13] = y;
-    mat[14] = z;
+    mat[12] = 0;
+    mat[13] = 0;
+    mat[14] = 0;
     mat[15] = 1;
+}
+
+static void mat_translate(float *mat, float x, float y, float z) {
+    mat[12] += x;
+    mat[13] += y;
+    mat[14] += z;
+}
+
+static void mat_rotateY(float *mat, uint32_t yawAngle) {
+    float sin = trig_sin(angle);
+    float cos = trig_cos(angle);
+    float temp1 = mat[0];
+    float temp2 = mat[2];
+    mat[0] = cos * temp1 + sin * temp2;
+    mat[2] = cos * temp2 - sin * temp1;
+
+    temp1 = mat[4];
+    temp2 = mat[6];
+    mat[4] = cos * temp1 + sin * temp2;
+    mat[6] = cos * temp2 - sin * temp1;
+
+    temp1 = mat[8];
+    temp2 = mat[10];
+    mat[8] = cos * temp1 + sin * temp2;
+    mat[10] = cos * temp2 - sin * temp1;
+
+    temp1 = mat[12];
+    temp2 = mat[14];
+    mat[12] = cos * temp1 + sin * temp2;
+    mat[14] = cos * temp2 - sin * temp1;
 }
 
 // Left handed projection matrix: +X is right, +Y is up, +Z is forward.

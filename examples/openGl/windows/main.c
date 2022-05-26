@@ -11,6 +11,7 @@
 #include "gl.c"
 #include "../shaders.c"
 #include "../vertexArrays.c"
+#include "../trig.c"
 #include "../mat.c"
 #include "../game.c"
 #include "window.c"
