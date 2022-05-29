@@ -7,8 +7,9 @@ struct window {
     int32_t epollFd;
     uint32_t windowId;
     uint32_t rootWindowId;
-    uint8_t xInputMajorOpcode;
-    char __pad[3];
+    uint8_t xinputMajorOpcode;
+    uint8_t xfixesMajorOpcode;
+    char __pad[2];
 };
 
 static struct window window;
@@ -73,9 +74,12 @@ static int32_t window_init(char **envp) {
         struct x11_createWindow createWindow;
         uint32_t createWindowValues[1];
         struct x11_mapWindow mapWindow;
-        struct x11_queryExtension queryExtension;
-        char queryExtensionName[sizeof(x11_XI_NAME) - 1];
-        char queryExtensionPad[util_PAD_BYTES(sizeof(x11_XI_NAME) - 1, 4)];
+        struct x11_queryExtension queryXfixes;
+        char queryXfixesName[sizeof(x11_XFIXES_NAME) - 1];
+        char queryXfixesPad[util_PAD_BYTES(sizeof(x11_XFIXES_NAME) - 1, 4)];
+        struct x11_queryExtension queryXinput;
+        char queryXinputName[sizeof(x11_XINPUT_NAME) - 1];
+        char queryXinputPad[util_PAD_BYTES(sizeof(x11_XINPUT_NAME) - 1, 4)];
     };
 
     struct requests windowRequests = {
@@ -100,14 +104,20 @@ static int32_t window_init(char **envp) {
             .length = sizeof(windowRequests.mapWindow) / 4,
             .windowId = windowRequests.createWindow.windowId
         },
-        .queryExtension = {
+        .queryXfixes = {
             .opcode = x11_queryExtension_OPCODE,
-            .length = (sizeof(windowRequests.queryExtension) + sizeof(windowRequests.queryExtensionName) + sizeof(windowRequests.queryExtensionPad)) / 4,
-            .nameLength = sizeof(windowRequests.queryExtensionName),
+            .length = (sizeof(windowRequests.queryXfixes) + sizeof(windowRequests.queryXfixesName) + sizeof(windowRequests.queryXfixesPad)) / 4,
+            .nameLength = sizeof(windowRequests.queryXfixesName),
         },
-        .queryExtensionName = x11_XI_NAME
+        .queryXfixesName = x11_XFIXES_NAME,
+        .queryXinput = {
+            .opcode = x11_queryExtension_OPCODE,
+            .length = (sizeof(windowRequests.queryXinput) + sizeof(windowRequests.queryXinputName) + sizeof(windowRequests.queryXinputPad)) / 4,
+            .nameLength = sizeof(windowRequests.queryXinputName),
+        },
+        .queryXinputName = x11_XINPUT_NAME
     };
-    status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 3);
+    status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 4);
     if (status < 0) {
         printf("Failed to send x11 window requests (%d)\n", status);
         goto cleanup_x11Client;
@@ -132,19 +142,28 @@ static int32_t window_init(char **envp) {
             status = -3;
             goto cleanup_x11Client;
         }
-        x11Client_ackMessage(&window.x11Client, msgLength);
 
-        if (msgType != x11_TYPE_REPLY) continue;
-        uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
-        if (sequenceNumber == 3) {
-            struct x11_queryExtensionResponse *response = (void *)&window.x11Client.receiveBuffer[0];
-            if (!response->present) {
-                status = -4;
-                goto cleanup_x11Client;
+        if (msgType == x11_TYPE_REPLY) {
+            uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
+            if (sequenceNumber == 3) {
+                struct x11_queryExtensionResponse *response = (void *)&window.x11Client.receiveBuffer[0];
+                if (!response->present) {
+                    status = -4;
+                    goto cleanup_x11Client;
+                }
+                window.xfixesMajorOpcode = response->majorOpcode;
+            } else if (sequenceNumber == 4) {
+                struct x11_queryExtensionResponse *response = (void *)&window.x11Client.receiveBuffer[0];
+                if (!response->present) {
+                    status = -5;
+                    goto cleanup_x11Client;
+                }
+                window.xinputMajorOpcode = response->majorOpcode;
+                x11Client_ackMessage(&window.x11Client, msgLength);
+                break;
             }
-            window.xInputMajorOpcode = response->majorOpcode;
-            break;
         }
+        x11Client_ackMessage(&window.x11Client, msgLength);
     }
 
     // Setup EGL surface.
@@ -175,7 +194,7 @@ static int32_t window_init(char **envp) {
     // Setup epoll.
     window.epollFd = sys_epoll_create1(0);
     if (window.epollFd < 0) {
-        status = -4;
+        status = -6;
         goto cleanup_x11Client;
     }
     struct epoll_event x11SocketEvent = {
@@ -183,7 +202,7 @@ static int32_t window_init(char **envp) {
         .data.ptr = &window.x11Client.socketFd
     };
     if (sys_epoll_ctl(window.epollFd, EPOLL_CTL_ADD, window.x11Client.socketFd, &x11SocketEvent) < 0) {
-        status = -5;
+        status = -7;
         goto cleanup_epollFd;
     }
 
@@ -205,11 +224,20 @@ static int32_t window_run(void) {
 
     // Grab pointer.
     struct requests {
+        struct x11_xfixesQueryVersion queryXfixesVersion; // Need to do this once to tell server what version we expect.
         struct x11_grabPointer grabPointer;
-        struct x11_xiSelectEvents xiSelectEvents;
-        struct x11_xiEventMask xiSelectEventsMask;
+        struct x11_xfixesHideCursor hideCursor;
+        struct x11_xinputSelectEvents xinputSelectEvents;
+        struct x11_xinputEventMask xinputSelectEventsMask;
     };
     struct requests grabPointerRequests = {
+        .queryXfixesVersion = {
+            .majorOpcode = window.xfixesMajorOpcode,
+            .opcode = x11_xfixesQueryVersion_OPCODE,
+            .length = sizeof(grabPointerRequests.queryXfixesVersion) / 4,
+            .majorVersion = 4,
+            .minorVersion = 0
+        },
         .grabPointer = {
             .opcode = x11_grabPointer_OPCODE,
             .ownerEvents = x11_TRUE,
@@ -222,20 +250,26 @@ static int32_t window_run(void) {
             .cursor = 0,
             .time = 0 // CurrentTime
         },
-        .xiSelectEvents = {
-            .majorOpcode = window.xInputMajorOpcode,
-            .opcode = x11_xiSelectEvents_OPCODE,
-            .length = (sizeof(grabPointerRequests.xiSelectEvents) + sizeof(grabPointerRequests.xiSelectEventsMask)) / 4,
+        .hideCursor = {
+            .majorOpcode = window.xfixesMajorOpcode,
+            .opcode = x11_xfixesHideCursor_OPCODE,
+            .length = sizeof(grabPointerRequests.hideCursor) / 4,
+            .windowId = window.windowId
+        },
+        .xinputSelectEvents = {
+            .majorOpcode = window.xinputMajorOpcode,
+            .opcode = x11_xinputSelectEvents_OPCODE,
+            .length = (sizeof(grabPointerRequests.xinputSelectEvents) + sizeof(grabPointerRequests.xinputSelectEventsMask)) / 4,
             .windowId = window.rootWindowId,
             .numMasks = 1
         },
-        .xiSelectEventsMask = {
-            .deviceId = x11_XI_ALL_MASTER_DEVICES,
+        .xinputSelectEventsMask = {
+            .deviceId = x11_XINPUT_ALL_MASTER_DEVICES,
             .maskLength = 1,
-            .mask = (1 << x11_XI_RAW_MOTION)
+            .mask = (1 << x11_XINPUT_RAW_MOTION)
         }
     };
-    if (x11Client_sendRequests(&window.x11Client, &grabPointerRequests, sizeof(grabPointerRequests), 2) < 0) return -1;
+    if (x11Client_sendRequests(&window.x11Client, &grabPointerRequests, sizeof(grabPointerRequests), 4) < 0) return -1;
 
     // Main loop.
     for (;;) {
@@ -272,14 +306,14 @@ static int32_t window_run(void) {
                             break;
                         }
                         case x11_genericEvent_TYPE: {
-                            struct x11_xiRawEvent *rawEvent = (void *)&window.x11Client.receiveBuffer[0];
-                            if (rawEvent->extension != window.xInputMajorOpcode || rawEvent->eventType != x11_XI_RAW_MOTION) break;
+                            struct x11_xinputRawEvent *rawEvent = (void *)&window.x11Client.receiveBuffer[0];
+                            if (rawEvent->extension != window.xinputMajorOpcode || rawEvent->eventType != x11_XINPUT_RAW_MOTION) break;
 
                             int32_t valuatorBits = 0;
                             for (int32_t i = 0; i < rawEvent->numValuators; ++i) {
                                 valuatorBits += hc_POPCOUNT32(rawEvent->data[i]);
                             }
-                            struct x11_xiFP3232 *valuatorsRaw = (void *)&rawEvent->data[rawEvent->numValuators + 2 * valuatorBits];
+                            struct x11_xinputFP3232 *valuatorsRaw = (void *)&rawEvent->data[rawEvent->numValuators + 2 * valuatorBits];
 
                             int64_t deltaX = ((int64_t)valuatorsRaw[0].integer << 32) | valuatorsRaw[0].fraction;
                             int64_t deltaY = ((int64_t)valuatorsRaw[1].integer << 32) | valuatorsRaw[1].fraction;

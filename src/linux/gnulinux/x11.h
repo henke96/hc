@@ -314,61 +314,61 @@ struct x11_genericEvent {
 };
 
 // XInput2 extension.
-#define x11_XI_NAME "XInputExtension"
+#define x11_XINPUT_NAME "XInputExtension"
 
-#define x11_XI_ALL_DEVICES 0
-#define x11_XI_ALL_MASTER_DEVICES 1
+#define x11_XINPUT_ALL_DEVICES 0
+#define x11_XINPUT_ALL_MASTER_DEVICES 1
 
-#define x11_XI_DEVICE_CHANGED 1
-#define x11_XI_KEY_PRESS 2
-#define x11_XI_KEY_RELEASE 3
-#define x11_XI_BUTTON_PRESS 4
-#define x11_XI_BUTTON_RELEASE 5
-#define x11_XI_MOTION 6
-#define x11_XI_ENTER 7
-#define x11_XI_LEAVE 8
-#define x11_XI_FOCUS_IN 9
-#define x11_XI_FOCUS_OUT 10
-#define x11_XI_HIERARCHY_CHANGED 11
-#define x11_XI_PROPERTY_EVENT 12
-#define x11_XI_RAW_KEY_PRESS 13
-#define x11_XI_RAW_KEY_RELEASE 14
-#define x11_XI_RAW_BUTTON_PRESS 15
-#define x11_XI_RAW_BUTTON_RELEASE 16
-#define x11_XI_RAW_MOTION 17
-#define x11_XI_TOUCH_BEGIN 18 // XI 2.2
-#define x11_XI_TOUCH_UPDATE 19
-#define x11_XI_TOUCH_END 20
-#define x11_XI_TOUCH_OWNERSHIP 21
-#define x11_XI_RAW_TOUCH_BEGIN 22
-#define x11_XI_RAW_TOUCH_UPDATE 23
-#define x11_XI_RAW_TOUCH_END 24
-#define x11_XI_BARRIER_HIT 25 // XI 2.3
-#define x11_XI_BARRIER_LEAVE 26
+#define x11_XINPUT_DEVICE_CHANGED 1
+#define x11_XINPUT_KEY_PRESS 2
+#define x11_XINPUT_KEY_RELEASE 3
+#define x11_XINPUT_BUTTON_PRESS 4
+#define x11_XINPUT_BUTTON_RELEASE 5
+#define x11_XINPUT_MOTION 6
+#define x11_XINPUT_ENTER 7
+#define x11_XINPUT_LEAVE 8
+#define x11_XINPUT_FOCUS_IN 9
+#define x11_XINPUT_FOCUS_OUT 10
+#define x11_XINPUT_HIERARCHY_CHANGED 11
+#define x11_XINPUT_PROPERTY_EVENT 12
+#define x11_XINPUT_RAW_KEY_PRESS 13
+#define x11_XINPUT_RAW_KEY_RELEASE 14
+#define x11_XINPUT_RAW_BUTTON_PRESS 15
+#define x11_XINPUT_RAW_BUTTON_RELEASE 16
+#define x11_XINPUT_RAW_MOTION 17
+#define x11_XINPUT_TOUCH_BEGIN 18 // XI 2.2
+#define x11_XINPUT_TOUCH_UPDATE 19
+#define x11_XINPUT_TOUCH_END 20
+#define x11_XINPUT_TOUCH_OWNERSHIP 21
+#define x11_XINPUT_RAW_TOUCH_BEGIN 22
+#define x11_XINPUT_RAW_TOUCH_UPDATE 23
+#define x11_XINPUT_RAW_TOUCH_END 24
+#define x11_XINPUT_BARRIER_HIT 25 // XI 2.3
+#define x11_XINPUT_BARRIER_LEAVE 26
 
-struct x11_xiEventMask {
+struct x11_xinputEventMask {
     uint16_t deviceId;
     uint16_t maskLength; // Always 1.
     uint32_t mask;
 };
 
-struct x11_xiFP3232 {
+struct x11_xinputFP3232 {
     int32_t integer;
     uint32_t fraction;
 };
 
-#define x11_xiSelectEvents_OPCODE 46
-struct x11_xiSelectEvents {
+#define x11_xinputSelectEvents_OPCODE 46
+struct x11_xinputSelectEvents {
     uint8_t majorOpcode;
     uint8_t opcode;
     uint16_t length;
     uint32_t windowId;
     uint16_t numMasks;
     uint16_t __pad;
-    struct x11_xiEventMask masks[];
+    struct x11_xinputEventMask masks[];
 };
 
-struct x11_xiRawEvent {
+struct x11_xinputRawEvent {
     uint8_t type;
     uint8_t extension;
     uint16_t sequenceNumber;
@@ -383,6 +383,34 @@ struct x11_xiRawEvent {
     uint32_t flags;
     uint32_t __pad;
     uint32_t data[]; // uint32_t valuators[numValuators];
-                     // struct x11_xiFP3232 axisValues[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
-                     // struct x11_xiFP3232 axisValuesRaw[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
+                     // struct x11_xinputFP3232 axisValues[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
+                     // struct x11_xinputFP3232 axisValuesRaw[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
+};
+
+// XFixes extension.
+#define x11_XFIXES_NAME "XFIXES"
+
+#define x11_xfixesQueryVersion_OPCODE 0
+struct x11_xfixesQueryVersion {
+    uint8_t majorOpcode;
+    uint8_t opcode;
+    uint16_t length;
+    uint32_t majorVersion;
+    uint32_t minorVersion;
+};
+
+#define x11_xfixesHideCursor_OPCODE 29
+struct x11_xfixesHideCursor {
+    uint8_t majorOpcode;
+    uint8_t opcode;
+    uint16_t length;
+    uint32_t windowId;
+};
+
+#define x11_xfixesShowCursor_OPCODE 30
+struct x11_xfixesShowCursor {
+    uint8_t majorOpcode;
+    uint8_t opcode;
+    uint16_t length;
+    uint32_t windowId;
 };
