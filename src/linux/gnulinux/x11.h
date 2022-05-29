@@ -4,6 +4,9 @@
 #define x11_TYPE_SYNTHETIC_BIT 0x80
 #define x11_TYPE_MASK 0x7F
 
+#define x11_FALSE 0
+#define x11_TRUE 1
+
 #define x11_COPY_FROM_PARENT 0
 #define x11_INPUT_OUTPUT 1
 #define x11_INPUT_ONLY 2
@@ -127,8 +130,7 @@ struct x11_setupResponse {
                     // struct x11_screen roots[numRoots]; (x11_screen is variable length!)
 };
 
-// Protocol requests, responses and events.
-
+// Protocol requests and responses.
 #define x11_createWindow_OPCODE 1
 // Bits for valueMask.
 #define x11_createWindow_BACKGROUND_PIXMAP 0x1
@@ -146,7 +148,6 @@ struct x11_setupResponse {
 #define x11_createWindow_DO_NOT_PROPAGATE_MASK 0x1000
 #define x11_createWindow_COLORMAP 0x2000
 #define x11_createWindow_CURSOR 0x4000
-
 struct x11_createWindow {
     uint8_t opcode;
     uint8_t depth;
@@ -202,6 +203,78 @@ struct x11_mapWindow {
     uint32_t windowId;
 };
 
+#define x11_grabPointer_OPCODE 26
+#define x11_grabPointer_SYNCHRONOUS 0
+#define x11_grabPointer_ASYNCHRONOUS 1
+struct x11_grabPointer {
+    uint8_t opcode;
+    uint8_t ownerEvents;
+    uint16_t length;
+    uint32_t grabWindowId;
+    uint16_t eventMask;
+    uint8_t pointerMode;
+    uint8_t keyboardMode;
+    uint32_t confineToWindowId;
+    uint32_t cursor;
+    uint32_t time;
+};
+
+#define x11_queryExtension_OPCODE 98
+struct x11_queryExtension {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint16_t nameLength;
+    uint16_t __pad2;
+    uint8_t data[]; // char name[n];
+                    // uint8_t __pad3[util_PAD_BYTES(n)];
+};
+
+struct x11_queryExtensionResponse {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint8_t present;
+    uint8_t majorOpcode;
+    uint8_t firstEvent;
+    uint8_t firstError;
+    uint8_t __pad2[20];
+};
+
+// Protocol events.
+#define x11_motionNotify_TYPE 6
+struct x11_motionNotify {
+    uint8_t type;
+    uint8_t detail;
+    uint16_t sequenceNumber;
+    uint32_t timeMs;
+    uint32_t windowId;
+    uint32_t eventWindowId;
+    uint32_t childWindowId;
+    int16_t rootX;
+    int16_t rootY;
+    int16_t eventX;
+    int16_t eventY;
+    uint16_t keyButtonState;
+    uint8_t sameScreen;
+    uint8_t __pad;
+};
+
+#define x11_expose_TYPE 12
+struct x11_expose {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t windowId;
+    uint16_t x;
+    uint16_t y;
+    uint16_t width;
+    uint16_t height;
+    uint16_t count;
+    uint8_t __pad2[14];
+};
+
 #define x11_mapNotify_TYPE 19
 struct x11_mapNotify {
     uint8_t type;
@@ -230,16 +303,86 @@ struct x11_configureNotify {
     uint8_t __pad2[5];
 };
 
-#define x11_expose_TYPE 12
-struct x11_expose {
+#define x11_genericEvent_TYPE 35
+struct x11_genericEvent {
     uint8_t type;
-    uint8_t __pad;
+    uint8_t extension;
     uint16_t sequenceNumber;
+    uint32_t length;
+    uint16_t eventType;
+    uint8_t data[];
+};
+
+// XInput2 extension.
+#define x11_XI_NAME "XInputExtension"
+
+#define x11_XI_ALL_DEVICES 0
+#define x11_XI_ALL_MASTER_DEVICES 1
+
+#define x11_XI_DEVICE_CHANGED 1
+#define x11_XI_KEY_PRESS 2
+#define x11_XI_KEY_RELEASE 3
+#define x11_XI_BUTTON_PRESS 4
+#define x11_XI_BUTTON_RELEASE 5
+#define x11_XI_MOTION 6
+#define x11_XI_ENTER 7
+#define x11_XI_LEAVE 8
+#define x11_XI_FOCUS_IN 9
+#define x11_XI_FOCUS_OUT 10
+#define x11_XI_HIERARCHY_CHANGED 11
+#define x11_XI_PROPERTY_EVENT 12
+#define x11_XI_RAW_KEY_PRESS 13
+#define x11_XI_RAW_KEY_RELEASE 14
+#define x11_XI_RAW_BUTTON_PRESS 15
+#define x11_XI_RAW_BUTTON_RELEASE 16
+#define x11_XI_RAW_MOTION 17
+#define x11_XI_TOUCH_BEGIN 18 // XI 2.2
+#define x11_XI_TOUCH_UPDATE 19
+#define x11_XI_TOUCH_END 20
+#define x11_XI_TOUCH_OWNERSHIP 21
+#define x11_XI_RAW_TOUCH_BEGIN 22
+#define x11_XI_RAW_TOUCH_UPDATE 23
+#define x11_XI_RAW_TOUCH_END 24
+#define x11_XI_BARRIER_HIT 25 // XI 2.3
+#define x11_XI_BARRIER_LEAVE 26
+
+struct x11_xiEventMask {
+    uint16_t deviceId;
+    uint16_t maskLength; // Always 1.
+    uint32_t mask;
+};
+
+struct x11_xiFP3232 {
+    int32_t integer;
+    uint32_t fraction;
+};
+
+#define x11_xiSelectEvents_OPCODE 46
+struct x11_xiSelectEvents {
+    uint8_t majorOpcode;
+    uint8_t opcode;
+    uint16_t length;
     uint32_t windowId;
-    uint16_t x;
-    uint16_t y;
-    uint16_t width;
-    uint16_t height;
-    uint16_t count;
-    uint8_t __pad2[14];
+    uint16_t numMasks;
+    uint16_t __pad;
+    struct x11_xiEventMask masks[];
+};
+
+struct x11_xiRawEvent {
+    uint8_t type;
+    uint8_t extension;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint16_t eventType;
+
+    uint16_t deviceId;
+    uint32_t timeMs;
+    uint32_t detail;
+    uint16_t sourceId;
+    uint16_t numValuators;
+    uint32_t flags;
+    uint32_t __pad;
+    uint32_t data[]; // uint32_t valuators[numValuators];
+                     // struct x11_xiFP3232 axisValues[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
+                     // struct x11_xiFP3232 axisValuesRaw[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
 };

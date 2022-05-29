@@ -118,8 +118,31 @@
                             let height = window.innerHeight;
                             canvas.width = width;
                             canvas.height = height;
-                            wasmExports.game_resize(width, height);
+                            wasmExports.game_onResize(width, height);
                         });
+
+                        let onMouseMove = (event) => {
+                            // Convert movements to 32.32 fixed point.
+                            wasmExports.game_onMouseMove(
+                                BigInt(event.movementX * 4294967296),
+                                BigInt(event.movementY * 4294967296)
+                            );
+                        };
+                        document.addEventListener("pointerlockchange", () => {
+                            if (document.pointerLockElement === canvas) {
+                                document.addEventListener("mousemove", onMouseMove);
+                            } else {
+                                document.removeEventListener("mousemove", onMouseMove);
+                            }
+                        });
+
+                        let onMouseDown = (event) => {
+                            if (document.pointerLockElement !== canvas) {
+                                canvas.requestPointerLock();
+                                return;
+                            }
+                        };
+                        document.addEventListener("mousedown", onMouseDown);
 
                         let frameCounter = 0;
                         let prevTime = performance.now();

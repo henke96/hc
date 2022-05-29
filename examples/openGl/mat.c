@@ -21,6 +21,7 @@ static void mat_init(float *mat, float scale) {
     mat[15] = 1;
 }
 
+hc_UNUSED
 static void mat_translate(float *mat, float x, float y, float z) {
     mat[12] += x;
     mat[13] += y;
@@ -34,22 +35,22 @@ static void mat_rotateX(float *mat, uint32_t pitchAngle) {
     float temp1 = mat[1];
     float temp2 = mat[2];
     mat[1] = cos * temp1 - sin * temp2;
-    mat[2] = cos * temp1 + sin * temp2;
+    mat[2] = cos * temp2 + sin * temp1;
 
     temp1 = mat[5];
     temp2 = mat[6];
     mat[5] = cos * temp1 - sin * temp2;
-    mat[6] = cos * temp1 + sin * temp2;
+    mat[6] = cos * temp2 + sin * temp1;
 
     temp1 = mat[9];
     temp2 = mat[10];
     mat[9] = cos * temp1 - sin * temp2;
-    mat[10] = cos * temp1 + sin * temp2;
+    mat[10] = cos * temp2 + sin * temp1;
 
     temp1 = mat[13];
     temp2 = mat[14];
     mat[13] = cos * temp1 - sin * temp2;
-    mat[14] = cos * temp1 + sin * temp2;
+    mat[14] = cos * temp2 + sin * temp1;
 }
 
 hc_UNUSED

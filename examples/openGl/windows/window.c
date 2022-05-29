@@ -75,7 +75,7 @@ static int64_t window_proc(
         case WM_SIZE: {
             int32_t width = lParam & 0xffff;
             int32_t height = (lParam >> 16) & 0xffff;
-            game_resize(width, height);
+            game_onResize(width, height);
             return 0;
         }
     }

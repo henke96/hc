@@ -134,14 +134,15 @@ static int32_t x11Client_receive(struct x11Client *self) {
 // Returns length of next message, 0 if no messages are buffered.
 static int32_t x11Client_nextMessage(struct x11Client *self) {
     if (self->receiveLength < 1) return 0;
-    if (self->receiveBuffer[0] != x11_TYPE_REPLY) {
-        // Errors and events are all 32 bytes.
+    uint8_t typeMasked = self->receiveBuffer[0] & x11_TYPE_MASK;
+    if (typeMasked != x11_TYPE_REPLY && typeMasked != x11_genericEvent_TYPE) {
+        // Errors and standard events are all 32 bytes.
         return self->receiveLength >= 32 ? 32 : 0;
     }
-    // 8 bytes must have been read to figure out reply length.
+    // 8 bytes must have been read to figure out reply or generic event length.
     if (self->receiveLength < 8) return 0;
-    uint32_t length = *(uint32_t *)&self->receiveBuffer[4];
-    return self->receiveLength >= length ? (int32_t)length : 0;
+    uint32_t length = 8 + *(uint32_t *)&self->receiveBuffer[4];
+    return (self->receiveLength >> 2) >= length ? (int32_t)(length << 2) : 0;
 }
 
 // Acks a message of length `length`, so that the next one can be read.

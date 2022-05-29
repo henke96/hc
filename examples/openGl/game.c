@@ -2,14 +2,22 @@
     #error "`#define game_EXPORT(NAME)` before including"
 #endif
 
+static struct {
+    uint32_t cameraYaw;
+    int32_t cameraPitch;
+    uint32_t triangleYaw;
+} game;
+
 game_EXPORT("game_draw")
 int32_t game_draw(void) {
-    static uint32_t i = 0; // TODO: remove.
+    game.triangleYaw = (game.triangleYaw + 1) & 4095;
 
     float matrix[16];
     mat_init(&matrix[0], 1.0f);
-    mat_rotateY(&matrix[0], ++i & 4095);
+    mat_rotateY(&matrix[0], game.triangleYaw);
     mat_translate(&matrix[0], -2.0f, -0.5f, 3.5f);
+    mat_rotateY(&matrix[0], game.cameraYaw);
+    mat_rotateX(&matrix[0], game.cameraPitch & 4095);
     gl_bufferData(gl_ARRAY_BUFFER, sizeof(matrix), &matrix[0], gl_STREAM_DRAW);
 
     gl_clear(gl_COLOR_BUFFER_BIT);
@@ -18,8 +26,8 @@ int32_t game_draw(void) {
     return 0;
 }
 
-game_EXPORT("game_resize")
-void game_resize(int32_t width, int32_t height) {
+game_EXPORT("game_onResize")
+void game_onResize(int32_t width, int32_t height) {
     gl_viewport(0, 0, width, height);
 
     float projectionMatrix[16];
@@ -27,8 +35,20 @@ void game_resize(int32_t width, int32_t height) {
     gl_uniformMatrix4fv(shaders_mainProjectionMatrixLoc, 1, gl_FALSE, &projectionMatrix[0]);
 }
 
+game_EXPORT("game_onMouseMove")
+void game_onMouseMove(int64_t deltaX, int64_t deltaY) {
+    game.cameraYaw = (game.cameraYaw - (uint32_t)(deltaX >> 32)) & 4095;
+    game.cameraPitch -= (deltaY >> 32);
+    if (game.cameraPitch > 1024) game.cameraPitch = 1024;
+    else if (game.cameraPitch < -1024) game.cameraPitch = -1024;
+}
+
 game_EXPORT("game_init")
 int32_t game_init(int32_t width, int32_t height) {
+    game.cameraYaw = 0;
+    game.cameraPitch = 0;
+    game.triangleYaw = 0;
+
     if (shaders_init() < 0) return -1;
 
     int32_t status;
@@ -45,7 +65,7 @@ int32_t game_init(int32_t width, int32_t height) {
         status = -3;
         goto cleanup_vertexArrays;
     }
-    game_resize(width, height);
+    game_onResize(width, height);
     return 0;
 
     cleanup_vertexArrays:

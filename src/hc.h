@@ -63,6 +63,8 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_BSWAP16(N) __builtin_bswap16((N))
 #define hc_BSWAP32(N) __builtin_bswap32((N))
 #define hc_BSWAP64(N) __builtin_bswap64((N))
+#define hc_POPCOUNT32(N) __builtin_popcount((N))
+#define hc_POPCOUNT64(N) __builtin_popcountll((N))
 #define hc_MEMCPY(DEST, SRC, N) __builtin_memcpy((DEST), (SRC), (N))
 #define hc_MEMMOVE(DEST, SRC, N) __builtin_memmove((DEST), (SRC), (N))
 #define hc_MEMCMP(LEFT, RIGHT, N) __builtin_memcmp((LEFT), (RIGHT), (N))

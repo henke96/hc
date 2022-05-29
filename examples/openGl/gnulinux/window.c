@@ -6,6 +6,9 @@ struct window {
     struct egl egl;
     int32_t epollFd;
     uint32_t windowId;
+    uint32_t rootWindowId;
+    uint8_t xInputMajorOpcode;
+    char __pad[3];
 };
 
 static struct window window;
@@ -64,12 +67,15 @@ static int32_t window_init(char **envp) {
         sizeof(struct x11_format) * window.x11Client.setupResponse->numPixmapFormats
     );
     struct x11_screen *screen = (void *)&window.x11Client.setupResponse->data[rootsOffset]; // Use first screen.
-    uint32_t parentId = screen->windowId;
+    window.rootWindowId = screen->windowId;
 
     struct requests {
         struct x11_createWindow createWindow;
         uint32_t createWindowValues[1];
         struct x11_mapWindow mapWindow;
+        struct x11_queryExtension queryExtension;
+        char queryExtensionName[sizeof(x11_XI_NAME) - 1];
+        char queryExtensionPad[util_PAD_BYTES(sizeof(x11_XI_NAME) - 1, 4)];
     };
 
     struct requests windowRequests = {
@@ -78,7 +84,7 @@ static int32_t window_init(char **envp) {
             .depth = 0,
             .length = (sizeof(windowRequests.createWindow) + sizeof(windowRequests.createWindowValues)) / 4,
             .windowId = window.windowId,
-            .parentId = parentId,
+            .parentId = window.rootWindowId,
             .width = window_DEFAULT_WIDTH,
             .height = window_DEFAULT_HEIGHT,
             .borderWidth = 1,
@@ -93,15 +99,21 @@ static int32_t window_init(char **envp) {
             .opcode = x11_mapWindow_OPCODE,
             .length = sizeof(windowRequests.mapWindow) / 4,
             .windowId = windowRequests.createWindow.windowId
-        }
+        },
+        .queryExtension = {
+            .opcode = x11_queryExtension_OPCODE,
+            .length = (sizeof(windowRequests.queryExtension) + sizeof(windowRequests.queryExtensionName) + sizeof(windowRequests.queryExtensionPad)) / 4,
+            .nameLength = sizeof(windowRequests.queryExtensionName),
+        },
+        .queryExtensionName = x11_XI_NAME
     };
-    status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 2);
+    status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 3);
     if (status < 0) {
         printf("Failed to send x11 window requests (%d)\n", status);
         goto cleanup_x11Client;
     }
 
-    // Wait for MapNotify event.
+    // Wait for QueryExtension response.
     for (;;) {
         int32_t msgLength = x11Client_nextMessage(&window.x11Client);
         if (msgLength == 0) {
@@ -121,7 +133,18 @@ static int32_t window_init(char **envp) {
             goto cleanup_x11Client;
         }
         x11Client_ackMessage(&window.x11Client, msgLength);
-        if (msgType == x11_mapNotify_TYPE) break;
+
+        if (msgType != x11_TYPE_REPLY) continue;
+        uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
+        if (sequenceNumber == 3) {
+            struct x11_queryExtensionResponse *response = (void *)&window.x11Client.receiveBuffer[0];
+            if (!response->present) {
+                status = -4;
+                goto cleanup_x11Client;
+            }
+            window.xInputMajorOpcode = response->majorOpcode;
+            break;
+        }
     }
 
     // Setup EGL surface.
@@ -180,6 +203,40 @@ static int32_t window_run(void) {
     struct timespec prev;
     debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), == 0);
 
+    // Grab pointer.
+    struct requests {
+        struct x11_grabPointer grabPointer;
+        struct x11_xiSelectEvents xiSelectEvents;
+        struct x11_xiEventMask xiSelectEventsMask;
+    };
+    struct requests grabPointerRequests = {
+        .grabPointer = {
+            .opcode = x11_grabPointer_OPCODE,
+            .ownerEvents = x11_TRUE,
+            .length = sizeof(grabPointerRequests.grabPointer) / 4,
+            .grabWindowId = window.windowId,
+            .eventMask = x11_EVENT_BUTTON_PRESS_BIT | x11_EVENT_BUTTON_RELEASE_BIT,
+            .pointerMode = x11_grabPointer_ASYNCHRONOUS,
+            .keyboardMode = x11_grabPointer_ASYNCHRONOUS,
+            .confineToWindowId = window.windowId,
+            .cursor = 0,
+            .time = 0 // CurrentTime
+        },
+        .xiSelectEvents = {
+            .majorOpcode = window.xInputMajorOpcode,
+            .opcode = x11_xiSelectEvents_OPCODE,
+            .length = (sizeof(grabPointerRequests.xiSelectEvents) + sizeof(grabPointerRequests.xiSelectEventsMask)) / 4,
+            .windowId = window.rootWindowId,
+            .numMasks = 1
+        },
+        .xiSelectEventsMask = {
+            .deviceId = x11_XI_ALL_MASTER_DEVICES,
+            .maskLength = 1,
+            .mask = (1 << x11_XI_RAW_MOTION)
+        }
+    };
+    if (x11Client_sendRequests(&window.x11Client, &grabPointerRequests, sizeof(grabPointerRequests), 2) < 0) return -1;
+
     // Main loop.
     for (;;) {
         // Process all inputs.
@@ -201,17 +258,34 @@ static int32_t window_run(void) {
                     if (msgLength == 0) break;
 
                     uint8_t msgType = window.x11Client.receiveBuffer[0];
-                    if (msgType == x11_TYPE_ERROR) {
-                        uint8_t errorCode = window.x11Client.receiveBuffer[1];
-                        uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
-                        printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
-                        return -3; // For now we always exit on X11 errors.
-                    }
+                    printf("Got message type: %d, length: %d\n", (int32_t)msgType, msgLength);
+                    switch (msgType) {
+                        case x11_TYPE_ERROR: {
+                            uint8_t errorCode = window.x11Client.receiveBuffer[1];
+                            uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
+                            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
+                            return -3; // For now we always exit on X11 errors.
+                        }
+                        case x11_configureNotify_TYPE: {
+                            struct x11_configureNotify *configureNotify = (void *)&window.x11Client.receiveBuffer[0];
+                            game_onResize(configureNotify->width, configureNotify->height);
+                            break;
+                        }
+                        case x11_genericEvent_TYPE: {
+                            struct x11_xiRawEvent *rawEvent = (void *)&window.x11Client.receiveBuffer[0];
+                            if (rawEvent->extension != window.xInputMajorOpcode || rawEvent->eventType != x11_XI_RAW_MOTION) break;
 
-                    printf("Got message type: %d\n", msgType);
-                    if (msgType == x11_configureNotify_TYPE) {
-                        struct x11_configureNotify *configureNotify = (void *)&window.x11Client.receiveBuffer[0];
-                        game_resize(configureNotify->width, configureNotify->height);
+                            int32_t valuatorBits = 0;
+                            for (int32_t i = 0; i < rawEvent->numValuators; ++i) {
+                                valuatorBits += hc_POPCOUNT32(rawEvent->data[i]);
+                            }
+                            struct x11_xiFP3232 *valuatorsRaw = (void *)&rawEvent->data[rawEvent->numValuators + 2 * valuatorBits];
+
+                            int64_t deltaX = ((int64_t)valuatorsRaw[0].integer << 32) | valuatorsRaw[0].fraction;
+                            int64_t deltaY = ((int64_t)valuatorsRaw[1].integer << 32) | valuatorsRaw[1].fraction;
+                            game_onMouseMove(deltaX, deltaY);
+                            break;
+                        }
                     }
                     x11Client_ackMessage(&window.x11Client, msgLength);
                 }
