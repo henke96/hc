@@ -315,8 +315,8 @@ static int32_t window_run(void) {
                             }
                             struct x11_xinputFP3232 *valuatorsRaw = (void *)&rawEvent->data[rawEvent->numValuators + 2 * valuatorBits];
 
-                            int64_t deltaX = ((int64_t)valuatorsRaw[0].integer << 32) | valuatorsRaw[0].fraction;
-                            int64_t deltaY = ((int64_t)valuatorsRaw[1].integer << 32) | valuatorsRaw[1].fraction;
+                            int64_t deltaX = (int64_t)((uint64_t)valuatorsRaw[0].integer << 32) | valuatorsRaw[0].fraction;
+                            int64_t deltaY = (int64_t)((uint64_t)valuatorsRaw[1].integer << 32) | valuatorsRaw[1].fraction;
                             game_onMouseMove(deltaX, deltaY);
                             break;
                         }
