@@ -38,25 +38,25 @@ int32_t main(int32_t argc, char **argv) {
     }
     newArgv[newEnvpCount] = NULL;
 
-    // Try known dynamic linker paths.
-#if hc_X86_64
-    newArgv[0] = "/lib64/ld-linux-x86-64.so.2";
-    sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
-    newArgv[0] = "/lib/ld-musl-x86_64.so.1";
-    sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
-#elif hc_AARCH64
-    newArgv[0] = "/lib/ld-linux-aarch64.so.1";
-    sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
-    newArgv[0] = "/lib/ld-musl-aarch64.so.1";
-    sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
-#elif hc_RISCV64
-    newArgv[0] = "/lib/ld-linux-riscv64-lp64d.so.1"; // Hard floats.
-    sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
-    newArgv[0] = "/lib/ld-linux-riscv64-lp64.so.1";
-    sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
-    newArgv[0] = "/lib/ld-musl-riscv64.so.1";
-    sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
-#endif
-    // None of them worked.
+    // Find dynamic linker path from /usr/bin/env.
+    int32_t fd = sys_openat(-1, "/usr/bin/env", O_RDONLY | O_CLOEXEC, 0);
+    if (fd < 0) return 1;
+
+    // Map /usr/bin/env into memory.
+    struct statx statx;
+    if (sys_statx(fd, "", AT_EMPTY_PATH, STATX_SIZE, &statx) < 0) return 1;
+    struct elf_header *elfHeader = sys_mmap(NULL, (int64_t)statx.stx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if ((int64_t)elfHeader < 0) return 1;
+
+    // Find the interpreter program header.
+    struct elf_programHeader *programHeaders = (void *)((char *)elfHeader + elfHeader->programHeadersOffset);
+    for (int32_t i = 0; i < elfHeader->programHeadersLength; ++i) {
+        if (programHeaders[i].type == elf_PT_INTERP) {
+            // Run ourself through the dynamic linker.
+            newArgv[0] = (char *)elfHeader + programHeaders[i].fileOffset;
+            sys_execveat(-1, newArgv[0], &newArgv[0], &newEnvp[0], 0);
+            return 1;
+        }
+    }
     return 1;
 }

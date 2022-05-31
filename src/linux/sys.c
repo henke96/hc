@@ -956,6 +956,12 @@ static hc_ALWAYS_INLINE int64_t sys_read(int32_t fd, void *buf, int64_t count) {
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int64_t sys_pread64(int32_t fd, void *buf, int64_t count, int64_t offset) {
+    sys_SYSCALL4(sys_NR_pread64, fd, buf, count, offset);
+    return ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE noreturn void sys_exit(int32_t exitcode) {
     sys_SYSCALL1(sys_NR_exit, exitcode);
     hc_UNREACHABLE;
