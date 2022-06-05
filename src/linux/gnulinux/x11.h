@@ -11,6 +11,8 @@
 #define x11_INPUT_OUTPUT 1
 #define x11_INPUT_ONLY 2
 
+#define x11_ATOM_NONE 0
+
 // Set-of-event bits.
 #define x11_EVENT_KEY_PRESS_BIT 0x1
 #define x11_EVENT_KEY_RELEASE_BIT 0x2
@@ -203,6 +205,26 @@ struct x11_mapWindow {
     uint32_t windowId;
 };
 
+#define x11_internAtom_OPCODE 16
+struct x11_internAtom {
+    uint8_t opcode;
+    uint8_t onlyIfExists;
+    uint16_t length;
+    uint16_t nameLength;
+    uint16_t __pad;
+    uint8_t data[]; // char name[nameLength];
+                    // uint8_t __pad2[util_PAD_BYTES(nameLength)];
+};
+
+struct x11_internAtomResponse {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint32_t atom;
+    uint8_t __pad2[20];
+};
+
 #define x11_grabPointer_OPCODE 26
 #define x11_grabPointer_SYNCHRONOUS 0
 #define x11_grabPointer_ASYNCHRONOUS 1
@@ -226,8 +248,8 @@ struct x11_queryExtension {
     uint16_t length;
     uint16_t nameLength;
     uint16_t __pad2;
-    uint8_t data[]; // char name[n];
-                    // uint8_t __pad3[util_PAD_BYTES(n)];
+    uint8_t data[]; // char name[nameLength];
+                    // uint8_t __pad3[util_PAD_BYTES(nameLength)];
 };
 
 struct x11_queryExtensionResponse {

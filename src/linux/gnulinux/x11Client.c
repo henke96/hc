@@ -125,7 +125,12 @@ static int32_t x11Client_sendRequests(struct x11Client *self, void *requests, in
 }
 
 static int32_t x11Client_receive(struct x11Client *self) {
-    int32_t numRead = (int32_t)sys_recvfrom(self->socketFd, &self->receiveBuffer[0], sizeof(self->receiveBuffer) - self->receiveLength, 0, NULL, NULL);
+    int32_t numRead = (int32_t)sys_recvfrom(
+        self->socketFd,
+        &self->receiveBuffer[self->receiveLength],
+        sizeof(self->receiveBuffer) - self->receiveLength,
+        0, NULL, NULL
+    );
     if (numRead <= 0) return numRead;
     self->receiveLength += (uint32_t)numRead;
     return numRead;
