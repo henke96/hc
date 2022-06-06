@@ -1,5 +1,6 @@
 #include "../../src/hc.h"
 #include "../../src/util.c"
+#include "../../src/elf.h"
 #include "../../src/libc/small.c"
 #include "../../src/linux/linux.h"
 #include "../../src/linux/util.c"

@@ -128,11 +128,16 @@
                                 BigInt(event.movementY * 4294967296)
                             );
                         };
+                        let onKeyEvent = (event) => console.log(event);
                         document.addEventListener("pointerlockchange", () => {
                             if (document.pointerLockElement === canvas) {
                                 document.addEventListener("mousemove", onMouseMove);
+                                document.addEventListener("keydown", onKeyEvent);
+                                document.addEventListener("keyup", onKeyEvent);
                             } else {
                                 document.removeEventListener("mousemove", onMouseMove);
+                                document.removeEventListener("keydown", onKeyEvent);
+                                document.removeEventListener("keyup", onKeyEvent);
                             }
                         });
 

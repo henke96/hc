@@ -7,12 +7,143 @@ struct window {
     int32_t epollFd;
     uint32_t windowId;
     uint32_t rootWindowId;
+    uint32_t wmProtocolsAtom;
+    uint32_t wmDeleteWindowAtom;
     uint8_t xinputMajorOpcode;
     uint8_t xfixesMajorOpcode;
     char __pad[2];
 };
 
 static struct window window;
+
+static int32_t window_x11Setup(uint32_t visualId) {
+    window.windowId = x11Client_nextId(&window.x11Client);
+    uint64_t rootsOffset = (
+        util_ALIGN_FORWARD(window.x11Client.setupResponse->vendorLength, 4) +
+        sizeof(struct x11_format) * window.x11Client.setupResponse->numPixmapFormats
+    );
+    struct x11_screen *screen = (void *)&window.x11Client.setupResponse->data[rootsOffset]; // Use first screen.
+    window.rootWindowId = screen->windowId;
+
+    struct requests {
+        struct x11_createWindow createWindow;
+        uint32_t createWindowValues[1];
+        struct x11_mapWindow mapWindow;
+        struct x11_queryExtension queryXfixes;
+        char queryXfixesName[sizeof(x11_XFIXES_NAME) - 1];
+        uint8_t queryXfixesPad[util_PAD_BYTES(sizeof(x11_XFIXES_NAME) - 1, 4)];
+        struct x11_queryExtension queryXinput;
+        char queryXinputName[sizeof(x11_XINPUT_NAME) - 1];
+        uint8_t queryXinputPad[util_PAD_BYTES(sizeof(x11_XINPUT_NAME) - 1, 4)];
+        struct x11_internAtom wmProtocolsAtom;
+        char wmProtocolsAtomName[sizeof("WM_PROTOCOLS") - 1];
+        uint8_t wmProtocolsAtomPad[util_PAD_BYTES(sizeof("WM_PROTOCOLS") - 1, 4)];
+        struct x11_internAtom wmDeleteWindowAtom;
+        char wmDeleteWindowAtomName[sizeof("WM_DELETE_WINDOW") - 1];
+        uint8_t wmDeleteWindowAtomPad[util_PAD_BYTES(sizeof("WM_DELETE_WINDOW") - 1, 4)];
+    };
+
+    struct requests windowRequests = {
+        .createWindow = {
+            .opcode = x11_createWindow_OPCODE,
+            .depth = 0,
+            .length = (sizeof(windowRequests.createWindow) + sizeof(windowRequests.createWindowValues)) / 4,
+            .windowId = window.windowId,
+            .parentId = window.rootWindowId,
+            .width = window_DEFAULT_WIDTH,
+            .height = window_DEFAULT_HEIGHT,
+            .borderWidth = 1,
+            .class = x11_INPUT_OUTPUT,
+            .visualId = visualId,
+            .valueMask = x11_createWindow_EVENT_MASK
+        },
+        .createWindowValues = {
+            x11_EVENT_STRUCTURE_NOTIFY_BIT
+        },
+        .mapWindow = {
+            .opcode = x11_mapWindow_OPCODE,
+            .length = sizeof(windowRequests.mapWindow) / 4,
+            .windowId = windowRequests.createWindow.windowId
+        },
+        .queryXfixes = {
+            .opcode = x11_queryExtension_OPCODE,
+            .length = (sizeof(windowRequests.queryXfixes) + sizeof(windowRequests.queryXfixesName) + sizeof(windowRequests.queryXfixesPad)) / 4,
+            .nameLength = sizeof(windowRequests.queryXfixesName),
+        },
+        .queryXfixesName = x11_XFIXES_NAME,
+        .queryXinput = {
+            .opcode = x11_queryExtension_OPCODE,
+            .length = (sizeof(windowRequests.queryXinput) + sizeof(windowRequests.queryXinputName) + sizeof(windowRequests.queryXinputPad)) / 4,
+            .nameLength = sizeof(windowRequests.queryXinputName),
+        },
+        .queryXinputName = x11_XINPUT_NAME,
+        .wmProtocolsAtom = {
+            .opcode = x11_internAtom_OPCODE,
+            .onlyIfExists = 0,
+            .length = (sizeof(windowRequests.wmProtocolsAtom) + sizeof(windowRequests.wmProtocolsAtomName) + sizeof(windowRequests.wmProtocolsAtomPad)) / 4,
+            .nameLength = sizeof(windowRequests.wmProtocolsAtomName)
+        },
+        .wmProtocolsAtomName = "WM_PROTOCOLS",
+        .wmDeleteWindowAtom = {
+            .opcode = x11_internAtom_OPCODE,
+            .onlyIfExists = 0,
+            .length = (sizeof(windowRequests.wmDeleteWindowAtom) + sizeof(windowRequests.wmDeleteWindowAtomName) + sizeof(windowRequests.wmDeleteWindowAtomPad)) / 4,
+            .nameLength = sizeof(windowRequests.wmDeleteWindowAtomName)
+        },
+        .wmDeleteWindowAtomName = "WM_DELETE_WINDOW"
+    };
+    int32_t status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 6);
+    if (status < 0) return -1;
+
+    // Wait for all replies.
+    int32_t nextSequenceNumber = 3;
+    for (;;) {
+        int32_t msgLength = x11Client_nextMessage(&window.x11Client);
+        if (msgLength == 0) {
+            int32_t numRead = x11Client_receive(&window.x11Client);
+            if (numRead <= 0) return -2;
+            continue;
+        }
+        struct x11_genericResponse *generic = (void *)&window.x11Client.receiveBuffer[0];
+        if (generic->type == x11_TYPE_ERROR) {
+            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)generic->sequenceNumber, (int32_t)generic->extra);
+            return -3;
+        }
+
+        if (generic->type == x11_TYPE_REPLY) {
+            if (generic->sequenceNumber != nextSequenceNumber) return -4;
+
+            switch (nextSequenceNumber) {
+                case 3: {
+                    struct x11_queryExtensionResponse *response = (void *)generic;
+                    if (!response->present) return -5;
+                    window.xfixesMajorOpcode = response->majorOpcode;
+                    break;
+                }
+                case 4: {
+                    struct x11_queryExtensionResponse *response = (void *)generic;
+                    if (!response->present) return -6;
+                    window.xinputMajorOpcode = response->majorOpcode;
+                    break;
+                }
+                case 5: {
+                    struct x11_internAtomResponse *response = (void *)generic;
+                    window.wmProtocolsAtom = response->atom;
+                    break;
+                }
+                case 6: {
+                    struct x11_internAtomResponse *response = (void *)generic;
+                    window.wmDeleteWindowAtom = response->atom;
+                    x11Client_ackMessage(&window.x11Client, msgLength);
+                    return 0; // Done.
+                }
+                default: hc_UNREACHABLE;
+            }
+            ++nextSequenceNumber;
+        }
+        x11Client_ackMessage(&window.x11Client, msgLength);
+    }
+}
 
 static int32_t window_init(char **envp) {
     // Initialise EGL.
@@ -61,109 +192,10 @@ static int32_t window_init(char **envp) {
         goto cleanup_egl;
     }
 
-    // Send requests to create and map X11 window.
-    window.windowId = x11Client_nextId(&window.x11Client);
-    uint64_t rootsOffset = (
-        util_ALIGN_FORWARD(window.x11Client.setupResponse->vendorLength, 4) +
-        sizeof(struct x11_format) * window.x11Client.setupResponse->numPixmapFormats
-    );
-    struct x11_screen *screen = (void *)&window.x11Client.setupResponse->data[rootsOffset]; // Use first screen.
-    window.rootWindowId = screen->windowId;
-
-    struct requests {
-        struct x11_createWindow createWindow;
-        uint32_t createWindowValues[1];
-        struct x11_mapWindow mapWindow;
-        struct x11_queryExtension queryXfixes;
-        char queryXfixesName[sizeof(x11_XFIXES_NAME) - 1];
-        char queryXfixesPad[util_PAD_BYTES(sizeof(x11_XFIXES_NAME) - 1, 4)];
-        struct x11_queryExtension queryXinput;
-        char queryXinputName[sizeof(x11_XINPUT_NAME) - 1];
-        char queryXinputPad[util_PAD_BYTES(sizeof(x11_XINPUT_NAME) - 1, 4)];
-    };
-
-    struct requests windowRequests = {
-        .createWindow = {
-            .opcode = x11_createWindow_OPCODE,
-            .depth = 0,
-            .length = (sizeof(windowRequests.createWindow) + sizeof(windowRequests.createWindowValues)) / 4,
-            .windowId = window.windowId,
-            .parentId = window.rootWindowId,
-            .width = window_DEFAULT_WIDTH,
-            .height = window_DEFAULT_HEIGHT,
-            .borderWidth = 1,
-            .class = x11_INPUT_OUTPUT,
-            .visualId = eglVisualId,
-            .valueMask = x11_createWindow_EVENT_MASK
-        },
-        .createWindowValues = {
-            x11_EVENT_STRUCTURE_NOTIFY_BIT
-        },
-        .mapWindow = {
-            .opcode = x11_mapWindow_OPCODE,
-            .length = sizeof(windowRequests.mapWindow) / 4,
-            .windowId = windowRequests.createWindow.windowId
-        },
-        .queryXfixes = {
-            .opcode = x11_queryExtension_OPCODE,
-            .length = (sizeof(windowRequests.queryXfixes) + sizeof(windowRequests.queryXfixesName) + sizeof(windowRequests.queryXfixesPad)) / 4,
-            .nameLength = sizeof(windowRequests.queryXfixesName),
-        },
-        .queryXfixesName = x11_XFIXES_NAME,
-        .queryXinput = {
-            .opcode = x11_queryExtension_OPCODE,
-            .length = (sizeof(windowRequests.queryXinput) + sizeof(windowRequests.queryXinputName) + sizeof(windowRequests.queryXinputPad)) / 4,
-            .nameLength = sizeof(windowRequests.queryXinputName),
-        },
-        .queryXinputName = x11_XINPUT_NAME
-    };
-    status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 4);
+    status = window_x11Setup(eglVisualId);
     if (status < 0) {
-        printf("Failed to send x11 window requests (%d)\n", status);
+        printf("X11 setup failed (%d)\n", status);
         goto cleanup_x11Client;
-    }
-
-    // Wait for QueryExtension response.
-    for (;;) {
-        int32_t msgLength = x11Client_nextMessage(&window.x11Client);
-        if (msgLength == 0) {
-            int32_t numRead = x11Client_receive(&window.x11Client);
-            if (numRead <= 0) {
-                status = -2;
-                goto cleanup_x11Client;
-            }
-            continue;
-        }
-        uint8_t msgType = window.x11Client.receiveBuffer[0];
-        if (msgType == x11_TYPE_ERROR) {
-            uint8_t errorCode = window.x11Client.receiveBuffer[1];
-            uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
-            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
-            status = -3;
-            goto cleanup_x11Client;
-        }
-
-        if (msgType == x11_TYPE_REPLY) {
-            uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
-            if (sequenceNumber == 3) {
-                struct x11_queryExtensionResponse *response = (void *)&window.x11Client.receiveBuffer[0];
-                if (!response->present) {
-                    status = -4;
-                    goto cleanup_x11Client;
-                }
-                window.xfixesMajorOpcode = response->majorOpcode;
-            } else if (sequenceNumber == 4) {
-                struct x11_queryExtensionResponse *response = (void *)&window.x11Client.receiveBuffer[0];
-                if (!response->present) {
-                    status = -5;
-                    goto cleanup_x11Client;
-                }
-                window.xinputMajorOpcode = response->majorOpcode;
-                x11Client_ackMessage(&window.x11Client, msgLength);
-                break;
-            }
-        }
-        x11Client_ackMessage(&window.x11Client, msgLength);
     }
 
     // Setup EGL surface.
@@ -183,8 +215,8 @@ static int32_t window_init(char **envp) {
 
     // Initialise game.
     status = game_init(
-        windowRequests.createWindow.width,
-        windowRequests.createWindow.height
+        window_DEFAULT_WIDTH,
+        window_DEFAULT_HEIGHT
     );
     if (status < 0) {
         printf("Failed to initialise game (%d)\n", status);
@@ -224,6 +256,8 @@ static int32_t window_run(void) {
 
     // Grab pointer.
     struct requests {
+        struct x11_changeProperty changeProperty;
+        uint32_t changePropertyData;
         struct x11_xfixesQueryVersion queryXfixesVersion; // Need to do this once to tell server what version we expect.
         struct x11_grabPointer grabPointer;
         struct x11_xfixesHideCursor hideCursor;
@@ -231,6 +265,17 @@ static int32_t window_run(void) {
         struct x11_xinputEventMask xinputSelectEventsMask;
     };
     struct requests grabPointerRequests = {
+        .changeProperty = {
+            .opcode = x11_changeProperty_OPCODE,
+            .mode = x11_changeProperty_REPLACE,
+            .length = (sizeof(grabPointerRequests.changeProperty) + sizeof(grabPointerRequests.changePropertyData)) / 4,
+            .window = window.windowId,
+            .property = window.wmProtocolsAtom,
+            .type = x11_ATOM_ATOM,
+            .format = 32,
+            .dataLength = 1
+        },
+        .changePropertyData = window.wmDeleteWindowAtom,
         .queryXfixesVersion = {
             .majorOpcode = window.xfixesMajorOpcode,
             .opcode = x11_xfixesQueryVersion_OPCODE,
@@ -269,7 +314,7 @@ static int32_t window_run(void) {
             .mask = (1 << x11_XINPUT_RAW_MOTION)
         }
     };
-    if (x11Client_sendRequests(&window.x11Client, &grabPointerRequests, sizeof(grabPointerRequests), 4) < 0) return -1;
+    if (x11Client_sendRequests(&window.x11Client, &grabPointerRequests, sizeof(grabPointerRequests), 5) < 0) return -1;
 
     // Main loop.
     for (;;) {
@@ -291,22 +336,20 @@ static int32_t window_run(void) {
                     int32_t msgLength = x11Client_nextMessage(&window.x11Client);
                     if (msgLength == 0) break;
 
-                    uint8_t msgType = window.x11Client.receiveBuffer[0];
-                    printf("Got message type: %d, length: %d\n", (int32_t)msgType, msgLength);
-                    switch (msgType) {
+                    struct x11_genericResponse *generic = (void *)&window.x11Client.receiveBuffer[0];
+                    printf("Got message type: %d (%d), length: %d\n", (int32_t)generic->type, msgLength);
+                    switch (generic->type & x11_TYPE_MASK) {
                         case x11_TYPE_ERROR: {
-                            uint8_t errorCode = window.x11Client.receiveBuffer[1];
-                            uint16_t sequenceNumber = *(uint16_t *)&window.x11Client.receiveBuffer[2];
-                            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)sequenceNumber, (int32_t)errorCode);
+                            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)generic->sequenceNumber, (int32_t)generic->extra);
                             return -3; // For now we always exit on X11 errors.
                         }
                         case x11_configureNotify_TYPE: {
-                            struct x11_configureNotify *configureNotify = (void *)&window.x11Client.receiveBuffer[0];
+                            struct x11_configureNotify *configureNotify = (void *)generic;
                             game_onResize(configureNotify->width, configureNotify->height);
                             break;
                         }
                         case x11_genericEvent_TYPE: {
-                            struct x11_xinputRawEvent *rawEvent = (void *)&window.x11Client.receiveBuffer[0];
+                            struct x11_xinputRawEvent *rawEvent = (void *)generic;
                             if (rawEvent->extension != window.xinputMajorOpcode || rawEvent->eventType != x11_XINPUT_RAW_MOTION) break;
 
                             int32_t valuatorBits = 0;
@@ -318,6 +361,11 @@ static int32_t window_run(void) {
                             int64_t deltaX = (int64_t)((uint64_t)valuatorsRaw[0].integer << 32) | valuatorsRaw[0].fraction;
                             int64_t deltaY = (int64_t)((uint64_t)valuatorsRaw[1].integer << 32) | valuatorsRaw[1].fraction;
                             game_onMouseMove(deltaX, deltaY);
+                            break;
+                        }
+                        case x11_clientMessage_TYPE: {
+                            struct x11_clientMessage *message = (void *)generic;
+                            if (message->atom == window.wmProtocolsAtom && message->data32[0] == window.wmDeleteWindowAtom) return 0;
                             break;
                         }
                     }

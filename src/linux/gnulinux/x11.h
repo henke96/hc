@@ -12,6 +12,7 @@
 #define x11_INPUT_ONLY 2
 
 #define x11_ATOM_NONE 0
+#define x11_ATOM_ATOM 4
 
 // Set-of-event bits.
 #define x11_EVENT_KEY_PRESS_BIT 0x1
@@ -133,6 +134,13 @@ struct x11_setupResponse {
 };
 
 // Protocol requests and responses.
+struct x11_genericResponse {
+    uint8_t type;
+    uint8_t extra;
+    uint16_t sequenceNumber;
+    uint8_t data[];
+};
+
 #define x11_createWindow_OPCODE 1
 // Bits for valueMask.
 #define x11_createWindow_BACKGROUND_PIXMAP 0x1
@@ -213,7 +221,7 @@ struct x11_internAtom {
     uint16_t nameLength;
     uint16_t __pad;
     uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad2[util_PAD_BYTES(nameLength)];
+                    // uint8_t __pad2[util_PAD_BYTES(nameLength, 4)];
 };
 
 struct x11_internAtomResponse {
@@ -223,6 +231,24 @@ struct x11_internAtomResponse {
     uint32_t length;
     uint32_t atom;
     uint8_t __pad2[20];
+};
+
+#define x11_changeProperty_OPCODE 18
+#define x11_changeProperty_REPLACE 0
+#define x11_changeProperty_PREPEND 1
+#define x11_changeProperty_APPEND 2
+struct x11_changeProperty {
+    uint8_t opcode;
+    uint8_t mode;
+    uint16_t length;
+    uint32_t window;
+    uint32_t property;
+    uint32_t type;
+    uint8_t format; // 8, 16 or 32 bits.
+    uint8_t __pad[3];
+    uint32_t dataLength; // In `format` units.
+    uint8_t data[]; // format_t data[dataLength];
+                    // uint8_t __pad2[util_PAD_BYTES(sizeof(format_t) * dataLength, 4)];
 };
 
 #define x11_grabPointer_OPCODE 26
@@ -249,7 +275,7 @@ struct x11_queryExtension {
     uint16_t nameLength;
     uint16_t __pad2;
     uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad3[util_PAD_BYTES(nameLength)];
+                    // uint8_t __pad3[util_PAD_BYTES(nameLength, 4)];
 };
 
 struct x11_queryExtensionResponse {
@@ -323,6 +349,20 @@ struct x11_configureNotify {
     uint16_t borderWidth;
     uint8_t overrideRedirect;
     uint8_t __pad2[5];
+};
+
+#define x11_clientMessage_TYPE 33
+struct x11_clientMessage {
+    uint8_t type;
+    uint8_t format;
+    uint16_t sequenceNumber;
+    uint32_t window;
+    uint32_t atom;
+    union {
+        uint8_t data8[20];
+        uint16_t data16[10];
+        uint32_t data32[5];
+    };
 };
 
 #define x11_genericEvent_TYPE 35
