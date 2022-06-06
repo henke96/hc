@@ -337,7 +337,7 @@ static int32_t window_run(void) {
                     if (msgLength == 0) break;
 
                     struct x11_genericResponse *generic = (void *)&window.x11Client.receiveBuffer[0];
-                    printf("Got message type: %d (%d), length: %d\n", (int32_t)generic->type, msgLength);
+                    printf("Got message type: %d, length: %d\n", (int32_t)generic->type, msgLength);
                     switch (generic->type & x11_TYPE_MASK) {
                         case x11_TYPE_ERROR: {
                             printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)generic->sequenceNumber, (int32_t)generic->extra);
