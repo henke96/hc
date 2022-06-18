@@ -4,14 +4,14 @@ SECTIONS {
     . = 0;
     .text : {
         KEEP(*(.start));
-        *(.text);
+        *(.text*);
     }
     .rodata : {
-        *(.rodata);
+        *(.rodata*);
     }
     . = ALIGN(4K);
     .data : {
-        *(.data);
+        *(.data*);
     }
     .bss : {
         kernel_bssStart = .;
