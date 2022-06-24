@@ -1,6 +1,6 @@
 # Make sure it's not run from the wrong folder.
 if test "$(dirname $0)" != "."; then
-    echo "Usage: ./buildAll.sh"
+    echo "Usage: ./build_all.sh"
     exit 1
 fi
 

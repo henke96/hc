@@ -307,6 +307,11 @@ struct timespec {
     int64_t tv_nsec;
 };
 
+struct timeval {
+    int64_t tv_sec;
+    int64_t tv_usec;
+};
+
 struct itimerspec {
     struct timespec it_interval; // Timer period
     struct timespec it_value; // Timer expiration
@@ -2299,3 +2304,51 @@ struct statx {
 #define STATX_ATTR_MOUNT_ROOT 0x00002000 /* Root of a mount */
 #define STATX_ATTR_VERITY 0x00100000 /* [I] Verity protected file */
 #define STATX_ATTR_DAX 0x00200000 /* File is currently in DAX state */
+
+// reboot.h
+#define LINUX_REBOOT_MAGIC1 0xfee1dead
+#define LINUX_REBOOT_MAGIC2 672274793
+#define LINUX_REBOOT_MAGIC2A 85072278
+#define LINUX_REBOOT_MAGIC2B 369367448
+#define LINUX_REBOOT_MAGIC2C 537993216
+
+#define LINUX_REBOOT_CMD_RESTART 0x01234567
+#define LINUX_REBOOT_CMD_HALT 0xCDEF0123
+#define LINUX_REBOOT_CMD_CAD_ON 0x89ABCDEF
+#define LINUX_REBOOT_CMD_CAD_OFF 0x00000000
+#define LINUX_REBOOT_CMD_POWER_OFF 0x4321FEDC
+#define LINUX_REBOOT_CMD_RESTART2 0xA1B2C3D4
+#define LINUX_REBOOT_CMD_SW_SUSPEND 0xD000FCE2
+#define LINUX_REBOOT_CMD_KEXEC 0x45584543
+
+// resource.h
+struct rusage {
+    struct timeval ru_utime;
+    struct timeval ru_stime;
+    int64_t ru_maxrss;
+    int64_t ru_ixrss;
+    int64_t ru_idrss;
+    int64_t ru_isrss;
+    int64_t ru_minflt;
+    int64_t ru_majflt;
+    int64_t ru_nswap;
+    int64_t ru_inblock;
+    int64_t ru_oublock;
+    int64_t ru_msgsnd;
+    int64_t ru_msgrcv;
+    int64_t ru_nsignals;
+    int64_t ru_nvcsw;
+    int64_t ru_nivcsw;
+};
+
+// wait.h
+#define WNOHANG 0x00000001
+#define WUNTRACED 0x00000002
+#define WSTOPPED WUNTRACED
+#define WEXITED 0x00000004
+#define WCONTINUED 0x00000008
+#define WNOWAIT 0x01000000 /* Don't reap, just poll status.  */
+
+#define __WNOTHREAD 0x20000000 /* Don't wait on children of other threads in this group */
+#define __WALL 0x40000000 /* Wait on all children, regardless of type */
+#define __WCLONE 0x80000000 /* Wait only on non-SIGCHLD children */

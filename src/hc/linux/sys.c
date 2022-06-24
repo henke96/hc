@@ -1131,8 +1131,8 @@ static hc_ALWAYS_INLINE int64_t sys_getrandom(void *buf, int64_t buflen, uint32_
 }
 
 hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_clone3(struct clone_args *args, uint64_t size) {
-    sys_SYSCALL2(sys_NR_clone3, args, size);
+static hc_ALWAYS_INLINE int32_t sys_clone3(struct clone_args *args) {
+    sys_SYSCALL2(sys_NR_clone3, args, sizeof(*args));
     return (int32_t)ret;
 }
 
@@ -1143,8 +1143,8 @@ static hc_ALWAYS_INLINE int32_t sys_execveat(int32_t fd, const char *filename, c
 }
 
 hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_wait4(int32_t pid, int32_t *status, int32_t options) {
-    sys_SYSCALL4(sys_NR_wait4, pid, status, options, NULL);
+static hc_ALWAYS_INLINE int32_t sys_wait4(int32_t pid, int32_t *status, int32_t options, struct rusage *rusage) {
+    sys_SYSCALL4(sys_NR_wait4, pid, status, options, rusage);
     return (int32_t)ret;
 }
 
@@ -1181,5 +1181,17 @@ static hc_ALWAYS_INLINE int32_t sys_ioctl(int32_t fd, uint32_t cmd, void *arg) {
 hc_UNUSED
 static hc_ALWAYS_INLINE int32_t sys_statx(int32_t dfd, const char *filename, uint32_t flags, uint32_t mask, struct statx *stat) {
     sys_SYSCALL5(sys_NR_statx, dfd, filename, flags, mask, stat);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_sync(void) {
+    sys_SYSCALL0(sys_NR_sync);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_reboot(uint32_t magic1, uint32_t magic2, uint32_t cmd, void *arg) {
+    sys_SYSCALL4(sys_NR_reboot, magic1, magic2, cmd, arg);
     return (int32_t)ret;
 }
