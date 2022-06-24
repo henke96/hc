@@ -1,6 +1,6 @@
-#include "../../src/hc.h"
-#include "../../src/util.c"
-#include "../../src/windows/windows.h"
+#include "hc/hc.h"
+#include "hc/util.c"
+#include "hc/windows/windows.h"
 
 void noreturn main(void) {
     void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);

@@ -1,13 +1,13 @@
-#include "../../src/hc.h"
-#include "../../src/elf.h"
-#include "../../src/util.c"
-#include "../../src/libc/small.c"
-#include "../../src/linux/linux.h"
-#include "../../src/linux/util.c"
-#include "../../src/linux/sys.c"
-#include "../../src/linux/debug.c"
-#include "../../src/linux/vdso.c"
-#include "../../src/linux/helpers/_start.c"
+#include "hc/hc.h"
+#include "hc/elf.h"
+#include "hc/util.c"
+#include "hc/libc/small.c"
+#include "hc/linux/linux.h"
+#include "hc/linux/util.c"
+#include "hc/linux/sys.c"
+#include "hc/linux/debug.c"
+#include "hc/linux/vdso.c"
+#include "hc/linux/helpers/_start.c"
 
 int32_t main(int32_t argc, char **argv) {
     // Find the clock_gettime() function in the shared object "vDSO" provided to us by Linux.

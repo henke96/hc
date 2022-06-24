@@ -1,4 +1,4 @@
-#include "../../src/hc.h"
+#include "hc/hc.h"
 
 hc_WASM_IMPORT("env", "print")
 void print(int32_t number);

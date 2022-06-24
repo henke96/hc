@@ -1,4 +1,3 @@
-
 static void mat_init(float *mat, float scale) {
     mat[0] = scale;
     mat[1] = 0;

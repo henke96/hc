@@ -1,13 +1,13 @@
-#include "../../src/hc.h"
-#include "../../src/util.c"
-#include "../../src/libc/musl.c"
-#include "../../src/linux/linux.h"
-#include "../../src/linux/util.c"
-#include "../../src/linux/sys.c"
-#include "../../src/linux/debug.c"
-#include "../../src/linux/drmKms.c"
-#include "../../src/linux/helpers/_start.c"
-#include "../../src/linux/helpers/sys_clone_exit.c"
+#include "hc/hc.h"
+#include "hc/util.c"
+#include "hc/libc/musl.c"
+#include "hc/linux/linux.h"
+#include "hc/linux/util.c"
+#include "hc/linux/sys.c"
+#include "hc/linux/debug.c"
+#include "hc/linux/drmKms.c"
+#include "hc/linux/helpers/_start.c"
+#include "hc/linux/helpers/sys_clone_exit.c"
 
 static int32_t init_graphics(struct drmKms *graphics) {
     // Set up frame buffer.

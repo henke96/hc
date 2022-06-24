@@ -1,11 +1,11 @@
-#include "../../src/hc.h"
-#include "../../src/util.c"
-#include "../../src/libc/small.c"
-#include "../../src/linux/linux.h"
-#include "../../src/linux/sys.c"
-#include "../../src/linux/debug.c"
-#include "../../src/linux/helpers/_start.c"
-#include "../../src/linux/helpers/sys_clone.c"
+#include "hc/hc.h"
+#include "hc/util.c"
+#include "hc/libc/small.c"
+#include "hc/linux/linux.h"
+#include "hc/linux/sys.c"
+#include "hc/linux/debug.c"
+#include "hc/linux/helpers/_start.c"
+#include "hc/linux/helpers/sys_clone.c"
 
 // 1 to use spin lock, 0 for futex-based locking.
 #define SPIN 0
