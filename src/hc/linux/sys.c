@@ -1195,3 +1195,9 @@ static hc_ALWAYS_INLINE int32_t sys_reboot(uint32_t magic1, uint32_t magic2, uin
     sys_SYSCALL4(sys_NR_reboot, magic1, magic2, cmd, arg);
     return (int32_t)ret;
 }
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_mount(const char *dev_name, const char *dir_name, const char *type, uint64_t flags, const void *data) {
+    sys_SYSCALL5(sys_NR_mount, dev_name, dir_name, type, flags, data);
+    return (int32_t)ret;
+}
