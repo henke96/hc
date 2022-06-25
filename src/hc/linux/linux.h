@@ -2364,7 +2364,7 @@ struct rusage {
 #define NETLINK_SELINUX 7 /* SELinux event notifications */
 #define NETLINK_ISCSI 8 /* Open-iSCSI */
 #define NETLINK_AUDIT 9 /* auditing */
-#define NETLINK_FIB_LOOKUP 10 
+#define NETLINK_FIB_LOOKUP 10
 #define NETLINK_CONNECTOR 11
 #define NETLINK_NETFILTER 12 /* netfilter subsystem */
 #define NETLINK_IP6_FW 13
@@ -2413,6 +2413,11 @@ struct nlmsghdr {
 /* Flags for ACK message */
 #define NLM_F_CAPPED 0x100 /* request was capped */
 #define NLM_F_ACK_TLVS 0x200 /* extended ACK TVLs were included */
+
+#define NLMSG_NOOP 0x1 /* Nothing. */
+#define NLMSG_ERROR 0x2 /* Error */
+#define NLMSG_DONE 0x3 /* End of a dump */
+#define NLMSG_OVERRUN 0x4 /* Data lost */
 
 // rtnetlink.h
 enum {
@@ -2596,6 +2601,20 @@ enum {
 #define RTM_NR_FAMILIES (RTM_NR_MSGTYPES >> 2)
 #define RTM_FAM(cmd) (((cmd) - RTM_BASE) >> 2)
 
+struct rtattr {
+    uint16_t rta_len;
+    uint16_t rta_type;
+};
+
+struct ifinfomsg {
+    uint8_t ifi_family;
+    uint8_t __pad;
+    uint16_t ifi_type; /* ARPHRD_* */
+    int32_t ifi_index; /* Link index */
+    uint32_t ifi_flags; /* IFF_* flags */
+    uint32_t ifi_change; /* IFF_* change mask */
+};
+
 // if_addr.h
 struct ifaddrmsg {
     uint8_t ifa_family;
@@ -2648,3 +2667,26 @@ enum {
 #define IFA_F_NOPREFIXROUTE 0x200
 #define IFA_F_MCAUTOJOIN 0x400
 #define IFA_F_STABLE_PRIVACY 0x800
+
+// if.h
+enum net_device_flags {
+    IFF_UP = 1<<0, /* sysfs */
+    IFF_BROADCAST = 1<<1, /* volatile */
+    IFF_DEBUG = 1<<2, /* sysfs */
+    IFF_LOOPBACK = 1<<3, /* volatile */
+    IFF_POINTOPOINT = 1<<4, /* volatile */
+    IFF_NOTRAILERS = 1<<5, /* sysfs */
+    IFF_RUNNING = 1<<6, /* volatile */
+    IFF_NOARP = 1<<7, /* sysfs */
+    IFF_PROMISC = 1<<8, /* sysfs */
+    IFF_ALLMULTI = 1<<9, /* sysfs */
+    IFF_MASTER = 1<<10, /* volatile */
+    IFF_SLAVE = 1<<11, /* volatile */
+    IFF_MULTICAST = 1<<12, /* sysfs */
+    IFF_PORTSEL = 1<<13, /* sysfs */
+    IFF_AUTOMEDIA = 1<<14, /* sysfs */
+    IFF_DYNAMIC = 1<<15, /* sysfs */
+    IFF_LOWER_UP = 1<<16, /* volatile */
+    IFF_DORMANT = 1<<17, /* volatile */
+    IFF_ECHO = 1<<18, /* volatile */
+};
