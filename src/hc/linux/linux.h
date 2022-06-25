@@ -2352,3 +2352,299 @@ struct rusage {
 #define __WNOTHREAD 0x20000000 /* Don't wait on children of other threads in this group */
 #define __WALL 0x40000000 /* Wait on all children, regardless of type */
 #define __WCLONE 0x80000000 /* Wait only on non-SIGCHLD children */
+
+// netlink.h
+#define NETLINK_ROUTE 0 /* Routing/device hook */
+#define NETLINK_UNUSED 1 /* Unused number */
+#define NETLINK_USERSOCK 2 /* Reserved for user mode socket protocols */
+#define NETLINK_FIREWALL 3 /* Unused number, formerly ip_queue */
+#define NETLINK_SOCK_DIAG 4 /* socket monitoring */
+#define NETLINK_NFLOG 5 /* netfilter/iptables ULOG */
+#define NETLINK_XFRM 6 /* ipsec */
+#define NETLINK_SELINUX 7 /* SELinux event notifications */
+#define NETLINK_ISCSI 8 /* Open-iSCSI */
+#define NETLINK_AUDIT 9 /* auditing */
+#define NETLINK_FIB_LOOKUP 10 
+#define NETLINK_CONNECTOR 11
+#define NETLINK_NETFILTER 12 /* netfilter subsystem */
+#define NETLINK_IP6_FW 13
+#define NETLINK_DNRTMSG 14 /* DECnet routing messages */
+#define NETLINK_KOBJECT_UEVENT 15 /* Kernel messages to userspace */
+#define NETLINK_GENERIC 16
+
+struct sockaddr_nl {
+    uint16_t nl_family;
+    uint16_t nl_pad;
+    uint32_t nl_pid; /* port ID */
+    uint32_t nl_groups; /* multicast groups mask */
+};
+
+struct nlmsghdr {
+    uint32_t nlmsg_len; /* Length of message including header */
+    uint16_t nlmsg_type; /* Message content */
+    uint16_t nlmsg_flags; /* Additional flags */
+    uint32_t nlmsg_seq; /* Sequence number */
+    uint32_t nlmsg_pid; /* Sending process port ID */
+};
+
+/* Flags values */
+#define NLM_F_REQUEST 0x01 /* It is request message.  */
+#define NLM_F_MULTI 0x02 /* Multipart message, terminated by NLMSG_DONE */
+#define NLM_F_ACK 0x04 /* Reply with ack, with zero or error code */
+#define NLM_F_ECHO 0x08 /* Echo this request  */
+#define NLM_F_DUMP_INTR 0x10 /* Dump was inconsistent due to sequence change */
+#define NLM_F_DUMP_FILTERED 0x20 /* Dump was filtered as requested */
+
+/* Modifiers to GET request */
+#define NLM_F_ROOT 0x100 /* specify tree root */
+#define NLM_F_MATCH 0x200 /* return all matching */
+#define NLM_F_ATOMIC 0x400 /* atomic GET */
+#define NLM_F_DUMP (NLM_F_ROOT|NLM_F_MATCH)
+
+/* Modifiers to NEW request */
+#define NLM_F_REPLACE 0x100 /* Override existing */
+#define NLM_F_EXCL 0x200 /* Do not touch, if it exists */
+#define NLM_F_CREATE 0x400 /* Create, if it does not exist */
+#define NLM_F_APPEND 0x800 /* Add to end of list */
+
+/* Modifiers to DELETE request */
+#define NLM_F_NONREC 0x100 /* Do not delete recursively */
+
+/* Flags for ACK message */
+#define NLM_F_CAPPED 0x100 /* request was capped */
+#define NLM_F_ACK_TLVS 0x200 /* extended ACK TVLs were included */
+
+// rtnetlink.h
+enum {
+    RTM_BASE = 16,
+#define RTM_BASE RTM_BASE
+
+    RTM_NEWLINK = 16,
+#define RTM_NEWLINK RTM_NEWLINK
+    RTM_DELLINK,
+#define RTM_DELLINK RTM_DELLINK
+    RTM_GETLINK,
+#define RTM_GETLINK RTM_GETLINK
+    RTM_SETLINK,
+#define RTM_SETLINK RTM_SETLINK
+
+    RTM_NEWADDR = 20,
+#define RTM_NEWADDR RTM_NEWADDR
+    RTM_DELADDR,
+#define RTM_DELADDR RTM_DELADDR
+    RTM_GETADDR,
+#define RTM_GETADDR RTM_GETADDR
+
+    RTM_NEWROUTE = 24,
+#define RTM_NEWROUTE RTM_NEWROUTE
+    RTM_DELROUTE,
+#define RTM_DELROUTE RTM_DELROUTE
+    RTM_GETROUTE,
+#define RTM_GETROUTE RTM_GETROUTE
+
+    RTM_NEWNEIGH = 28,
+#define RTM_NEWNEIGH RTM_NEWNEIGH
+    RTM_DELNEIGH,
+#define RTM_DELNEIGH RTM_DELNEIGH
+    RTM_GETNEIGH,
+#define RTM_GETNEIGH RTM_GETNEIGH
+
+    RTM_NEWRULE = 32,
+#define RTM_NEWRULE RTM_NEWRULE
+    RTM_DELRULE,
+#define RTM_DELRULE RTM_DELRULE
+    RTM_GETRULE,
+#define RTM_GETRULE RTM_GETRULE
+
+    RTM_NEWQDISC = 36,
+#define RTM_NEWQDISC RTM_NEWQDISC
+    RTM_DELQDISC,
+#define RTM_DELQDISC RTM_DELQDISC
+    RTM_GETQDISC,
+#define RTM_GETQDISC RTM_GETQDISC
+
+    RTM_NEWTCLASS = 40,
+#define RTM_NEWTCLASS RTM_NEWTCLASS
+    RTM_DELTCLASS,
+#define RTM_DELTCLASS RTM_DELTCLASS
+    RTM_GETTCLASS,
+#define RTM_GETTCLASS RTM_GETTCLASS
+
+    RTM_NEWTFILTER = 44,
+#define RTM_NEWTFILTER RTM_NEWTFILTER
+    RTM_DELTFILTER,
+#define RTM_DELTFILTER RTM_DELTFILTER
+    RTM_GETTFILTER,
+#define RTM_GETTFILTER RTM_GETTFILTER
+
+    RTM_NEWACTION = 48,
+#define RTM_NEWACTION   RTM_NEWACTION
+    RTM_DELACTION,
+#define RTM_DELACTION   RTM_DELACTION
+    RTM_GETACTION,
+#define RTM_GETACTION   RTM_GETACTION
+
+    RTM_NEWPREFIX = 52,
+#define RTM_NEWPREFIX RTM_NEWPREFIX
+
+    RTM_GETMULTICAST = 58,
+#define RTM_GETMULTICAST RTM_GETMULTICAST
+
+    RTM_GETANYCAST = 62,
+#define RTM_GETANYCAST RTM_GETANYCAST
+
+    RTM_NEWNEIGHTBL = 64,
+#define RTM_NEWNEIGHTBL RTM_NEWNEIGHTBL
+    RTM_GETNEIGHTBL = 66,
+#define RTM_GETNEIGHTBL RTM_GETNEIGHTBL
+    RTM_SETNEIGHTBL,
+#define RTM_SETNEIGHTBL RTM_SETNEIGHTBL
+
+    RTM_NEWNDUSEROPT = 68,
+#define RTM_NEWNDUSEROPT RTM_NEWNDUSEROPT
+
+    RTM_NEWADDRLABEL = 72,
+#define RTM_NEWADDRLABEL RTM_NEWADDRLABEL
+    RTM_DELADDRLABEL,
+#define RTM_DELADDRLABEL RTM_DELADDRLABEL
+    RTM_GETADDRLABEL,
+#define RTM_GETADDRLABEL RTM_GETADDRLABEL
+
+    RTM_GETDCB = 78,
+#define RTM_GETDCB RTM_GETDCB
+    RTM_SETDCB,
+#define RTM_SETDCB RTM_SETDCB
+
+    RTM_NEWNETCONF = 80,
+#define RTM_NEWNETCONF RTM_NEWNETCONF
+    RTM_DELNETCONF,
+#define RTM_DELNETCONF RTM_DELNETCONF
+    RTM_GETNETCONF = 82,
+#define RTM_GETNETCONF RTM_GETNETCONF
+
+    RTM_NEWMDB = 84,
+#define RTM_NEWMDB RTM_NEWMDB
+    RTM_DELMDB = 85,
+#define RTM_DELMDB RTM_DELMDB
+    RTM_GETMDB = 86,
+#define RTM_GETMDB RTM_GETMDB
+
+    RTM_NEWNSID = 88,
+#define RTM_NEWNSID RTM_NEWNSID
+    RTM_DELNSID = 89,
+#define RTM_DELNSID RTM_DELNSID
+    RTM_GETNSID = 90,
+#define RTM_GETNSID RTM_GETNSID
+
+    RTM_NEWSTATS = 92,
+#define RTM_NEWSTATS RTM_NEWSTATS
+    RTM_GETSTATS = 94,
+#define RTM_GETSTATS RTM_GETSTATS
+    RTM_SETSTATS,
+#define RTM_SETSTATS RTM_SETSTATS
+
+    RTM_NEWCACHEREPORT = 96,
+#define RTM_NEWCACHEREPORT RTM_NEWCACHEREPORT
+
+    RTM_NEWCHAIN = 100,
+#define RTM_NEWCHAIN RTM_NEWCHAIN
+    RTM_DELCHAIN,
+#define RTM_DELCHAIN RTM_DELCHAIN
+    RTM_GETCHAIN,
+#define RTM_GETCHAIN RTM_GETCHAIN
+
+    RTM_NEWNEXTHOP = 104,
+#define RTM_NEWNEXTHOP RTM_NEWNEXTHOP
+    RTM_DELNEXTHOP,
+#define RTM_DELNEXTHOP RTM_DELNEXTHOP
+    RTM_GETNEXTHOP,
+#define RTM_GETNEXTHOP RTM_GETNEXTHOP
+
+    RTM_NEWLINKPROP = 108,
+#define RTM_NEWLINKPROP RTM_NEWLINKPROP
+    RTM_DELLINKPROP,
+#define RTM_DELLINKPROP RTM_DELLINKPROP
+    RTM_GETLINKPROP,
+#define RTM_GETLINKPROP RTM_GETLINKPROP
+
+    RTM_NEWVLAN = 112,
+#define RTM_NEWNVLAN RTM_NEWVLAN
+    RTM_DELVLAN,
+#define RTM_DELVLAN RTM_DELVLAN
+    RTM_GETVLAN,
+#define RTM_GETVLAN RTM_GETVLAN
+
+    RTM_NEWNEXTHOPBUCKET = 116,
+#define RTM_NEWNEXTHOPBUCKET RTM_NEWNEXTHOPBUCKET
+    RTM_DELNEXTHOPBUCKET,
+#define RTM_DELNEXTHOPBUCKET RTM_DELNEXTHOPBUCKET
+    RTM_GETNEXTHOPBUCKET,
+#define RTM_GETNEXTHOPBUCKET RTM_GETNEXTHOPBUCKET
+
+    RTM_NEWTUNNEL = 120,
+#define RTM_NEWTUNNEL RTM_NEWTUNNEL
+    RTM_DELTUNNEL,
+#define RTM_DELTUNNEL RTM_DELTUNNEL
+    RTM_GETTUNNEL,
+#define RTM_GETTUNNEL RTM_GETTUNNEL
+
+    __RTM_MAX,
+#define RTM_MAX (((__RTM_MAX + 3) & ~3) - 1)
+};
+
+#define RTM_NR_MSGTYPES (RTM_MAX + 1 - RTM_BASE)
+#define RTM_NR_FAMILIES (RTM_NR_MSGTYPES >> 2)
+#define RTM_FAM(cmd) (((cmd) - RTM_BASE) >> 2)
+
+// if_addr.h
+struct ifaddrmsg {
+    uint8_t ifa_family;
+    uint8_t ifa_prefixlen; /* The prefix length */
+    uint8_t ifa_flags; /* Flags */
+    uint8_t ifa_scope; /* Address scope */
+    uint32_t ifa_index; /* Link index */
+};
+
+/*
+ * Important comment:
+ * IFA_ADDRESS is prefix address, rather than local interface address.
+ * It makes no difference for normally configured broadcast interfaces,
+ * but for point-to-point IFA_ADDRESS is DESTINATION address,
+ * local address is supplied in IFA_LOCAL attribute.
+ *
+ * IFA_FLAGS is a u32 attribute that extends the u8 field ifa_flags.
+ * If present, the value from struct ifaddrmsg will be ignored.
+ */
+enum {
+    IFA_UNSPEC,
+    IFA_ADDRESS,
+    IFA_LOCAL,
+    IFA_LABEL,
+    IFA_BROADCAST,
+    IFA_ANYCAST,
+    IFA_CACHEINFO,
+    IFA_MULTICAST,
+    IFA_FLAGS,
+    IFA_RT_PRIORITY, /* u32, priority/metric for prefix route */
+    IFA_TARGET_NETNSID,
+    IFA_PROTO, /* u8, address protocol */
+    __IFA_MAX
+};
+
+#define IFA_MAX (__IFA_MAX - 1)
+
+/* ifa_flags */
+#define IFA_F_SECONDARY 0x01
+#define IFA_F_TEMPORARY IFA_F_SECONDARY
+
+#define IFA_F_NODAD 0x02
+#define IFA_F_OPTIMISTIC 0x04
+#define IFA_F_DADFAILED 0x08
+#define IFA_F_HOMEADDRESS 0x10
+#define IFA_F_DEPRECATED 0x20
+#define IFA_F_TENTATIVE 0x40
+#define IFA_F_PERMANENT 0x80
+#define IFA_F_MANAGETEMPADDR 0x100
+#define IFA_F_NOPREFIXROUTE 0x200
+#define IFA_F_MCAUTOJOIN 0x400
+#define IFA_F_STABLE_PRIVACY 0x800
