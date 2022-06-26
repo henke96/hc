@@ -2419,6 +2419,8 @@ struct nlmsghdr {
 #define NLMSG_DONE 0x3 /* End of a dump */
 #define NLMSG_OVERRUN 0x4 /* Data lost */
 
+#define NLMSG_MIN_TYPE 0x10 /* < 0x10: reserved control messages */
+
 /*
  *  <------- NLA_HDRLEN ------> <-- NLA_ALIGN(payload)-->
  * +---------------------+- - -+- - - - - - - - - -+- - -+
@@ -2627,6 +2629,145 @@ enum {
 #define RTM_NR_MSGTYPES (RTM_MAX + 1 - RTM_BASE)
 #define RTM_NR_FAMILIES (RTM_NR_MSGTYPES >> 2)
 #define RTM_FAM(cmd) (((cmd) - RTM_BASE) >> 2)
+
+struct rtmsg {
+    uint8_t rtm_family;
+    uint8_t rtm_dst_len;
+    uint8_t rtm_src_len;
+    uint8_t rtm_tos;
+    uint8_t rtm_table; /* Routing table id */
+    uint8_t rtm_protocol; /* Routing protocol; see below */
+    uint8_t rtm_scope; /* See below */
+    uint8_t rtm_type; /* See below */
+    uint32_t rtm_flags;
+};
+
+/* rtm_type */
+enum {
+    RTN_UNSPEC,
+    RTN_UNICAST, /* Gateway or direct route */
+    RTN_LOCAL, /* Accept locally */
+    RTN_BROADCAST, /* Accept locally as broadcast, send as broadcast */
+    RTN_ANYCAST, /* Accept locally as broadcast, but send as unicast */
+    RTN_MULTICAST, /* Multicast route */
+    RTN_BLACKHOLE, /* Drop */
+    RTN_UNREACHABLE, /* Destination is unreachable */
+    RTN_PROHIBIT, /* Administratively prohibited */
+    RTN_THROW, /* Not in this table */
+    RTN_NAT, /* Translate this address */
+    RTN_XRESOLVE, /* Use external resolver */
+    __RTN_MAX
+};
+#define RTN_MAX (__RTN_MAX - 1)
+
+/* rtm_protocol */
+#define RTPROT_UNSPEC 0
+#define RTPROT_REDIRECT 1 /* Route installed by ICMP redirects; not used by current IPv4 */
+#define RTPROT_KERNEL 2 /* Route installed by kernel */
+#define RTPROT_BOOT 3 /* Route installed during boot */
+#define RTPROT_STATIC 4 /* Route installed by administrator */
+
+/* Values of protocol >= RTPROT_STATIC are not interpreted by kernel;
+   they are just passed from user and back as is.
+   It will be used by hypothetical multiple routing daemons.
+   Note that protocol values should be standardized in order to
+   avoid conflicts.
+ */
+#define RTPROT_GATED 8 /* Apparently, GateD */
+#define RTPROT_RA 9 /* RDISC/ND router advertisements */
+#define RTPROT_MRT 10 /* Merit MRT */
+#define RTPROT_ZEBRA 11 /* Zebra */
+#define RTPROT_BIRD 12 /* BIRD */
+#define RTPROT_DNROUTED 13 /* DECnet routing daemon */
+#define RTPROT_XORP 14 /* XORP */
+#define RTPROT_NTK 15 /* Netsukuku */
+#define RTPROT_DHCP 16 /* DHCP client */
+#define RTPROT_MROUTED 17 /* Multicast daemon */
+#define RTPROT_KEEPALIVED 18 /* Keepalived daemon */
+#define RTPROT_BABEL 42 /* Babel daemon */
+#define RTPROT_OPENR 99 /* Open Routing (Open/R) Routes */
+#define RTPROT_BGP 186 /* BGP Routes */
+#define RTPROT_ISIS 187 /* ISIS Routes */
+#define RTPROT_OSPF 188 /* OSPF Routes */
+#define RTPROT_RIP 189 /* RIP Routes */
+#define RTPROT_EIGRP 192 /* EIGRP Routes */
+
+/* rtm_scope
+   Really it is not scope, but sort of distance to the destination.
+   NOWHERE are reserved for not existing destinations, HOST is our
+   local addresses, LINK are destinations, located on directly attached
+   link and UNIVERSE is everywhere in the Universe.
+
+   Intermediate values are also possible f.e. interior routes
+   could be assigned a value between UNIVERSE and LINK.
+*/
+enum rt_scope_t {
+    RT_SCOPE_UNIVERSE=0,
+/* User defined values */
+    RT_SCOPE_SITE=200,
+    RT_SCOPE_LINK=253,
+    RT_SCOPE_HOST=254,
+    RT_SCOPE_NOWHERE=255
+};
+
+/* rtm_flags */
+#define RTM_F_NOTIFY 0x100 /* Notify user of route change */
+#define RTM_F_CLONED 0x200 /* This route is cloned */
+#define RTM_F_EQUALIZE 0x400 /* Multipath equalizer: NI */
+#define RTM_F_PREFIX 0x800 /* Prefix addresses */
+#define RTM_F_LOOKUP_TABLE 0x1000 /* set rtm_table to FIB lookup result */
+#define RTM_F_FIB_MATCH 0x2000 /* return full fib lookup match */
+#define RTM_F_OFFLOAD 0x4000 /* route is offloaded */
+#define RTM_F_TRAP 0x8000 /* route is trapping packets */
+#define RTM_F_OFFLOAD_FAILED 0x20000000 /* route offload failed */
+
+/* Reserved table identifiers */
+enum rt_class_t {
+    RT_TABLE_UNSPEC=0,
+/* User defined values */
+    RT_TABLE_COMPAT=252,
+    RT_TABLE_DEFAULT=253,
+    RT_TABLE_MAIN=254,
+    RT_TABLE_LOCAL=255,
+    RT_TABLE_MAX=0xFFFFFFFF
+};
+
+/* Routing message attributes */
+enum rtattr_type_t {
+    RTA_UNSPEC,
+    RTA_DST,
+    RTA_SRC,
+    RTA_IIF,
+    RTA_OIF,
+    RTA_GATEWAY,
+    RTA_PRIORITY,
+    RTA_PREFSRC,
+    RTA_METRICS,
+    RTA_MULTIPATH,
+    RTA_PROTOINFO, /* no longer used */
+    RTA_FLOW,
+    RTA_CACHEINFO,
+    RTA_SESSION, /* no longer used */
+    RTA_MP_ALGO, /* no longer used */
+    RTA_TABLE,
+    RTA_MARK,
+    RTA_MFC_STATS,
+    RTA_VIA,
+    RTA_NEWDST,
+    RTA_PREF,
+    RTA_ENCAP_TYPE,
+    RTA_ENCAP,
+    RTA_EXPIRES,
+    RTA_PAD,
+    RTA_UID,
+    RTA_TTL_PROPAGATE,
+    RTA_IP_PROTO,
+    RTA_SPORT,
+    RTA_DPORT,
+    RTA_NH_ID,
+    __RTA_MAX
+};
+#define RTA_MAX (__RTA_MAX - 1)
 
 struct ifinfomsg {
     uint8_t ifi_family;
@@ -2866,3 +3007,86 @@ enum {
     __IFLA_INFO_MAX,
 };
 #define IFLA_INFO_MAX (__IFLA_INFO_MAX - 1)
+
+// gennetlink.h
+#define GENL_NAMSIZ 16 /* length of family name */
+#define GENL_MIN_ID NLMSG_MIN_TYPE
+#define GENL_MAX_ID 1023
+
+struct genlmsghdr {
+    uint8_t cmd;
+    uint8_t version;
+    uint16_t reserved;
+};
+
+#define GENL_ADMIN_PERM 0x01
+#define GENL_CMD_CAP_DO 0x02
+#define GENL_CMD_CAP_DUMP 0x04
+#define GENL_CMD_CAP_HASPOL 0x08
+#define GENL_UNS_ADMIN_PERM 0x10
+
+/*
+ * List of reserved static generic netlink identifiers:
+ */
+#define GENL_ID_CTRL NLMSG_MIN_TYPE
+#define GENL_ID_VFS_DQUOT (NLMSG_MIN_TYPE + 1)
+#define GENL_ID_PMCRAID (NLMSG_MIN_TYPE + 2)
+/* must be last reserved + 1 */
+#define GENL_START_ALLOC (NLMSG_MIN_TYPE + 3)
+
+enum {
+    CTRL_CMD_UNSPEC,
+    CTRL_CMD_NEWFAMILY,
+    CTRL_CMD_DELFAMILY,
+    CTRL_CMD_GETFAMILY,
+    CTRL_CMD_NEWOPS,
+    CTRL_CMD_DELOPS,
+    CTRL_CMD_GETOPS,
+    CTRL_CMD_NEWMCAST_GRP,
+    CTRL_CMD_DELMCAST_GRP,
+    CTRL_CMD_GETMCAST_GRP, /* unused */
+    CTRL_CMD_GETPOLICY,
+    __CTRL_CMD_MAX,
+};
+#define CTRL_CMD_MAX (__CTRL_CMD_MAX - 1)
+
+enum {
+    CTRL_ATTR_UNSPEC,
+    CTRL_ATTR_FAMILY_ID,
+    CTRL_ATTR_FAMILY_NAME,
+    CTRL_ATTR_VERSION,
+    CTRL_ATTR_HDRSIZE,
+    CTRL_ATTR_MAXATTR,
+    CTRL_ATTR_OPS,
+    CTRL_ATTR_MCAST_GROUPS,
+    CTRL_ATTR_POLICY,
+    CTRL_ATTR_OP_POLICY,
+    CTRL_ATTR_OP,
+    __CTRL_ATTR_MAX,
+};
+#define CTRL_ATTR_MAX (__CTRL_ATTR_MAX - 1)
+
+enum {
+    CTRL_ATTR_OP_UNSPEC,
+    CTRL_ATTR_OP_ID,
+    CTRL_ATTR_OP_FLAGS,
+    __CTRL_ATTR_OP_MAX,
+};
+#define CTRL_ATTR_OP_MAX (__CTRL_ATTR_OP_MAX - 1)
+
+enum {
+    CTRL_ATTR_MCAST_GRP_UNSPEC,
+    CTRL_ATTR_MCAST_GRP_NAME,
+    CTRL_ATTR_MCAST_GRP_ID,
+    __CTRL_ATTR_MCAST_GRP_MAX,
+};
+
+enum {
+    CTRL_ATTR_POLICY_UNSPEC,
+    CTRL_ATTR_POLICY_DO,
+    CTRL_ATTR_POLICY_DUMP,
+
+    __CTRL_ATTR_POLICY_DUMP_MAX,
+    CTRL_ATTR_POLICY_DUMP_MAX = __CTRL_ATTR_POLICY_DUMP_MAX - 1
+};
+#define CTRL_ATTR_MCAST_GRP_MAX (__CTRL_ATTR_MCAST_GRP_MAX - 1)
