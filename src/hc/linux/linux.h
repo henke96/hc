@@ -2419,6 +2419,33 @@ struct nlmsghdr {
 #define NLMSG_DONE 0x3 /* End of a dump */
 #define NLMSG_OVERRUN 0x4 /* Data lost */
 
+/*
+ *  <------- NLA_HDRLEN ------> <-- NLA_ALIGN(payload)-->
+ * +---------------------+- - -+- - - - - - - - - -+- - -+
+ * |        Header       | Pad |     Payload       | Pad |
+ * |   (struct nlattr)   | ing |                   | ing |
+ * +---------------------+- - -+- - - - - - - - - -+- - -+
+ *  <-------------- nlattr->nla_len -------------->
+ */
+struct nlattr {
+    uint16_t nla_len;
+    uint16_t nla_type;
+};
+
+/*
+ * nla_type (16 bits)
+ * +---+---+-------------------------------+
+ * | N | O | Attribute Type                |
+ * +---+---+-------------------------------+
+ * N := Carries nested attributes
+ * O := Payload stored in network byte order
+ *
+ * Note: The N and O flag are mutually exclusive.
+ */
+#define NLA_F_NESTED (1 << 15)
+#define NLA_F_NET_BYTEORDER (1 << 14)
+#define NLA_TYPE_MASK ~(NLA_F_NESTED | NLA_F_NET_BYTEORDER)
+
 // rtnetlink.h
 enum {
     RTM_BASE = 16,
@@ -2601,11 +2628,6 @@ enum {
 #define RTM_NR_FAMILIES (RTM_NR_MSGTYPES >> 2)
 #define RTM_FAM(cmd) (((cmd) - RTM_BASE) >> 2)
 
-struct rtattr {
-    uint16_t rta_len;
-    uint16_t rta_type;
-};
-
 struct ifinfomsg {
     uint8_t ifi_family;
     uint8_t __pad;
@@ -2690,3 +2712,157 @@ enum net_device_flags {
     IFF_DORMANT = 1<<17, /* volatile */
     IFF_ECHO = 1<<18, /* volatile */
 };
+
+// wireguard.h
+#define WG_GENL_NAME "wireguard"
+#define WG_GENL_VERSION 1
+
+#define WG_KEY_LEN 32
+
+enum wg_cmd {
+    WG_CMD_GET_DEVICE,
+    WG_CMD_SET_DEVICE,
+    __WG_CMD_MAX
+};
+#define WG_CMD_MAX (__WG_CMD_MAX - 1)
+
+enum wgdevice_flag {
+    WGDEVICE_F_REPLACE_PEERS = 1U << 0,
+    __WGDEVICE_F_ALL = WGDEVICE_F_REPLACE_PEERS
+};
+enum wgdevice_attribute {
+    WGDEVICE_A_UNSPEC,
+    WGDEVICE_A_IFINDEX,
+    WGDEVICE_A_IFNAME,
+    WGDEVICE_A_PRIVATE_KEY,
+    WGDEVICE_A_PUBLIC_KEY,
+    WGDEVICE_A_FLAGS,
+    WGDEVICE_A_LISTEN_PORT,
+    WGDEVICE_A_FWMARK,
+    WGDEVICE_A_PEERS,
+    __WGDEVICE_A_LAST
+};
+#define WGDEVICE_A_MAX (__WGDEVICE_A_LAST - 1)
+
+enum wgpeer_flag {
+    WGPEER_F_REMOVE_ME = 1U << 0,
+    WGPEER_F_REPLACE_ALLOWEDIPS = 1U << 1,
+    WGPEER_F_UPDATE_ONLY = 1U << 2,
+    __WGPEER_F_ALL = WGPEER_F_REMOVE_ME | WGPEER_F_REPLACE_ALLOWEDIPS | WGPEER_F_UPDATE_ONLY
+};
+enum wgpeer_attribute {
+    WGPEER_A_UNSPEC,
+    WGPEER_A_PUBLIC_KEY,
+    WGPEER_A_PRESHARED_KEY,
+    WGPEER_A_FLAGS,
+    WGPEER_A_ENDPOINT,
+    WGPEER_A_PERSISTENT_KEEPALIVE_INTERVAL,
+    WGPEER_A_LAST_HANDSHAKE_TIME,
+    WGPEER_A_RX_BYTES,
+    WGPEER_A_TX_BYTES,
+    WGPEER_A_ALLOWEDIPS,
+    WGPEER_A_PROTOCOL_VERSION,
+    __WGPEER_A_LAST
+};
+#define WGPEER_A_MAX (__WGPEER_A_LAST - 1)
+
+enum wgallowedip_attribute {
+    WGALLOWEDIP_A_UNSPEC,
+    WGALLOWEDIP_A_FAMILY,
+    WGALLOWEDIP_A_IPADDR,
+    WGALLOWEDIP_A_CIDR_MASK,
+    __WGALLOWEDIP_A_LAST
+};
+#define WGALLOWEDIP_A_MAX (__WGALLOWEDIP_A_LAST - 1)
+
+// if_link.h
+enum {
+    IFLA_UNSPEC,
+    IFLA_ADDRESS,
+    IFLA_BROADCAST,
+    IFLA_IFNAME,
+    IFLA_MTU,
+    IFLA_LINK,
+    IFLA_QDISC,
+    IFLA_STATS,
+    IFLA_COST,
+#define IFLA_COST IFLA_COST
+    IFLA_PRIORITY,
+#define IFLA_PRIORITY IFLA_PRIORITY
+    IFLA_MASTER,
+#define IFLA_MASTER IFLA_MASTER
+    IFLA_WIRELESS, /* Wireless Extension event - see wireless.h */
+#define IFLA_WIRELESS IFLA_WIRELESS
+    IFLA_PROTINFO, /* Protocol specific information for a link */
+#define IFLA_PROTINFO IFLA_PROTINFO
+    IFLA_TXQLEN,
+#define IFLA_TXQLEN IFLA_TXQLEN
+    IFLA_MAP,
+#define IFLA_MAP IFLA_MAP
+    IFLA_WEIGHT,
+#define IFLA_WEIGHT IFLA_WEIGHT
+    IFLA_OPERSTATE,
+    IFLA_LINKMODE,
+    IFLA_LINKINFO,
+#define IFLA_LINKINFO IFLA_LINKINFO
+    IFLA_NET_NS_PID,
+    IFLA_IFALIAS,
+    IFLA_NUM_VF, /* Number of VFs if device is SR-IOV PF */
+    IFLA_VFINFO_LIST,
+    IFLA_STATS64,
+    IFLA_VF_PORTS,
+    IFLA_PORT_SELF,
+    IFLA_AF_SPEC,
+    IFLA_GROUP, /* Group the device belongs to */
+    IFLA_NET_NS_FD,
+    IFLA_EXT_MASK, /* Extended info mask, VFs, etc */
+    IFLA_PROMISCUITY, /* Promiscuity count: > 0 means acts PROMISC */
+#define IFLA_PROMISCUITY IFLA_PROMISCUITY
+    IFLA_NUM_TX_QUEUES,
+    IFLA_NUM_RX_QUEUES,
+    IFLA_CARRIER,
+    IFLA_PHYS_PORT_ID,
+    IFLA_CARRIER_CHANGES,
+    IFLA_PHYS_SWITCH_ID,
+    IFLA_LINK_NETNSID,
+    IFLA_PHYS_PORT_NAME,
+    IFLA_PROTO_DOWN,
+    IFLA_GSO_MAX_SEGS,
+    IFLA_GSO_MAX_SIZE,
+    IFLA_PAD,
+    IFLA_XDP,
+    IFLA_EVENT,
+    IFLA_NEW_NETNSID,
+    IFLA_IF_NETNSID,
+    IFLA_TARGET_NETNSID = IFLA_IF_NETNSID, /* new alias */
+    IFLA_CARRIER_UP_COUNT,
+    IFLA_CARRIER_DOWN_COUNT,
+    IFLA_NEW_IFINDEX,
+    IFLA_MIN_MTU,
+    IFLA_MAX_MTU,
+    IFLA_PROP_LIST,
+    IFLA_ALT_IFNAME, /* Alternative ifname */
+    IFLA_PERM_ADDRESS,
+    IFLA_PROTO_DOWN_REASON,
+
+    /* device (sysfs) name as parent, used instead
+     * of IFLA_LINK where there's no parent netdev
+     */
+    IFLA_PARENT_DEV_NAME,
+    IFLA_PARENT_DEV_BUS_NAME,
+    IFLA_GRO_MAX_SIZE,
+
+    __IFLA_MAX
+};
+#define IFLA_MAX (__IFLA_MAX - 1)
+
+enum {
+    IFLA_INFO_UNSPEC,
+    IFLA_INFO_KIND,
+    IFLA_INFO_DATA,
+    IFLA_INFO_XSTATS,
+    IFLA_INFO_SLAVE_KIND,
+    IFLA_INFO_SLAVE_DATA,
+    __IFLA_INFO_MAX,
+};
+#define IFLA_INFO_MAX (__IFLA_INFO_MAX - 1)

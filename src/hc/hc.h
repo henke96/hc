@@ -93,6 +93,10 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_ATOMIC_PAUSE
 #endif
 
+// TODO: wasm32 seems to need compiler_rt for these (https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/multi3.c)
+typedef __int128_t int128_t;
+typedef __uint128_t uint128_t;
+
 // Standard C
 #define NULL ((void *)0)
 
