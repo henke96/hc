@@ -92,19 +92,19 @@ static int32_t wgl_init(struct wgl *self) {
 
     status = 0;
     cleanup_context_current:
-    debug_CHECK(self->wglMakeCurrent(dc, NULL), == 1);
+    debug_CHECK(self->wglMakeCurrent(dc, NULL), RES == 1);
     cleanup_context:
-    debug_CHECK(self->wglDeleteContext(context), == 1);
+    debug_CHECK(self->wglDeleteContext(context), RES == 1);
     cleanup_dc:
-    debug_CHECK(ReleaseDC(windowHandle, dc), == 1);
+    debug_CHECK(ReleaseDC(windowHandle, dc), RES == 1);
     cleanup_windowHandle:
-    debug_CHECK(DestroyWindow(windowHandle), != 0);
+    debug_CHECK(DestroyWindow(windowHandle), RES != 0);
     cleanup_windowClass:
-    debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), == 1);
+    debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), RES == 1);
     if (status == 0) return 0; // On success we clean up everything except the library.
 
     cleanup_dlHandle:
-    debug_CHECK(FreeLibrary(self->dlHandle), != 0);
+    debug_CHECK(FreeLibrary(self->dlHandle), RES != 0);
     return status;
 }
 
@@ -114,22 +114,22 @@ static int32_t wgl_createContext(struct wgl *self, void *dc, const int32_t *form
     if (!self->wglChoosePixelFormatARB(dc, formatAttributes, NULL, 1, &format, &numFormats) || numFormats != 1) return -1;
 
     struct PIXELFORMATDESCRIPTOR pfd;
-    debug_CHECK(DescribePixelFormat(dc, format, sizeof(pfd), &pfd), != 0);
+    debug_CHECK(DescribePixelFormat(dc, format, sizeof(pfd), &pfd), RES != 0);
     if (!SetPixelFormat(dc, format, &pfd)) return -2;
 
     self->context = self->wglCreateContextAttribsARB(dc, NULL, contextAttributes);
     if (self->context == NULL) return -3;
-    debug_CHECK(self->wglMakeCurrent(dc, self->context), == 1);
+    debug_CHECK(self->wglMakeCurrent(dc, self->context), RES == 1);
     return 0;
 }
 
 static void wgl_destroyContext(struct wgl *self, void *dc) {
-    debug_CHECK(self->wglMakeCurrent(dc, NULL), == 1);
-    debug_CHECK(self->wglDeleteContext(self->context), == 1);
+    debug_CHECK(self->wglMakeCurrent(dc, NULL), RES == 1);
+    debug_CHECK(self->wglDeleteContext(self->context), RES == 1);
 }
 
 static void wgl_deinit(struct wgl *self) {
-    debug_CHECK(FreeLibrary(self->dlHandle), != 0);
+    debug_CHECK(FreeLibrary(self->dlHandle), RES != 0);
 }
 
 hc_UNUSED

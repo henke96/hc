@@ -1201,3 +1201,9 @@ static hc_ALWAYS_INLINE int32_t sys_mount(const char *dev_name, const char *dir_
     sys_SYSCALL5(sys_NR_mount, dev_name, dir_name, type, flags, data);
     return (int32_t)ret;
 }
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_umount2(const char *name, uint32_t flags) {
+    sys_SYSCALL2(sys_NR_umount2, name, flags);
+    return (int32_t)ret;
+}

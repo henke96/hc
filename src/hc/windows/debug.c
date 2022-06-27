@@ -12,39 +12,32 @@ static void debug_printNum(const char *pre, int64_t num, const char *post) {
 }
 
 hc_UNUSED
-static void debug_printStr(const char *pre, const char *str, const char *post, int64_t strlen) {
-    void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    WriteFile(stdOutHandle, pre, (uint32_t)util_cstrLen(pre), NULL, NULL);
-    WriteFile(stdOutHandle, str, (uint32_t)strlen, NULL, NULL);
-    WriteFile(stdOutHandle, post, (uint32_t)util_cstrLen(post), NULL, NULL);
-}
+static noreturn void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
+    char resBuffer[util_INT64_MAX_CHARS];
+    char *resStr = util_intToStr(&resBuffer[util_INT64_MAX_CHARS], res);
+    char lineBuffer[util_INT32_MAX_CHARS];
+    char *lineStr = util_intToStr(&lineBuffer[util_INT32_MAX_CHARS], line);
 
-#ifdef debug_NDEBUG
-    #define debug_ASSERT(EXPR) ((void)0)
-    #define debug_CHECK(EXPR, COND) EXPR
-#else
-    #define debug_ASSERT(EXPR) ((void)((EXPR) || (debug_failAssert(#EXPR, __FILE__, __func__, __LINE__), 0)))
-    #define debug_CHECK(EXPR, COND) ((void)((EXPR COND) || (debug_failAssert(#EXPR " " #COND, __FILE__, __func__, __LINE__), 0)))
-hc_UNUSED
-static noreturn void debug_failAssert(const char *expression, const char *file, const char *function, int32_t line) {
-    char buffer[util_INT32_MAX_CHARS];
-    char *lineStr = util_intToStr(&buffer[util_INT32_MAX_CHARS], line);
-
-    static const char start[18] = "Assertion failed: ";
-    static const char parenStart[2] = " (";
-    static const char colon[2] = ": ";
-    static const char end[2] = ")\n";
+    static const char fail[7] = " fail: ";
+    static const char equals[3] = " = ";
+    static const char end[1] = "\n";
 
     void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    WriteFile(stdOutHandle, &start[0], sizeof(start), NULL, NULL);
-    WriteFile(stdOutHandle, expression, (uint32_t)util_cstrLen(expression), NULL, NULL);
-    WriteFile(stdOutHandle, &parenStart[0], sizeof(parenStart), NULL, NULL);
     WriteFile(stdOutHandle, file, (uint32_t)util_cstrLen(file), NULL, NULL);
-    WriteFile(stdOutHandle, &colon[0], 1, NULL, NULL);
-    WriteFile(stdOutHandle, lineStr, (uint32_t)(&buffer[util_INT32_MAX_CHARS] - lineStr), NULL, NULL);
-    WriteFile(stdOutHandle, &colon[0], sizeof(colon), NULL, NULL);
-    WriteFile(stdOutHandle, function, (uint32_t)util_cstrLen(function), NULL, NULL);
+    WriteFile(stdOutHandle, &fail[5], 1, NULL, NULL);
+    WriteFile(stdOutHandle, lineStr, (uint32_t)(&lineBuffer[util_INT32_MAX_CHARS] - lineStr), NULL, NULL);
+    WriteFile(stdOutHandle, &fail[0], sizeof(fail), NULL, NULL);
+    WriteFile(stdOutHandle, expression, (uint32_t)util_cstrLen(expression), NULL, NULL);
+    WriteFile(stdOutHandle, &equals[0], sizeof(equals), NULL, NULL);
+    WriteFile(stdOutHandle, resStr, (uint32_t)(&resBuffer[util_INT64_MAX_CHARS] - resStr), NULL, NULL);
     WriteFile(stdOutHandle, &end[0], sizeof(end), NULL, NULL);
     ExitProcess(137);
 }
+
+#ifdef debug_NDEBUG
+    #define debug_ASSERT(EXPR, COND) ((void)0)
+    #define debug_CHECK(EXPR, COND) EXPR
+#else
+    #define debug_ASSERT(EXPR, COND) do { typeof(EXPR) RES = (EXPR); if (!(COND)) debug_fail((int64_t)RES, #EXPR, __FILE_NAME__, __LINE__); } while (0)
+    #define debug_CHECK debug_ASSERT
 #endif

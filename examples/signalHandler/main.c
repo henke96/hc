@@ -43,7 +43,7 @@ int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     for (;;) {
         int32_t status = sys_clock_nanosleep(CLOCK_MONOTONIC, 0, &remaining, &remaining);
         if (status == 0) break;
-        debug_ASSERT(status == -EINTR);
+        debug_ASSERT(status, RES == -EINTR);
     }
 
     return 0;

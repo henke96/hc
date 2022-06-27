@@ -18,20 +18,20 @@ int32_t main(int32_t argc, char **argv) {
     // See how many times we can call clock_gettime() in one second.
     uint64_t count = 0;
     struct timespec start;
-    debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &start), == 0);
+    debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &start), RES == 0);
     for (;;) {
         struct timespec current;
-        debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &current), == 0);
+        debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &current), RES == 0);
         ++count;
         if (current.tv_sec > start.tv_sec && current.tv_nsec >= start.tv_nsec) break;
     }
 
     // Do the same test but using the syscall.
     uint64_t countSyscall = 0;
-    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &start), == 0);
+    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &start), RES == 0);
     for (;;) {
         struct timespec current;
-        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &current), == 0);
+        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &current), RES == 0);
         ++countSyscall;
         if (current.tv_sec > start.tv_sec && current.tv_nsec >= start.tv_nsec) break;
     }

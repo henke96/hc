@@ -48,7 +48,7 @@ static int64_t window_proc(
                 debug_printNum("Failed to create context (", status, ")\n");
                 goto cleanup_dc;
             }
-            debug_CHECK(wgl_swapInterval(&window.wgl, 0), == 1);
+            debug_CHECK(wgl_swapInterval(&window.wgl, 0), RES == 1);
 
             if (gl_init(&window.wgl) < 0) goto cleanup_context;
 
@@ -62,13 +62,13 @@ static int64_t window_proc(
             cleanup_context:
             wgl_destroyContext(&window.wgl, window.dc);
             cleanup_dc:
-            debug_CHECK(ReleaseDC(windowHandle, window.dc), == 1);
+            debug_CHECK(ReleaseDC(windowHandle, window.dc), RES == 1);
             return -1;
         };
         case WM_DESTROY: {
             game_deinit();
             wgl_destroyContext(&window.wgl, window.dc);
-            debug_CHECK(ReleaseDC(windowHandle, window.dc), == 1);
+            debug_CHECK(ReleaseDC(windowHandle, window.dc), RES == 1);
             PostQuitMessage(0);
             return 0;
         }
@@ -115,7 +115,7 @@ static int32_t window_init(void) {
     return 0;
 
     cleanup_windowClass:
-    debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), == 1);
+    debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), RES == 1);
     cleanup_wgl:
     wgl_deinit(&window.wgl);
     return status;
@@ -135,7 +135,7 @@ static void window_run(void) {
             DispatchMessageW(&msg);
         }
         if (game_draw() < 0 || !SwapBuffers(window.dc)) {
-            debug_CHECK(PostMessageW(window.windowHandle, WM_CLOSE, 0, 0), != 0);
+            debug_CHECK(PostMessageW(window.windowHandle, WM_CLOSE, 0, 0), RES != 0);
             continue;
         }
 
@@ -151,6 +151,6 @@ static void window_run(void) {
 }
 
 static void window_deinit(void) {
-    debug_CHECK(UnregisterClassW(u"gl", __ImageBase), == 1);
+    debug_CHECK(UnregisterClassW(u"gl", __ImageBase), RES == 1);
     wgl_deinit(&window.wgl);
 }

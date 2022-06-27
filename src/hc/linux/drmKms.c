@@ -69,7 +69,7 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     return 0;
 
     cleanup_cardFd:
-    debug_CHECK(sys_close(self->cardFd), == 0);
+    debug_CHECK(sys_close(self->cardFd), RES == 0);
     return status;
 }
 
@@ -132,27 +132,26 @@ static int32_t drmKms_setupFb(struct drmKms *self, int32_t modeIndex) {
     return 0;
 
     cleanup_frameBuffer:
-    debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), == 0);
+    debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), RES == 0);
     self->frameBuffer = NULL;
     cleanup_frameBufferInfo:
-    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id), == 0);
+    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id), RES == 0);
     cleanup_dumbBuffer:
-    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = dumbBuffer.handle }), == 0);
+    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = dumbBuffer.handle }), RES == 0);
     return status;
 }
 
 // Call after updating framebuffer to make sure it gets displayed on screen.
 static inline void drmKms_markFbDirty(struct drmKms *self) {
     struct drm_mode_fb_dirty_cmd fbDirty = { .fb_id = self->frameBufferInfo.fb_id };
-    hc_UNUSED int32_t status = sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DIRTYFB, &fbDirty);
-    debug_ASSERT(status == 0 || status == -ENOSYS);
+    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DIRTYFB, &fbDirty), RES == 0 || RES == -ENOSYS);
 }
 
 static inline void drmKms_deinit(struct drmKms *self) {
     if (self->frameBuffer != NULL) {
-        debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), == 0);
-        debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id), == 0);
-        debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = self->frameBufferInfo.handle }), == 0);
+        debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), RES == 0);
+        debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id), RES == 0);
+        debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = self->frameBufferInfo.handle }), RES == 0);
     }
-    debug_CHECK(sys_close(self->cardFd), == 0);
+    debug_CHECK(sys_close(self->cardFd), RES == 0);
 }

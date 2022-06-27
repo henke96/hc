@@ -204,7 +204,7 @@ static int32_t window_init(char **envp) {
         printf("Failed to setup EGL surface (%d)\n", status);
         goto cleanup_x11Client;
     }
-    debug_CHECK(egl_swapInterval(&window.egl, 0), == egl_TRUE);
+    debug_CHECK(egl_swapInterval(&window.egl, 0), RES == egl_TRUE);
 
     // Load OpenGL functions.
     status = gl_init(&window.egl);
@@ -241,7 +241,7 @@ static int32_t window_init(char **envp) {
     return 0;
 
     cleanup_epollFd:
-    debug_CHECK(sys_close(window.epollFd), == 0);
+    debug_CHECK(sys_close(window.epollFd), RES == 0);
     cleanup_x11Client:
     x11Client_deinit(&window.x11Client);
     cleanup_egl:
@@ -252,7 +252,7 @@ static int32_t window_init(char **envp) {
 static int32_t window_run(void) {
     uint64_t frameCounter = 0;
     struct timespec prev;
-    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), == 0);
+    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
 
     // Grab pointer.
     struct requests {
@@ -378,7 +378,7 @@ static int32_t window_run(void) {
 
         ++frameCounter;
         struct timespec now;
-        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), == 0);
+        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), RES == 0);
         if (now.tv_sec > prev.tv_sec) {
             printf("FPS: %llu\n", frameCounter);
             frameCounter = 0;
@@ -389,7 +389,7 @@ static int32_t window_run(void) {
 
 static void window_deinit(void) {
     game_deinit();
-    debug_CHECK(sys_close(window.epollFd), == 0);
+    debug_CHECK(sys_close(window.epollFd), RES == 0);
     x11Client_deinit(&window.x11Client);
     egl_deinit(&window.egl);
 }

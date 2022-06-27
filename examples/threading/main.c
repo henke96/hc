@@ -29,9 +29,7 @@ static void takeLock(void) {
 #if SPIN
         while (hc_ATOMIC_LOAD(&printLock, hc_ATOMIC_RELAXED) == LOCKED) hc_ATOMIC_PAUSE;
 #else
-        hc_UNUSED
-        int32_t status = sys_futex(&printLock, FUTEX_WAIT_PRIVATE, LOCKED, NULL, NULL, 0);
-        debug_ASSERT(status == 0 || status == -EAGAIN);
+        debug_CHECK(sys_futex(&printLock, FUTEX_WAIT_PRIVATE, LOCKED, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
 #endif
     }
 }
@@ -40,7 +38,7 @@ static void releaseLock(void) {
     hc_ATOMIC_STORE(&printLock, UNLOCKED, hc_ATOMIC_RELEASE);
 
 #if !SPIN
-    debug_CHECK(sys_futex(&printLock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), >= 0);
+    debug_CHECK(sys_futex(&printLock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), RES >= 0);
 #endif
 }
 
@@ -52,7 +50,7 @@ static noreturn void thread(void *arg) {
     }
 
     hc_ATOMIC_STORE(&childDone, CHILD_DONE, hc_ATOMIC_RELEASE);
-    debug_CHECK(sys_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), >= 0);
+    debug_CHECK(sys_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), RES >= 0);
     sys_exit(0);
 }
 
@@ -75,8 +73,7 @@ int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     // Wait for child to finish.
     for (;;) {
         if (hc_ATOMIC_LOAD(&childDone, hc_ATOMIC_ACQUIRE) == CHILD_DONE) break;
-        int32_t hc_UNUSED status = sys_futex(&childDone, FUTEX_WAIT_PRIVATE, CHILD_NOT_DONE, NULL, NULL, 0);
-        debug_ASSERT(status == 0 || status == -EAGAIN);
+        debug_CHECK(sys_futex(&childDone, FUTEX_WAIT_PRIVATE, CHILD_NOT_DONE, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
     }
 
     return 0;

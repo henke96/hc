@@ -40,7 +40,7 @@ static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **en
 
     status = window_run();
     window_deinit();
-    debug_CHECK(dlclose(libcHandle), == 0);
+    debug_CHECK(dlclose(libcHandle), RES == 0);
     if (status < 0) {
         printf("Error while running (%d)\n", status);
         return 1;

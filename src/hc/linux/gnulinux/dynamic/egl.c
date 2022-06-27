@@ -60,7 +60,7 @@ static int32_t egl_init(struct egl *self) {
     return 0;
 
     cleanup_dlHandle:
-    debug_CHECK(dlclose(self->dlHandle), == 0);
+    debug_CHECK(dlclose(self->dlHandle), RES == 0);
     return status;
 }
 
@@ -86,7 +86,7 @@ static int32_t egl_setupSurface(struct egl *self, uint32_t windowId) {
     if (self->surface == egl_NO_SURFACE) return -1;
 
     if (!self->eglMakeCurrent(self->display, self->surface, self->surface, self->context)) {
-        debug_CHECK(self->eglDestroySurface(self->display, self->surface), == egl_TRUE);
+        debug_CHECK(self->eglDestroySurface(self->display, self->surface), RES == egl_TRUE);
         self->surface = egl_NO_SURFACE;
         return -2;
     }
@@ -108,11 +108,11 @@ static inline uint32_t egl_swapInterval(struct egl *self, int32_t interval) {
 
 static void egl_deinit(struct egl *self) {
     if (self->surface != egl_NO_SURFACE) {
-        debug_CHECK(self->eglMakeCurrent(self->display, egl_NO_SURFACE, egl_NO_SURFACE, egl_NO_CONTEXT), == egl_TRUE);
-        debug_CHECK(self->eglDestroySurface(self->display, self->surface), == egl_TRUE);
+        debug_CHECK(self->eglMakeCurrent(self->display, egl_NO_SURFACE, egl_NO_SURFACE, egl_NO_CONTEXT), RES == egl_TRUE);
+        debug_CHECK(self->eglDestroySurface(self->display, self->surface), RES == egl_TRUE);
     }
-    if (self->context != egl_NO_CONTEXT) debug_CHECK(self->eglDestroyContext(self->display, self->context), == egl_TRUE);
+    if (self->context != egl_NO_CONTEXT) debug_CHECK(self->eglDestroyContext(self->display, self->context), RES == egl_TRUE);
 
-    debug_CHECK(self->eglTerminate(self->display), == egl_TRUE);
-    debug_CHECK(dlclose(self->dlHandle), == 0);
+    debug_CHECK(self->eglTerminate(self->display), RES == egl_TRUE);
+    debug_CHECK(dlclose(self->dlHandle), RES == 0);
 }

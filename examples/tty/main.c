@@ -22,8 +22,11 @@ static int32_t init_graphics(struct drmKms *graphics) {
     int32_t selectedModeWidth = 0;
     int32_t selectedModeHz = 0;
     for (int32_t i = 0; i < graphics->connector.count_modes; ++i) {
-        debug_printStr("Mode \"", graphics->modeInfos[i].name, "\"\n", DRM_DISPLAY_MODE_LEN);
-        debug_printNum("  Pixel clock: ", graphics->modeInfos[i].clock, " KHz\n");
+        sys_writev(STDOUT_FILENO, (struct iovec[2]) {
+            { .iov_base = "Mode \"", .iov_len = 6 },
+            { .iov_base = graphics->modeInfos[i].name, .iov_len = DRM_DISPLAY_MODE_LEN }
+        }, 2);
+        debug_printNum("\"\n  Pixel clock: ", graphics->modeInfos[i].clock, " KHz\n");
         debug_printNum("  Width: ", graphics->modeInfos[i].hdisplay, " pixels\n");
         debug_printNum("  Height: ", graphics->modeInfos[i].vdisplay, " pixels\n");
         debug_printNum("  Hsync: start=", graphics->modeInfos[i].hsync_start, ", ");
@@ -43,8 +46,11 @@ static int32_t init_graphics(struct drmKms *graphics) {
             selectedModeHz = graphics->modeInfos[i].vrefresh;
         }
     }
-    debug_printStr("Selected mode \"", graphics->modeInfos[selectedModeIndex].name, "\" at ", DRM_DISPLAY_MODE_LEN);
-    debug_printNum("", selectedModeHz, " Hz.\n");
+    sys_writev(STDOUT_FILENO, (struct iovec[2]) {
+        { .iov_base = "Selected mode \"", .iov_len = 15 },
+        { .iov_base = graphics->modeInfos[selectedModeIndex].name, .iov_len = DRM_DISPLAY_MODE_LEN }
+    }, 2);
+    debug_printNum("\" at ", selectedModeHz, " Hz.\n");
 
     // Setup framebuffer using the selected mode.
     status = drmKms_setupFb(graphics, selectedModeIndex);
@@ -194,7 +200,7 @@ int32_t main(int32_t argc, char **argv) {
                 green = 0;
                 blue = 0;
                 frameCounter = 0;
-                debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), == 0);
+                debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
             } else if (info.ssi_signo == SIGUSR2) {
                 if (!active) return 1;
 
@@ -217,7 +223,7 @@ int32_t main(int32_t argc, char **argv) {
 
         ++frameCounter;
         struct timespec now;
-        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), == 0);
+        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), RES == 0);
         if (now.tv_sec > prev.tv_sec) {
             debug_printNum("FPS: ", frameCounter, "\n");
             frameCounter = 0;
