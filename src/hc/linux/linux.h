@@ -3125,3 +3125,30 @@ enum {
     CTRL_ATTR_POLICY_DUMP_MAX = __CTRL_ATTR_POLICY_DUMP_MAX - 1
 };
 #define CTRL_ATTR_MCAST_GRP_MAX (__CTRL_ATTR_MCAST_GRP_MAX - 1)
+
+// acpi netlink
+struct acpi_genl_event {
+    char device_class[20];
+    char bus_id[15];
+    uint32_t type;
+    uint32_t data;
+};
+
+enum {
+    ACPI_GENL_ATTR_UNSPEC,
+    ACPI_GENL_ATTR_EVENT,
+    __ACPI_GENL_ATTR_MAX,
+};
+#define ACPI_GENL_ATTR_MAX (__ACPI_GENL_ATTR_MAX - 1)
+
+enum {
+    ACPI_GENL_CMD_UNSPEC,
+    ACPI_GENL_CMD_EVENT,
+    __ACPI_GENL_CMD_MAX,
+};
+#define ACPI_GENL_CMD_MAX (__ACPI_GENL_CMD_MAX - 1)
+#define GENL_MAX_FAM_OPS 256
+#define GENL_MAX_FAM_GRPS 256
+
+#define ACPI_EVENT_FAMILY_NAME "acpi_event"
+#define ACPI_EVENT_MCAST_GROUP_NAME "acpi_mc_group"
