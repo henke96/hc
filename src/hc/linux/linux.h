@@ -3152,3 +3152,82 @@ enum {
 
 #define ACPI_EVENT_FAMILY_NAME "acpi_event"
 #define ACPI_EVENT_MCAST_GROUP_NAME "acpi_mc_group"
+
+// mount.h
+#define MS_RDONLY  1 /* Mount read-only */
+#define MS_NOSUID  2 /* Ignore suid and sgid bits */
+#define MS_NODEV  4 /* Disallow access to device special files */
+#define MS_NOEXEC  8 /* Disallow program execution */
+#define MS_SYNCHRONOUS 16 /* Writes are synced at once */
+#define MS_REMOUNT 32 /* Alter flags of a mounted FS */
+#define MS_MANDLOCK 64 /* Allow mandatory locks on an FS */
+#define MS_DIRSYNC 128 /* Directory modifications are synchronous */
+#define MS_NOSYMFOLLOW 256 /* Do not follow symlinks */
+#define MS_NOATIME 1024 /* Do not update access times. */
+#define MS_NODIRATIME 2048 /* Do not update directory access times */
+#define MS_BIND 4096
+#define MS_MOVE 8192
+#define MS_REC 16384
+#define MS_VERBOSE 32768 /* War is peace. Verbosity is silence. MS_VERBOSE is deprecated. */
+#define MS_SILENT 32768
+#define MS_POSIXACL (1<<16) /* VFS does not apply the umask */
+#define MS_UNBINDABLE (1<<17) /* change to unbindable */
+#define MS_PRIVATE (1<<18) /* change to private */
+#define MS_SLAVE (1<<19) /* change to slave */
+#define MS_SHARED (1<<20) /* change to shared */
+#define MS_RELATIME (1<<21) /* Update atime relative to mtime/ctime. */
+#define MS_KERNMOUNT (1<<22) /* this is a kern_mount call */
+#define MS_I_VERSION (1<<23) /* Update inode I_version field */
+#define MS_STRICTATIME (1<<24) /* Always perform atime updates */
+#define MS_LAZYTIME (1<<25) /* Update the on-disk [acm]times lazily */
+
+// dirent.h
+struct linux_dirent64 {
+    uint64_t d_ino; /* 64-bit inode number */
+    int64_t d_off; /* 64-bit offset to next structure */
+    uint16_t d_reclen; /* Size of this dirent */
+    uint8_t d_type; /* File type */
+    char d_name[]; /* Filename (null-terminated) */
+} hc_PACKED;
+
+// fs.h
+#define SEEK_SET 0 /* seek relative to beginning of file */
+#define SEEK_CUR 1 /* seek relative to current file position */
+#define SEEK_END 2 /* seek relative to end of file */
+#define SEEK_DATA 3 /* seek to the next data */
+#define SEEK_HOLE 4 /* seek to the next hole */
+#define SEEK_MAX SEEK_HOLE
+
+#define RENAME_NOREPLACE (1 << 0) /* Don't overwrite target */
+#define RENAME_EXCHANGE (1 << 1) /* Exchange source and dest */
+#define RENAME_WHITEOUT (1 << 2) /* Whiteout source */
+
+#define BLKROSET _IO(0x12,93) /* set device read-only (0 = read-write) */
+#define BLKROGET _IO(0x12,94) /* get read-only status (0 = read_write) */
+#define BLKRRPART _IO(0x12,95) /* re-read partition table */
+#define BLKGETSIZE _IO(0x12,96) /* return device size /512 (long *arg) */
+#define BLKFLSBUF _IO(0x12,97) /* flush buffer cache */
+#define BLKRASET _IO(0x12,98) /* set read ahead for block device */
+#define BLKRAGET _IO(0x12,99) /* get current read ahead setting */
+#define BLKFRASET  _IO(0x12,100) /* set filesystem (mm/filemap.c) read-ahead */
+#define BLKFRAGET  _IO(0x12,101) /* get filesystem (mm/filemap.c) read-ahead */
+#define BLKSECTSET _IO(0x12,102) /* set max sectors per request (ll_rw_blk.c) */
+#define BLKSECTGET _IO(0x12,103) /* get max sectors per request (ll_rw_blk.c) */
+#define BLKSSZGET _IO(0x12,104) /* get block device sector size */
+#define BLKBSZGET _IOR(0x12,112,size_t)
+#define BLKBSZSET _IOW(0x12,113,size_t)
+#define BLKGETSIZE64 _IOR(0x12,114,size_t) /* return device size in bytes (u64 *arg) */
+#define BLKTRACESETUP _IOWR(0x12,115,struct blk_user_trace_setup)
+#define BLKTRACESTART _IO(0x12,116)
+#define BLKTRACESTOP _IO(0x12,117)
+#define BLKTRACETEARDOWN _IO(0x12,118)
+#define BLKDISCARD _IO(0x12,119)
+#define BLKIOMIN _IO(0x12,120)
+#define BLKIOOPT _IO(0x12,121)
+#define BLKALIGNOFF _IO(0x12,122)
+#define BLKPBSZGET _IO(0x12,123)
+#define BLKDISCARDZEROES _IO(0x12,124)
+#define BLKSECDISCARD _IO(0x12,125)
+#define BLKROTATIONAL _IO(0x12,126)
+#define BLKZEROOUT _IO(0x12,127)
+#define BLKGETDISKSEQ _IOR(0x12,128,__u64)

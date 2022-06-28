@@ -1207,3 +1207,27 @@ static hc_ALWAYS_INLINE int32_t sys_umount2(const char *name, uint32_t flags) {
     sys_SYSCALL2(sys_NR_umount2, name, flags);
     return (int32_t)ret;
 }
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int64_t sys_getdents64(int32_t fd, void *dirents, int64_t count) {
+    sys_SYSCALL3(sys_NR_getdents64, fd, dirents, count);
+    return ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_readlinkat(int32_t dfd, const char *pathname, char *buf, int32_t bufsize) {
+    sys_SYSCALL4(sys_NR_readlinkat, dfd, pathname, buf, bufsize);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_faccessat(int32_t dfd, const char *filename, uint32_t mode) {
+    sys_SYSCALL3(sys_NR_faccessat, dfd, filename, mode);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_unlinkat(int32_t dfd, const char *pathname, uint32_t flags) {
+    sys_SYSCALL3(sys_NR_unlinkat, dfd, pathname, flags);
+    return (int32_t)ret;
+}
