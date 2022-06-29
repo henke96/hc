@@ -177,6 +177,8 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define SO_BSDCOMPAT 14
 #define SO_REUSEPORT 15
 
+#define SO_BINDTODEVICE	25
+
 #define SOCK_CLOEXEC 02000000
 #define SOCK_NONBLOCK 00004000
 
@@ -225,18 +227,10 @@ struct msghdr {
 #define IPPROTO_IPV6 41
 #define IPPROTO_RAW 255
 
-#define INADDR_ANY ((uint32_t)0x00000000)
-#define INADDR_BROADCAST ((uint32_t)0xffffffff)
-#define INADDR_NONE ((uint32_t)0xffffffff)
-
-struct in_addr {
-    uint32_t s_addr;
-};
-
 struct sockaddr_in {
     uint16_t sin_family;
     uint16_t sin_port;
-    struct in_addr sin_addr;
+    uint8_t sin_addr[4];
     uint8_t sin_zero[8];
 };
 
