@@ -177,7 +177,7 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define SO_BSDCOMPAT 14
 #define SO_REUSEPORT 15
 
-#define SO_BINDTODEVICE	25
+#define SO_BINDTODEVICE 25
 
 #define SOCK_CLOEXEC 02000000
 #define SOCK_NONBLOCK 00004000
@@ -2813,7 +2813,7 @@ struct ifaddrmsg {
     uint8_t ifa_prefixlen; /* The prefix length */
     uint8_t ifa_flags; /* Flags */
     uint8_t ifa_scope; /* Address scope */
-    uint32_t ifa_index; /* Link index */
+    int32_t ifa_index; /* Link index */
 };
 
 /*
@@ -2860,7 +2860,16 @@ enum {
 #define IFA_F_MCAUTOJOIN 0x400
 #define IFA_F_STABLE_PRIVACY 0x800
 
+struct ifa_cacheinfo {
+    uint32_t ifa_prefered;
+    uint32_t ifa_valid;
+    uint32_t cstamp; /* created timestamp, hundredths of seconds */
+    uint32_t tstamp; /* updated timestamp, hundredths of seconds */
+};
+
 // if.h
+#define IFNAMSIZ 16
+
 enum net_device_flags {
     IFF_UP = 1<<0, /* sysfs */
     IFF_BROADCAST = 1<<1, /* volatile */
@@ -2881,6 +2890,31 @@ enum net_device_flags {
     IFF_LOWER_UP = 1<<16, /* volatile */
     IFF_DORMANT = 1<<17, /* volatile */
     IFF_ECHO = 1<<18, /* volatile */
+};
+
+struct ifmap {
+    uint64_t mem_start;
+    uint64_t mem_end;
+    uint16_t base_addr;
+    uint8_t irq;
+    uint8_t dma;
+    uint8_t port;
+    char __pad[3];
+};
+
+struct ifreq {
+    char ifr_name[IFNAMSIZ]; /* Interface name */
+    union {
+        char ifr_addr[16];
+        int16_t ifr_flags;
+        int32_t ifr_ifindex;
+        int32_t ifr_metric;
+        int32_t ifr_mtu;
+        struct ifmap ifr_map;
+        char ifr_slave[IFNAMSIZ];
+        char ifr_newname[IFNAMSIZ];
+        char *ifr_data;
+    };
 };
 
 // wireguard.h
@@ -3225,3 +3259,119 @@ struct linux_dirent64 {
 #define BLKROTATIONAL _IO(0x12,126)
 #define BLKZEROOUT _IO(0x12,127)
 #define BLKGETDISKSEQ _IOR(0x12,128,__u64)
+
+// sockios.h
+#define SIOCINQ FIONREAD
+#define SIOCOUTQ TIOCOUTQ /* output queue size (not sent + not acked) */
+
+#define SOCK_IOC_TYPE 0x89
+
+/*
+ * the timeval/timespec data structure layout is defined by libc,
+ * so we need to cover both possible versions on 32-bit.
+ */
+/* Get stamp (timeval) */
+#define SIOCGSTAMP_NEW  _IOR(SOCK_IOC_TYPE, 0x06, long long[2])
+/* Get stamp (timespec) */
+#define SIOCGSTAMPNS_NEW _IOR(SOCK_IOC_TYPE, 0x07, long long[2])
+
+#define SIOCGSTAMP SIOCGSTAMP_NEW
+#define SIOCGSTAMPNS SIOCGSTAMPNS_NEW
+
+/* Routing table calls. */
+#define SIOCADDRT 0x890B /* add routing table entry */
+#define SIOCDELRT 0x890C /* delete routing table entry */
+#define SIOCRTMSG 0x890D /* unused */
+
+/* Socket configuration controls. */
+#define SIOCGIFNAME 0x8910 /* get iface name */
+#define SIOCSIFLINK 0x8911 /* set iface channel */
+#define SIOCGIFCONF 0x8912 /* get iface list */
+#define SIOCGIFFLAGS 0x8913 /* get flags */
+#define SIOCSIFFLAGS 0x8914 /* set flags */
+#define SIOCGIFADDR 0x8915 /* get PA address */
+#define SIOCSIFADDR 0x8916 /* set PA address */
+#define SIOCGIFDSTADDR 0x8917 /* get remote PA address */
+#define SIOCSIFDSTADDR 0x8918 /* set remote PA address */
+#define SIOCGIFBRDADDR 0x8919 /* get broadcast PA address */
+#define SIOCSIFBRDADDR 0x891a /* set broadcast PA address */
+#define SIOCGIFNETMASK 0x891b /* get network PA mask */
+#define SIOCSIFNETMASK 0x891c /* set network PA mask */
+#define SIOCGIFMETRIC 0x891d /* get metric */
+#define SIOCSIFMETRIC 0x891e /* set metric */
+#define SIOCGIFMEM 0x891f /* get memory address (BSD) */
+#define SIOCSIFMEM 0x8920 /* set memory address (BSD) */
+#define SIOCGIFMTU 0x8921 /* get MTU size */
+#define SIOCSIFMTU 0x8922 /* set MTU size */
+#define SIOCSIFNAME 0x8923 /* set interface name */
+#define SIOCSIFHWADDR 0x8924 /* set hardware address  */
+#define SIOCGIFENCAP 0x8925 /* get/set encapsulations       */
+#define SIOCSIFENCAP 0x8926
+#define SIOCGIFHWADDR 0x8927 /* Get hardware address */
+#define SIOCGIFSLAVE 0x8929 /* Driver slaving support */
+#define SIOCSIFSLAVE 0x8930
+#define SIOCADDMULTI 0x8931 /* Multicast address lists */
+#define SIOCDELMULTI 0x8932
+#define SIOCGIFINDEX 0x8933 /* name -> if_index mapping */
+#define SIOGIFINDEX SIOCGIFINDEX /* misprint compatibility :-) */
+#define SIOCSIFPFLAGS 0x8934 /* set/get extended flags set */
+#define SIOCGIFPFLAGS 0x8935
+#define SIOCDIFADDR 0x8936 /* delete PA address */
+#define SIOCSIFHWBROADCAST 0x8937 /* set hardware broadcast addr */
+#define SIOCGIFCOUNT 0x8938 /* get number of devices */
+
+#define SIOCGIFBR 0x8940 /* Bridging support */
+#define SIOCSIFBR 0x8941 /* Set bridging options  */
+
+#define SIOCGIFTXQLEN 0x8942 /* Get the tx queue length */
+#define SIOCSIFTXQLEN 0x8943 /* Set the tx queue length  */
+
+#define SIOCETHTOOL 0x8946 /* Ethtool interface */
+
+#define SIOCGMIIPHY 0x8947 /* Get address of MII PHY in use. */
+#define SIOCGMIIREG 0x8948 /* Read MII PHY register. */
+#define SIOCSMIIREG 0x8949 /* Write MII PHY register. */
+#define SIOCWANDEV 0x894A /* get/set netdev parameters */
+#define SIOCOUTQNSD 0x894B /* output queue size (not sent only) */
+#define SIOCGSKNS 0x894C /* get socket network namespace */
+
+/* ARP cache control calls. */
+#define SIOCDARP 0x8953 /* delete ARP table entry */
+#define SIOCGARP 0x8954 /* get ARP table entry */
+#define SIOCSARP 0x8955 /* set ARP table entry */
+
+/* RARP cache control calls. */
+#define SIOCDRARP 0x8960 /* delete RARP table entry */
+#define SIOCGRARP 0x8961 /* get RARP table entry */
+#define SIOCSRARP 0x8962 /* set RARP table entry */
+
+/* Driver configuration calls */
+
+#define SIOCGIFMAP 0x8970 /* Get device parameters */
+#define SIOCSIFMAP 0x8971 /* Set device parameters */
+
+/* DLCI configuration calls */
+
+#define SIOCADDDLCI 0x8980 /* Create new DLCI device */
+#define SIOCDELDLCI 0x8981 /* Delete DLCI device */
+
+#define SIOCGIFVLAN 0x8982 /* 802.1Q VLAN support */
+#define SIOCSIFVLAN 0x8983 /* Set 802.1Q VLAN options  */
+
+/* bonding calls */
+#define SIOCBONDENSLAVE 0x8990 /* enslave a device to the bond */
+#define SIOCBONDRELEASE 0x8991 /* release a slave from the bond*/
+#define SIOCBONDSETHWADDR      0x8992 /* set the hw addr of the bond  */
+#define SIOCBONDSLAVEINFOQUERY 0x8993   /* rtn info about slave state   */
+#define SIOCBONDINFOQUERY      0x8994 /* rtn info about bond state    */
+#define SIOCBONDCHANGEACTIVE   0x8995   /* update to a new active slave */
+
+/* bridge calls */
+#define SIOCBRADDBR 0x89a0 /* create new bridge device     */
+#define SIOCBRDELBR 0x89a1 /* remove bridge device         */
+#define SIOCBRADDIF 0x89a2 /* add interface to bridge      */
+#define SIOCBRDELIF 0x89a3 /* remove interface from bridge */
+
+/* hardware time stamping: parameters in linux/net_tstamp.h */
+#define SIOCSHWTSTAMP 0x89b0 /* set and get config */
+#define SIOCGHWTSTAMP 0x89b1 /* get config */
