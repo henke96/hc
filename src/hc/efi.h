@@ -33,9 +33,9 @@ struct efi_memoryDescriptor {
 #define efi_BUFFER_TOO_SMALL (int64_t)(0x8000000000000000u + 5)
 
 // GUIDs.
-#define efi_guid_GRAPHICS_OUTPUT_PROTOCOL { \
-    0x9042a9de, 0x23dc, 0x4a38, { 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a } \
-}
+#define efi_guid_GRAPHICS_OUTPUT_PROTOCOL { 0x9042a9de, 0x23dc, 0x4a38, { 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a } }
+#define efi_guid_LOADED_IMAGE_PROTOCOL { 0x5B1B31A1, 0x9562, 0x11d2, { 0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B } }
+#define efi_guid_DEVICE_PATH_PROTOCOL { 0x09576e91, 0x6d3f, 0x11d2, { 0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b } }
 
 struct efi_guid {
     uint32_t data1;
@@ -206,6 +206,17 @@ struct efi_devicePathProtocol {
     uint8_t type;
     uint8_t subType;
     uint8_t length[2];
+    uint8_t data[];
+};
+
+struct efi_devicePathProtocol_mediaDevicePath {
+    struct efi_devicePathProtocol hdr;
+    uint32_t partitionNumber;
+    uint64_t partitionStart;
+    uint64_t partitionSize;
+    uint8_t partitionSignature[16];
+    uint8_t partitionFormat;
+    uint8_t signatureType;
 };
 
 struct efi_openProtocolInformationEntry {
@@ -369,7 +380,7 @@ struct efi_systemTable {
     struct efi_configurationTable *configurationTable;
 };
 
-// Graphics output protocol
+// Graphics output protocol.
 enum efi_graphicsPixelFormat {
     efi_PIXEL_RED_GREEN_BLUE_RESERVED_8BIT_PER_COLOR,
     efi_PIXEL_BLUE_GREEN_RED_RESERVED_8BIT_PER_COLOR,
@@ -442,6 +453,26 @@ struct efi_graphicsOutputProtocol {
         uint64_t delta
     );
     struct efi_graphicsOutputProtocolMode *mode;
+};
+
+// Loaded image protocol.
+struct efi_loadedImageProtocol {
+    uint32_t revision;
+    void *parentHandle;
+    struct efi_systemTable *systemTable;
+    // Source location.
+    void *deviceHandle;
+    struct efi_devicePathProtocol *filePath;
+    void *reserved;
+    // Load options.
+    uint32_t loadOptionsSize;
+    void *loadOptions;
+    // Load location.
+    void *imageBase;
+    uint64_t imageSize;
+    enum efi_memoryType imageCodeType;
+    enum efi_memoryType imageDataType;
+    int64_t (hc_MS_ABI *unload)(void *imageHandle);
 };
 
 #endif
