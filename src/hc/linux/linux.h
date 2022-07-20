@@ -157,6 +157,7 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define SOCK_DCCP 6
 #define SOCK_PACKET 10
 
+#define SOL_IP 0
 #define SOL_SOCKET 1
 
 #define SO_DEBUG 1
@@ -3375,3 +3376,252 @@ struct linux_dirent64 {
 /* hardware time stamping: parameters in linux/net_tstamp.h */
 #define SIOCSHWTSTAMP 0x89b0 /* set and get config */
 #define SIOCGHWTSTAMP 0x89b1 /* get config */
+
+// netfilter.h
+#define NF_DROP 0
+#define NF_ACCEPT 1
+#define NF_STOLEN 2
+#define NF_QUEUE 3
+#define NF_REPEAT 4
+#define NF_STOP 5 /* Deprecated, for userspace nf_queue compatibility. */
+#define NF_MAX_VERDICT NF_STOP
+
+/* we overload the higher bits for encoding auxiliary data such as the queue
+ * number or errno values. Not nice, but better than additional function
+ * arguments. */
+#define NF_VERDICT_MASK 0x000000ff
+
+/* extra verdict flags have mask 0x0000ff00 */
+#define NF_VERDICT_FLAG_QUEUE_BYPASS 0x00008000
+
+/* queue number (NF_QUEUE) or errno (NF_DROP) */
+#define NF_VERDICT_QMASK 0xffff0000
+#define NF_VERDICT_QBITS 16
+
+#define NF_QUEUE_NR(x) ((((x) << 16) & NF_VERDICT_QMASK) | NF_QUEUE)
+#define NF_DROP_ERR(x) (((-x) << 16) | NF_DROP)
+
+enum nf_inet_hooks {
+    NF_INET_PRE_ROUTING,
+    NF_INET_LOCAL_IN,
+    NF_INET_FORWARD,
+    NF_INET_LOCAL_OUT,
+    NF_INET_POST_ROUTING,
+    NF_INET_NUMHOOKS,
+    NF_INET_INGRESS = NF_INET_NUMHOOKS,
+};
+
+enum nf_dev_hooks {
+    NF_NETDEV_INGRESS,
+    NF_NETDEV_EGRESS,
+    NF_NETDEV_NUMHOOKS
+};
+
+enum {
+    NFPROTO_UNSPEC =  0,
+    NFPROTO_INET   =  1,
+    NFPROTO_IPV4   =  2,
+    NFPROTO_ARP    =  3,
+    NFPROTO_NETDEV =  5,
+    NFPROTO_BRIDGE =  7,
+    NFPROTO_IPV6   = 10,
+    NFPROTO_DECNET = 12,
+    NFPROTO_NUMPROTO,
+};
+
+// x_tables.h
+#define XT_FUNCTION_MAXNAMELEN 30
+#define XT_EXTENSION_MAXNAMELEN 29
+#define XT_TABLE_MAXNAMELEN 32
+
+struct xt_entry_match {
+    uint16_t match_size;
+    char name[XT_EXTENSION_MAXNAMELEN];
+    uint8_t revision;
+
+    uint8_t data[];
+} hc_ALIGNED(8);
+
+struct xt_entry_target {
+    uint16_t target_size;
+    char name[XT_EXTENSION_MAXNAMELEN];
+    uint8_t revision;
+
+    uint8_t data[];
+} hc_ALIGNED(8);
+
+struct xt_standard_target {
+    struct xt_entry_target target;
+    int32_t verdict;
+    int32_t __pad;
+};
+
+/* CONTINUE verdict for targets */
+#define XT_CONTINUE 0xFFFFFFFF
+
+/* For standard target */
+#define XT_RETURN (-NF_REPEAT - 1)
+
+/* Standard return verdict, or do jump. */
+#define XT_STANDARD_TARGET ""
+
+struct xt_counters {
+    uint64_t pcnt, bcnt; /* Packet and byte counters */
+};
+
+#define XT_INV_PROTO 0x40 /* Invert the sense of PROTO. */
+
+// nf_nat.h
+struct nf_nat_ipv4_range {
+    uint32_t flags;
+    uint8_t min_ip[4];
+    uint8_t max_ip[4];
+    uint16_t min;
+    uint16_t max;
+};
+
+struct nf_nat_ipv4_multi_range_compat {
+    uint32_t rangesize;
+    struct nf_nat_ipv4_range range[1];
+};
+
+// ip_tables.h
+struct ipt_ip {
+    /* Source and destination IP addr */
+    uint8_t src[4], dst[4];
+    /* Mask for src and dest IP addr */
+    uint8_t smsk[4], dmsk[4];
+    char iniface[IFNAMSIZ], outiface[IFNAMSIZ];
+    uint8_t iniface_mask[IFNAMSIZ], outiface_mask[IFNAMSIZ];
+
+    /* Protocol, 0 = ANY */
+    uint16_t proto;
+
+    /* Flags word */
+    uint8_t flags;
+    /* Inverse flags */
+    uint8_t invflags;
+};
+
+/* Values for "flag" field in struct ipt_ip (general ip structure). */
+#define IPT_F_FRAG 0x01 /* Set if rule is a fragment rule */
+#define IPT_F_GOTO 0x02 /* Set if jump is a goto */
+#define IPT_F_MASK 0x03 /* All possible flag bits mask. */
+
+/* Values for "inv" field in struct ipt_ip. */
+#define IPT_INV_VIA_IN 0x01 /* Invert the sense of IN IFACE. */
+#define IPT_INV_VIA_OUT 0x02 /* Invert the sense of OUT IFACE */
+#define IPT_INV_TOS 0x04 /* Invert the sense of TOS. */
+#define IPT_INV_SRCIP 0x08 /* Invert the sense of SRC IP. */
+#define IPT_INV_DSTIP 0x10 /* Invert the sense of DST OP. */
+#define IPT_INV_FRAG 0x20 /* Invert the sense of FRAG. */
+#define IPT_INV_PROTO XT_INV_PROTO
+#define IPT_INV_MASK 0x7F /* All possible flag bits mask. */
+
+/* This structure defines each of the firewall rules.  Consists of 3
+   parts which are 1) general IP header stuff 2) match specific
+   stuff 3) the target to perform if the rule matches */
+struct ipt_entry {
+    struct ipt_ip ip;
+
+    /* Mark with fields that we care about. */
+    uint32_t nfcache;
+
+    /* Size of ipt_entry + matches */
+    uint16_t target_offset;
+    /* Size of ipt_entry + matches + target */
+    uint16_t next_offset;
+
+    /* Back pointer */
+    uint32_t comefrom;
+
+    /* Packet and byte counters. */
+    struct xt_counters counters;
+
+    /* The matches (if any), then the target. */
+    uint8_t elems[];
+};
+
+#define IPT_BASE_CTL 64
+
+#define IPT_SO_SET_REPLACE (IPT_BASE_CTL)
+#define IPT_SO_SET_ADD_COUNTERS (IPT_BASE_CTL + 1)
+
+#define IPT_SO_GET_INFO (IPT_BASE_CTL)
+#define IPT_SO_GET_ENTRIES (IPT_BASE_CTL + 1)
+#define IPT_SO_GET_REVISION_MATCH (IPT_BASE_CTL + 2)
+#define IPT_SO_GET_REVISION_TARGET (IPT_BASE_CTL + 3)
+
+/* ICMP matching stuff */
+struct ipt_icmp {
+    uint8_t type; /* type to match */
+    uint8_t code[2]; /* range of code */
+    uint8_t invflags; /* Inverse flags */
+};
+
+/* Values for "inv" field for struct ipt_icmp. */
+#define IPT_ICMP_INV 0x01 /* Invert the sense of type/code test */
+
+/* The argument to IPT_SO_GET_INFO */
+struct ipt_getinfo {
+    /* Which table: caller fills this in. */
+    char name[XT_TABLE_MAXNAMELEN];
+
+    /* Kernel fills these in. */
+    /* Which hook entry points are valid: bitmask */
+    uint32_t valid_hooks;
+
+    /* Hook entry points: one per netfilter hook. */
+    uint32_t hook_entry[NF_INET_NUMHOOKS];
+
+    /* Underflow points. */
+    uint32_t underflow[NF_INET_NUMHOOKS];
+
+    /* Number of entries */
+    uint32_t num_entries;
+
+    /* Size of entries. */
+    uint32_t size;
+};
+
+/* The argument to IPT_SO_SET_REPLACE. */
+struct ipt_replace {
+    /* Which table. */
+    char name[XT_TABLE_MAXNAMELEN];
+
+    /* Which hook entry points are valid: bitmask. You can't change this. */
+    uint32_t valid_hooks;
+
+    /* Number of entries */
+    uint32_t num_entries;
+
+    /* Total size of new entries */
+    uint32_t size;
+
+    /* Hook entry points. */
+    uint32_t hook_entry[NF_INET_NUMHOOKS];
+
+    /* Underflow points. */
+    uint32_t underflow[NF_INET_NUMHOOKS];
+
+    /* Information about old entries: */
+    /* Number of counters (must be equal to current number of entries). */
+    uint32_t num_counters;
+    /* The old entries' counters. */
+    struct xt_counters *counters;
+
+    /* The entries (hang off end: not really an array). */
+    uint8_t entries[];
+};
+
+/* The argument to IPT_SO_GET_ENTRIES. */
+struct ipt_get_entries {
+    /* Which table: user fills this in. */
+    char name[XT_TABLE_MAXNAMELEN];
+
+    /* User fills this in: total entry size. */
+    uint32_t size;
+
+    /* The entries. */
+    uint8_t entries[];
+};
