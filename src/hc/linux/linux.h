@@ -146,7 +146,7 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define AF_BRIDGE 7 // Multiprotocol bridge
 #define AF_INET6 10 // IP version 6
 #define AF_NETLINK 16
-#define AF_PACKET 17// Packet family
+#define AF_PACKET 17 // Packet family
 #define AF_ALG 38 // Algorithm sockets
 
 #define SOCK_STREAM 1
@@ -3702,3 +3702,27 @@ struct ipt_get_entries {
     /* The entries. */
     uint8_t entries[];
 };
+
+// if_ether.h
+#define ETH_P_ALL 0x0003
+
+// if_packet.h
+struct sockaddr_ll {
+    uint16_t sll_family;
+    uint16_t sll_protocol;
+    int32_t sll_ifindex;
+    uint16_t sll_hatype;
+    uint8_t sll_pkttype;
+    uint8_t sll_halen;
+    uint8_t sll_addr[8];
+};
+
+/* Packet types */
+#define PACKET_HOST 0 /* To us */
+#define PACKET_BROADCAST 1 /* To all */
+#define PACKET_MULTICAST 2 /* To group */
+#define PACKET_OTHERHOST 3 /* To someone else  */
+#define PACKET_OUTGOING 4 /* Outgoing of any type */
+#define PACKET_LOOPBACK 5 /* MC/BRD frame looped back */
+#define PACKET_USER 6 /* To user space */
+#define PACKET_KERNEL 7 /* To kernel space */
