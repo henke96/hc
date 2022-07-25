@@ -1053,6 +1053,12 @@ static hc_ALWAYS_INLINE int64_t sys_sendmsg(int32_t fd, const struct msghdr *msg
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int64_t sys_recvmsg(int32_t fd, const struct msghdr *msg, uint32_t flags) {
+    sys_SYSCALL3(sys_NR_recvmsg, fd, msg, flags);
+    return ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE int64_t sys_recvfrom(int32_t fd, const void *restrict buf, int64_t len, uint32_t flags, const void *restrict addr, int32_t *restrict addrlen) {
     sys_SYSCALL6(sys_NR_recvfrom, fd, buf, len, flags, addr, addrlen);
     return ret;
