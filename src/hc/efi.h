@@ -36,6 +36,7 @@ struct efi_memoryDescriptor {
 #define efi_guid_GRAPHICS_OUTPUT_PROTOCOL { 0x9042a9de, 0x23dc, 0x4a38, { 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a } }
 #define efi_guid_LOADED_IMAGE_PROTOCOL { 0x5B1B31A1, 0x9562, 0x11d2, { 0x8E, 0x3F, 0x00, 0xA0, 0xC9, 0x69, 0x72, 0x3B } }
 #define efi_guid_DEVICE_PATH_PROTOCOL { 0x09576e91, 0x6d3f, 0x11d2, { 0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b } }
+#define efi_guid_BLOCK_IO_PROTOCOL { 0x964e5b21, 0x6459, 0x11d2, { 0x8e, 0x39, 0x00, 0xa0, 0xc9, 0x69, 0x72, 0x3b } }
 
 struct efi_guid {
     uint32_t data1;
@@ -473,6 +474,46 @@ struct efi_loadedImageProtocol {
     enum efi_memoryType imageCodeType;
     enum efi_memoryType imageDataType;
     int64_t (hc_MS_ABI *unload)(void *imageHandle);
+};
+
+// Block IO protocol.
+#define efi_BLOCK_IO_PROTOCOL_REVISION2 0x00020001
+#define efi_BLOCK_IO_PROTOCOL_REVISION3 ((2 << 16) | (31))
+
+struct efi_blockIOMedia {
+    uint32_t mediaId;
+    uint8_t removableMedia;
+    uint8_t mediaPresent;
+    uint8_t logicalPartition;
+    uint8_t readOnly;
+    uint8_t writeCaching;
+    uint32_t blockSize;
+    uint32_t ioAlign;
+    uint64_t lastBlock;
+    uint64_t lowestAlignedLba; // Added in revision 2.
+    uint32_t logicalBlocksPerPhysicalBlock; // Added in revision 2.
+    uint32_t optimalTransferLengthGranularity; // Added in revision 3.
+};
+
+struct efi_blockIOProtocol {
+    uint64_t revision;
+    struct efi_blockIOMedia *media;
+    int64_t (hc_MS_ABI *reset)(struct efi_blockIOProtocol *self, uint8_t extendedVerification);
+    int64_t (hc_MS_ABI *readBlocks)(
+        struct efi_blockIOProtocol *self,
+        uint32_t mediaId,
+        uint64_t logicalBlockAddress,
+        uint64_t bufferSize,
+        void *buffer
+    );
+    int64_t (hc_MS_ABI *writeBlocks)(
+        struct efi_blockIOProtocol *self,
+        uint32_t mediaId,
+        uint64_t logicalBlockAddress,
+        uint64_t bufferSize,
+        void *buffer
+    );
+    int64_t (hc_MS_ABI *flushBlocks)(struct efi_blockIOProtocol *self);
 };
 
 #endif

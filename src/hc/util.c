@@ -1,7 +1,8 @@
 // ALIGN must be power of 2.
 #define util_ALIGN_FORWARD(X, ALIGN) (((X) + ((ALIGN) - 1)) & ~((ALIGN) - 1))
 #define util_PAD_BYTES(X, ALIGN) (-(X) & ((ALIGN) - 1))
-#define util_RANGES_OVERLAP(X1, X2, Y1, Y2) ((X1) <= (Y2) && (Y1) <= (X2))
+// Check if [X_START, X_END) and [Y_START, Y_END) overlap.
+#define util_RANGES_OVERLAP(X_START, X_END, Y_START, Y_END) ((X_START) < (Y_END) && (Y_START) < (X_END))
 
 hc_UNUSED
 static int64_t util_cstrLen(const char *cstring) {
@@ -57,19 +58,18 @@ hc_UNUSED static char *util_uintToStr(char *bufferEnd, uint64_t number) {
 // Expects `buffer` to have 1 or more digits followed by `terminator`.
 // Returns the number of characters in the parsed number (0 on errors).
 // Sets `*number` to the parsed value if successful.
-hc_UNUSED static int32_t util_strToUint(const char *buffer, char terminator, uint64_t *number) {
+hc_UNUSED static int32_t util_strToUint(const void *buffer, char terminator, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
     do {
-        int64_t digitValue = (buffer[i] - '0');
+        uint64_t digitValue = (uint64_t)((uint8_t *)buffer)[i] - '0';
         if (
-            (digitValue < 0 || digitValue > 9) ||
-            (result > (UINT64_MAX - (uint64_t)digitValue) / 10)
+            (digitValue > 9) || (result > (UINT64_MAX - digitValue) / 10)
         ) return 0; // Not a digit or overflow.
 
-        result = result * 10 + (uint64_t)digitValue;
+        result = result * 10 + digitValue;
         ++i;
-    } while (buffer[i] != terminator);
+    } while (((char *)buffer)[i] != terminator);
 
     *number = result;
     return i;
@@ -92,4 +92,30 @@ hc_UNUSED static int32_t util_strToInt(const char *buffer, char terminator, int6
         *number = (int64_t)value;
         return parsed;
     }
+}
+
+// Expects `buffer` to have 1 or more hex digits followed by `terminator`.
+// Returns the number of characters in the parsed number (0 on errors).
+// Sets `*number` to the parsed value if successful.
+hc_UNUSED static int32_t util_hexToUint(const void *buffer, char terminator, uint64_t *number) {
+    uint64_t result = 0;
+    int32_t i = 0;
+    do {
+        uint64_t digitValue = ((uint8_t *)buffer)[i] - '0';
+        if (digitValue > 9) {
+            digitValue += (uint64_t)'0' - 'a';
+            if (digitValue > 5) {
+                digitValue += (uint64_t)'a' - 'A';
+                if (digitValue > 5) return 0; // Not a hex digit.
+            }
+            digitValue += 10;
+        }
+        if (result > (UINT64_MAX >> 4)) return 0; // Overflow.
+
+        result = (result << 4) | digitValue;
+        ++i;
+    } while (((char *)buffer)[i] != terminator);
+
+    *number = result;
+    return i;
 }

@@ -34,6 +34,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 
 // Attributes
 #define hc_UNREACHABLE __builtin_unreachable()
+#define hc_ASSUME(EXPR) __builtin_assume(EXPR)
 #define hc_UNUSED __attribute__((unused))
 #define hc_PACKED __attribute__((packed))
 #define hc_FALLTHROUGH __attribute__((fallthrough))

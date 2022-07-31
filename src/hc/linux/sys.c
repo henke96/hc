@@ -1237,3 +1237,15 @@ static hc_ALWAYS_INLINE int32_t sys_unlinkat(int32_t dfd, const char *pathname, 
     sys_SYSCALL3(sys_NR_unlinkat, dfd, pathname, flags);
     return (int32_t)ret;
 }
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_inotify_init1(uint32_t flags) {
+    sys_SYSCALL1(sys_NR_inotify_init1, flags);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_inotify_add_watch(int32_t fd, const char *pathname, uint32_t mask) {
+    sys_SYSCALL3(sys_NR_inotify_add_watch, fd, pathname, mask);
+    return (int32_t)ret;
+}
