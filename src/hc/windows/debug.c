@@ -1,7 +1,7 @@
 // TODO: We are just assuming the uint32_t casts are fine.
 
 hc_UNUSED
-static void debug_printNum(const char *pre, int64_t num, const char *post) {
+static hc_COLD void debug_printNum(const char *pre, int64_t num, const char *post) {
     char buffer[util_INT64_MAX_CHARS];
     char *numStr = util_intToStr(&buffer[util_INT64_MAX_CHARS], num);
 
@@ -12,7 +12,7 @@ static void debug_printNum(const char *pre, int64_t num, const char *post) {
 }
 
 hc_UNUSED
-static noreturn void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
+static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
     char resBuffer[util_INT64_MAX_CHARS];
     char *resStr = util_intToStr(&resBuffer[util_INT64_MAX_CHARS], res);
     char lineBuffer[util_INT32_MAX_CHARS];
