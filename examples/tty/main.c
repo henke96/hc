@@ -93,7 +93,7 @@ int32_t main(int32_t argc, char **argv) {
 
     // Parse TTY_NUM argument.
     uint64_t ttyNumber;
-    if (util_strToUint(argv[1], '\0', &ttyNumber) == 0 || ttyNumber < 1 || ttyNumber > 63) {
+    if (util_strToUint(argv[1], 100, &ttyNumber) <= 0 || ttyNumber < 1 || ttyNumber > 63) {
         static const char error[] = "Invalid TTY_NUM argument\n";
         sys_write(STDOUT_FILENO, &error, sizeof(error) - 1);
         return 1;

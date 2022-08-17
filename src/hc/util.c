@@ -55,67 +55,70 @@ hc_UNUSED static char *util_uintToStr(char *bufferEnd, uint64_t number) {
     return bufferEnd;
 }
 
-// Expects `buffer` to have 1 or more digits followed by `terminator`.
-// Returns the number of characters in the parsed number (0 on errors).
-// Sets `*number` to the parsed value if successful.
-hc_UNUSED static int32_t util_strToUint(const void *buffer, char terminator, uint64_t *number) {
+// Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
+// The result is stored in `*number` if successful.
+hc_UNUSED static int32_t util_strToUint(const void *buffer, int64_t maxChars, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
-    do {
+    for (; i < maxChars; ++i) {
         uint64_t digitValue = (uint64_t)((uint8_t *)buffer)[i] - '0';
-        if (
-            (digitValue > 9) || (result > (UINT64_MAX - digitValue) / 10)
-        ) return 0; // Not a digit or overflow.
+        if (digitValue > 9) break;
 
+        if (result > (UINT64_MAX - digitValue) / 10) return -1;
         result = result * 10 + digitValue;
-        ++i;
-    } while (((char *)buffer)[i] != terminator);
+    }
 
-    *number = result;
+    if (i > 0) *number = result;
     return i;
 }
 
-// Expects `buffer` to have 1 or more digits followed by `terminator`, optionally starting with a minus sign.
-// Returns the number of characters in the parsed number (0 on errors).
-// Sets `*number` to the parsed value if successful.
-hc_UNUSED static int32_t util_strToInt(const char *buffer, char terminator, int64_t *number) {
-    if (buffer[0] == '-') {
-        uint64_t value;
-        int32_t parsed = util_strToUint(&buffer[1], terminator, &value);
-        if (parsed == 0 || value > (uint64_t)INT64_MAX + 1) return 0;
-        *number = (int64_t)-value;
-        return 1 + parsed;
-    } else {
-        uint64_t value;
-        int32_t parsed = util_strToUint(buffer, terminator, &value);
-        if (parsed == 0 || value > (uint64_t)INT64_MAX) return 0;
-        *number = (int64_t)value;
-        return parsed;
+// Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
+// The result is stored in `*number` if successful.
+hc_UNUSED static int32_t util_strToInt(const void *buffer, int64_t maxChars, int64_t *number) {
+    if (maxChars <= 0) return 0;
+
+    uint64_t negative;
+    if (((char *)buffer)[0] == '-') negative = 1;
+    else negative = 0;
+
+    uint64_t maxNumber = (uint64_t)INT64_MAX + negative;
+    uint64_t result = 0;
+    int32_t i = (int32_t)negative;
+    for (; i < maxChars; ++i) {
+        uint64_t digitValue = (uint64_t)((uint8_t *)buffer)[i] - '0';
+        if (digitValue > 9) break;
+
+        if (result > (maxNumber - digitValue) / 10) return -1;
+        result = result * 10 + digitValue;
     }
+
+    if (i > (int32_t)negative) {
+        *number = (int64_t)(result * -negative);
+        return i;
+    }
+    return 0;
 }
 
-// Expects `buffer` to have 1 or more hex digits followed by `terminator`.
-// Returns the number of characters in the parsed number (0 on errors).
-// Sets `*number` to the parsed value if successful.
-hc_UNUSED static int32_t util_hexToUint(const void *buffer, char terminator, uint64_t *number) {
+// Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
+// The result is stored in `*number` if successful.
+hc_UNUSED static int32_t util_hexToUint(const void *buffer, int64_t maxChars, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
-    do {
+    for (; i < maxChars; ++i) {
         uint64_t digitValue = ((uint8_t *)buffer)[i] - '0';
         if (digitValue > 9) {
             digitValue += (uint64_t)'0' - 'a';
             if (digitValue > 5) {
                 digitValue += (uint64_t)'a' - 'A';
-                if (digitValue > 5) return 0; // Not a hex digit.
+                if (digitValue > 5) break; // Not a hex digit.
             }
             digitValue += 10;
         }
-        if (result > (UINT64_MAX >> 4)) return 0; // Overflow.
+        if (result > (UINT64_MAX >> 4)) return -1; // Overflow.
 
         result = (result << 4) | digitValue;
-        ++i;
-    } while (((char *)buffer)[i] != terminator);
+    }
 
-    *number = result;
+    if (i > 0) *number = result;
     return i;
 }

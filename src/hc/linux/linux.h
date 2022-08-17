@@ -1084,6 +1084,183 @@ struct clone_args {
 #define _IOW(type,nr,size) _IOC(_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
 #define _IOWR(type,nr,size) _IOC(_IOC_READ|_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
 
+// termbits.h
+#define NCCS 19
+struct termios {
+    uint32_t c_iflag; /* input mode flags */
+    uint32_t c_oflag; /* output mode flags */
+    uint32_t c_cflag; /* control mode flags */
+    uint32_t c_lflag; /* local mode flags */
+    uint8_t c_line; /* line discipline */
+    uint8_t c_cc[NCCS]; /* control characters */
+};
+
+struct termios2 {
+    uint32_t c_iflag; /* input mode flags */
+    uint32_t c_oflag; /* output mode flags */
+    uint32_t c_cflag; /* control mode flags */
+    uint32_t c_lflag; /* local mode flags */
+    uint8_t c_line; /* line discipline */
+    uint8_t c_cc[NCCS]; /* control characters */
+    uint32_t c_ispeed; /* input speed */
+    uint32_t c_ospeed; /* output speed */
+};
+
+/* c_cc characters */
+#define VINTR 0
+#define VQUIT 1
+#define VERASE 2
+#define VKILL 3
+#define VEOF 4
+#define VTIME 5
+#define VMIN 6
+#define VSWTC 7
+#define VSTART 8
+#define VSTOP 9
+#define VSUSP 10
+#define VEOL 11
+#define VREPRINT 12
+#define VDISCARD 13
+#define VWERASE 14
+#define VLNEXT 15
+#define VEOL2 16
+
+/* c_iflag bits */
+#define IGNBRK 0000001
+#define BRKINT 0000002
+#define IGNPAR 0000004
+#define PARMRK 0000010
+#define INPCK 0000020
+#define ISTRIP 0000040
+#define INLCR 0000100
+#define IGNCR 0000200
+#define ICRNL 0000400
+#define IUCLC 0001000
+#define IXON 0002000
+#define IXANY 0004000
+#define IXOFF 0010000
+#define IMAXBEL 0020000
+#define IUTF8 0040000
+
+/* c_oflag bits */
+#define OPOST 0000001U
+#define OLCUC 0000002U
+#define ONLCR 0000004U
+#define OCRNL 0000010U
+#define ONOCR 0000020U
+#define ONLRET 0000040U
+#define OFILL 0000100U
+#define OFDEL 0000200U
+#define NLDLY 0000400U
+#define NL0 0000000U
+#define NL1 0000400U
+#define CRDLY 0003000U
+#define CR0 0000000U
+#define CR1 0001000U
+#define CR2 0002000U
+#define CR3 0003000U
+#define TABDLY 0014000U
+#define TAB0 0000000U
+#define TAB1 0004000U
+#define TAB2 0010000U
+#define TAB3 0014000U
+#define XTABS 0014000U
+#define BSDLY 0020000U
+#define BS0 0000000U
+#define BS1 0020000U
+#define VTDLY 0040000U
+#define VT0 0000000U
+#define VT1 0040000U
+#define FFDLY 0100000U
+#define FF0 0000000U
+#define FF1 0100000U
+
+/* c_cflag bit meaning */
+#define CBAUD 0010017U
+#define B0 0000000U /* hang up */
+#define B50 0000001U
+#define B75 0000002U
+#define B110 0000003U
+#define B134 0000004U
+#define B150 0000005U
+#define B200 0000006U
+#define B300 0000007U
+#define B600 0000010U
+#define B1200 0000011U
+#define B1800 0000012U
+#define B2400 0000013U
+#define B4800 0000014U
+#define B9600 0000015U
+#define B19200 0000016U
+#define B38400 0000017U
+#define CSIZE 0000060U
+#define CS5 0000000U
+#define CS6 0000020U
+#define CS7 0000040U
+#define CS8 0000060U
+#define CSTOPB 0000100U
+#define CREAD 0000200U
+#define PARENB 0000400U
+#define PARODD 0001000U
+#define HUPCL 0002000U
+#define CLOCAL 0004000U
+#define CBAUDEX 0010000U
+#define BOTHER 0010000U
+#define B57600 0010001U
+#define B115200 0010002U
+#define B230400 0010003U
+#define B460800 0010004U
+#define B500000 0010005U
+#define B576000 0010006U
+#define B921600 0010007U
+#define B1000000 0010010U
+#define B1152000 0010011U
+#define B1500000 0010012U
+#define B2000000 0010013U
+#define B2500000 0010014U
+#define B3000000 0010015U
+#define B3500000 0010016U
+#define B4000000 0010017U
+#define CIBAUD 002003600000U /* input baud rate */
+#define CMSPAR 010000000000U /* mark or space (stick) parity */
+#define CRTSCTS 020000000000U /* flow control */
+
+#define IBSHIFT 16 /* Shift from CBAUD to CIBAUD */
+
+/* c_lflag bits */
+#define ISIG 0000001U
+#define ICANON 0000002U
+#define XCASE 0000004U
+#define ECHO 0000010U
+#define ECHOE 0000020U
+#define ECHOK 0000040U
+#define ECHONL 0000100U
+#define NOFLSH 0000200U
+#define TOSTOP 0000400U
+#define ECHOCTL 0001000U
+#define ECHOPRT 0002000U
+#define ECHOKE 0004000U
+#define FLUSHO 0010000U
+#define PENDIN 0040000U
+#define IEXTEN 0100000U
+#define EXTPROC 0200000U
+
+/* tcflow() and TCXONC use these */
+#define TCOOFF 0
+#define TCOON 1
+#define TCIOFF 2
+#define TCION 3
+
+/* tcflush() and TCFLSH use these */
+#define TCIFLUSH 0
+#define TCOFLUSH 1
+#define TCIOFLUSH 2
+
+/* tcsetattr uses these */
+#define TCSANOW 0
+#define TCSADRAIN 1
+#define TCSAFLUSH 2
+
 // ioctls.h
 #define TCGETS 0x5401
 #define TCSETS 0x5402
