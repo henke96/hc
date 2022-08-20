@@ -424,6 +424,16 @@ struct x11_motionNotify {
     uint8_t __pad;
 };
 
+#define x11_focusOut_TYPE 10
+struct x11_focusOut {
+    uint8_t type;
+    uint8_t detail;
+    uint16_t sequenceNumber;
+    uint32_t eventWindowId;
+    uint8_t mode;
+    uint8_t __pad[23];
+};
+
 #define x11_expose_TYPE 12
 struct x11_expose {
     uint8_t type;

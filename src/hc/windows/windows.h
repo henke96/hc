@@ -76,6 +76,30 @@ struct PIXELFORMATDESCRIPTOR {
 };
 
 // winuser.h
+#define IMAGE_BITMAP 0
+#define IMAGE_ICON 1
+#define IMAGE_CURSOR 2
+#define IMAGE_ENHMETAFILE 3
+
+#define IDC_ARROW ((void *)32512)
+#define IDC_IBEAM ((void *)32513)
+#define IDC_WAIT ((void *)32514)
+#define IDC_CROSS ((void *)32515)
+#define IDC_UPARROW ((void *)32516)
+#define IDC_SIZE ((void *)32640)
+#define IDC_ICON ((void *)32641)
+#define IDC_SIZENWSE ((void *)32642)
+#define IDC_SIZENESW ((void *)32643)
+#define IDC_SIZEWE ((void *)32644)
+#define IDC_SIZENS ((void *)32645)
+#define IDC_SIZEALL ((void *)32646)
+#define IDC_NO ((void *)32648)
+#define IDC_HAND ((void *)32649)
+#define IDC_APPSTARTING ((void *)32650)
+#define IDC_HELP ((void *)32651)
+#define IDC_PIN ((void *)32671)
+#define IDC_PERSON ((void *)32672)
+
 #define MB_OK 0x00000000
 #define MB_OKCANCEL 0x00000001
 #define MB_ABORTRETRYIGNORE 0x00000002
@@ -207,6 +231,155 @@ struct PIXELFORMATDESCRIPTOR {
 #define WM_QUEUESYNC 0x0023
 #define WM_GETMINMAXINFO 0x0024
 
+#define WM_PAINTICON 0x0026
+#define WM_ICONERASEBKGND 0x0027
+#define WM_NEXTDLGCTL 0x0028
+#define WM_SPOOLERSTATUS 0x002A
+#define WM_DRAWITEM 0x002B
+#define WM_MEASUREITEM 0x002C
+#define WM_DELETEITEM 0x002D
+#define WM_VKEYTOITEM 0x002E
+#define WM_CHARTOITEM 0x002F
+#define WM_SETFONT 0x0030
+#define WM_GETFONT 0x0031
+#define WM_SETHOTKEY 0x0032
+#define WM_GETHOTKEY 0x0033
+#define WM_QUERYDRAGICON 0x0037
+#define WM_COMPAREITEM 0x0039
+#define WM_GETOBJECT 0x003D
+#define WM_COMPACTING 0x0041
+#define WM_COMMNOTIFY 0x0044
+#define WM_WINDOWPOSCHANGING 0x0046
+#define WM_WINDOWPOSCHANGED 0x0047
+#define WM_POWER 0x0048
+
+#define PWR_OK 1
+#define PWR_FAIL (-1)
+#define PWR_SUSPENDREQUEST 1
+#define PWR_SUSPENDRESUME 2
+#define PWR_CRITICALRESUME 3
+
+#define WM_COPYDATA 0x004A
+#define WM_CANCELJOURNAL 0x004B
+
+#define WM_NOTIFY 0x004E
+#define WM_INPUTLANGCHANGEREQUEST 0x0050
+#define WM_INPUTLANGCHANGE 0x0051
+#define WM_TCARD 0x0052
+#define WM_HELP 0x0053
+#define WM_USERCHANGED 0x0054
+#define WM_NOTIFYFORMAT 0x0055
+
+#define NFR_ANSI 1
+#define NFR_UNICODE 2
+#define NF_QUERY 3
+#define NF_REQUERY 4
+
+#define WM_CONTEXTMENU 0x007B
+#define WM_STYLECHANGING 0x007C
+#define WM_STYLECHANGED 0x007D
+#define WM_DISPLAYCHANGE 0x007E
+#define WM_GETICON 0x007F
+#define WM_SETICON 0x0080
+
+#define WM_NCCREATE 0x0081
+#define WM_NCDESTROY 0x0082
+#define WM_NCCALCSIZE 0x0083
+#define WM_NCHITTEST 0x0084
+#define WM_NCPAINT 0x0085
+#define WM_NCACTIVATE 0x0086
+#define WM_GETDLGCODE 0x0087
+#define WM_SYNCPAINT 0x0088
+#define WM_NCMOUSEMOVE 0x00A0
+#define WM_NCLBUTTONDOWN 0x00A1
+#define WM_NCLBUTTONUP 0x00A2
+#define WM_NCLBUTTONDBLCLK 0x00A3
+#define WM_NCRBUTTONDOWN 0x00A4
+#define WM_NCRBUTTONUP 0x00A5
+#define WM_NCRBUTTONDBLCLK 0x00A6
+#define WM_NCMBUTTONDOWN 0x00A7
+#define WM_NCMBUTTONUP 0x00A8
+#define WM_NCMBUTTONDBLCLK 0x00A9
+
+#define WM_NCXBUTTONDOWN 0x00AB
+#define WM_NCXBUTTONUP 0x00AC
+#define WM_NCXBUTTONDBLCLK 0x00AD
+#define WM_INPUT_DEVICE_CHANGE 0x00fe
+#define WM_INPUT 0x00FF
+#define WM_KEYFIRST 0x0100
+#define WM_KEYDOWN 0x0100
+#define WM_KEYUP 0x0101
+#define WM_CHAR 0x0102
+#define WM_DEADCHAR 0x0103
+#define WM_SYSKEYDOWN 0x0104
+#define WM_SYSKEYUP 0x0105
+#define WM_SYSCHAR 0x0106
+#define WM_SYSDEADCHAR 0x0107
+#define WM_UNICHAR 0x0109
+#define WM_KEYLAST 0x0109
+#define UNICODE_NOCHAR 0xFFFF
+#define WM_IME_STARTCOMPOSITION 0x010D
+#define WM_IME_ENDCOMPOSITION 0x010E
+#define WM_IME_COMPOSITION 0x010F
+#define WM_IME_KEYLAST 0x010F
+#define WM_INITDIALOG 0x0110
+#define WM_COMMAND 0x0111
+#define WM_SYSCOMMAND 0x0112
+#define WM_TIMER 0x0113
+#define WM_HSCROLL 0x0114
+#define WM_VSCROLL 0x0115
+#define WM_INITMENU 0x0116
+#define WM_INITMENUPOPUP 0x0117
+#define WM_MENUSELECT 0x011F
+#define WM_GESTURE 0x0119
+#define WM_GESTURENOTIFY 0x011A
+#define WM_MENUCHAR 0x0120
+#define WM_ENTERIDLE 0x0121
+
+#define WM_MENURBUTTONUP 0x0122
+#define WM_MENUDRAG 0x0123
+#define WM_MENUGETOBJECT 0x0124
+#define WM_UNINITMENUPOPUP 0x0125
+#define WM_MENUCOMMAND 0x0126
+#define WM_CHANGEUISTATE 0x0127
+#define WM_UPDATEUISTATE 0x0128
+#define WM_QUERYUISTATE 0x0129
+
+#define UIS_SET 1
+#define UIS_CLEAR 2
+#define UIS_INITIALIZE 3
+
+#define UISF_HIDEFOCUS 0x1
+#define UISF_HIDEACCEL 0x2
+#define UISF_ACTIVE 0x4
+
+#define WM_CTLCOLORMSGBOX 0x0132
+#define WM_CTLCOLOREDIT 0x0133
+#define WM_CTLCOLORLISTBOX 0x0134
+#define WM_CTLCOLORBTN 0x0135
+#define WM_CTLCOLORDLG 0x0136
+#define WM_CTLCOLORSCROLLBAR 0x0137
+#define WM_CTLCOLORSTATIC 0x0138
+#define MN_GETHMENU 0x01E1
+
+#define WM_MOUSEFIRST 0x0200
+#define WM_MOUSEMOVE 0x0200
+#define WM_LBUTTONDOWN 0x0201
+#define WM_LBUTTONUP 0x0202
+#define WM_LBUTTONDBLCLK 0x0203
+#define WM_RBUTTONDOWN 0x0204
+#define WM_RBUTTONUP 0x0205
+#define WM_RBUTTONDBLCLK 0x0206
+#define WM_MBUTTONDOWN 0x0207
+#define WM_MBUTTONUP 0x0208
+#define WM_MBUTTONDBLCLK 0x0209
+#define WM_MOUSEWHEEL 0x020A
+#define WM_XBUTTONDOWN 0x020B
+#define WM_XBUTTONUP 0x020C
+#define WM_XBUTTONDBLCLK 0x020D
+#define WM_MOUSEHWHEEL 0x020e
+#define WM_MOUSELAST 0x020e
+
 #define QS_KEY 0x0001
 #define QS_MOUSEMOVE 0x0002
 #define QS_MOUSEBUTTON 0x0004
@@ -276,6 +449,122 @@ struct MSG {
     struct POINT point;
 };
 
+struct RECT {
+    int32_t left;
+    int32_t top;
+    int32_t right;
+    int32_t bottom;
+};
+
+// Raw input.
+#define RIM_INPUT 0
+#define RIM_INPUTSINK 1
+
+struct RAWINPUTHEADER {
+    uint32_t type;
+    uint32_t size;
+    void *deviceHandle;
+    uint64_t wParam;
+};
+
+#define RIM_TYPEMOUSE 0
+#define RIM_TYPEKEYBOARD 1
+#define RIM_TYPEHID 2
+#define RIM_TYPEMAX 2
+
+struct RAWMOUSE {
+    uint16_t flags;
+    union {
+        uint32_t buttons;
+        struct {
+            uint16_t buttonFlags;
+            uint16_t buttonData;
+        };
+    };
+    uint32_t rawButtons;
+    int32_t lastX;
+    int32_t lastY;
+    uint32_t extraInformation;
+};
+
+#define RI_MOUSE_LEFT_BUTTON_DOWN 0x0001
+#define RI_MOUSE_LEFT_BUTTON_UP 0x0002
+#define RI_MOUSE_RIGHT_BUTTON_DOWN 0x0004
+#define RI_MOUSE_RIGHT_BUTTON_UP 0x0008
+#define RI_MOUSE_MIDDLE_BUTTON_DOWN 0x0010
+#define RI_MOUSE_MIDDLE_BUTTON_UP 0x0020
+#define RI_MOUSE_BUTTON_4_DOWN 0x0040
+#define RI_MOUSE_BUTTON_4_UP 0x0080
+#define RI_MOUSE_BUTTON_5_DOWN 0x0100
+#define RI_MOUSE_BUTTON_5_UP 0x0200
+#define RI_MOUSE_WHEEL 0x0400
+#define RI_MOUSE_HWHEEL 0x0800
+
+#define RI_MOUSE_BUTTON_1_DOWN RI_MOUSE_LEFT_BUTTON_DOWN
+#define RI_MOUSE_BUTTON_1_UP RI_MOUSE_LEFT_BUTTON_UP
+#define RI_MOUSE_BUTTON_2_DOWN RI_MOUSE_RIGHT_BUTTON_DOWN
+#define RI_MOUSE_BUTTON_2_UP RI_MOUSE_RIGHT_BUTTON_UP
+#define RI_MOUSE_BUTTON_3_DOWN RI_MOUSE_MIDDLE_BUTTON_DOWN
+#define RI_MOUSE_BUTTON_3_UP RI_MOUSE_MIDDLE_BUTTON_UP
+
+#define MOUSE_MOVE_RELATIVE 0
+#define MOUSE_MOVE_ABSOLUTE 1
+#define MOUSE_VIRTUAL_DESKTOP 0x02
+#define MOUSE_ATTRIBUTES_CHANGED 0x04
+#define MOUSE_MOVE_NOCOALESCE 0x08
+
+struct RAWKEYBOARD {
+    uint16_t makeCode;
+    uint16_t flags;
+    uint16_t reserved;
+    uint16_t vKey;
+    uint32_t message;
+    uint32_t extraInformation;
+};
+
+#define KEYBOARD_OVERRUN_MAKE_CODE 0xFF
+
+#define RI_KEY_MAKE 0
+#define RI_KEY_BREAK 1
+#define RI_KEY_E0 2
+#define RI_KEY_E1 4
+
+struct RAWHID {
+    uint32_t sizeHid;
+    uint32_t count;
+    uint8_t rawData[];
+};
+
+struct RAWINPUT {
+    struct RAWINPUTHEADER header;
+    union {
+        struct RAWMOUSE mouse;
+        struct RAWKEYBOARD keyboard;
+        struct RAWHID hid;
+    } data;
+};
+
+#define RID_INPUT 0x10000003
+#define RID_HEADER 0x10000005
+
+struct RAWINPUTDEVICE {
+    uint16_t usagePage;
+    uint16_t usage;
+    uint32_t flags;
+    void *targetWindowHandle;
+};
+
+#define RIDEV_REMOVE 0x00000001
+#define RIDEV_EXCLUDE 0x00000010
+#define RIDEV_PAGEONLY 0x00000020
+#define RIDEV_NOLEGACY 0x00000030
+#define RIDEV_INPUTSINK 0x00000100
+#define RIDEV_CAPTUREMOUSE 0x00000200
+#define RIDEV_NOHOTKEYS 0x00000200
+#define RIDEV_APPKEYS 0x00000400
+#define RIDEV_EXINPUTSINK 0x00001000
+#define RIDEV_DEVNOTIFY 0x00002000
+
 // kernel32.lib
 hc_DLLIMPORT uint32_t GetLastError(void);
 
@@ -318,6 +607,10 @@ hc_DLLIMPORT void *CreateWindowExW(
 );
 hc_DLLIMPORT int32_t ShowWindow(void *windowHandle, int32_t showCommand);
 hc_DLLIMPORT int32_t DestroyWindow(void *windowHandle);
+hc_DLLIMPORT int32_t GetWindowRect(void *windowHandle, struct RECT *rect);
+hc_DLLIMPORT int32_t ClipCursor(const struct RECT *rect);
+hc_DLLIMPORT int32_t ShowCursor(int32_t show);
+hc_DLLIMPORT void *LoadImageW(void *instanceHandle, const uint16_t *name, uint32_t type, int32_t width, int32_t height, uint32_t flags);
 
 hc_DLLIMPORT int32_t GetMessageW(struct MSG *msg, void *windowHandle, uint32_t msgFilterMin, uint32_t msgFilterMax);
 hc_DLLIMPORT int32_t PeekMessageW(struct MSG *msg, void *windowHandle, uint32_t msgFilterMin, uint32_t msgFilterMax, uint32_t removeMsg);
@@ -327,6 +620,9 @@ hc_DLLIMPORT void PostQuitMessage(int32_t exitCode);
 hc_DLLIMPORT int32_t PostMessageW(void *windowHandle, uint32_t msg, uint64_t wParam, int64_t lParam);
 hc_DLLIMPORT void *GetDC(void *windowHandle);
 hc_DLLIMPORT int32_t ReleaseDC(void *windowHandle, void *dc);
+
+hc_DLLIMPORT int32_t RegisterRawInputDevices(const struct RAWINPUTDEVICE *rawInputDevices, uint32_t numDevices, uint32_t size);
+hc_DLLIMPORT uint32_t GetRawInputData(void *rawInputHandle, uint32_t command, void *data, uint32_t *dataSize, uint32_t headerSize);
 
 // gdi32.lib
 hc_DLLIMPORT int32_t ChoosePixelFormat(void *dc, const struct PIXELFORMATDESCRIPTOR *pfd);

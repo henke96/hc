@@ -7,6 +7,7 @@ struct window {
     struct wgl wgl;
     void *dc;
     void *windowHandle;
+    bool pointerGrabbed;
 };
 
 static struct window window;
@@ -78,11 +79,65 @@ static int64_t window_proc(
             game_onResize(width, height);
             return 0;
         }
+        case WM_KILLFOCUS: {
+            if (window.pointerGrabbed) {
+                // Ungrab pointer.
+                debug_CHECK(ClipCursor(NULL), RES != 0);
+                debug_CHECK(ShowCursor(1), RES == 0);
+                window.pointerGrabbed = false;
+            }
+            return 0;
+        }
+        case WM_LBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+        case WM_RBUTTONDOWN: {
+            if (!window.pointerGrabbed) {
+                // Grab pointer.
+                struct RECT windowRect;
+                if (!GetWindowRect(windowHandle, &windowRect)) return 0;
+                debug_CHECK(ClipCursor(&windowRect), RES != 0);
+                debug_CHECK(ShowCursor(0), RES == -1);
+                window.pointerGrabbed = true;
+            }
+            return 0;
+        }
+        case WM_INPUT: {
+            struct RAWINPUT input;
+            uint32_t inputSize = sizeof(input);
+            if (GetRawInputData((void *)lParam, RID_INPUT, &input, &inputSize, sizeof(struct RAWINPUTHEADER)) == (uint32_t)-1) return -1;
+
+            if (input.header.type == RIM_TYPEMOUSE) {
+                if (!window.pointerGrabbed) return 0;
+
+                if (!(input.data.mouse.flags & MOUSE_MOVE_ABSOLUTE)) {
+                    int64_t deltaX = (int64_t)((uint64_t)input.data.mouse.lastX << 32);
+                    int64_t deltaY = (int64_t)((uint64_t)input.data.mouse.lastY << 32);
+                    game_onMouseMove(deltaX, deltaY);
+                }
+            } else if (input.header.type == RIM_TYPEKEYBOARD) {
+                if (input.data.keyboard.flags & RI_KEY_E1) return 0; // Ignore weirdness.
+
+                if (!(input.data.keyboard.flags & RI_KEY_BREAK)) {
+                    // Key down.
+                    if (window.pointerGrabbed && input.data.keyboard.makeCode == 0x01) { // Escape.
+                        // Ungrab pointer.
+                        debug_CHECK(ClipCursor(NULL), RES != 0);
+                        debug_CHECK(ShowCursor(1), RES == 0);
+                        window.pointerGrabbed = false;
+                    }
+                } else {
+                    // Key up.
+                }
+            }
+            return 0;
+        }
     }
     return DefWindowProcW(windowHandle, message, wParam, lParam);
 }
 
 static int32_t window_init(void) {
+    window.pointerGrabbed = false;
+
     if (wgl_init(&window.wgl) < 0) return -1;
 
     int32_t status;
@@ -90,7 +145,8 @@ static int32_t window_init(void) {
         .instanceHandle = __ImageBase,
         .className = u"gl",
         .windowProc = window_proc,
-        .style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW
+        .style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW,
+        .cursorHandle = LoadImageW(NULL, IDC_ARROW, IMAGE_CURSOR, 0, 0, 0)
     };
     if (!RegisterClassW(&windowClass)) {
         status = -2;
@@ -110,6 +166,25 @@ static int32_t window_init(void) {
     );
     if (window.windowHandle == NULL) {
         status = -3;
+        goto cleanup_windowClass;
+    }
+
+    // Request raw input for mouse and keyboard.
+    struct RAWINPUTDEVICE rawDevices[2] = {
+        {
+            .usagePage = 1,
+            .usage = 2, // Mouse.
+            .flags = 0, // We still want WM_LBUTTONDOWN etc.
+            .targetWindowHandle = NULL
+        }, {
+            .usagePage = 1,
+            .usage = 6, // Keyboard.
+            .flags = RIDEV_NOLEGACY,
+            .targetWindowHandle = NULL
+        }
+    };
+    if (!RegisterRawInputDevices(&rawDevices[0], 2, sizeof(rawDevices[0]))) {
+        status = -4;
         goto cleanup_windowClass;
     }
     return 0;

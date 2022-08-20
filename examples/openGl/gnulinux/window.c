@@ -21,7 +21,6 @@ struct window {
 static struct window window;
 
 static int32_t window_x11Setup(uint32_t visualId) {
-    window.pointerGrabbed = false;
     window.windowId = x11Client_nextId(&window.x11Client);
     uint64_t rootsOffset = (
         util_ALIGN_FORWARD(window.x11Client.setupResponse->vendorLength, 4) +
@@ -67,6 +66,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
         .createWindowValues = {
             (
                 x11_EVENT_STRUCTURE_NOTIFY_BIT |
+                x11_EVENT_FOCUS_CHANGE_BIT |
                 x11_EVENT_BUTTON_PRESS_BIT |
                 x11_EVENT_BUTTON_RELEASE_BIT |
                 x11_EVENT_KEY_PRESS_BIT |
@@ -185,6 +185,8 @@ static int32_t window_x11Setup(uint32_t visualId) {
 }
 
 static int32_t window_init(char **envp) {
+    window.pointerGrabbed = false;
+
     // Initialise EGL.
     int32_t status = egl_init(&window.egl);
     if (status < 0) {
@@ -469,13 +471,17 @@ static int32_t window_run(void) {
                             }
                             break;
                         }
+                        case x11_focusOut_TYPE: {
+                            if (window.pointerGrabbed && window_ungrabPointer() < 0) return -6;
+                            break;
+                        }
                     }
                     x11Client_ackMessage(&window.x11Client, msgLength);
                 }
             }
         }
         // Rendering.
-        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -6;
+        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -7;
 
         ++frameCounter;
         struct timespec now;
