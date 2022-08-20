@@ -267,6 +267,14 @@ struct x11_grabPointer {
     uint32_t time;
 };
 
+#define x11_ungrabPointer_OPCODE 27
+struct x11_ungrabPointer {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint32_t time; // Set to 0 for CurrentTime.
+};
+
 #define x11_queryExtension_OPCODE 98
 struct x11_queryExtension {
     uint8_t opcode;
@@ -290,7 +298,114 @@ struct x11_queryExtensionResponse {
     uint8_t __pad2[20];
 };
 
+#define x11_getKeyboardMapping_OPCODE 101
+struct x11_getKeyboardMapping {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint8_t firstKeycode;
+    uint8_t count;
+    uint8_t __pad2[2];
+};
+
+struct x11_getKeyboardMappingResponse {
+    uint8_t type;
+    uint8_t keysymsPerKeycode;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint8_t __pad[24];
+    uint32_t keysyms[];
+};
+
+#define x11_getModifierMapping_OPCODE 119
+struct x11_getModifierMapping {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+};
+
+struct x11_getModifierMappingResponse {
+    uint8_t type;
+    uint8_t keycodesPerModifier;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint8_t __pad[24];
+    uint8_t keycodes[];
+};
+
 // Protocol events.
+#define x11_keyPress_TYPE 2
+struct x11_keyPress {
+    uint8_t type;
+    uint8_t detail;
+    uint16_t sequenceNumber;
+    uint32_t timeMs;
+    uint32_t windowId;
+    uint32_t eventWindowId;
+    uint32_t childWindowId;
+    int16_t rootX;
+    int16_t rootY;
+    int16_t eventX;
+    int16_t eventY;
+    uint16_t state;
+    uint8_t sameScreen;
+    uint8_t __pad;
+};
+
+#define x11_keyRelease_TYPE 3
+struct x11_keyRelease {
+    uint8_t type;
+    uint8_t detail;
+    uint16_t sequenceNumber;
+    uint32_t timeMs;
+    uint32_t windowId;
+    uint32_t eventWindowId;
+    uint32_t childWindowId;
+    int16_t rootX;
+    int16_t rootY;
+    int16_t eventX;
+    int16_t eventY;
+    uint16_t state;
+    uint8_t sameScreen;
+    uint8_t __pad;
+};
+
+#define x11_buttonPress_TYPE 4
+struct x11_buttonPress {
+    uint8_t type;
+    uint8_t detail;
+    uint16_t sequenceNumber;
+    uint32_t timeMs;
+    uint32_t windowId;
+    uint32_t eventWindowId;
+    uint32_t childWindowId;
+    int16_t rootX;
+    int16_t rootY;
+    int16_t eventX;
+    int16_t eventY;
+    uint16_t state;
+    uint8_t sameScreen;
+    uint8_t __pad;
+};
+
+#define x11_buttonRelease_TYPE 5
+struct x11_buttonRelease {
+    uint8_t type;
+    uint8_t detail;
+    uint16_t sequenceNumber;
+    uint32_t timeMs;
+    uint32_t windowId;
+    uint32_t eventWindowId;
+    uint32_t childWindowId;
+    int16_t rootX;
+    int16_t rootY;
+    int16_t eventX;
+    int16_t eventY;
+    uint16_t state;
+    uint8_t sameScreen;
+    uint8_t __pad;
+};
+
 #define x11_motionNotify_TYPE 6
 struct x11_motionNotify {
     uint8_t type;

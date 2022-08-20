@@ -4,6 +4,9 @@
 struct window {
     struct x11Client x11Client;
     struct egl egl;
+    struct x11_getKeyboardMappingResponse *keyboardMap;
+    struct x11_getModifierMappingResponse *modifierMap;
+    uint32_t keyboardMapSize;
     int32_t epollFd;
     uint32_t windowId;
     uint32_t rootWindowId;
@@ -11,12 +14,14 @@ struct window {
     uint32_t wmDeleteWindowAtom;
     uint8_t xinputMajorOpcode;
     uint8_t xfixesMajorOpcode;
-    char __pad[2];
+    bool pointerGrabbed;
+    char __pad[5];
 };
 
 static struct window window;
 
 static int32_t window_x11Setup(uint32_t visualId) {
+    window.pointerGrabbed = false;
     window.windowId = x11Client_nextId(&window.x11Client);
     uint64_t rootsOffset = (
         util_ALIGN_FORWARD(window.x11Client.setupResponse->vendorLength, 4) +
@@ -41,6 +46,8 @@ static int32_t window_x11Setup(uint32_t visualId) {
         struct x11_internAtom wmDeleteWindowAtom;
         char wmDeleteWindowAtomName[sizeof("WM_DELETE_WINDOW") - 1];
         uint8_t wmDeleteWindowAtomPad[util_PAD_BYTES(sizeof("WM_DELETE_WINDOW") - 1, 4)];
+        struct x11_getKeyboardMapping getKeyboardMapping;
+        struct x11_getModifierMapping getModifierMapping;
     };
 
     struct requests windowRequests = {
@@ -58,7 +65,13 @@ static int32_t window_x11Setup(uint32_t visualId) {
             .valueMask = x11_createWindow_EVENT_MASK
         },
         .createWindowValues = {
-            x11_EVENT_STRUCTURE_NOTIFY_BIT
+            (
+                x11_EVENT_STRUCTURE_NOTIFY_BIT |
+                x11_EVENT_BUTTON_PRESS_BIT |
+                x11_EVENT_BUTTON_RELEASE_BIT |
+                x11_EVENT_KEY_PRESS_BIT |
+                x11_EVENT_KEY_RELEASE_BIT
+            )
         },
         .mapWindow = {
             .opcode = x11_mapWindow_OPCODE,
@@ -90,9 +103,19 @@ static int32_t window_x11Setup(uint32_t visualId) {
             .length = (sizeof(windowRequests.wmDeleteWindowAtom) + sizeof(windowRequests.wmDeleteWindowAtomName) + sizeof(windowRequests.wmDeleteWindowAtomPad)) / 4,
             .nameLength = sizeof(windowRequests.wmDeleteWindowAtomName)
         },
-        .wmDeleteWindowAtomName = "WM_DELETE_WINDOW"
+        .wmDeleteWindowAtomName = "WM_DELETE_WINDOW",
+        .getKeyboardMapping = {
+            .opcode = x11_getKeyboardMapping_OPCODE,
+            .length = sizeof(windowRequests.getKeyboardMapping) / 4,
+            .firstKeycode = window.x11Client.setupResponse->minKeycode,
+            .count = 1 + window.x11Client.setupResponse->maxKeycode - window.x11Client.setupResponse->minKeycode
+        },
+        .getModifierMapping = {
+            .opcode = x11_getModifierMapping_OPCODE,
+            .length = sizeof(windowRequests.getModifierMapping) / 4
+        }
     };
-    int32_t status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 6);
+    int32_t status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 8);
     if (status < 0) return -1;
 
     // Wait for all replies.
@@ -134,8 +157,24 @@ static int32_t window_x11Setup(uint32_t visualId) {
                 case 6: {
                     struct x11_internAtomResponse *response = (void *)generic;
                     window.wmDeleteWindowAtom = response->atom;
+                    break;
+                }
+                case 7: {
+                    struct x11_getKeyboardMappingResponse *response = (void *)generic;
+                    window.keyboardMapSize = 8 + response->length * 4;
+                    window.keyboardMap = sys_mmap(NULL, window.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+                    if ((int64_t)window.keyboardMap < 0) return -7;
+                    hc_MEMCPY(window.keyboardMap, &window.x11Client.receiveBuffer[0], window.keyboardMapSize);
+                    break;
+                }
+                case 8: {
+                    // TODO: Find MODE SWITCH modifier.
+                    hc_UNUSED
+                    struct x11_getModifierMappingResponse *response = (void *)generic;
+
+                    // Done.
                     x11Client_ackMessage(&window.x11Client, msgLength);
-                    return 0; // Done.
+                    return 0;
                 }
                 default: hc_UNREACHABLE;
             }
@@ -179,13 +218,13 @@ static int32_t window_init(char **envp) {
     hc_MEMCPY(&serverAddr.sun_path[0], &address[0], sizeof(address));
     char *xAuthorityFile = util_getEnv(envp, "XAUTHORITY");
     struct xauth xauth;
+    struct xauth_entry entry = {0};
     if (xAuthorityFile != NULL && xauth_init(&xauth, xAuthorityFile) == 0) {
-        struct xauth_entry entry = {0}; // Zeroed in case `xauth_nextEntry` fails.
         xauth_nextEntry(&xauth, &entry);
         status = x11Client_init(&window.x11Client, &serverAddr, sizeof(serverAddr), &entry);
         xauth_deinit(&xauth);
     } else {
-        status = x11Client_init(&window.x11Client, &serverAddr, sizeof(serverAddr), &(struct xauth_entry) {0});
+        status = x11Client_init(&window.x11Client, &serverAddr, sizeof(serverAddr), &entry);
     }
     if (status < 0) {
         printf("Failed to initialise x11Client (%d)\n", status);
@@ -202,7 +241,7 @@ static int32_t window_init(char **envp) {
     status = egl_setupSurface(&window.egl, (uint32_t)window.windowId);
     if (status < 0) {
         printf("Failed to setup EGL surface (%d)\n", status);
-        goto cleanup_x11Client;
+        goto cleanup_x11Setup;
     }
     debug_CHECK(egl_swapInterval(&window.egl, 0), RES == egl_TRUE);
 
@@ -210,7 +249,7 @@ static int32_t window_init(char **envp) {
     status = gl_init(&window.egl);
     if (status < 0) {
         printf("Failed to initialise GL (%d)\n", status);
-        goto cleanup_x11Client;
+        goto cleanup_x11Setup;
     }
 
     // Initialise game.
@@ -220,14 +259,14 @@ static int32_t window_init(char **envp) {
     );
     if (status < 0) {
         printf("Failed to initialise game (%d)\n", status);
-        goto cleanup_x11Client;
+        goto cleanup_x11Setup;
     }
 
     // Setup epoll.
     window.epollFd = sys_epoll_create1(0);
     if (window.epollFd < 0) {
         status = -6;
-        goto cleanup_x11Client;
+        goto cleanup_x11Setup;
     }
     struct epoll_event x11SocketEvent = {
         .events = EPOLLIN,
@@ -242,6 +281,8 @@ static int32_t window_init(char **envp) {
 
     cleanup_epollFd:
     debug_CHECK(sys_close(window.epollFd), RES == 0);
+    cleanup_x11Setup:
+    debug_CHECK(sys_munmap(window.keyboardMap, window.keyboardMapSize), RES == 0);
     cleanup_x11Client:
     x11Client_deinit(&window.x11Client);
     cleanup_egl:
@@ -249,44 +290,19 @@ static int32_t window_init(char **envp) {
     return status;
 }
 
-static int32_t window_run(void) {
-    uint64_t frameCounter = 0;
-    struct timespec prev;
-    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
-
-    // Grab pointer.
+static int32_t window_grabPointer(void) {
     struct requests {
-        struct x11_changeProperty changeProperty;
-        uint32_t changePropertyData;
-        struct x11_xfixesQueryVersion queryXfixesVersion; // Need to do this once to tell server what version we expect.
         struct x11_grabPointer grabPointer;
         struct x11_xfixesHideCursor hideCursor;
         struct x11_xinputSelectEvents xinputSelectEvents;
         struct x11_xinputEventMask xinputSelectEventsMask;
     };
-    struct requests grabPointerRequests = {
-        .changeProperty = {
-            .opcode = x11_changeProperty_OPCODE,
-            .mode = x11_changeProperty_REPLACE,
-            .length = (sizeof(grabPointerRequests.changeProperty) + sizeof(grabPointerRequests.changePropertyData)) / 4,
-            .window = window.windowId,
-            .property = window.wmProtocolsAtom,
-            .type = x11_ATOM_ATOM,
-            .format = 32,
-            .dataLength = 1
-        },
-        .changePropertyData = window.wmDeleteWindowAtom,
-        .queryXfixesVersion = {
-            .majorOpcode = window.xfixesMajorOpcode,
-            .opcode = x11_xfixesQueryVersion_OPCODE,
-            .length = sizeof(grabPointerRequests.queryXfixesVersion) / 4,
-            .majorVersion = 4,
-            .minorVersion = 0
-        },
+
+    struct requests requests = {
         .grabPointer = {
             .opcode = x11_grabPointer_OPCODE,
             .ownerEvents = x11_TRUE,
-            .length = sizeof(grabPointerRequests.grabPointer) / 4,
+            .length = sizeof(requests.grabPointer) / 4,
             .grabWindowId = window.windowId,
             .eventMask = x11_EVENT_BUTTON_PRESS_BIT | x11_EVENT_BUTTON_RELEASE_BIT,
             .pointerMode = x11_grabPointer_ASYNCHRONOUS,
@@ -298,13 +314,13 @@ static int32_t window_run(void) {
         .hideCursor = {
             .majorOpcode = window.xfixesMajorOpcode,
             .opcode = x11_xfixesHideCursor_OPCODE,
-            .length = sizeof(grabPointerRequests.hideCursor) / 4,
+            .length = sizeof(requests.hideCursor) / 4,
             .windowId = window.windowId
         },
         .xinputSelectEvents = {
             .majorOpcode = window.xinputMajorOpcode,
             .opcode = x11_xinputSelectEvents_OPCODE,
-            .length = (sizeof(grabPointerRequests.xinputSelectEvents) + sizeof(grabPointerRequests.xinputSelectEventsMask)) / 4,
+            .length = (sizeof(requests.xinputSelectEvents) + sizeof(requests.xinputSelectEventsMask)) / 4,
             .windowId = window.rootWindowId,
             .numMasks = 1
         },
@@ -314,7 +330,81 @@ static int32_t window_run(void) {
             .mask = (1 << x11_XINPUT_RAW_MOTION)
         }
     };
-    if (x11Client_sendRequests(&window.x11Client, &grabPointerRequests, sizeof(grabPointerRequests), 5) < 0) return -1;
+    if (x11Client_sendRequests(&window.x11Client, &requests, sizeof(requests), 3) < 0) return -1;
+    window.pointerGrabbed = true;
+    return 0;
+}
+
+static int32_t window_ungrabPointer(void) {
+    struct requests {
+        struct x11_ungrabPointer ungrabPointer;
+        struct x11_xfixesShowCursor showCursor;
+        struct x11_xinputSelectEvents xinputSelectEvents;
+        struct x11_xinputEventMask xinputSelectEventsMask;
+    };
+
+    struct requests requests = {
+        .ungrabPointer = {
+            .opcode = x11_ungrabPointer_OPCODE,
+            .length = sizeof(requests.ungrabPointer) / 4,
+            .time = 0 // CurrentTime
+        },
+        .showCursor = {
+            .majorOpcode = window.xfixesMajorOpcode,
+            .opcode = x11_xfixesShowCursor_OPCODE,
+            .length = sizeof(requests.showCursor) / 4,
+            .windowId = window.windowId
+        },
+        .xinputSelectEvents = {
+            .majorOpcode = window.xinputMajorOpcode,
+            .opcode = x11_xinputSelectEvents_OPCODE,
+            .length = (sizeof(requests.xinputSelectEvents) + sizeof(requests.xinputSelectEventsMask)) / 4,
+            .windowId = window.rootWindowId,
+            .numMasks = 1
+        },
+        .xinputSelectEventsMask = {
+            .deviceId = x11_XINPUT_ALL_MASTER_DEVICES,
+            .maskLength = 1,
+            .mask = 0
+        }
+    };
+    if (x11Client_sendRequests(&window.x11Client, &requests, sizeof(requests), 3) < 0) return -1;
+    window.pointerGrabbed = false;
+    return 0;
+}
+
+static int32_t window_run(void) {
+    uint64_t frameCounter = 0;
+    struct timespec prev;
+    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
+
+    struct requests {
+        struct x11_changeProperty changeProperty;
+        uint32_t changePropertyData;
+        struct x11_xfixesQueryVersion queryXfixesVersion; // Need to do this once to tell server what version we expect.
+    };
+    struct requests setupRequests = {
+        .changeProperty = {
+            .opcode = x11_changeProperty_OPCODE,
+            .mode = x11_changeProperty_REPLACE,
+            .length = (sizeof(setupRequests.changeProperty) + sizeof(setupRequests.changePropertyData)) / 4,
+            .window = window.windowId,
+            .property = window.wmProtocolsAtom,
+            .type = x11_ATOM_ATOM,
+            .format = 32,
+            .dataLength = 1
+        },
+        .changePropertyData = window.wmDeleteWindowAtom,
+        .queryXfixesVersion = {
+            .majorOpcode = window.xfixesMajorOpcode,
+            .opcode = x11_xfixesQueryVersion_OPCODE,
+            .length = sizeof(setupRequests.queryXfixesVersion) / 4,
+            .majorVersion = 4,
+            .minorVersion = 0
+        },
+
+    };
+    if (x11Client_sendRequests(&window.x11Client, &setupRequests, sizeof(setupRequests), 2) < 0) return -1;
 
     // Main loop.
     for (;;) {
@@ -368,13 +458,24 @@ static int32_t window_run(void) {
                             if (message->atom == window.wmProtocolsAtom && message->data32[0] == window.wmDeleteWindowAtom) return 0;
                             break;
                         }
+                        case x11_buttonPress_TYPE: {
+                            if (!window.pointerGrabbed && window_grabPointer() < 0) return -4;
+                            break;
+                        }
+                        case x11_keyPress_TYPE: {
+                            struct x11_keyPress *message = (void *)generic;
+                            if (message->detail == 0x09) { // Escape.
+                                if (window.pointerGrabbed && window_ungrabPointer() < 0) return -5;
+                            }
+                            break;
+                        }
                     }
                     x11Client_ackMessage(&window.x11Client, msgLength);
                 }
             }
         }
         // Rendering.
-        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -4;
+        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -6;
 
         ++frameCounter;
         struct timespec now;
@@ -390,6 +491,7 @@ static int32_t window_run(void) {
 static void window_deinit(void) {
     game_deinit();
     debug_CHECK(sys_close(window.epollFd), RES == 0);
+    debug_CHECK(sys_munmap(window.keyboardMap, window.keyboardMapSize), RES == 0);
     x11Client_deinit(&window.x11Client);
     egl_deinit(&window.egl);
 }

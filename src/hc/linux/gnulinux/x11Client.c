@@ -1,8 +1,8 @@
 struct x11Client {
     struct x11_setupResponse *setupResponse;
-    int32_t setupResponseLength;
+    int32_t setupResponseSize;
     int32_t socketFd;
-    uint8_t receiveBuffer[4096];
+    uint8_t receiveBuffer[8192]; // Some responses are big, like GetKeyboardMapping.
     uint32_t receiveLength;
     uint32_t nextId;
     uint16_t sequenceNumber;
@@ -74,8 +74,8 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     }
 
     // Allocate space for rest of response.
-    self->setupResponseLength = 8 + (int32_t)response.length * 4;
-    self->setupResponse = sys_mmap(NULL, self->setupResponseLength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    self->setupResponseSize = 8 + (int32_t)response.length * 4;
+    self->setupResponse = sys_mmap(NULL, self->setupResponseSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     if ((int64_t)self->setupResponse < 0) {
         status = -7;
         goto cleanup_socket;
@@ -83,9 +83,9 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     hc_MEMCPY(self->setupResponse, &response, sizeof(response));
 
     // Read rest of response.
-    while (numRead < self->setupResponseLength) {
+    while (numRead < self->setupResponseSize) {
         char *readPos = &((char *)self->setupResponse)[numRead];
-        int64_t read = sys_recvfrom(self->socketFd, readPos, self->setupResponseLength - numRead, 0, NULL, NULL);
+        int64_t read = sys_recvfrom(self->socketFd, readPos, self->setupResponseSize - numRead, 0, NULL, NULL);
         if (read <= 0) {
             status = -8;
             goto cleanup_setupResponse;
@@ -95,7 +95,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     return 0;
 
     cleanup_setupResponse:
-    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseLength), RES == 0);
+    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseSize), RES == 0);
     cleanup_socket:
     debug_CHECK(sys_close(self->socketFd), RES == 0);
     return status;
@@ -157,6 +157,6 @@ static void x11Client_ackMessage(struct x11Client *self, int32_t length) {
 }
 
 static void x11Client_deinit(struct x11Client *self) {
-    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseLength), RES == 0);
+    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseSize), RES == 0);
     debug_CHECK(sys_close(self->socketFd), RES == 0);
 }
