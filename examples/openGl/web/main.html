@@ -102,7 +102,9 @@
                         }
                     }
                 };
-                WebAssembly.instantiateStreaming(fetch("release.wasm"), importObject).then(
+                let wasmBase64 = "/*INCLUDE_BASE64(release.wasm)*/";
+                let wasmBuffer = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0)).buffer;
+                WebAssembly.instantiate(wasmBuffer, importObject).then(
                     object => {
                         wasmExports = object.instance.exports;
                         wasmMemoryU8 = new Uint8Array(wasmExports.memory.buffer);
