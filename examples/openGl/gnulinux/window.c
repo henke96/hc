@@ -160,25 +160,29 @@ static int32_t window_x11Setup(uint32_t visualId) {
             if (numRead <= 0) return -2;
             continue;
         }
+        // We only handle big responses for keyboard map.
+        #define window_GETKEYBOARDMAPPING_SEQ 10
+        if (msgLength < 0 && nextSequenceNumber != window_GETKEYBOARDMAPPING_SEQ) return -3;
+
         struct x11_genericResponse *generic = (void *)&window.x11Client.receiveBuffer[0];
         if (generic->type == x11_TYPE_ERROR) {
             printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)generic->sequenceNumber, (int32_t)generic->extra);
-            return -3;
+            return -4;
         }
 
         if (generic->type == x11_TYPE_REPLY) {
-            if (generic->sequenceNumber != nextSequenceNumber) return -4;
+            if (generic->sequenceNumber != nextSequenceNumber) return -5;
 
             switch (nextSequenceNumber) {
                 case 3: {
                     struct x11_queryExtensionResponse *response = (void *)generic;
-                    if (!response->present) return -5;
+                    if (!response->present) return -6;
                     window.xfixesMajorOpcode = response->majorOpcode;
                     break;
                 }
                 case 4: {
                     struct x11_queryExtensionResponse *response = (void *)generic;
-                    if (!response->present) return -6;
+                    if (!response->present) return -7;
                     window.xinputMajorOpcode = response->majorOpcode;
                     break;
                 }
@@ -207,12 +211,29 @@ static int32_t window_x11Setup(uint32_t visualId) {
                     window.wmBypassCompositorAtom = response->atom;
                     break;
                 }
-                case 10: {
-                    struct x11_getKeyboardMappingResponse *response = (void *)generic;
-                    window.keyboardMapSize = 8 + response->length * 4;
+                case window_GETKEYBOARDMAPPING_SEQ: {
+                    window.keyboardMapSize = (uint32_t)hc_ABS32(msgLength);
                     window.keyboardMap = sys_mmap(NULL, window.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-                    if ((int64_t)window.keyboardMap < 0) return -7;
-                    hc_MEMCPY(window.keyboardMap, &window.x11Client.receiveBuffer[0], window.keyboardMapSize);
+                    if ((int64_t)window.keyboardMap < 0) return -8;
+
+                    // Handle big response.
+                    if (msgLength < 0) {
+                        uint32_t totalRead = window.x11Client.receiveLength;
+                        while (totalRead < window.keyboardMapSize) {
+                            int32_t read = (int32_t)sys_recvfrom(
+                                window.x11Client.socketFd,
+                                &((char *)window.keyboardMap)[totalRead],
+                                window.keyboardMapSize - totalRead,
+                                0, NULL, NULL
+                            );
+                            if (read <= 0) return -9;
+                            totalRead += (uint32_t)read;
+                        }
+
+                        // Make msgLength normal again.
+                        msgLength = (int32_t)window.x11Client.receiveLength;
+                    }
+                    hc_MEMCPY(window.keyboardMap, &window.x11Client.receiveBuffer[0], (uint32_t)msgLength);
                     break;
                 }
                 case 11: {
@@ -507,13 +528,14 @@ static int32_t window_run(void) {
                 for (;;) {
                     int32_t msgLength = x11Client_nextMessage(&window.x11Client);
                     if (msgLength == 0) break;
+                    if (msgLength < 0) return -3;
 
                     struct x11_genericResponse *generic = (void *)&window.x11Client.receiveBuffer[0];
                     printf("Got message type: %d, length: %d\n", (int32_t)generic->type, msgLength);
                     switch (generic->type & x11_TYPE_MASK) {
                         case x11_TYPE_ERROR: {
                             printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)generic->sequenceNumber, (int32_t)generic->extra);
-                            return -3; // For now we always exit on X11 errors.
+                            return -4; // For now we always exit on X11 errors.
                         }
                         case x11_configureNotify_TYPE: {
                             struct x11_configureNotify *configureNotify = (void *)generic;
@@ -541,20 +563,20 @@ static int32_t window_run(void) {
                             break;
                         }
                         case x11_buttonPress_TYPE: {
-                            if (!window.pointerGrabbed && window_grabPointer() < 0) return -4;
+                            if (!window.pointerGrabbed && window_grabPointer() < 0) return -5;
                             break;
                         }
                         case x11_keyPress_TYPE: {
                             struct x11_keyPress *message = (void *)generic;
                             if (message->detail == 0x0009) { // Escape.
-                                if (window.pointerGrabbed && window_ungrabPointer() < 0) return -5;
+                                if (window.pointerGrabbed && window_ungrabPointer() < 0) return -6;
                             } else if (message->detail == 0x005F) { // F11.
-                                if (window_toggleFullscreen() < 0) return -6;
+                                if (window_toggleFullscreen() < 0) return -7;
                             }
                             break;
                         }
                         case x11_focusOut_TYPE: {
-                            if (window.pointerGrabbed && window_ungrabPointer() < 0) return -7;
+                            if (window.pointerGrabbed && window_ungrabPointer() < 0) return -8;
                             break;
                         }
                     }
@@ -563,7 +585,7 @@ static int32_t window_run(void) {
             }
         }
         // Rendering.
-        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -8;
+        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -9;
 
         ++frameCounter;
         struct timespec now;

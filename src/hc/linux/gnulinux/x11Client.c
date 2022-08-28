@@ -2,7 +2,7 @@ struct x11Client {
     struct x11_setupResponse *setupResponse;
     int32_t setupResponseSize;
     int32_t socketFd;
-    uint8_t receiveBuffer[32768]; // Some responses are big, like GetKeyboardMapping.
+    uint8_t receiveBuffer[4096];
     uint32_t receiveLength;
     uint32_t nextId;
     uint16_t sequenceNumber;
@@ -137,6 +137,8 @@ static int32_t x11Client_receive(struct x11Client *self) {
 }
 
 // Returns length of next message, 0 if no messages are buffered.
+// If the message won't fit the buffer, the length is returned negated.
+// It's up to the caller to solve that situation manually, or treat it as an error.
 static int32_t x11Client_nextMessage(struct x11Client *self) {
     if (self->receiveLength < 1) return 0;
     uint8_t typeMasked = self->receiveBuffer[0] & x11_TYPE_MASK;
@@ -144,10 +146,15 @@ static int32_t x11Client_nextMessage(struct x11Client *self) {
         // Errors and standard events are all 32 bytes.
         return self->receiveLength >= 32 ? 32 : 0;
     }
-    // 8 bytes must have been read to figure out reply or generic event length.
-    if (self->receiveLength < 8) return 0;
-    uint32_t length = 8 + *(uint32_t *)&self->receiveBuffer[4];
-    return (self->receiveLength >> 2) >= length ? (int32_t)(length << 2) : 0;
+    // Read atleast 32 bytes before calculating reply or generic event length.
+    if (self->receiveLength < 32) return 0;
+    uint32_t length = *(uint32_t *)&self->receiveBuffer[4];
+    if (length > (INT32_MAX - 32) / 4) return 0; // Too long, would overflow.
+
+    uint32_t realLength = 32 + length * 4;
+    if (realLength > sizeof(self->receiveBuffer)) return (int32_t)-realLength;
+    if (self->receiveLength >= realLength) return (int32_t)realLength;
+    return 0;
 }
 
 // Acks a message of length `length`, so that the next one can be read.
