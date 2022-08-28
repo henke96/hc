@@ -663,6 +663,7 @@ hc_DLLIMPORT int32_t GetWindowPlacement(void *windowHandle, struct WINDOWPLACEME
 hc_DLLIMPORT int32_t SetWindowPlacement(void *windowHandle, const struct WINDOWPLACEMENT *windowPlacement);
 hc_DLLIMPORT int32_t ClipCursor(const struct RECT *rect);
 hc_DLLIMPORT int32_t ShowCursor(int32_t show);
+hc_DLLIMPORT void *LoadCursorW(void *instanceHandle, const uint16_t *name);
 hc_DLLIMPORT void *LoadImageW(void *instanceHandle, const uint16_t *name, uint32_t type, int32_t width, int32_t height, uint32_t flags);
 
 hc_DLLIMPORT int32_t GetMessageW(struct MSG *msg, void *windowHandle, uint32_t msgFilterMin, uint32_t msgFilterMax);

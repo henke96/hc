@@ -77,6 +77,12 @@ static int64_t window_proc(
         case WM_SIZE: {
             int32_t width = lParam & 0xffff;
             int32_t height = (lParam >> 16) & 0xffff;
+            if (window.pointerGrabbed) {
+                struct RECT windowRect;
+                if (GetWindowRect(windowHandle, &windowRect)) {
+                    debug_CHECK(ClipCursor(&windowRect), RES != 0);
+                }
+            }
             game_onResize(width, height);
             return 0;
         }
@@ -177,7 +183,7 @@ static int32_t window_init(void) {
         .className = u"gl",
         .windowProc = window_proc,
         .style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW,
-        .cursorHandle = LoadImageW(NULL, IDC_ARROW, IMAGE_CURSOR, 0, 0, 0)
+        .cursorHandle = LoadCursorW(NULL, IDC_ARROW)
     };
     if (!RegisterClassW(&windowClass)) {
         status = -2;
