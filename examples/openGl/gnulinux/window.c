@@ -12,6 +12,8 @@ struct window {
     uint32_t rootWindowId;
     uint32_t wmProtocolsAtom;
     uint32_t wmDeleteWindowAtom;
+    uint32_t wmStateAtom;
+    uint32_t wmStateFullscreenAtom;
     uint8_t xinputMajorOpcode;
     uint8_t xfixesMajorOpcode;
     bool pointerGrabbed;
@@ -45,6 +47,12 @@ static int32_t window_x11Setup(uint32_t visualId) {
         struct x11_internAtom wmDeleteWindowAtom;
         char wmDeleteWindowAtomName[sizeof("WM_DELETE_WINDOW") - 1];
         uint8_t wmDeleteWindowAtomPad[util_PAD_BYTES(sizeof("WM_DELETE_WINDOW") - 1, 4)];
+        struct x11_internAtom wmStateAtom;
+        char wmStateAtomName[sizeof("_NET_WM_STATE") - 1];
+        uint8_t wmStateAtomPad[util_PAD_BYTES(sizeof("_NET_WM_STATE") - 1, 4)];
+        struct x11_internAtom wmStateFullscreenAtom;
+        char wmStateFullscreenAtomName[sizeof("_NET_WM_STATE_FULLSCREEN") - 1];
+        uint8_t wmStateFullscreenAtomPad[util_PAD_BYTES(sizeof("_NET_WM_STATE_FULLSCREEN") - 1, 4)];
         struct x11_getKeyboardMapping getKeyboardMapping;
         struct x11_getModifierMapping getModifierMapping;
     };
@@ -104,6 +112,20 @@ static int32_t window_x11Setup(uint32_t visualId) {
             .nameLength = sizeof(windowRequests.wmDeleteWindowAtomName)
         },
         .wmDeleteWindowAtomName = "WM_DELETE_WINDOW",
+        .wmStateAtom = {
+            .opcode = x11_internAtom_OPCODE,
+            .onlyIfExists = 0,
+            .length = (sizeof(windowRequests.wmStateAtom) + sizeof(windowRequests.wmStateAtomName) + sizeof(windowRequests.wmStateAtomPad)) / 4,
+            .nameLength = sizeof(windowRequests.wmStateAtomName)
+        },
+        .wmStateAtomName = "_NET_WM_STATE",
+        .wmStateFullscreenAtom = {
+            .opcode = x11_internAtom_OPCODE,
+            .onlyIfExists = 0,
+            .length = (sizeof(windowRequests.wmStateFullscreenAtom) + sizeof(windowRequests.wmStateFullscreenAtomName) + sizeof(windowRequests.wmStateFullscreenAtomPad)) / 4,
+            .nameLength = sizeof(windowRequests.wmStateFullscreenAtomName)
+        },
+        .wmStateFullscreenAtomName = "_NET_WM_STATE_FULLSCREEN",
         .getKeyboardMapping = {
             .opcode = x11_getKeyboardMapping_OPCODE,
             .length = sizeof(windowRequests.getKeyboardMapping) / 4,
@@ -115,7 +137,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
             .length = sizeof(windowRequests.getModifierMapping) / 4
         }
     };
-    int32_t status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 8);
+    int32_t status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 10);
     if (status < 0) return -1;
 
     // Wait for all replies.
@@ -160,6 +182,16 @@ static int32_t window_x11Setup(uint32_t visualId) {
                     break;
                 }
                 case 7: {
+                    struct x11_internAtomResponse *response = (void *)generic;
+                    window.wmStateAtom = response->atom;
+                    break;
+                }
+                case 8: {
+                    struct x11_internAtomResponse *response = (void *)generic;
+                    window.wmStateFullscreenAtom = response->atom;
+                    break;
+                }
+                case 9: {
                     struct x11_getKeyboardMappingResponse *response = (void *)generic;
                     window.keyboardMapSize = 8 + response->length * 4;
                     window.keyboardMap = sys_mmap(NULL, window.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
@@ -167,7 +199,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
                     hc_MEMCPY(window.keyboardMap, &window.x11Client.receiveBuffer[0], window.keyboardMapSize);
                     break;
                 }
-                case 8: {
+                case 10: {
                     // TODO: Find MODE SWITCH modifier.
                     hc_UNUSED
                     struct x11_getModifierMappingResponse *response = (void *)generic;
@@ -375,6 +407,26 @@ static int32_t window_ungrabPointer(void) {
     return 0;
 }
 
+static int32_t window_toggleFullscreen(void) {
+    struct x11_sendEvent event = {
+        .opcode = x11_sendEvent_OPCODE,
+        .propagate = 0,
+        .length = sizeof(event) / 4,
+        .destWindowId = window.rootWindowId,
+        .eventMask = x11_EVENT_SUBSTRUCTURE_NOTIFY_BIT | x11_EVENT_SUBSTRUCTURE_REDIRECT_BIT,
+        .clientMessage = {
+            .type = x11_clientMessage_TYPE,
+            .format = 32,
+            .sequenceNumber = 0,
+            .window = window.windowId,
+            .atom = window.wmStateAtom,
+            .data32 = { x11_NET_WM_STATE_TOGGLE, window.wmStateFullscreenAtom, 0, 1, 0 }
+        }
+    };
+    if (x11Client_sendRequests(&window.x11Client, &event, sizeof(event), 1) < 0) return -1;
+    return 0;
+}
+
 static int32_t window_run(void) {
     uint64_t frameCounter = 0;
     struct timespec prev;
@@ -403,8 +455,7 @@ static int32_t window_run(void) {
             .length = sizeof(setupRequests.queryXfixesVersion) / 4,
             .majorVersion = 4,
             .minorVersion = 0
-        },
-
+        }
     };
     if (x11Client_sendRequests(&window.x11Client, &setupRequests, sizeof(setupRequests), 2) < 0) return -1;
 
@@ -466,13 +517,15 @@ static int32_t window_run(void) {
                         }
                         case x11_keyPress_TYPE: {
                             struct x11_keyPress *message = (void *)generic;
-                            if (message->detail == 0x09) { // Escape.
+                            if (message->detail == 0x0009) { // Escape.
                                 if (window.pointerGrabbed && window_ungrabPointer() < 0) return -5;
+                            } else if (message->detail == 0x005F) { // F11.
+                                if (window_toggleFullscreen() < 0) return -6;
                             }
                             break;
                         }
                         case x11_focusOut_TYPE: {
-                            if (window.pointerGrabbed && window_ungrabPointer() < 0) return -6;
+                            if (window.pointerGrabbed && window_ungrabPointer() < 0) return -7;
                             break;
                         }
                     }
@@ -481,7 +534,7 @@ static int32_t window_run(void) {
             }
         }
         // Rendering.
-        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -7;
+        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -8;
 
         ++frameCounter;
         struct timespec now;

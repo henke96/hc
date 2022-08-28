@@ -14,6 +14,10 @@
 #define x11_ATOM_NONE 0
 #define x11_ATOM_ATOM 4
 
+#define x11_NET_WM_STATE_REMOVE 0
+#define x11_NET_WM_STATE_ADD 1
+#define x11_NET_WM_STATE_TOGGLE 2
+
 // Set-of-event bits.
 #define x11_EVENT_KEY_PRESS_BIT 0x1
 #define x11_EVENT_KEY_RELEASE_BIT 0x2
@@ -131,206 +135,6 @@ struct x11_setupResponse {
                     // uint8_t __pad[util_PAD_BYTES(vendorLength, 4)];
                     // struct x11_format pixmapFormats[numPixmapFormats];
                     // struct x11_screen roots[numRoots]; (x11_screen is variable length!)
-};
-
-// Protocol requests and responses.
-struct x11_genericResponse {
-    uint8_t type;
-    uint8_t extra;
-    uint16_t sequenceNumber;
-    uint8_t data[];
-};
-
-#define x11_createWindow_OPCODE 1
-// Bits for valueMask.
-#define x11_createWindow_BACKGROUND_PIXMAP 0x1
-#define x11_createWindow_BACKGROUND_PIXEL 0x2
-#define x11_createWindow_BORDER_PIXMAP 0x3
-#define x11_createWindow_BORDER_PIXEL 0x8
-#define x11_createWindow_BIT_GRAVITY 0x10
-#define x11_createWindow_WIN_GRAVITY 0x20
-#define x11_createWindow_BACKING_STORE 0x40
-#define x11_createWindow_BACKING_PLANES 0x80
-#define x11_createWindow_BACKING_PIXEL 0x100
-#define x11_createWindow_OVERRIDE_REDIRECT 0x200
-#define x11_createWindow_SAVE_UNDER 0x400
-#define x11_createWindow_EVENT_MASK 0x800
-#define x11_createWindow_DO_NOT_PROPAGATE_MASK 0x1000
-#define x11_createWindow_COLORMAP 0x2000
-#define x11_createWindow_CURSOR 0x4000
-struct x11_createWindow {
-    uint8_t opcode;
-    uint8_t depth;
-    uint16_t length;
-    uint32_t windowId;
-    uint32_t parentId;
-    int16_t x;
-    int16_t y;
-    uint16_t width;
-    uint16_t height;
-    uint16_t borderWidth;
-    uint16_t class;
-    uint32_t visualId;
-    uint32_t valueMask;
-    uint32_t values[];
-};
-
-#define x11_getWindowAttributes_OPCODE 3
-struct x11_getWindowAttributes {
-    uint8_t opcode;
-    uint8_t __pad;
-    uint16_t length;
-    uint32_t windowId;
-};
-
-struct x11_getWindowAttributesReponse {
-    uint8_t type;
-    uint8_t backingStore;
-    uint16_t sequenceNumber;
-    uint32_t length;
-    uint32_t visualId;
-    uint16_t class;
-    uint8_t bitGravity;
-    uint8_t winGravity;
-    uint32_t backingPlanes;
-    uint32_t backingPixel;
-    uint8_t saveUnder;
-    uint8_t mapIsInstalled;
-    uint8_t mapState;
-    uint8_t overrideRedirect;
-    uint32_t colormap;
-    uint32_t allEventMask;
-    uint32_t yourEventMask;
-    uint16_t doNotPropagateMask;
-    uint8_t __pad[2];
-};
-
-#define x11_mapWindow_OPCODE 8
-struct x11_mapWindow {
-    uint8_t opcode;
-    uint8_t __pad;
-    uint16_t length;
-    uint32_t windowId;
-};
-
-#define x11_internAtom_OPCODE 16
-struct x11_internAtom {
-    uint8_t opcode;
-    uint8_t onlyIfExists;
-    uint16_t length;
-    uint16_t nameLength;
-    uint16_t __pad;
-    uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad2[util_PAD_BYTES(nameLength, 4)];
-};
-
-struct x11_internAtomResponse {
-    uint8_t type;
-    uint8_t __pad;
-    uint16_t sequenceNumber;
-    uint32_t length;
-    uint32_t atom;
-    uint8_t __pad2[20];
-};
-
-#define x11_changeProperty_OPCODE 18
-#define x11_changeProperty_REPLACE 0
-#define x11_changeProperty_PREPEND 1
-#define x11_changeProperty_APPEND 2
-struct x11_changeProperty {
-    uint8_t opcode;
-    uint8_t mode;
-    uint16_t length;
-    uint32_t window;
-    uint32_t property;
-    uint32_t type;
-    uint8_t format; // 8, 16 or 32 bits.
-    uint8_t __pad[3];
-    uint32_t dataLength; // In `format` units.
-    uint8_t data[]; // format_t data[dataLength];
-                    // uint8_t __pad2[util_PAD_BYTES(sizeof(format_t) * dataLength, 4)];
-};
-
-#define x11_grabPointer_OPCODE 26
-#define x11_grabPointer_SYNCHRONOUS 0
-#define x11_grabPointer_ASYNCHRONOUS 1
-struct x11_grabPointer {
-    uint8_t opcode;
-    uint8_t ownerEvents;
-    uint16_t length;
-    uint32_t grabWindowId;
-    uint16_t eventMask;
-    uint8_t pointerMode;
-    uint8_t keyboardMode;
-    uint32_t confineToWindowId;
-    uint32_t cursor;
-    uint32_t time;
-};
-
-#define x11_ungrabPointer_OPCODE 27
-struct x11_ungrabPointer {
-    uint8_t opcode;
-    uint8_t __pad;
-    uint16_t length;
-    uint32_t time; // Set to 0 for CurrentTime.
-};
-
-#define x11_queryExtension_OPCODE 98
-struct x11_queryExtension {
-    uint8_t opcode;
-    uint8_t __pad;
-    uint16_t length;
-    uint16_t nameLength;
-    uint16_t __pad2;
-    uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad3[util_PAD_BYTES(nameLength, 4)];
-};
-
-struct x11_queryExtensionResponse {
-    uint8_t type;
-    uint8_t __pad;
-    uint16_t sequenceNumber;
-    uint32_t length;
-    uint8_t present;
-    uint8_t majorOpcode;
-    uint8_t firstEvent;
-    uint8_t firstError;
-    uint8_t __pad2[20];
-};
-
-#define x11_getKeyboardMapping_OPCODE 101
-struct x11_getKeyboardMapping {
-    uint8_t opcode;
-    uint8_t __pad;
-    uint16_t length;
-    uint8_t firstKeycode;
-    uint8_t count;
-    uint8_t __pad2[2];
-};
-
-struct x11_getKeyboardMappingResponse {
-    uint8_t type;
-    uint8_t keysymsPerKeycode;
-    uint16_t sequenceNumber;
-    uint32_t length;
-    uint8_t __pad[24];
-    uint32_t keysyms[];
-};
-
-#define x11_getModifierMapping_OPCODE 119
-struct x11_getModifierMapping {
-    uint8_t opcode;
-    uint8_t __pad;
-    uint16_t length;
-};
-
-struct x11_getModifierMappingResponse {
-    uint8_t type;
-    uint8_t keycodesPerModifier;
-    uint16_t sequenceNumber;
-    uint32_t length;
-    uint8_t __pad[24];
-    uint8_t keycodes[];
 };
 
 // Protocol events.
@@ -498,6 +302,218 @@ struct x11_genericEvent {
     uint32_t length;
     uint16_t eventType;
     uint8_t data[];
+};
+
+// Protocol requests and responses.
+struct x11_genericResponse {
+    uint8_t type;
+    uint8_t extra;
+    uint16_t sequenceNumber;
+    uint8_t data[];
+};
+
+#define x11_createWindow_OPCODE 1
+// Bits for valueMask.
+#define x11_createWindow_BACKGROUND_PIXMAP 0x1
+#define x11_createWindow_BACKGROUND_PIXEL 0x2
+#define x11_createWindow_BORDER_PIXMAP 0x3
+#define x11_createWindow_BORDER_PIXEL 0x8
+#define x11_createWindow_BIT_GRAVITY 0x10
+#define x11_createWindow_WIN_GRAVITY 0x20
+#define x11_createWindow_BACKING_STORE 0x40
+#define x11_createWindow_BACKING_PLANES 0x80
+#define x11_createWindow_BACKING_PIXEL 0x100
+#define x11_createWindow_OVERRIDE_REDIRECT 0x200
+#define x11_createWindow_SAVE_UNDER 0x400
+#define x11_createWindow_EVENT_MASK 0x800
+#define x11_createWindow_DO_NOT_PROPAGATE_MASK 0x1000
+#define x11_createWindow_COLORMAP 0x2000
+#define x11_createWindow_CURSOR 0x4000
+struct x11_createWindow {
+    uint8_t opcode;
+    uint8_t depth;
+    uint16_t length;
+    uint32_t windowId;
+    uint32_t parentId;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
+    uint16_t borderWidth;
+    uint16_t class;
+    uint32_t visualId;
+    uint32_t valueMask;
+    uint32_t values[];
+};
+
+#define x11_getWindowAttributes_OPCODE 3
+struct x11_getWindowAttributes {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint32_t windowId;
+};
+
+struct x11_getWindowAttributesReponse {
+    uint8_t type;
+    uint8_t backingStore;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint32_t visualId;
+    uint16_t class;
+    uint8_t bitGravity;
+    uint8_t winGravity;
+    uint32_t backingPlanes;
+    uint32_t backingPixel;
+    uint8_t saveUnder;
+    uint8_t mapIsInstalled;
+    uint8_t mapState;
+    uint8_t overrideRedirect;
+    uint32_t colormap;
+    uint32_t allEventMask;
+    uint32_t yourEventMask;
+    uint16_t doNotPropagateMask;
+    uint8_t __pad[2];
+};
+
+#define x11_mapWindow_OPCODE 8
+struct x11_mapWindow {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint32_t windowId;
+};
+
+#define x11_internAtom_OPCODE 16
+struct x11_internAtom {
+    uint8_t opcode;
+    uint8_t onlyIfExists;
+    uint16_t length;
+    uint16_t nameLength;
+    uint16_t __pad;
+    uint8_t data[]; // char name[nameLength];
+                    // uint8_t __pad2[util_PAD_BYTES(nameLength, 4)];
+};
+
+struct x11_internAtomResponse {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint32_t atom;
+    uint8_t __pad2[20];
+};
+
+#define x11_changeProperty_OPCODE 18
+#define x11_changeProperty_REPLACE 0
+#define x11_changeProperty_PREPEND 1
+#define x11_changeProperty_APPEND 2
+struct x11_changeProperty {
+    uint8_t opcode;
+    uint8_t mode;
+    uint16_t length;
+    uint32_t window;
+    uint32_t property;
+    uint32_t type;
+    uint8_t format; // 8, 16 or 32 bits.
+    uint8_t __pad[3];
+    uint32_t dataLength; // In `format` units.
+    uint8_t data[]; // format_t data[dataLength];
+                    // uint8_t __pad2[util_PAD_BYTES(sizeof(format_t) * dataLength, 4)];
+};
+
+#define x11_sendEvent_OPCODE 25
+struct x11_sendEvent {
+    uint8_t opcode;
+    uint8_t propagate;
+    uint16_t length;
+    uint32_t destWindowId;
+    uint32_t eventMask;
+    union {
+        struct x11_clientMessage clientMessage;
+    };
+};
+
+#define x11_grabPointer_OPCODE 26
+#define x11_grabPointer_SYNCHRONOUS 0
+#define x11_grabPointer_ASYNCHRONOUS 1
+struct x11_grabPointer {
+    uint8_t opcode;
+    uint8_t ownerEvents;
+    uint16_t length;
+    uint32_t grabWindowId;
+    uint16_t eventMask;
+    uint8_t pointerMode;
+    uint8_t keyboardMode;
+    uint32_t confineToWindowId;
+    uint32_t cursor;
+    uint32_t time;
+};
+
+#define x11_ungrabPointer_OPCODE 27
+struct x11_ungrabPointer {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint32_t time; // Set to 0 for CurrentTime.
+};
+
+#define x11_queryExtension_OPCODE 98
+struct x11_queryExtension {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint16_t nameLength;
+    uint16_t __pad2;
+    uint8_t data[]; // char name[nameLength];
+                    // uint8_t __pad3[util_PAD_BYTES(nameLength, 4)];
+};
+
+struct x11_queryExtensionResponse {
+    uint8_t type;
+    uint8_t __pad;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint8_t present;
+    uint8_t majorOpcode;
+    uint8_t firstEvent;
+    uint8_t firstError;
+    uint8_t __pad2[20];
+};
+
+#define x11_getKeyboardMapping_OPCODE 101
+struct x11_getKeyboardMapping {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+    uint8_t firstKeycode;
+    uint8_t count;
+    uint8_t __pad2[2];
+};
+
+struct x11_getKeyboardMappingResponse {
+    uint8_t type;
+    uint8_t keysymsPerKeycode;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint8_t __pad[24];
+    uint32_t keysyms[];
+};
+
+#define x11_getModifierMapping_OPCODE 119
+struct x11_getModifierMapping {
+    uint8_t opcode;
+    uint8_t __pad;
+    uint16_t length;
+};
+
+struct x11_getModifierMappingResponse {
+    uint8_t type;
+    uint8_t keycodesPerModifier;
+    uint16_t sequenceNumber;
+    uint32_t length;
+    uint8_t __pad[24];
+    uint8_t keycodes[];
 };
 
 // XInput2 extension.
