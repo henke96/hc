@@ -2,7 +2,7 @@ struct x11Client {
     struct x11_setupResponse *setupResponse;
     int32_t setupResponseSize;
     int32_t socketFd;
-    uint8_t receiveBuffer[8192]; // Some responses are big, like GetKeyboardMapping.
+    uint8_t receiveBuffer[32768]; // Some responses are big, like GetKeyboardMapping.
     uint32_t receiveLength;
     uint32_t nextId;
     uint16_t sequenceNumber;
