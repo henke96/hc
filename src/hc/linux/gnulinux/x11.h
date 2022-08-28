@@ -13,6 +13,7 @@
 
 #define x11_ATOM_NONE 0
 #define x11_ATOM_ATOM 4
+#define x11_ATOM_CARDINAL 6
 
 #define x11_NET_WM_STATE_REMOVE 0
 #define x11_NET_WM_STATE_ADD 1

@@ -14,10 +14,11 @@ struct window {
     uint32_t wmDeleteWindowAtom;
     uint32_t wmStateAtom;
     uint32_t wmStateFullscreenAtom;
+    uint32_t wmBypassCompositorAtom;
     uint8_t xinputMajorOpcode;
     uint8_t xfixesMajorOpcode;
     bool pointerGrabbed;
-    char __pad[5];
+    char __pad[1];
 };
 
 static struct window window;
@@ -53,6 +54,9 @@ static int32_t window_x11Setup(uint32_t visualId) {
         struct x11_internAtom wmStateFullscreenAtom;
         char wmStateFullscreenAtomName[sizeof("_NET_WM_STATE_FULLSCREEN") - 1];
         uint8_t wmStateFullscreenAtomPad[util_PAD_BYTES(sizeof("_NET_WM_STATE_FULLSCREEN") - 1, 4)];
+        struct x11_internAtom wmBypassCompositorAtom;
+        char wmBypassCompositorAtomName[sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1];
+        uint8_t wmBypassCompositorAtomPad[util_PAD_BYTES(sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1, 4)];
         struct x11_getKeyboardMapping getKeyboardMapping;
         struct x11_getModifierMapping getModifierMapping;
     };
@@ -126,6 +130,13 @@ static int32_t window_x11Setup(uint32_t visualId) {
             .nameLength = sizeof(windowRequests.wmStateFullscreenAtomName)
         },
         .wmStateFullscreenAtomName = "_NET_WM_STATE_FULLSCREEN",
+        .wmBypassCompositorAtom = {
+            .opcode = x11_internAtom_OPCODE,
+            .onlyIfExists = 0,
+            .length = (sizeof(windowRequests.wmBypassCompositorAtom) + sizeof(windowRequests.wmBypassCompositorAtomName) + sizeof(windowRequests.wmBypassCompositorAtomPad)) / 4,
+            .nameLength = sizeof(windowRequests.wmBypassCompositorAtomName)
+        },
+        .wmBypassCompositorAtomName = "_NET_WM_BYPASS_COMPOSITOR",
         .getKeyboardMapping = {
             .opcode = x11_getKeyboardMapping_OPCODE,
             .length = sizeof(windowRequests.getKeyboardMapping) / 4,
@@ -137,7 +148,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
             .length = sizeof(windowRequests.getModifierMapping) / 4
         }
     };
-    int32_t status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 10);
+    int32_t status = x11Client_sendRequests(&window.x11Client, &windowRequests, sizeof(windowRequests), 11);
     if (status < 0) return -1;
 
     // Wait for all replies.
@@ -192,6 +203,11 @@ static int32_t window_x11Setup(uint32_t visualId) {
                     break;
                 }
                 case 9: {
+                    struct x11_internAtomResponse *response = (void *)generic;
+                    window.wmBypassCompositorAtom = response->atom;
+                    break;
+                }
+                case 10: {
                     struct x11_getKeyboardMappingResponse *response = (void *)generic;
                     window.keyboardMapSize = 8 + response->length * 4;
                     window.keyboardMap = sys_mmap(NULL, window.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
@@ -199,7 +215,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
                     hc_MEMCPY(window.keyboardMap, &window.x11Client.receiveBuffer[0], window.keyboardMapSize);
                     break;
                 }
-                case 10: {
+                case 11: {
                     // TODO: Find MODE SWITCH modifier.
                     hc_UNUSED
                     struct x11_getModifierMappingResponse *response = (void *)generic;
@@ -435,6 +451,8 @@ static int32_t window_run(void) {
     struct requests {
         struct x11_changeProperty changeProperty;
         uint32_t changePropertyData;
+        struct x11_changeProperty bypassCompositor;
+        uint32_t bypassCompositorData;
         struct x11_xfixesQueryVersion queryXfixesVersion; // Need to do this once to tell server what version we expect.
     };
     struct requests setupRequests = {
@@ -449,6 +467,17 @@ static int32_t window_run(void) {
             .dataLength = 1
         },
         .changePropertyData = window.wmDeleteWindowAtom,
+        .bypassCompositor = {
+            .opcode = x11_changeProperty_OPCODE,
+            .mode = x11_changeProperty_REPLACE,
+            .length = (sizeof(setupRequests.bypassCompositor) + sizeof(setupRequests.bypassCompositorData)) / 4,
+            .window = window.windowId,
+            .property = window.wmBypassCompositorAtom,
+            .type = x11_ATOM_CARDINAL,
+            .format = 32,
+            .dataLength = 1
+        },
+        .bypassCompositorData = 1,
         .queryXfixesVersion = {
             .majorOpcode = window.xfixesMajorOpcode,
             .opcode = x11_xfixesQueryVersion_OPCODE,
@@ -457,7 +486,7 @@ static int32_t window_run(void) {
             .minorVersion = 0
         }
     };
-    if (x11Client_sendRequests(&window.x11Client, &setupRequests, sizeof(setupRequests), 2) < 0) return -1;
+    if (x11Client_sendRequests(&window.x11Client, &setupRequests, sizeof(setupRequests), 3) < 0) return -1;
 
     // Main loop.
     for (;;) {
