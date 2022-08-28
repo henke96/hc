@@ -655,6 +655,8 @@ hc_DLLIMPORT void *CreateWindowExW(
 );
 hc_DLLIMPORT int32_t ShowWindow(void *windowHandle, int32_t showCommand);
 hc_DLLIMPORT int32_t DestroyWindow(void *windowHandle);
+hc_DLLIMPORT int32_t GetClientRect(void *windowHandle, struct RECT *rect);
+hc_DLLIMPORT int32_t ClientToScreen(void *windowHandle, struct POINT *point);
 hc_DLLIMPORT int32_t GetWindowRect(void *windowHandle, struct RECT *rect);
 hc_DLLIMPORT int32_t GetWindowLongW(void *windowHandle, int32_t index);
 hc_DLLIMPORT int32_t SetWindowLongW(void *windowHandle, int32_t index, int32_t newLong);

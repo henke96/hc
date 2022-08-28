@@ -13,6 +13,17 @@ struct window {
 
 static struct window window;
 
+static void window_clipCursor(void *windowHandle) {
+    struct RECT rect;
+    if (
+        GetClientRect(windowHandle, &rect) &&
+        ClientToScreen(windowHandle, (struct POINT *)&rect.left) &&
+        ClientToScreen(windowHandle, (struct POINT *)&rect.right)
+    ) {
+        debug_CHECK(ClipCursor(&rect), RES != 0);
+    }
+}
+
 static int64_t window_proc(
     void *windowHandle,
     uint32_t message,
@@ -77,12 +88,7 @@ static int64_t window_proc(
         case WM_SIZE: {
             int32_t width = lParam & 0xffff;
             int32_t height = (lParam >> 16) & 0xffff;
-            if (window.pointerGrabbed) {
-                struct RECT windowRect;
-                if (GetWindowRect(windowHandle, &windowRect)) {
-                    debug_CHECK(ClipCursor(&windowRect), RES != 0);
-                }
-            }
+            if (window.pointerGrabbed) window_clipCursor(windowHandle);
             game_onResize(width, height);
             return 0;
         }
@@ -100,9 +106,7 @@ static int64_t window_proc(
         case WM_RBUTTONDOWN: {
             if (!window.pointerGrabbed) {
                 // Grab pointer.
-                struct RECT windowRect;
-                if (!GetWindowRect(windowHandle, &windowRect)) return 0;
-                debug_CHECK(ClipCursor(&windowRect), RES != 0);
+                window_clipCursor(windowHandle);
                 debug_CHECK(ShowCursor(0), RES == -1);
                 window.pointerGrabbed = true;
             }
