@@ -8,6 +8,7 @@ struct window {
     void *dc;
     void *windowHandle;
     bool pointerGrabbed;
+    struct WINDOWPLACEMENT prevPlacement;
 };
 
 static struct window window;
@@ -119,11 +120,40 @@ static int64_t window_proc(
 
                 if (!(input.data.keyboard.flags & RI_KEY_BREAK)) {
                     // Key down.
-                    if (window.pointerGrabbed && input.data.keyboard.makeCode == 0x01) { // Escape.
-                        // Ungrab pointer.
-                        debug_CHECK(ClipCursor(NULL), RES != 0);
-                        debug_CHECK(ShowCursor(1), RES == 0);
-                        window.pointerGrabbed = false;
+                    if (input.data.keyboard.makeCode == 0x0001) { // Escape.
+                        if (window.pointerGrabbed) {
+                            // Ungrab pointer.
+                            debug_CHECK(ClipCursor(NULL), RES != 0);
+                            debug_CHECK(ShowCursor(1), RES == 0);
+                            window.pointerGrabbed = false;
+                        }
+                    } else if (input.data.keyboard.makeCode == 0x0057) { // F11.
+                        // Toggle fullscreen.
+                        int32_t style = GetWindowLongW(windowHandle, GWL_STYLE);
+                        if (style & WS_OVERLAPPEDWINDOW) {
+                            struct MONITORINFOEXW mi = { .size = sizeof(mi) };
+                            if (
+                                GetWindowPlacement(windowHandle, &window.prevPlacement) &&
+                                GetMonitorInfoW(MonitorFromWindow(windowHandle, MONITOR_DEFAULTTOPRIMARY), &mi)
+                            ) {
+                                SetWindowLongW(windowHandle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+                                SetWindowPos(
+                                    windowHandle,
+                                    HWND_TOP,
+                                    mi.monitorRect.left, mi.monitorRect.top,
+                                    mi.monitorRect.right - mi.monitorRect.left,
+                                    mi.monitorRect.bottom - mi.monitorRect.top,
+                                    SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+                                );
+                            }
+                        } else {
+                            SetWindowLongW(windowHandle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
+                            SetWindowPlacement(windowHandle, &window.prevPlacement);
+                            SetWindowPos(
+                                windowHandle, NULL, 0, 0, 0, 0,
+                                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+                            );
+                        }
                     }
                 } else {
                     // Key up.
@@ -137,6 +167,7 @@ static int64_t window_proc(
 
 static int32_t window_init(void) {
     window.pointerGrabbed = false;
+    window.prevPlacement.length = sizeof(window.prevPlacement);
 
     if (wgl_init(&window.wgl) < 0) return -1;
 

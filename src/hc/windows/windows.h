@@ -456,6 +456,10 @@ struct RECT {
     int32_t bottom;
 };
 
+#define GWL_STYLE (-16)
+#define GWL_EXSTYLE (-20)
+#define GWL_ID (-12)
+
 // Raw input.
 #define RIM_INPUT 0
 #define RIM_INPUTSINK 1
@@ -565,6 +569,50 @@ struct RAWINPUTDEVICE {
 #define RIDEV_EXINPUTSINK 0x00001000
 #define RIDEV_DEVNOTIFY 0x00002000
 
+struct MONITORINFOEXW {
+    struct {
+      uint32_t size;
+      struct RECT monitorRect;
+      struct RECT workAreaRect;
+      uint32_t flags;
+    };
+    uint16_t device[32];
+};
+
+#define MONITOR_DEFAULTTONULL 0x00000000
+#define MONITOR_DEFAULTTOPRIMARY 0x00000001
+#define MONITOR_DEFAULTTONEAREST 0x00000002
+
+#define SWP_NOSIZE 0x0001
+#define SWP_NOMOVE 0x0002
+#define SWP_NOZORDER 0x0004
+#define SWP_NOREDRAW 0x0008
+#define SWP_NOACTIVATE 0x0010
+#define SWP_FRAMECHANGED 0x0020
+#define SWP_SHOWWINDOW 0x0040
+#define SWP_HIDEWINDOW 0x0080
+#define SWP_NOCOPYBITS 0x0100
+#define SWP_NOOWNERZORDER 0x0200
+#define SWP_NOSENDCHANGING 0x0400
+
+#define SWP_DEFERERASE 0x2000
+#define SWP_ASYNCWINDOWPOS 0x4000
+
+#define HWND_TOP ((void *)0)
+#define HWND_BOTTOM ((void *)1)
+#define HWND_TOPMOST ((void *)-1)
+#define HWND_NOTOPMOST ((void *)-2)
+
+struct WINDOWPLACEMENT {
+    uint32_t length;
+    uint32_t flags;
+    uint32_t showCmd;
+    struct POINT ptMinPosition;
+    struct POINT ptMaxPosition;
+    struct RECT normalPositionRect;
+    struct RECT deviceRect;
+};
+
 // kernel32.lib
 hc_DLLIMPORT uint32_t GetLastError(void);
 
@@ -608,6 +656,11 @@ hc_DLLIMPORT void *CreateWindowExW(
 hc_DLLIMPORT int32_t ShowWindow(void *windowHandle, int32_t showCommand);
 hc_DLLIMPORT int32_t DestroyWindow(void *windowHandle);
 hc_DLLIMPORT int32_t GetWindowRect(void *windowHandle, struct RECT *rect);
+hc_DLLIMPORT int32_t GetWindowLongW(void *windowHandle, int32_t index);
+hc_DLLIMPORT int32_t SetWindowLongW(void *windowHandle, int32_t index, int32_t newLong);
+hc_DLLIMPORT int32_t SetWindowPos(void *windowHandle, void *windowHandleInsertAfter, int32_t x, int32_t y, int32_t width, int32_t height, uint32_t flags);
+hc_DLLIMPORT int32_t GetWindowPlacement(void *windowHandle, struct WINDOWPLACEMENT *windowPlacement);
+hc_DLLIMPORT int32_t SetWindowPlacement(void *windowHandle, const struct WINDOWPLACEMENT *windowPlacement);
 hc_DLLIMPORT int32_t ClipCursor(const struct RECT *rect);
 hc_DLLIMPORT int32_t ShowCursor(int32_t show);
 hc_DLLIMPORT void *LoadImageW(void *instanceHandle, const uint16_t *name, uint32_t type, int32_t width, int32_t height, uint32_t flags);
@@ -623,6 +676,9 @@ hc_DLLIMPORT int32_t ReleaseDC(void *windowHandle, void *dc);
 
 hc_DLLIMPORT int32_t RegisterRawInputDevices(const struct RAWINPUTDEVICE *rawInputDevices, uint32_t numDevices, uint32_t size);
 hc_DLLIMPORT uint32_t GetRawInputData(void *rawInputHandle, uint32_t command, void *data, uint32_t *dataSize, uint32_t headerSize);
+
+hc_DLLIMPORT int32_t GetMonitorInfoW(void *monitorHandle, struct MONITORINFOEXW *monitorInfo);
+hc_DLLIMPORT void *MonitorFromWindow(void *windowHandle, uint32_t flags);
 
 // gdi32.lib
 hc_DLLIMPORT int32_t ChoosePixelFormat(void *dc, const struct PIXELFORMATDESCRIPTOR *pfd);

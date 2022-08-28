@@ -23,10 +23,6 @@ hc_DLLEXPORT uint32_t AmdPowerXpressRequestHighPerformance = 0x00000001;
 int32_t _fltused; // TODO: Figure out why this is needed.
 
 void noreturn main(void) {
-    void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (stdOutHandle == INVALID_HANDLE_VALUE) ExitProcess(1);
-    WriteFile(stdOutHandle, "Hello!\n", 7, NULL, NULL);
-
     int32_t status = window_init();
     if (status < 0) {
         debug_printNum("Failed to initialise window (", status, ")\n");
