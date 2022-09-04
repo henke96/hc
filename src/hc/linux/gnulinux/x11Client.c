@@ -33,11 +33,11 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     struct iovec iov[5] = {
         { .iov_base = &request,        .iov_len = sizeof(request) },
         { .iov_base = authEntry->name, .iov_len = request.authProtocolNameLength },
-        { .iov_base = &request,        .iov_len = util_PAD_BYTES(request.authProtocolNameLength, 4) },
+        { .iov_base = &request,        .iov_len = math_PAD_BYTES(request.authProtocolNameLength, 4) },
         { .iov_base = authEntry->data, .iov_len = request.authProtocolDataLength },
-        { .iov_base = &request,        .iov_len = util_PAD_BYTES(request.authProtocolDataLength, 4) }
+        { .iov_base = &request,        .iov_len = math_PAD_BYTES(request.authProtocolDataLength, 4) }
     };
-    int64_t sendLength = sizeof(request) + util_ALIGN_FORWARD(request.authProtocolNameLength, 4) + util_ALIGN_FORWARD(request.authProtocolDataLength, 4);
+    int64_t sendLength = sizeof(request) + math_ALIGN_FORWARD(request.authProtocolNameLength, 4) + math_ALIGN_FORWARD(request.authProtocolDataLength, 4);
     if (sys_sendmsg(self->socketFd, &(struct msghdr) { .msg_iov = &iov[0], .msg_iovlen = 5 }, MSG_NOSIGNAL) != sendLength) {
         status = -3;
         goto cleanup_socket;

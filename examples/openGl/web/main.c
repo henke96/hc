@@ -2,6 +2,7 @@
 #include "hc/gl.h"
 
 #define game_EXPORT(NAME) hc_WASM_EXPORT(NAME)
+#include "debug.h"
 #include "gl.h"
 #include "../shaders.c"
 #include "../vertexArrays.c"

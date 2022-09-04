@@ -26,7 +26,7 @@ static struct window window;
 static int32_t window_x11Setup(uint32_t visualId) {
     window.windowId = x11Client_nextId(&window.x11Client);
     uint64_t rootsOffset = (
-        util_ALIGN_FORWARD(window.x11Client.setupResponse->vendorLength, 4) +
+        math_ALIGN_FORWARD(window.x11Client.setupResponse->vendorLength, 4) +
         sizeof(struct x11_format) * window.x11Client.setupResponse->numPixmapFormats
     );
     struct x11_screen *screen = (void *)&window.x11Client.setupResponse->data[rootsOffset]; // Use first screen.
@@ -38,25 +38,25 @@ static int32_t window_x11Setup(uint32_t visualId) {
         struct x11_mapWindow mapWindow;
         struct x11_queryExtension queryXfixes;
         char queryXfixesName[sizeof(x11_XFIXES_NAME) - 1];
-        uint8_t queryXfixesPad[util_PAD_BYTES(sizeof(x11_XFIXES_NAME) - 1, 4)];
+        uint8_t queryXfixesPad[math_PAD_BYTES(sizeof(x11_XFIXES_NAME) - 1, 4)];
         struct x11_queryExtension queryXinput;
         char queryXinputName[sizeof(x11_XINPUT_NAME) - 1];
-        uint8_t queryXinputPad[util_PAD_BYTES(sizeof(x11_XINPUT_NAME) - 1, 4)];
+        uint8_t queryXinputPad[math_PAD_BYTES(sizeof(x11_XINPUT_NAME) - 1, 4)];
         struct x11_internAtom wmProtocolsAtom;
         char wmProtocolsAtomName[sizeof("WM_PROTOCOLS") - 1];
-        uint8_t wmProtocolsAtomPad[util_PAD_BYTES(sizeof("WM_PROTOCOLS") - 1, 4)];
+        uint8_t wmProtocolsAtomPad[math_PAD_BYTES(sizeof("WM_PROTOCOLS") - 1, 4)];
         struct x11_internAtom wmDeleteWindowAtom;
         char wmDeleteWindowAtomName[sizeof("WM_DELETE_WINDOW") - 1];
-        uint8_t wmDeleteWindowAtomPad[util_PAD_BYTES(sizeof("WM_DELETE_WINDOW") - 1, 4)];
+        uint8_t wmDeleteWindowAtomPad[math_PAD_BYTES(sizeof("WM_DELETE_WINDOW") - 1, 4)];
         struct x11_internAtom wmStateAtom;
         char wmStateAtomName[sizeof("_NET_WM_STATE") - 1];
-        uint8_t wmStateAtomPad[util_PAD_BYTES(sizeof("_NET_WM_STATE") - 1, 4)];
+        uint8_t wmStateAtomPad[math_PAD_BYTES(sizeof("_NET_WM_STATE") - 1, 4)];
         struct x11_internAtom wmStateFullscreenAtom;
         char wmStateFullscreenAtomName[sizeof("_NET_WM_STATE_FULLSCREEN") - 1];
-        uint8_t wmStateFullscreenAtomPad[util_PAD_BYTES(sizeof("_NET_WM_STATE_FULLSCREEN") - 1, 4)];
+        uint8_t wmStateFullscreenAtomPad[math_PAD_BYTES(sizeof("_NET_WM_STATE_FULLSCREEN") - 1, 4)];
         struct x11_internAtom wmBypassCompositorAtom;
         char wmBypassCompositorAtomName[sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1];
-        uint8_t wmBypassCompositorAtomPad[util_PAD_BYTES(sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1, 4)];
+        uint8_t wmBypassCompositorAtomPad[math_PAD_BYTES(sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1, 4)];
         struct x11_getKeyboardMapping getKeyboardMapping;
         struct x11_getModifierMapping getModifierMapping;
     };
@@ -166,7 +166,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
 
         struct x11_genericResponse *generic = (void *)&window.x11Client.receiveBuffer[0];
         if (generic->type == x11_TYPE_ERROR) {
-            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)generic->sequenceNumber, (int32_t)generic->extra);
+            debug_printNum("X11 request failed (seq=", (int32_t)generic->sequenceNumber, "\n");
             return -4;
         }
 
@@ -259,7 +259,7 @@ static int32_t window_init(char **envp) {
     // Initialise EGL.
     int32_t status = egl_init(&window.egl);
     if (status < 0) {
-        printf("Failed to initalise EGL (%d)\n", status);
+        debug_printNum("Failed to initalise EGL (", status, ")\n");
         return -1;
     }
     const int32_t configAttributes[] = {
@@ -277,7 +277,7 @@ static int32_t window_init(char **envp) {
     };
     status = egl_createContext(&window.egl, egl_OPENGL_ES_API, &configAttributes[0], &contextAttributes[0]);
     if (status < 0) {
-        printf("Failed to create EGL context (%d)\n", status);
+        debug_printNum("Failed to create EGL context (", status, ")\n");
         goto cleanup_egl;
     }
     uint32_t eglVisualId = (uint32_t)status;
@@ -298,20 +298,20 @@ static int32_t window_init(char **envp) {
         status = x11Client_init(&window.x11Client, &serverAddr, sizeof(serverAddr), &entry);
     }
     if (status < 0) {
-        printf("Failed to initialise x11Client (%d)\n", status);
+        debug_printNum("Failed to initialise x11Client (", status, ")\n");
         goto cleanup_egl;
     }
 
     status = window_x11Setup(eglVisualId);
     if (status < 0) {
-        printf("X11 setup failed (%d)\n", status);
+        debug_printNum("X11 setup failed (", status, ")\n");
         goto cleanup_x11Client;
     }
 
     // Setup EGL surface.
     status = egl_setupSurface(&window.egl, (uint32_t)window.windowId);
     if (status < 0) {
-        printf("Failed to setup EGL surface (%d)\n", status);
+        debug_printNum("Failed to setup EGL surface (", status, ")\n");
         goto cleanup_x11Setup;
     }
     debug_CHECK(egl_swapInterval(&window.egl, 0), RES == egl_TRUE);
@@ -319,17 +319,21 @@ static int32_t window_init(char **envp) {
     // Load OpenGL functions.
     status = gl_init(&window.egl);
     if (status < 0) {
-        printf("Failed to initialise GL (%d)\n", status);
+        debug_printNum("Failed to initialise GL (", status, ")\n");
         goto cleanup_x11Setup;
     }
 
     // Initialise game.
+    struct timespec initTimespec;
+    debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &initTimespec), RES == 0);
+    uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
     status = game_init(
         window_DEFAULT_WIDTH,
-        window_DEFAULT_HEIGHT
+        window_DEFAULT_HEIGHT,
+        initTimestamp
     );
     if (status < 0) {
-        printf("Failed to initialise game (%d)\n", status);
+        debug_printNum("Failed to initialise game (", status, ")\n");
         goto cleanup_x11Setup;
     }
 
@@ -465,10 +469,6 @@ static int32_t window_toggleFullscreen(void) {
 }
 
 static int32_t window_run(void) {
-    uint64_t frameCounter = 0;
-    struct timespec prev;
-    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
-
     struct requests {
         struct x11_changeProperty changeProperty;
         uint32_t changePropertyData;
@@ -518,6 +518,10 @@ static int32_t window_run(void) {
             if (status < 0) return -1;
             if (status == 0) break;
 
+            struct timespec eventTimespec;
+            debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &eventTimespec), RES == 0);
+            uint64_t eventTimestamp = (uint64_t)eventTimespec.tv_sec * 1000000000 + (uint64_t)eventTimespec.tv_nsec;
+
             int32_t eventFd = *((int32_t *)event.data.ptr);
             if (eventFd == window.x11Client.socketFd) {
                 int32_t numRead = x11Client_receive(&window.x11Client);
@@ -531,10 +535,10 @@ static int32_t window_run(void) {
                     if (msgLength < 0) return -3;
 
                     struct x11_genericResponse *generic = (void *)&window.x11Client.receiveBuffer[0];
-                    printf("Got message type: %d, length: %d\n", (int32_t)generic->type, msgLength);
-                    switch (generic->type & x11_TYPE_MASK) {
+                    int32_t type = generic->type & x11_TYPE_MASK;
+                    switch (type) {
                         case x11_TYPE_ERROR: {
-                            printf("X11 request failed (seq=%d, code=%d)\n", (int32_t)generic->sequenceNumber, (int32_t)generic->extra);
+                            debug_printNum("X11 request failed (code=", (int32_t)generic->extra, "\n");
                             return -4; // For now we always exit on X11 errors.
                         }
                         case x11_configureNotify_TYPE: {
@@ -554,7 +558,7 @@ static int32_t window_run(void) {
 
                             int64_t deltaX = (int64_t)((uint64_t)valuatorsRaw[0].integer << 32) | valuatorsRaw[0].fraction;
                             int64_t deltaY = (int64_t)((uint64_t)valuatorsRaw[1].integer << 32) | valuatorsRaw[1].fraction;
-                            game_onMouseMove(deltaX, deltaY);
+                            game_onMouseMove(deltaX, deltaY, eventTimestamp);
                             break;
                         }
                         case x11_clientMessage_TYPE: {
@@ -566,13 +570,20 @@ static int32_t window_run(void) {
                             if (!window.pointerGrabbed && window_grabPointer() < 0) return -5;
                             break;
                         }
-                        case x11_keyPress_TYPE: {
-                            struct x11_keyPress *message = (void *)generic;
-                            if (message->detail == 0x0009) { // Escape.
-                                if (window.pointerGrabbed && window_ungrabPointer() < 0) return -6;
-                            } else if (message->detail == 0x005F) { // F11.
-                                if (window_toggleFullscreen() < 0) return -7;
-                            }
+                        case x11_keyPress_TYPE:
+                        case x11_keyRelease_TYPE: {
+                            struct x11_keyPress *message = (void *)generic; // Press/release structs are identical.
+                            if (message->detail > 0x7F) break;
+
+                            int32_t key = input_codeToKey[message->detail];
+                            if (type == x11_keyPress_TYPE) {
+                                if (key != 0) game_onKeyDown(key, eventTimestamp);
+                                else if (message->detail == 0x09) { // Escape.
+                                  if (window.pointerGrabbed && window_ungrabPointer() < 0) return -6;
+                                } else if (message->detail == 0x5F) { // F11.
+                                    if (window_toggleFullscreen() < 0) return -7;
+                                }
+                            } else if (key != 0) game_onKeyUp(key, eventTimestamp);
                             break;
                         }
                         case x11_focusOut_TYPE: {
@@ -585,16 +596,10 @@ static int32_t window_run(void) {
             }
         }
         // Rendering.
-        if (game_draw() < 0 || !egl_swapBuffers(&window.egl)) return -9;
-
-        ++frameCounter;
-        struct timespec now;
-        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), RES == 0);
-        if (now.tv_sec > prev.tv_sec) {
-            printf("FPS: %llu\n", frameCounter);
-            frameCounter = 0;
-            prev = now;
-        }
+        struct timespec drawTimespec;
+        debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &drawTimespec), RES == 0);
+        uint64_t drawTimestamp = (uint64_t)drawTimespec.tv_sec * 1000000000 + (uint64_t)drawTimespec.tv_nsec;
+        if (game_draw(drawTimestamp) < 0 || !egl_swapBuffers(&window.egl)) return -9;
     }
 }
 

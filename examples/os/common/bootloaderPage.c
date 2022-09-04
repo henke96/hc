@@ -17,7 +17,7 @@ static int64_t bootloaderPage_getFreePageAddress(void *memoryMap, uint64_t memor
         struct efi_memoryDescriptor *descriptor = (void *)&memoryMap[mapOffset];
         if (descriptor->type != efi_CONVENTIONAL_MEMORY) continue;
 
-        uint64_t alignedStart = util_ALIGN_FORWARD(descriptor->physicalStart, paging_PAGE_SIZE);
+        uint64_t alignedStart = math_ALIGN_FORWARD(descriptor->physicalStart, paging_PAGE_SIZE);
         if (alignedStart < startPageAddress) alignedStart = startPageAddress;
         uint64_t end = descriptor->physicalStart + descriptor->numberOfPages * 4096;
 

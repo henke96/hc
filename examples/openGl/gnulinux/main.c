@@ -1,4 +1,5 @@
 #include "hc/hc.h"
+#include "hc/math.c"
 #include "hc/util.c"
 #include "hc/gl.h"
 #include "hc/elf.h"
@@ -17,7 +18,7 @@
 #include "hc/linux/gnulinux/dynamic/egl.c"
 #include "hc/linux/gnulinux/dynamic/main.c"
 
-static int32_t (*printf)(const char *restrict format, ...);
+static int32_t (*clock_gettime)(int32_t clock, struct timespec *time);
 
 #define game_EXPORT(NAME) static
 #include "gl.c"
@@ -26,13 +27,14 @@ static int32_t (*printf)(const char *restrict format, ...);
 #include "../trig.c"
 #include "../mat.c"
 #include "../game.c"
+#include "input.c"
 #include "window.c"
 
 static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     void *libcHandle = dlopen("libc.so.6", RTLD_NOW);
     if (dlerror() != NULL) return 1;
 
-    printf = dlsym(libcHandle, "printf");
+    clock_gettime = dlsym(libcHandle, "clock_gettime");
     if (dlerror() != NULL) return 1;
 
     int32_t status = window_init(envp);
@@ -42,7 +44,7 @@ static int32_t libcMain(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **en
     window_deinit();
     debug_CHECK(dlclose(libcHandle), RES == 0);
     if (status < 0) {
-        printf("Error while running (%d)\n", status);
+        debug_printNum("Error while running (", status, ")\n");
         return 1;
     }
     return 0;

@@ -36,6 +36,12 @@
 
                 let importObject = {
                     env: {
+                        debug_printNum: (pre, num, post) => {
+                            let preEnd, postEnd;
+                            for (preEnd = pre; wasmMemoryU8[preEnd]; ++preEnd);
+                            for (postEnd = post; wasmMemoryU8[postEnd]; ++postEnd);
+                            console.log(textDecoder.decode(wasmMemoryU8.subarray(pre, preEnd)) + num + textDecoder.decode(wasmMemoryU8.subarray(post, postEnd)));
+                        },
                         gl_getError: () => gl.getError(),
                         gl_createShader: type => glPush(gl.createShader(type)),
                         gl_shaderSource: (shader, count, string, length) => {
@@ -112,7 +118,7 @@
                         wasmMemoryU32 = new Uint32Array(wasmExports.memory.buffer);
                         wasmMemoryF32 = new Float32Array(wasmExports.memory.buffer);
 
-                        let status = wasmExports.game_init(canvas.width, canvas.height);
+                        let status = wasmExports.game_init(canvas.width, canvas.height, BigInt(performance.now() * 1000) * 1000n);
                         if (status < 0) throw "Failed to initialise game (" + status + ")";
 
                         window.addEventListener("resize", () => {
@@ -127,19 +133,27 @@
                             // Convert movements to 32.32 fixed point.
                             wasmExports.game_onMouseMove(
                                 BigInt(event.movementX * 4294967296),
-                                BigInt(event.movementY * 4294967296)
+                                BigInt(event.movementY * 4294967296),
+                                BigInt(event.timeStamp * 1000) * 1000n
                             );
                         };
-                        let onKeyEvent = (event) => console.log(event);
+                        let onKeyDown = (event) => {
+                            if (event.code.startsWith("Key")) {
+                                wasmExports.game_onKeyDown(event.code.charCodeAt(3), BigInt(event.timeStamp * 1000) * 1000n);
+                            }
+                        }
+                        let onKeyUp = (event) => {
+                            if (event.code.startsWith("Key")) {
+                                wasmExports.game_onKeyUp(event.code.charCodeAt(3), BigInt(event.timeStamp * 1000) * 1000n);
+                            }
+                        }
+                        document.addEventListener("keydown", onKeyDown);
+                        document.addEventListener("keyup", onKeyUp);
                         document.addEventListener("pointerlockchange", () => {
                             if (document.pointerLockElement === canvas) {
                                 document.addEventListener("mousemove", onMouseMove);
-                                document.addEventListener("keydown", onKeyEvent);
-                                document.addEventListener("keyup", onKeyEvent);
                             } else {
                                 document.removeEventListener("mousemove", onMouseMove);
-                                document.removeEventListener("keydown", onKeyEvent);
-                                document.removeEventListener("keyup", onKeyEvent);
                             }
                         });
 
@@ -151,19 +165,9 @@
                         };
                         document.addEventListener("mousedown", onMouseDown);
 
-                        let frameCounter = 0;
-                        let prevTime = performance.now();
                         let mainLoop = () => {
-                            let status = wasmExports.game_draw();
+                            let status = wasmExports.game_draw(BigInt(performance.now() * 1000) * 1000n);
                             if (status < 0) throw "Failed to draw game (" + status + ")";
-
-                            ++frameCounter;
-                            let currentTime = performance.now();
-                            if (currentTime - prevTime >= 1000) {
-                                console.log("FPS: " + frameCounter);
-                                frameCounter = 0;
-                                prevTime = currentTime;
-                            }
                             window.requestAnimationFrame(mainLoop);
                         };
                         mainLoop();

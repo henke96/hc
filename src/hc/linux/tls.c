@@ -42,7 +42,7 @@ static struct elf_programHeader *tls_findProgramHeader(const uint64_t *auxv) {
 hc_UNUSED static uint64_t tls_initArea(struct elf_programHeader *tlsProgramHeader, void *tlsArea) {
     hc_MEMCPY(tlsArea, (void *)tlsProgramHeader->virtualAddress, tlsProgramHeader->segmentFileSize);
 #if hc_X86_64
-    uint64_t threadPointer = (uint64_t)tlsArea + util_ALIGN_FORWARD(tlsProgramHeader->segmentMemorySize, tlsProgramHeader->segmentAlignment);
+    uint64_t threadPointer = (uint64_t)tlsArea + math_ALIGN_FORWARD(tlsProgramHeader->segmentMemorySize, tlsProgramHeader->segmentAlignment);
     *(uint64_t *)threadPointer = threadPointer;
     return threadPointer;
 #elif hc_AARCH64

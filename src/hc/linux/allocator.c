@@ -10,7 +10,7 @@ static inline void allocator_create(struct allocator *self) {
 }
 
 static int32_t allocator_resize(struct allocator *self, int64_t newSize) {
-    newSize = util_ALIGN_FORWARD(newSize, 4096);
+    newSize = math_ALIGN_FORWARD(newSize, 4096);
     if (self->size == newSize) return 0;
 
     if (newSize == 0) {

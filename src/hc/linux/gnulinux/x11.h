@@ -105,9 +105,9 @@ struct x11_setupRequest {
     uint16_t authProtocolDataLength;
     uint8_t __pad2[2];
     uint8_t data[]; // char authProtocolName[authProtocolNameLength];
-                    // __pad3[util_PAD_BYTES(authProtocolNameLength, 4)];
+                    // __pad3[math_PAD_BYTES(authProtocolNameLength, 4)];
                     // uint8_t authProtocolData[authProtocolDataLength];
-                    // __pad4[util_PAD_BYTES(authProtocolDataLength, 4)];
+                    // __pad4[math_PAD_BYTES(authProtocolDataLength, 4)];
 };
 
 #define x11_setupResponse_SUCCESS 1
@@ -133,7 +133,7 @@ struct x11_setupResponse {
     uint8_t maxKeycode;
     uint8_t __pad2[4];
     uint8_t data[]; // char vendor[vendorLength];
-                    // uint8_t __pad[util_PAD_BYTES(vendorLength, 4)];
+                    // uint8_t __pad[math_PAD_BYTES(vendorLength, 4)];
                     // struct x11_format pixmapFormats[numPixmapFormats];
                     // struct x11_screen roots[numRoots]; (x11_screen is variable length!)
 };
@@ -393,7 +393,7 @@ struct x11_internAtom {
     uint16_t nameLength;
     uint16_t __pad;
     uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad2[util_PAD_BYTES(nameLength, 4)];
+                    // uint8_t __pad2[math_PAD_BYTES(nameLength, 4)];
 };
 
 struct x11_internAtomResponse {
@@ -420,7 +420,7 @@ struct x11_changeProperty {
     uint8_t __pad[3];
     uint32_t dataLength; // In `format` units.
     uint8_t data[]; // format_t data[dataLength];
-                    // uint8_t __pad2[util_PAD_BYTES(sizeof(format_t) * dataLength, 4)];
+                    // uint8_t __pad2[math_PAD_BYTES(sizeof(format_t) * dataLength, 4)];
 };
 
 #define x11_sendEvent_OPCODE 25
@@ -467,7 +467,7 @@ struct x11_queryExtension {
     uint16_t nameLength;
     uint16_t __pad2;
     uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad3[util_PAD_BYTES(nameLength, 4)];
+                    // uint8_t __pad3[math_PAD_BYTES(nameLength, 4)];
 };
 
 struct x11_queryExtensionResponse {

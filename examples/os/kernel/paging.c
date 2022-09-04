@@ -33,7 +33,7 @@ static void paging_init(void) {
     // Map the frame buffer.
     uint64_t frameBufferMapStart = bootloaderPage->frameBufferBase & ~(paging_PAGE_SIZE - 1);
     uint64_t frameBufferSize = sizeof(uint32_t) * bootloaderPage->frameBufferWidth * bootloaderPage->frameBufferHeight;
-    uint64_t frameBufferMapEnd = util_ALIGN_FORWARD(bootloaderPage->frameBufferBase + frameBufferSize, paging_PAGE_SIZE);
+    uint64_t frameBufferMapEnd = math_ALIGN_FORWARD(bootloaderPage->frameBufferBase + frameBufferSize, paging_PAGE_SIZE);
     uint64_t numPages = (frameBufferMapEnd - frameBufferMapStart) / paging_PAGE_SIZE;
     for (uint64_t i = 0; i < numPages; ++i) {
         // Enable write-combine for framebuffer pages.
