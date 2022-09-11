@@ -54,6 +54,8 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #if hc_WASM32
     #define hc_WASM_IMPORT(MODULE, NAME) __attribute__((import_module(MODULE), import_name(NAME)))
     #define hc_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
+    #define hc_WASM_MEMORY_SIZE __builtin_wasm_memory_size(0)
+    #define hc_WASM_MEMORY_GROW(DELTA) __builtin_wasm_memory_grow(0, DELTA)
 #else
     #define hc_WASM_IMPORT(MODULE, NAME)
     #define hc_WASM_EXPORT(NAME)
