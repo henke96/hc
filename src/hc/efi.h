@@ -459,6 +459,7 @@ struct efi_graphicsOutputProtocol {
 // Loaded image protocol.
 struct efi_loadedImageProtocol {
     uint32_t revision;
+    int32_t __pad;
     void *parentHandle;
     struct efi_systemTable *systemTable;
     // Source location.
@@ -467,6 +468,7 @@ struct efi_loadedImageProtocol {
     void *reserved;
     // Load options.
     uint32_t loadOptionsSize;
+    int32_t __pad2;
     void *loadOptions;
     // Load location.
     void *imageBase;
@@ -487,8 +489,10 @@ struct efi_blockIOMedia {
     uint8_t logicalPartition;
     uint8_t readOnly;
     uint8_t writeCaching;
+    char __pad[3];
     uint32_t blockSize;
     uint32_t ioAlign;
+    int32_t __pad2;
     uint64_t lastBlock;
     uint64_t lowestAlignedLba; // Added in revision 2.
     uint32_t logicalBlocksPerPhysicalBlock; // Added in revision 2.
