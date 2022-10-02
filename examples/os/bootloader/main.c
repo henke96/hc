@@ -106,7 +106,7 @@ static int64_t getMemoryMap(struct efi_systemTable *systemTable, uint8_t **memor
     return 0;
 }
 
-int64_t main(void *imageHandle, struct efi_systemTable *systemTable) {
+int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     // Setup graphics.
     struct efi_graphicsOutputProtocol *graphics;
     int64_t status = setupGraphics(systemTable, &graphics);

@@ -409,6 +409,7 @@ struct PIXELFORMATDESCRIPTOR {
 
 struct WNDCLASSW {
     uint32_t style;
+    int32_t __pad;
     int64_t (*windowProc)(void *handle, uint32_t message, uint64_t wParam, int64_t lParam);
     int32_t clsExtra;
     int32_t wndExtra;
@@ -430,9 +431,11 @@ struct CREATESTRUCTW {
     int32_t y;
     int32_t x;
     int32_t style;
+    int32_t __pad;
     uint16_t *name;
     uint16_t *className;
     uint32_t exStyle;
+    int32_t __pad2;
 };
 
 struct POINT {
@@ -443,10 +446,12 @@ struct POINT {
 struct MSG {
     void *windowHandle;
     uint32_t message;
+    int32_t __pad;
     uint64_t wParam;
     int64_t lParam;
     uint32_t time;
     struct POINT point;
+    int32_t __pad2;
 };
 
 struct RECT {
@@ -478,6 +483,7 @@ struct RAWINPUTHEADER {
 
 struct RAWMOUSE {
     uint16_t flags;
+    int16_t __pad;
     union {
         uint32_t buttons;
         struct {

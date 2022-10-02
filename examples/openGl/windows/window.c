@@ -7,10 +7,11 @@ struct window {
     struct wgl wgl;
     void *dc;
     void *windowHandle;
-    bool pointerGrabbed;
-    struct WINDOWPLACEMENT prevPlacement;
     uint64_t timestampMult;
     uint64_t eventTimestamp;
+    struct WINDOWPLACEMENT prevPlacement;
+    bool pointerGrabbed;
+    char __pad[3];
 };
 
 static struct window window;

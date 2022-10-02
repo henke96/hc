@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 script_dir="$(dirname $0)"
-flags="-Wl,-subsystem:console -O2"
+flags="-Wl,-subsystem,console -O2"
 debug_flags="$flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g $FLAGS"
 release_flags="$flags -Ddebug_NDEBUG -s $FLAGS"
 "$script_dir/../../../cc_pe.sh" $debug_flags -S -o "$script_dir/debug.exe.s" "$script_dir/main.c"

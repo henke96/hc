@@ -13,6 +13,6 @@ OBJCOPY="${OBJCOPY:-llvm-objcopy}"
 $OBJCOPY -O binary "$script_dir/kernel/kernel.bin.elf" "$script_dir/kernel/kernel.bin"
 
 # Bootloader (with kernel binary embedded)
-flags="-Wl,-subsystem:efi_application -I$script_dir/kernel -Os -s"
+flags="-Wl,-subsystem,efi_application -I$script_dir/kernel -Os -s"
 "$script_dir/../../cc_pe.sh" $flags -S -o "$script_dir/bootloader/bootloader.efi.s" "$script_dir/bootloader/main.c"
 "$script_dir/../../cc_pe.sh" $flags -o "$script_dir/bootloader.efi" "$script_dir/bootloader/main.c"
