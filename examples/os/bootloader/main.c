@@ -1,5 +1,6 @@
 #include "hc/hc.h"
 #include "hc/efi.h"
+#include "hc/math.c"
 #include "hc/util.c"
 #include "hc/libc/small.c"
 #include "../common/paging.h"
