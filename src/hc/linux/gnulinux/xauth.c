@@ -22,6 +22,7 @@ static int32_t xauth_init(struct xauth *self, const char *xAuthorityFile) {
 
     // Find file size.
     struct statx statx;
+    statx.stx_size = 0;
     int32_t status = sys_statx(self->fd, "", AT_EMPTY_PATH, STATX_SIZE, &statx);
     if (status < 0) {
         status = -2;

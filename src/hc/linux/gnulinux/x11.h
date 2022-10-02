@@ -110,6 +110,7 @@ struct x11_setupRequest {
                     // __pad4[math_PAD_BYTES(authProtocolDataLength, 4)];
 };
 
+#define x11_setupResponse_FAILED 0
 #define x11_setupResponse_SUCCESS 1
 struct x11_setupResponse {
     uint8_t status;

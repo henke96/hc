@@ -17,7 +17,7 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     if (self->cardFd < 0) return -1;
 
     // Get a list of connectors and one crtc for this card.
-    uint32_t connectorIds[drmKms_MAX_CONNECTORS];
+    uint32_t connectorIds[drmKms_MAX_CONNECTORS] = {0};
 
     struct drm_mode_card_res cardResources = {
         .connector_id_ptr = &connectorIds[0],

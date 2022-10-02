@@ -44,6 +44,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     }
 
     struct x11_setupResponse response;
+    response.status = x11_setupResponse_FAILED;
     int64_t numRead = sys_recvfrom(self->socketFd, &response, sizeof(response), 0, NULL, NULL);
     if (numRead <= 0) {
         status = -4;
@@ -77,7 +78,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     self->setupResponseSize = 8 + (int32_t)response.length * 4;
     self->setupResponse = sys_mmap(NULL, self->setupResponseSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     if ((int64_t)self->setupResponse < 0) {
-        status = -7;
+        status = -8;
         goto cleanup_socket;
     }
     hc_MEMCPY(self->setupResponse, &response, sizeof(response));
@@ -87,7 +88,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
         char *readPos = &((char *)self->setupResponse)[numRead];
         int64_t read = sys_recvfrom(self->socketFd, readPos, self->setupResponseSize - numRead, 0, NULL, NULL);
         if (read <= 0) {
-            status = -8;
+            status = -9;
             goto cleanup_setupResponse;
         }
         numRead += read;

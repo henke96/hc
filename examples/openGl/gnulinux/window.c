@@ -514,9 +514,11 @@ static int32_t window_run(void) {
         // Process all inputs.
         for (;;) {
             struct epoll_event event;
+            event.data.ptr = NULL;
             int32_t status = sys_epoll_pwait(window.epollFd, &event, 1, 0, NULL);
             if (status < 0) return -1;
             if (status == 0) break;
+            if (event.data.ptr == NULL) return -1; // Should never happen..
 
             struct timespec eventTimespec;
             debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &eventTimespec), RES == 0);

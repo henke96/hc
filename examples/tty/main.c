@@ -18,7 +18,7 @@ static int32_t init_graphics(struct drmKms *graphics) {
     }
 
     // Find the best display mode, prioritising resolution and refresh rate.
-    int32_t selectedModeIndex;
+    int32_t selectedModeIndex = -1;
     int32_t selectedModeWidth = 0;
     int32_t selectedModeHz = 0;
     for (int32_t i = 0; i < graphics->connector.count_modes; ++i) {
@@ -46,6 +46,8 @@ static int32_t init_graphics(struct drmKms *graphics) {
             selectedModeHz = graphics->modeInfos[i].vrefresh;
         }
     }
+    if (selectedModeIndex < 0) return -1;
+
     sys_writev(STDOUT_FILENO, (struct iovec[2]) {
         { .iov_base = "Selected mode \"", .iov_len = 15 },
         { .iov_base = graphics->modeInfos[selectedModeIndex].name, .iov_len = DRM_DISPLAY_MODE_LEN }
@@ -152,14 +154,10 @@ int32_t main(int32_t argc, char **argv) {
 
     // Check if our tty is already active.
     struct vt_stat vtState;
+    vtState.v_active = 0;
     status = sys_ioctl(ttyFd, VT_GETSTATE, &vtState);
     if (status < 0) return 1;
-
     bool active = vtState.v_active == ttyNumber;
-    struct drmKms graphics;
-    if (active) {
-        if (init_graphics(&graphics) < 0) return 1;
-    }
 
     // Set up epoll.
     int32_t epollFd = sys_epoll_create1(0);
@@ -170,20 +168,32 @@ int32_t main(int32_t argc, char **argv) {
     };
     if (sys_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
 
+    struct drmKms graphics;
     int64_t frameCounter;
     struct timespec prev;
     uint32_t red;
     uint32_t green;
     uint32_t blue;
+
+    if (active) {
+        // Initialise drawing state.
+        if (init_graphics(&graphics) < 0) return 1;
+        red = 0;
+        green = 0;
+        blue = 0;
+        frameCounter = 0;
+        debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
+    }
+
     for (;;) {
         int32_t timeout = active ? 0 : -1; // Only block if not active.
         struct epoll_event event;
         status = sys_epoll_pwait(epollFd, &event, 1, timeout, NULL);
         if (status < 0) return 1;
-
         if (status > 0) {
             // Handle event.
             struct signalfd_siginfo info;
+            info.ssi_signo = 0;
             int64_t numRead = sys_read(signalFd, &info, sizeof(info));
             if (numRead != sizeof(info)) return 1;
 
@@ -193,9 +203,8 @@ int32_t main(int32_t argc, char **argv) {
                 static const char message[] = "Acquired!\n";
                 sys_write(STDOUT_FILENO, &message, sizeof(message) - 1);
 
-                if (init_graphics(&graphics) < 0) return 1;
-
                 // Initialise drawing state.
+                if (init_graphics(&graphics) < 0) return 1;
                 red = 0;
                 green = 0;
                 blue = 0;
@@ -211,9 +220,9 @@ int32_t main(int32_t argc, char **argv) {
                 active = false;
                 static const char message[] = "Released!\n";
                 sys_write(STDOUT_FILENO, &message, sizeof(message) - 1);
-                continue; // Skip drawing.
             }
         }
+        if (!active) continue; // Skip drawing if not active.
 
         // Do drawing.
         uint32_t colour = (red << 16) | (green << 8) | blue;

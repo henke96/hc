@@ -44,6 +44,7 @@ int32_t main(int32_t argc, char **argv) {
 
     // Map /usr/bin/env into memory.
     struct statx statx;
+    statx.stx_size = 0;
     if (sys_statx(fd, "", AT_EMPTY_PATH, STATX_SIZE, &statx) < 0) return 1;
     struct elf_header *elfHeader = sys_mmap(NULL, (int64_t)statx.stx_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if ((int64_t)elfHeader < 0) return 1;
