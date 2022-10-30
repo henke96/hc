@@ -1,5 +1,5 @@
 // Returns pid, or negative error code.
-int32_t sys_clone(struct clone_args *args, uint64_t size, void (*childfunc)(void *), void *childarg);
+int32_t sys_clone(hc_NONULL struct clone_args *args, uint64_t size, hc_NONULL void (*childfunc)(void *), void *childarg);
 #if hc_X86_64
 asm(
     ".section .text\n"

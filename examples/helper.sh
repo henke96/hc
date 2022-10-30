@@ -17,3 +17,8 @@ release_flags="-Ddebug_NDEBUG -O2 -s $FLAGS"
 "$script_dir/../cc_elf.sh" $release_flags -S -o "$1/release.bin.s" "$1/main.c" $LFLAGS
 "$script_dir/../cc_elf.sh" $release_flags -o "$1/release.bin" "$1/main.c" $LFLAGS
 $OBJCOPY --strip-sections "$1/release.bin" || true
+
+# Static analysis.
+analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
+"$script_dir/../cc_elf.sh" $debug_flags $analyse_flags "$1/main.c" $LFLAGS
+"$script_dir/../cc_elf.sh" $release_flags $analyse_flags "$1/main.c" $LFLAGS
