@@ -1119,6 +1119,18 @@ static hc_ALWAYS_INLINE int32_t sys_madvise(hc_NONULL void *addr, int64_t size, 
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_mprotect(hc_NONULL void *addr, int64_t size, uint32_t prot) {
+    sys_SYSCALL3(sys_NR_mprotect, addr, size, prot);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_msync(hc_NONULL void *addr, int64_t size, uint32_t flags) {
+    sys_SYSCALL3(sys_NR_msync, addr, size, flags);
+    return (int32_t)ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE int32_t sys_clock_gettime(int32_t clock, hc_NONULL struct timespec *time) {
     sys_SYSCALL2(sys_NR_clock_gettime, clock, time);
     return (int32_t)ret;

@@ -702,6 +702,12 @@ struct sockaddr_alg {
 #define MREMAP_FIXED 2
 #define MREMAP_DONTUNMAP 4
 
+#define MAP_GROWSDOWN 0x0100 /* stack-like segment */
+#define MAP_DENYWRITE 0x0800 /* ETXTBSY */
+#define MAP_EXECUTABLE 0x1000 /* mark it as an executable */
+#define MAP_LOCKED 0x2000 /* pages are locked */
+#define MAP_NORESERVE 0x4000 /* don't check for reservations */
+
 #define MAP_SHARED 0x01 // Share changes
 #define MAP_PRIVATE 0x02 // Changes are private
 
@@ -725,6 +731,10 @@ struct sockaddr_alg {
 #define MAP_FIXED_NOREPLACE 0x100000 // MAP_FIXED which doesn't unmap underlying mapping
 
 #define MAP_UNINITIALIZED 0x4000000 // For anonymous mmap, memory could be uninitialized
+
+#define MS_ASYNC 1 /* sync memory asynchronously */
+#define MS_INVALIDATE 2 /* invalidate the caches */
+#define MS_SYNC 4 /* synchronous memory sync */
 
 #define MADV_NORMAL 0 // no further special treatment
 #define MADV_RANDOM 1 // expect random page references
