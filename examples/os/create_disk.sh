@@ -3,24 +3,22 @@ set -e
 script_dir="$(dirname $0)"
 cleanup() {
     set +e
-    umount "$script_dir/mnt"
-    rmdir "$script_dir/mnt"
-    losetup -d $dev
+    umount "$mnt"
+    udisksctl loop-delete -b "$dev"
 }
-
-dd if=/dev/zero of="$script_dir/disk.img" bs=1024 count=35000
-chmod a+rw "$script_dir/disk.img"
-
-dev=`losetup --show -f "$script_dir/disk.img"`
 trap cleanup EXIT
 
-parted -s $dev \
-mklabel gpt \
-mkpart EFI 1Mib 34Mib set 1 esp on
+# Create disk.
+dd if=/dev/zero of="$script_dir/disk.img" bs=34816 count=1
 
-mkfs -t fat -F 32 ${dev}p1
+# Create disk filesystem.
+mkfs.fat -F 12 -i 0 -n OS -f 1 -r 16 "$script_dir/disk.img"
 
-mkdir -p "$script_dir/mnt"
-mount ${dev}p1 "$script_dir/mnt"
-mkdir -p "$script_dir/mnt/EFI/BOOT"
-cp "$script_dir/bootloader.efi" "$script_dir/mnt/EFI/BOOT/bootx64.efi"
+# Create loop device for disk.
+dev=$(udisksctl loop-setup -f "$script_dir/disk.img" | sed 's/^Mapped file .\+ as \(.\+\)\.$/\1/')
+
+# Mount disk.
+mnt=$(udisksctl mount -b "$dev" | sed 's/^Mounted .\+ at \(.\+\)\.$/\1/')
+
+mkdir -p "$mnt/EFI/BOOT"
+cp "$script_dir/bootloader.efi" "$mnt/EFI/BOOT/BOOTX64.EFI"
