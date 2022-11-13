@@ -1,2 +1,3 @@
 #!/bin/sh
-qemu-system-x86_64 -bios /usr/share/qemu/OVMF.fd -drive format=raw,file=disk.img -enable-kvm
+script_dir="$(dirname $0)"
+qemu-system-x86_64 -bios /usr/share/qemu/OVMF.fd -drive format=raw,file="$script_dir/disk.img" -enable-kvm
