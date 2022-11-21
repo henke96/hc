@@ -2,8 +2,8 @@
 setlocal
 set /p flags=<%~dp0flags
 if not defined CC set CC=clang
-if not defined LD set LD=lld
+if not defined LD set LD=ld.lld
 if not defined ARCH set ARCH=x86_64
 if not defined ABI set ABI=elf
-%CC% -I%~dp0/src %flags% -target %ARCH%-unknown-linux-%ABI% -fuse-ld="%LD%" -Wl,--build-id=none %*
+%CC% -I%~dp0/src %flags% -target %ARCH%-unknown-linux-%ABI% --ld-path="%LD%" -Wl,--build-id=none %*
 endlocal
