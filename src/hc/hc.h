@@ -31,6 +31,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 // Preprocessor helpers.
 #define hc_STR(X) #X
 #define hc_XSTR(X) hc_STR(X)
+#define hc_ARRAY_LEN(ARRAY) (sizeof(ARRAY) / sizeof((ARRAY)[0]))
 
 // Attributes
 #define hc_UNREACHABLE __builtin_unreachable()

@@ -3,11 +3,12 @@ static void hc_COLD debug_printNum(const char *pre, int64_t num, const char *pos
     char buffer[util_INT64_MAX_CHARS];
     char *numStr = util_intToStr(&buffer[util_INT64_MAX_CHARS], num);
 
-    sys_writev(STDOUT_FILENO, (struct iovec[3]) {
+    struct iovec print[] = {
         { .iov_base = (char *)pre,  .iov_len = util_cstrLen(pre) },
         { .iov_base = numStr,       .iov_len = (int64_t)(&buffer[util_INT64_MAX_CHARS] - numStr) },
         { .iov_base = (char *)post, .iov_len = util_cstrLen(post) }
-    }, 3);
+    };
+    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
 }
 
 hc_UNUSED
@@ -21,7 +22,7 @@ static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, con
     static const char equals[3] = " = ";
     static const char end[1] = "\n";
 
-    sys_writev(STDOUT_FILENO, (struct iovec[9]) {
+    struct iovec print[] = {
         { .iov_base = (char *)file,       .iov_len = util_cstrLen(file) },
         { .iov_base = (char *)&fail[5],   .iov_len = 1 },
         { .iov_base = lineStr,            .iov_len = (int64_t)(&lineBuffer[util_INT32_MAX_CHARS] - lineStr) },
@@ -30,7 +31,8 @@ static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, con
         { .iov_base = (char *)&equals[0], .iov_len = sizeof(equals) },
         { .iov_base = resStr,             .iov_len = (int64_t)(&resBuffer[util_INT64_MAX_CHARS] - resStr) },
         { .iov_base = (char *)&end[0],    .iov_len = sizeof(end) }
-    }, 9);
+    };
+    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
     sys_kill(sys_getpid(), SIGABRT);
     sys_exit_group(137);
 }

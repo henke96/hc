@@ -41,9 +41,10 @@ int32_t main(int32_t argc, char **argv) {
     char resultSyscall[34] = "With syscall:                    \n";
     util_uintToStr(&result[sizeof(result) - 1], count);
     util_uintToStr(&resultSyscall[sizeof(resultSyscall) - 1], countSyscall);
-    sys_writev(STDOUT_FILENO, (struct iovec[2]) {
+    struct iovec print[] = {
         { .iov_base = &result[0], .iov_len = sizeof(result) },
         { .iov_base = &resultSyscall[0], .iov_len = sizeof(resultSyscall) }
-    }, 2);
+    };
+    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
     return 0;
 }

@@ -22,10 +22,11 @@ static int32_t init_graphics(struct drmKms *graphics) {
     int32_t selectedModeWidth = 0;
     int32_t selectedModeHz = 0;
     for (int32_t i = 0; i < graphics->connector.count_modes; ++i) {
-        sys_writev(STDOUT_FILENO, (struct iovec[2]) {
+        struct iovec print[] = {
             { .iov_base = "Mode \"", .iov_len = 6 },
             { .iov_base = graphics->modeInfos[i].name, .iov_len = DRM_DISPLAY_MODE_LEN }
-        }, 2);
+        };
+        sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print)); 
         debug_printNum("\"\n  Pixel clock: ", graphics->modeInfos[i].clock, " KHz\n");
         debug_printNum("  Width: ", graphics->modeInfos[i].hdisplay, " pixels\n");
         debug_printNum("  Height: ", graphics->modeInfos[i].vdisplay, " pixels\n");
@@ -48,10 +49,11 @@ static int32_t init_graphics(struct drmKms *graphics) {
     }
     if (selectedModeIndex < 0) return -1;
 
-    sys_writev(STDOUT_FILENO, (struct iovec[2]) {
+    struct iovec print[] = {
         { .iov_base = "Selected mode \"", .iov_len = 15 },
         { .iov_base = graphics->modeInfos[selectedModeIndex].name, .iov_len = DRM_DISPLAY_MODE_LEN }
-    }, 2);
+    };
+    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
     debug_printNum("\" at ", selectedModeHz, " Hz.\n");
 
     // Setup framebuffer using the selected mode.
@@ -85,11 +87,12 @@ int32_t main(int32_t argc, char **argv) {
     if (argc != 2) {
         static const char usageStart[7] = "Usage: ";
         static const char usageArgs[9] = " TTY_NUM\n";
-        sys_writev(STDOUT_FILENO, (struct iovec[3]) {
+        struct iovec print[] = {
             { .iov_base = (char *)&usageStart[0], .iov_len = sizeof(usageStart) },
             { .iov_base = (char *)programName,    .iov_len = util_cstrLen(programName) },
             { .iov_base = (char *)&usageArgs[0],  .iov_len = sizeof(usageArgs) }
-        }, 3);
+        };
+        sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
         return 0;
     }
 
