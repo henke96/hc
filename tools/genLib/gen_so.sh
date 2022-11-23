@@ -7,7 +7,7 @@ then
     exit 1
 fi
 
-CC="${CC:-clang}"
-LD="${LD:-ld.lld}"
+CC="${CC:-clang}$LLVM"
+LD="${LD:-ld.lld}$LLVM"
 ARCH="${ARCH:-x86_64}"
 "$CC" -target $ARCH-unknown-linux-elf --ld-path="$LD" -shared -nostdlib -o "$2" "$1"

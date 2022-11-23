@@ -9,7 +9,7 @@ flags="-Wl,-T$script_dir/kernel/kernel.ld -mno-red-zone -O2 -s"
 "$script_dir/../../cc_elf.sh" $flags -o "$script_dir/kernel/kernel.bin.elf" "$script_dir/kernel/main.c"
 unset ABI
 
-OBJCOPY="${OBJCOPY:-llvm-objcopy}"
+OBJCOPY="${OBJCOPY:-llvm-objcopy}$LLVM"
 $OBJCOPY -O binary "$script_dir/kernel/kernel.bin.elf" "$script_dir/kernel/kernel.bin"
 
 # Bootloader (with kernel binary embedded)

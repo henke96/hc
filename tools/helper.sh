@@ -7,7 +7,7 @@ then
     exit 1
 fi
 
-CC="${CC:-clang}"
+CC="${CC:-clang}$LLVM"
 
 script_dir="$(dirname $0)"
 flags="-fsanitize=undefined -fsanitize=address -Wall -Wextra -Wconversion -Wshadow -Wpadded -Werror $FLAGS"

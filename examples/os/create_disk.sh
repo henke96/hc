@@ -15,10 +15,10 @@ dd if=/dev/zero of="$script_dir/disk.img" bs=34816 count=1
 mkfs.fat -F 12 -i 0 -n OS -f 1 -r 16 "$script_dir/disk.img"
 
 # Create loop device for disk.
-dev=$(udisksctl loop-setup -f "$script_dir/disk.img" | sed 's/^Mapped file .\+ as \(.\+\)\.$/\1/')
+dev=$(udisksctl loop-setup -f "$script_dir/disk.img" | sed -E 's/^Mapped file .+ as ([^.]+).*$/\1/')
 
 # Mount disk.
-mnt=$(udisksctl mount -b "$dev" | sed 's/^Mounted .\+ at \(.\+\)\.$/\1/')
+mnt=$(udisksctl mount -b "$dev" | sed -E 's/^Mounted .+ at ([^.]+).*$/\1/')
 
 mkdir -p "$mnt/EFI/BOOT"
 cp "$script_dir/bootloader.efi" "$mnt/EFI/BOOT/BOOTX64.EFI"

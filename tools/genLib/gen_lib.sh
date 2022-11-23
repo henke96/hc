@@ -7,7 +7,7 @@ then
     exit 1
 fi
 
-DLLTOOL="${DLLTOOL:-llvm-dlltool}"
+DLLTOOL="${DLLTOOL:-llvm-dlltool}$LLVM"
 ARCH="${ARCH:-x86_64}"
 if test "$ARCH" = "x86_64"; then
     arch="i386:x86-64"
