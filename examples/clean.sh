@@ -11,3 +11,4 @@ find . -name "*.exe*" -type f -delete
 find . -name "*.wasm*" -type f -delete
 find . -name "*.img" -type f -delete
 find . -name "*.so.*" -type f -delete
+find . -name "*.a" -type f -delete
