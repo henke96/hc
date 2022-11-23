@@ -619,7 +619,7 @@ struct WINDOWPLACEMENT {
     struct RECT deviceRect;
 };
 
-// kernel32.lib
+// kernel32.dll
 hc_DLLIMPORT uint32_t GetLastError(void);
 
 hc_DLLIMPORT int32_t AllocConsole(void);
@@ -640,7 +640,7 @@ hc_DLLIMPORT void *GetProcAddress(void *moduleHandle, const char *procName);
 hc_DLLIMPORT int32_t QueryPerformanceFrequency(int64_t *frequency);
 hc_DLLIMPORT int32_t QueryPerformanceCounter(int64_t *count);
 
-// user32.lib
+// user32.dll
 hc_DLLIMPORT int32_t MessageBoxW(void *windowHandle, const uint16_t *text, const uint16_t *caption, uint32_t type);
 hc_DLLIMPORT uint16_t RegisterClassW(const struct WNDCLASSW *windowClass);
 hc_DLLIMPORT int32_t UnregisterClassW(const uint16_t *className, void *instanceHandle);
@@ -689,7 +689,7 @@ hc_DLLIMPORT uint32_t GetRawInputData(void *rawInputHandle, uint32_t command, vo
 hc_DLLIMPORT int32_t GetMonitorInfoW(void *monitorHandle, struct MONITORINFOEXW *monitorInfo);
 hc_DLLIMPORT void *MonitorFromWindow(void *windowHandle, uint32_t flags);
 
-// gdi32.lib
+// gdi32.dll
 hc_DLLIMPORT int32_t ChoosePixelFormat(void *dc, const struct PIXELFORMATDESCRIPTOR *pfd);
 hc_DLLIMPORT int32_t SetPixelFormat(void *dc, int32_t format, const struct PIXELFORMATDESCRIPTOR *pfd);
 hc_DLLIMPORT int32_t DescribePixelFormat(void *dc, int32_t pixelFormat, uint32_t size, struct PIXELFORMATDESCRIPTOR *pfd);
