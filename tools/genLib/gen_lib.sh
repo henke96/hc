@@ -10,12 +10,12 @@ fi
 LLD_LINK="${LLD_LINK:-lld-link}$LLVM"
 ARCH="${ARCH:-x86_64}"
 if test "$ARCH" = "x86_64"; then
-    arch="x64"
+    machine="x64"
 elif test "$ARCH" = "aarch64"; then
-    arch="arm64"
+    machine="arm64"
 else
     echo "Invalid architecture"
     exit 1
 fi
 
-"$LLD_LINK" -machine:$arch -def:"$1" -out:"$2"
+"$LLD_LINK" -machine:$machine -def:"$1" -out:"$2"
