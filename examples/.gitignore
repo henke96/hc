@@ -4,4 +4,4 @@
 *.wasm*
 *.img
 *.so.*
-*.a
+*.lib

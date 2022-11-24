@@ -3,14 +3,14 @@ set -e
 
 if test -z "$1" || test -z "$2"
 then
-    echo "Usage: $0 INPUT.def OUTPUT.a"
+    echo "Usage: $0 INPUT.def OUTPUT.lib"
     exit 1
 fi
 
-DLLTOOL="${DLLTOOL:-llvm-dlltool}$LLVM"
+LLD_LINK="${LLD_LINK:-lld-link}$LLVM"
 ARCH="${ARCH:-x86_64}"
 if test "$ARCH" = "x86_64"; then
-    arch="i386:x86-64"
+    arch="x64"
 elif test "$ARCH" = "aarch64"; then
     arch="arm64"
 else
@@ -18,4 +18,4 @@ else
     exit 1
 fi
 
-"$DLLTOOL" -m $arch -d "$1" -l "$2"
+"$LLD_LINK" -machine:$arch -def:"$1" -out:"$2"
