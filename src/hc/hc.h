@@ -24,8 +24,10 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 // Are size_t, int, long and pointer types 32 bit?
 #if defined(__ILP32__)
     #define hc_ILP32 1
+    #define hc_ILP32_PAD(NAME) int32_t NAME 
 #else
     #define hc_ILP32 0
+    #define hc_ILP32_PAD(NAME)
 #endif
 
 // Preprocessor helpers.

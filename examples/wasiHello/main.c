@@ -1,5 +1,5 @@
 #include "hc/hc.h"
-#include "hc/wasi/wasi.h"
+#include "hc/wasm/wasi.h"
 
 void noreturn _start(void) {
     struct ciovec iov = {

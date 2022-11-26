@@ -14,3 +14,5 @@ FreeLibrary
 GetProcAddress
 QueryPerformanceFrequency
 QueryPerformanceCounter
+VirtualAlloc
+VirtualFree

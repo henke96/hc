@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <body>
+        <script>
+            "use strict";
+            let textDecoder = new TextDecoder("utf8");
+            let wasmExports;
+
+            function main() {
+                let importObject = {
+                    env: {
+                        debug_printNum: (pre, num, post) => {
+                            let wasmMemoryU8 = new Uint8Array(wasmExports.memory.buffer);
+                            let preEnd, postEnd;
+                            for (preEnd = pre; wasmMemoryU8[preEnd]; ++preEnd);
+                            for (postEnd = post; wasmMemoryU8[postEnd]; ++postEnd);
+                            console.log(textDecoder.decode(wasmMemoryU8.subarray(pre, preEnd)) + num + textDecoder.decode(wasmMemoryU8.subarray(post, postEnd)));
+                        }
+                    }
+                };
+                let wasmBase64 = "/*INCLUDE_BASE64(release.wasm)*/";
+                let wasmBuffer = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0)).buffer;
+                WebAssembly.instantiate(wasmBuffer, importObject).then(
+                    object => {
+                        wasmExports = object.instance.exports;
+                        wasmExports._start();
+                    }
+                );
+            }
+            window.onload = main;
+        </script>
+    </body>
+</html>

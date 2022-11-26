@@ -11,8 +11,4 @@ if test ! -f "$script_dir/../../../tools/htmlPacker/release.bin"; then
 fi
 
 # Generate html.
-(cd "$script_dir" && ../../../tools/htmlPacker/release.bin main.html openGl)
-if test "$MINIFY" = "yes"; then
-    html-minifier --collapse-whitespace --remove-comments --remove-optional-tags --remove-redundant-attributes --remove-script-type-attributes --use-short-doctype --minify-css true --minify-js true openGl.html > openGlMin.html
-    (cd "$script_dir" && ../../../tools/htmlPacker/release.bin openGlMin.html openGlMin)
-fi
+(cd "$script_dir" && ../../../tools/htmlPacker/release.bin main.html allocation)
