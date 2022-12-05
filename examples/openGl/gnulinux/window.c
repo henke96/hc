@@ -222,7 +222,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
                         while (totalRead < window.keyboardMapSize) {
                             int32_t read = (int32_t)sys_recvfrom(
                                 window.x11Client.socketFd,
-                                &((char *)window.keyboardMap)[totalRead],
+                                (char *)window.keyboardMap + totalRead,
                                 window.keyboardMapSize - totalRead,
                                 0, NULL, NULL
                             );

@@ -59,7 +59,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
 
     // Read all fixed size content.
     while (numRead < (int64_t)sizeof(response)) {
-        char *readPos = &((char *)&response)[numRead];
+        char *readPos = (char *)&response + numRead;
         int64_t read = sys_recvfrom(self->socketFd, readPos, (int64_t)sizeof(response) - numRead, 0, NULL, NULL);
         if (read <= 0) {
             status = -6;
@@ -85,7 +85,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
 
     // Read rest of response.
     while (numRead < self->setupResponseSize) {
-        char *readPos = &((char *)self->setupResponse)[numRead];
+        char *readPos = (char *)self->setupResponse + numRead;
         int64_t read = sys_recvfrom(self->socketFd, readPos, self->setupResponseSize - numRead, 0, NULL, NULL);
         if (read <= 0) {
             status = -9;
@@ -113,7 +113,7 @@ static uint32_t x11Client_nextId(struct x11Client *self) {
 static int32_t x11Client_sendRequests(struct x11Client *self, void *requests, int64_t requestsLength, int32_t numRequests) {
     int64_t numSent = 0;
     do {
-        int64_t sent = sys_sendto(self->socketFd, &((char *)requests)[numSent], requestsLength - numSent, MSG_NOSIGNAL, NULL, 0);
+        int64_t sent = sys_sendto(self->socketFd, requests + numSent, requestsLength - numSent, MSG_NOSIGNAL, NULL, 0);
         if (sent <= 0) {
             if (sent == -EINTR) continue;
             return -1;

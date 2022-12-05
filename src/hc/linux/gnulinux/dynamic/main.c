@@ -50,7 +50,7 @@ int32_t main(int32_t argc, char **argv) {
     if ((int64_t)elfHeader < 0) return 1;
 
     // Find the interpreter program header.
-    struct elf_programHeader *programHeaders = (void *)((char *)elfHeader + elfHeader->programHeadersOffset);
+    struct elf_programHeader *programHeaders = (void *)elfHeader + elfHeader->programHeadersOffset;
     for (int32_t i = 0; i < elfHeader->programHeadersLength; ++i) {
         if (programHeaders[i].type == elf_PT_INTERP) {
             // Run ourself through the dynamic linker.

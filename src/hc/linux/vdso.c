@@ -23,10 +23,10 @@ static void *vdso_lookup(const uint64_t *auxv, const char *symbolName) {
 
     // Find dynamic section.
     struct elf_dynamicInfo *dynamicSection;
-    struct elf_programHeader *programHeaders = (void *)((char *)elfHeader + elfHeader->programHeadersOffset);
+    struct elf_programHeader *programHeaders = (void *)elfHeader + elfHeader->programHeadersOffset;
     for (int32_t i = 0; i < elfHeader->programHeadersLength; ++i) {
         if (programHeaders[i].type == elf_PT_DYNAMIC) {
-            dynamicSection = (void *)((char *)elfHeader + programHeaders[i].fileOffset);
+            dynamicSection = (void *)elfHeader + programHeaders[i].fileOffset;
             goto foundDynamicSection;
         }
     }
@@ -38,7 +38,7 @@ static void *vdso_lookup(const uint64_t *auxv, const char *symbolName) {
     struct elf_symbol *symbols = NULL;
     struct elf_hashTable *hashTable = NULL;
     for (int32_t i = 0; dynamicSection[i].tag != elf_DT_NULL; ++i) {
-        void *pointer = (char *)elfHeader + dynamicSection[i].value;
+        void *pointer = (void *)elfHeader + dynamicSection[i].value;
         switch (dynamicSection[i].tag) {
             case elf_DT_STRTAB: strings = pointer; break;
             case elf_DT_SYMTAB: symbols = pointer; break;
@@ -50,7 +50,7 @@ static void *vdso_lookup(const uint64_t *auxv, const char *symbolName) {
     // Find the requested symbol.
     for (uint32_t i = 0; i < hashTable->numChains; ++i) {
         if (util_cstrCmp(symbolName, &strings[symbols[i].nameIndex]) == 0) {
-            return (char *)elfHeader + symbols[i].value;
+            return (void *)elfHeader + symbols[i].value;
         }
     }
     return NULL;
