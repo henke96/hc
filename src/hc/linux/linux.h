@@ -4215,3 +4215,351 @@ struct inotify_event {
 /* Flags for sys_inotify_init1.  */
 #define IN_CLOEXEC O_CLOEXEC
 #define IN_NONBLOCK O_NONBLOCK
+
+// ksmbd_netlink.h
+#define KSMBD_GENL_NAME "SMBD_GENL"
+#define KSMBD_GENL_VERSION 0x01
+
+#define KSMBD_REQ_MAX_ACCOUNT_NAME_SZ 48
+#define KSMBD_REQ_MAX_HASH_SZ 18
+#define KSMBD_REQ_MAX_SHARE_NAME 64
+
+/*
+ * IPC heartbeat frame to check whether user IPC daemon is alive.
+ */
+struct ksmbd_heartbeat {
+    uint32_t handle;
+};
+
+/*
+ * Global config flags.
+ */
+#define KSMBD_GLOBAL_FLAG_INVALID (0)
+#define KSMBD_GLOBAL_FLAG_SMB2_LEASES 0x1
+#define KSMBD_GLOBAL_FLAG_SMB2_ENCRYPTION 0x2
+#define KSMBD_GLOBAL_FLAG_SMB3_MULTICHANNEL 0x4
+
+/*
+ * IPC request for ksmbd server startup
+ */
+struct ksmbd_startup_request {
+    uint32_t flags; /* Flags for global config */
+    int32_t signing; /* Signing enabled */
+    char min_prot[16]; /* The minimum SMB protocol version */
+    char max_prot[16]; /* The maximum SMB protocol version */
+    char netbios_name[16];
+    char work_group[64]; /* Workgroup */
+    char server_string[64]; /* Server string */
+    uint16_t tcp_port; /* tcp port */
+    uint16_t ipc_timeout; /*
+                           * specifies the number of seconds
+                           * server will wait for the userspace to
+                           * reply to heartbeat frames.
+                           */
+    uint32_t deadtime; /* Number of minutes of inactivity */
+    uint32_t file_max; /* Limits the maximum number of open files */
+    uint32_t smb2_max_write; /* MAX write size */
+    uint32_t smb2_max_read; /* MAX read size */
+    uint32_t smb2_max_trans; /* MAX trans size */
+    uint32_t share_fake_fscaps; /*
+                                 * Support some special application that
+                                 * makes QFSINFO calls to check whether
+                                 * we set the SPARSE_FILES bit (0x40).
+                                 */
+    uint32_t sub_auth[3]; /* Subauth value for Security ID */
+    uint32_t smb2_max_credits; /* MAX credits */
+    uint32_t reserved[128]; /* Reserved room */
+    uint32_t ifc_list_sz; /* interfaces list size */
+    char ____payload[];
+};
+
+#define KSMBD_STARTUP_CONFIG_INTERFACES(s) ((s)->____payload)
+
+/*
+ * IPC request to shutdown ksmbd server.
+ */
+struct ksmbd_shutdown_request {
+    int32_t reserved[16];
+};
+
+/*
+ * IPC user login request.
+ */
+struct ksmbd_login_request {
+    uint32_t handle;
+    char account[KSMBD_REQ_MAX_ACCOUNT_NAME_SZ]; /* user account name */
+    uint32_t reserved[16]; /* Reserved room */
+};
+
+/*
+ * IPC user login response.
+ */
+struct ksmbd_login_response {
+    uint32_t handle;
+    uint32_t gid; /* group id */
+    uint32_t uid; /* user id */
+    char account[KSMBD_REQ_MAX_ACCOUNT_NAME_SZ]; /* user account name */
+    uint16_t status;
+    uint16_t hash_sz; /* hash size */
+    uint8_t hash[KSMBD_REQ_MAX_HASH_SZ]; /* password hash */
+    int16_t __pad;
+    uint32_t reserved[16]; /* Reserved room */
+};
+
+/*
+ * IPC request to fetch net share config.
+ */
+struct ksmbd_share_config_request {
+    uint32_t handle;
+    char share_name[KSMBD_REQ_MAX_SHARE_NAME]; /* share name */
+    uint32_t reserved[16]; /* Reserved room */
+};
+
+/*
+ * IPC response to the net share config request.
+ */
+struct ksmbd_share_config_response {
+    uint32_t handle;
+    uint32_t flags;
+    uint16_t create_mask;
+    uint16_t directory_mask;
+    uint16_t force_create_mode;
+    uint16_t force_directory_mode;
+    uint16_t force_uid;
+    uint16_t force_gid;
+    uint32_t reserved[128]; /* Reserved room */
+    uint32_t veto_list_sz;
+    char ____payload[];
+};
+
+#define KSMBD_SHARE_CONFIG_VETO_LIST(s) ((s)->____payload)
+
+static inline char *ksmbd_share_config_path(struct ksmbd_share_config_response *sc) {
+    char *p = sc->____payload;
+    if (sc->veto_list_sz) p += sc->veto_list_sz + 1;
+    return p;
+}
+
+/*
+ * IPC request for tree connection. This request include session and tree
+ * connect info from client.
+ */
+struct ksmbd_tree_connect_request {
+    uint32_t handle;
+    uint16_t account_flags;
+    uint16_t flags;
+    uint64_t session_id;
+    uint64_t connect_id;
+    char account[KSMBD_REQ_MAX_ACCOUNT_NAME_SZ];
+    char share[KSMBD_REQ_MAX_SHARE_NAME];
+    char peer_addr[64];
+    uint32_t reserved[16]; /* Reserved room */
+};
+
+/*
+ * IPC Response structure for tree connection.
+ */
+struct ksmbd_tree_connect_response {
+    uint32_t handle;
+    uint16_t status;
+    uint16_t connection_flags;
+    uint32_t reserved[16]; /* Reserved room */
+};
+
+/*
+ * IPC Request struture to disconnect tree connection.
+ */
+struct ksmbd_tree_disconnect_request {
+    uint64_t session_id; /* session id */
+    uint64_t connect_id; /* tree connection id */
+    uint32_t reserved[16]; /* Reserved room */
+};
+
+/*
+ * IPC Response structure to logout user account.
+ */
+struct ksmbd_logout_request {
+    char account[KSMBD_REQ_MAX_ACCOUNT_NAME_SZ]; /* user account name */
+    uint32_t account_flags;
+    uint32_t reserved[16]; /* Reserved room */
+};
+
+/*
+ * RPC command structure to send rpc request like srvsvc or wkssvc to
+ * IPC user daemon.
+ */
+struct ksmbd_rpc_command {
+    uint32_t handle;
+    uint32_t flags;
+    uint32_t payload_sz;
+    uint8_t payload[];
+};
+
+/*
+ * IPC Request Kerberos authentication
+ */
+struct ksmbd_spnego_authen_request {
+    uint32_t handle;
+    uint16_t spnego_blob_len; /* the length of spnego_blob */
+    uint8_t spnego_blob[]; /*
+                            * the GSS token from SecurityBuffer of
+                            * SMB2 SESSION SETUP request
+                            */
+};
+
+/*
+ * Response data which includes the GSS token and the session key generated by
+ * user daemon.
+ */
+struct ksmbd_spnego_authen_response {
+    uint32_t handle;
+    struct ksmbd_login_response login_response; /*
+                                                 * the login response with
+                                                 * a user identified by the
+                                                 * GSS token from a client
+                                                 */
+    uint16_t session_key_len; /* the length of the session key */
+    uint16_t spnego_blob_len; /*
+                               * the length of  the GSS token which will be
+                               * stored in SecurityBuffer of SMB2 SESSION
+                               * SETUP response
+                               */
+    uint8_t payload[]; /* session key + AP_REP */
+};
+
+/*
+ * This also used as NETLINK attribute type value.
+ *
+ * NOTE:
+ * Response message type value should be equal to
+ * request message type value + 1.
+ */
+enum ksmbd_event {
+    KSMBD_EVENT_UNSPEC = 0,
+    KSMBD_EVENT_HEARTBEAT_REQUEST,
+
+    KSMBD_EVENT_STARTING_UP,
+    KSMBD_EVENT_SHUTTING_DOWN,
+
+    KSMBD_EVENT_LOGIN_REQUEST,
+    KSMBD_EVENT_LOGIN_RESPONSE = 5,
+
+    KSMBD_EVENT_SHARE_CONFIG_REQUEST,
+    KSMBD_EVENT_SHARE_CONFIG_RESPONSE,
+
+    KSMBD_EVENT_TREE_CONNECT_REQUEST,
+    KSMBD_EVENT_TREE_CONNECT_RESPONSE,
+
+    KSMBD_EVENT_TREE_DISCONNECT_REQUEST = 10,
+
+    KSMBD_EVENT_LOGOUT_REQUEST,
+
+    KSMBD_EVENT_RPC_REQUEST,
+    KSMBD_EVENT_RPC_RESPONSE,
+
+    KSMBD_EVENT_SPNEGO_AUTHEN_REQUEST,
+    KSMBD_EVENT_SPNEGO_AUTHEN_RESPONSE = 15,
+
+    KSMBD_EVENT_MAX
+};
+
+/*
+ * Enumeration for IPC tree connect status.
+ */
+enum KSMBD_TREE_CONN_STATUS {
+    KSMBD_TREE_CONN_STATUS_OK = 0,
+    KSMBD_TREE_CONN_STATUS_NOMEM,
+    KSMBD_TREE_CONN_STATUS_NO_SHARE,
+    KSMBD_TREE_CONN_STATUS_NO_USER,
+    KSMBD_TREE_CONN_STATUS_INVALID_USER,
+    KSMBD_TREE_CONN_STATUS_HOST_DENIED = 5,
+    KSMBD_TREE_CONN_STATUS_CONN_EXIST,
+    KSMBD_TREE_CONN_STATUS_TOO_MANY_CONNS,
+    KSMBD_TREE_CONN_STATUS_TOO_MANY_SESSIONS,
+    KSMBD_TREE_CONN_STATUS_ERROR,
+};
+
+/*
+ * User config flags.
+ */
+#define KSMBD_USER_FLAG_INVALID (0)
+#define KSMBD_USER_FLAG_OK 0x1
+#define KSMBD_USER_FLAG_BAD_PASSWORD 0x2
+#define KSMBD_USER_FLAG_BAD_UID 0x4
+#define KSMBD_USER_FLAG_BAD_USER 0x8
+#define KSMBD_USER_FLAG_GUEST_ACCOUNT 0x10
+#define KSMBD_USER_FLAG_DELAY_SESSION 0x20
+
+/*
+ * Share config flags.
+ */
+#define KSMBD_SHARE_FLAG_INVALID (0)
+#define KSMBD_SHARE_FLAG_AVAILABLE 0x1
+#define KSMBD_SHARE_FLAG_BROWSEABLE 0x2
+#define KSMBD_SHARE_FLAG_WRITEABLE 0x4
+#define KSMBD_SHARE_FLAG_READONLY 0x8
+#define KSMBD_SHARE_FLAG_GUEST_OK 0x10
+#define KSMBD_SHARE_FLAG_GUEST_ONLY 0x20
+#define KSMBD_SHARE_FLAG_STORE_DOS_ATTRS 0x40
+#define KSMBD_SHARE_FLAG_OPLOCKS 0x80
+#define KSMBD_SHARE_FLAG_PIPE 0x100
+#define KSMBD_SHARE_FLAG_HIDE_DOT_FILES 0x200
+#define KSMBD_SHARE_FLAG_INHERIT_OWNER 0x400
+#define KSMBD_SHARE_FLAG_STREAMS 0x800
+#define KSMBD_SHARE_FLAG_FOLLOW_SYMLINKS 0x1000
+#define KSMBD_SHARE_FLAG_ACL_XATTR 0x2000
+
+/*
+ * Tree connect request flags.
+ */
+#define KSMBD_TREE_CONN_FLAG_REQUEST_SMB1 (0)
+#define KSMBD_TREE_CONN_FLAG_REQUEST_IPV6 0x1
+#define KSMBD_TREE_CONN_FLAG_REQUEST_SMB2 0x2
+
+/*
+ * Tree connect flags.
+ */
+#define KSMBD_TREE_CONN_FLAG_GUEST_ACCOUNT 0x1
+#define KSMBD_TREE_CONN_FLAG_READ_ONLY 0x2
+#define KSMBD_TREE_CONN_FLAG_WRITABLE 0x4
+#define KSMBD_TREE_CONN_FLAG_ADMIN_ACCOUNT 0x8
+
+/*
+ * RPC over IPC.
+ */
+#define KSMBD_RPC_METHOD_RETURN 0x1
+#define KSMBD_RPC_SRVSVC_METHOD_INVOKE 0x2
+#define KSMBD_RPC_SRVSVC_METHOD_RETURN (KSMBD_RPC_SRVSVC_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_WKSSVC_METHOD_INVOKE 0x4
+#define KSMBD_RPC_WKSSVC_METHOD_RETURN (KSMBD_RPC_WKSSVC_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_IOCTL_METHOD (0x8 | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_OPEN_METHOD 0x10
+#define KSMBD_RPC_WRITE_METHOD 0x20
+#define KSMBD_RPC_READ_METHOD (0x40 | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_CLOSE_METHOD 0x80
+#define KSMBD_RPC_RAP_METHOD (0x100 | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_RESTRICTED_CONTEXT 0x200
+#define KSMBD_RPC_SAMR_METHOD_INVOKE 0x400
+#define KSMBD_RPC_SAMR_METHOD_RETURN (KSMBD_RPC_SAMR_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_LSARPC_METHOD_INVOKE 0x800
+#define KSMBD_RPC_LSARPC_METHOD_RETURN (KSMBD_RPC_LSARPC_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
+
+/*
+ * RPC status definitions.
+ */
+#define KSMBD_RPC_OK 0
+#define KSMBD_RPC_EBAD_FUNC 0x00000001
+#define KSMBD_RPC_EACCESS_DENIED 0x00000005
+#define KSMBD_RPC_EBAD_FID 0x00000006
+#define KSMBD_RPC_ENOMEM 0x00000008
+#define KSMBD_RPC_EBAD_DATA 0x0000000D
+#define KSMBD_RPC_ENOTIMPLEMENTED 0x00000040
+#define KSMBD_RPC_EINVALID_PARAMETER 0x00000057
+#define KSMBD_RPC_EMORE_DATA 0x000000EA
+#define KSMBD_RPC_EINVALID_LEVEL 0x0000007C
+#define KSMBD_RPC_SOME_NOT_MAPPED 0x00000107
+
+#define KSMBD_CONFIG_OPT_DISABLED 0
+#define KSMBD_CONFIG_OPT_ENABLED 1
+#define KSMBD_CONFIG_OPT_AUTO 2
+#define KSMBD_CONFIG_OPT_MANDATORY 3
