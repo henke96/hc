@@ -99,11 +99,12 @@ hc_UNUSED static int32_t util_hexToUint(const void *buffer, int64_t maxChars, ui
     uint64_t result = 0;
     int32_t i = 0;
     for (; i < maxChars; ++i) {
-        uint64_t digitValue = ((uint8_t *)buffer)[i] - '0';
+        uint64_t digitValue = ((uint8_t *)buffer)[i];
+        digitValue -= '0';
         if (digitValue > 9) {
-            digitValue += (uint64_t)'0' - 'a';
+            digitValue += (uint64_t)'0' - 'A';
             if (digitValue > 5) {
-                digitValue += (uint64_t)'a' - 'A';
+                digitValue += (uint64_t)'A' - 'a';
                 if (digitValue > 5) break; // Not a hex digit.
             }
             digitValue += 10;

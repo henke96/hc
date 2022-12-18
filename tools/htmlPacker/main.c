@@ -30,7 +30,6 @@ static void base64Encode(char *output, unsigned char *input, size_t inputSize) {
             outputPos[2] = base64_table[((input[1] & 0xF) << 2)];
         }
         outputPos[3] = '=';
-        outputPos += 4;
     }
 }
 
