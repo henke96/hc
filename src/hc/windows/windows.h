@@ -7,6 +7,9 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define MB_ERR_INVALID_CHARS 0x00000008
 #define WC_ERR_INVALID_CHARS 0x00000080
 
+// wincon.h
+#define ATTACH_PARENT_PROCESS (uint32_t)-1
+
 // winnt.h
 #define DLL_PROCESS_ATTACH 1
 #define DLL_THREAD_ATTACH 2

@@ -17,8 +17,8 @@ root_dir="$script_dir/../.."
 common_flags="-Wl,-subsystem,windows -L$1 -O2"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g $FLAGS"
 release_flags="$common_flags -Ddebug_NDEBUG -s $FLAGS"
-"$root_dir/cc_pe.sh" $debug_flags -S -o "$1/$2.debug.exe.s" "$1/$2.c" $LFLAGS
-"$root_dir/cc_pe.sh" $debug_flags -o "$1/$2.debug.exe" "$1/$2.c" $LFLAGS
+"$root_dir/cc_pe.sh" $debug_flags -S -o "$1/debug.$2.exe.s" "$1/$2.c" $LFLAGS
+"$root_dir/cc_pe.sh" $debug_flags -o "$1/debug.$2.exe" "$1/$2.c" $LFLAGS
 "$root_dir/cc_pe.sh" $release_flags -S -o "$1/$2.exe.s" "$1/$2.c" $LFLAGS
 "$root_dir/cc_pe.sh" $release_flags -o "$1/$2.exe" "$1/$2.c" $LFLAGS
 

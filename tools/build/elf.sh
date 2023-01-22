@@ -16,7 +16,7 @@ release_flags="-Ddebug_NDEBUG -O2 -s $FLAGS"
 "$root_dir/cc_elf.sh" $debug_flags -o "$1/debug.$2.elf" "$1/$2.c" $LFLAGS
 "$root_dir/cc_elf.sh" $release_flags -S -o "$1/$2.elf.s" "$1/$2.c" $LFLAGS
 "$root_dir/cc_elf.sh" $release_flags -o "$1/$2.elf" "$1/$2.c" $LFLAGS
-${LLVM}llvm-objcopy --strip-sections "$1/$2.elf"
+"${LLVM}llvm-objcopy" --strip-sections "$1/$2.elf"
 
 # Static analysis.
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"

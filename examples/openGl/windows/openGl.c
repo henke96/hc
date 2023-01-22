@@ -22,6 +22,7 @@ hc_DLLEXPORT uint32_t NvOptimusEnablement = 0x00000001;
 hc_DLLEXPORT uint32_t AmdPowerXpressRequestHighPerformance = 0x00000001;
 
 void noreturn _start(void) {
+    AttachConsole(ATTACH_PARENT_PROCESS);
     int32_t status = window_init();
     if (status < 0) {
         debug_printNum("Failed to initialise window (", status, ")\n");

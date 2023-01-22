@@ -11,7 +11,8 @@ struct window {
     uint64_t eventTimestamp;
     struct WINDOWPLACEMENT prevPlacement;
     bool pointerGrabbed;
-    char __pad[3];
+    bool initialised;
+    char __pad[2];
 };
 
 static struct window window;
@@ -75,6 +76,7 @@ static int64_t window_proc(
                 debug_printNum("Failed to initialise game (", status, ")\n");
                 goto cleanup_context;
             }
+            window.initialised = true;
             return 0;
 
             cleanup_context:
@@ -84,10 +86,13 @@ static int64_t window_proc(
             return -1;
         };
         case WM_DESTROY: {
-            game_deinit();
-            wgl_destroyContext(&window.wgl, window.dc);
-            debug_CHECK(ReleaseDC(windowHandle, window.dc), RES == 1);
-            PostQuitMessage(0);
+            // Windows calls this even if WM_CREATE failed..
+            if (window.initialised) {
+                game_deinit();
+                wgl_destroyContext(&window.wgl, window.dc);
+                debug_CHECK(ReleaseDC(windowHandle, window.dc), RES == 1);
+                PostQuitMessage(0);
+            }
             return 0;
         }
         case WM_SIZE: {
@@ -184,6 +189,7 @@ static int64_t window_proc(
 }
 
 static int32_t window_init(void) {
+    window.initialised = false;
     window.pointerGrabbed = false;
     window.prevPlacement.length = sizeof(window.prevPlacement);
 
