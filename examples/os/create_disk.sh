@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-script_dir="$(dirname $0)"
+script_dir="$(dirname "$0")"
 cleanup() {
     set +e
     umount "$mnt"

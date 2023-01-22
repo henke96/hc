@@ -1,6 +1,6 @@
 #!/bin/sh
 set -e
-script_dir="$(dirname $0)"
+script_dir="$(dirname "$0")"
 root_dir="$script_dir/../../.."
 
 "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/kernel32.def" "$script_dir/kernel32.lib"

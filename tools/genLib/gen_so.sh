@@ -7,5 +7,5 @@ then
     exit 1
 fi
 
-script_dir="$(dirname $0)"
+script_dir="$(dirname "$0")"
 "$script_dir/../../cc_elf.sh" -shared -o "$2" "$1"

@@ -1,4 +1,5 @@
 #!/bin/sh
-script_dir="$(dirname $0)"
+script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
-LFLAGS="-l:libc.so.6 -l:libdl.so.2" "$root_dir/tools/build/gnuelf.sh" "$script_dir" gnuHello
+
+FLAGS="-l:libc.so.6 -l:libdl.so.2" "$root_dir/tools/build/gnuelf.sh" "$script_dir" gnuHello

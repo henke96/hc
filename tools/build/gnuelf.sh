@@ -7,10 +7,12 @@ then
     exit 1
 fi
 
-script_dir="$(dirname $0)"
+path="$1"
+
+script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
-"$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/dynamic/libc.so.6.c" "$1/libc.so.6"
-"$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/dynamic/libdl.so.2.c" "$1/libdl.so.2"
+"$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/dynamic/libc.so.6.c" "$path/libc.so.6"
+"$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/dynamic/libdl.so.2.c" "$path/libdl.so.2"
 
-LFLAGS="-L$1 $LFLAGS" "$script_dir/elf.sh" "$@"
+FLAGS="-L\"$path\" $FLAGS" "$script_dir/elf.sh" "$@"
