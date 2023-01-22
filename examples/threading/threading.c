@@ -54,7 +54,7 @@ static noreturn void thread(void *arg) {
     sys_exit(0);
 }
 
-int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
+int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     // Start child thread.
     struct clone_args args = {
         .flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM,

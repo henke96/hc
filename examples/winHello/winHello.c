@@ -5,7 +5,7 @@
 
 void noreturn _start(void) {
     void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    debug_CHECK(stdOutHandle, RES != INVALID_HANDLE_VALUE);
+    debug_ASSERT(stdOutHandle != INVALID_HANDLE_VALUE);
     WriteFile(stdOutHandle, "Hello!\n", 7, NULL, NULL);
     MessageBoxW(NULL, u"Hey!", u"Yo", MB_OK);
     ExitProcess(0);

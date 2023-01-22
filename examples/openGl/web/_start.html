@@ -25,7 +25,7 @@
                 glObjects[index] = null;
                 return object;
             }
-            function main() {
+            function _start() {
                 // Initialise webGL.
                 let canvas = document.getElementById("gameCanvas");
                 canvas.width = window.innerWidth;
@@ -108,7 +108,7 @@
                         }
                     }
                 };
-                let wasmBase64 = "/*INCLUDE_BASE64(release.wasm)*/";
+                let wasmBase64 = "/*INCLUDE_BASE64(openGl.wasm)*/";
                 let wasmBuffer = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0)).buffer;
                 WebAssembly.instantiate(wasmBuffer, importObject).then(
                     object => {
@@ -174,7 +174,7 @@
                     }
                 );
             }
-            window.onload = main;
+            window.onload = _start;
         </script>
         <canvas id="gameCanvas"></canvas>
     </body>

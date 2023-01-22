@@ -18,12 +18,12 @@
                         }
                     }
                 };
-                let wasmBase64 = "/*INCLUDE_BASE64(release.wasm)*/";
+                let wasmBase64 = "/*INCLUDE_BASE64(allocation.wasm)*/";
                 let wasmBuffer = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0)).buffer;
                 WebAssembly.instantiate(wasmBuffer, importObject).then(
                     object => {
                         wasmExports = object.instance.exports;
-                        wasmExports._start();
+                        wasmExports.start();
                     }
                 );
             }

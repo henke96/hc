@@ -2,12 +2,38 @@
 
 static_assert(!hc_ILP32, "Pointers not 64 bit");
 
+// winnls.h
+#define CP_UTF8 65001
+#define MB_ERR_INVALID_CHARS 0x00000008
+#define WC_ERR_INVALID_CHARS 0x00000080
+
 // winnt.h
 #define DLL_PROCESS_ATTACH 1
 #define DLL_THREAD_ATTACH 2
 #define DLL_THREAD_DETACH 3
 #define DLL_PROCESS_DETACH 0
 #define DLL_PROCESS_VERIFIER 4
+
+#define GENERIC_READ 0x80000000
+#define GENERIC_WRITE 0x40000000
+#define GENERIC_EXECUTE 0x20000000
+#define GENERIC_ALL 0x10000000
+
+#define FILE_ATTRIBUTE_READONLY 0x00000001
+#define FILE_ATTRIBUTE_HIDDEN 0x00000002
+#define FILE_ATTRIBUTE_SYSTEM 0x00000004
+#define FILE_ATTRIBUTE_DIRECTORY 0x00000010
+#define FILE_ATTRIBUTE_ARCHIVE 0x00000020
+#define FILE_ATTRIBUTE_DEVICE 0x00000040
+#define FILE_ATTRIBUTE_NORMAL 0x00000080
+#define FILE_ATTRIBUTE_TEMPORARY 0x00000100
+#define FILE_ATTRIBUTE_SPARSE_FILE 0x00000200
+#define FILE_ATTRIBUTE_REPARSE_POINT 0x00000400
+#define FILE_ATTRIBUTE_COMPRESSED 0x00000800
+#define FILE_ATTRIBUTE_OFFLINE 0x00001000
+#define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED 0x00002000
+#define FILE_ATTRIBUTE_ENCRYPTED 0x00004000
+#define FILE_ATTRIBUTE_VIRTUAL 0x00010000
 
 // winbase.h
 #define INVALID_HANDLE_VALUE ((void *)-1)
@@ -18,6 +44,24 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define STD_INPUT_HANDLE ((uint32_t)-10)
 #define STD_OUTPUT_HANDLE ((uint32_t)-11)
 #define STD_ERROR_HANDLE ((uint32_t)-12)
+
+#define FILE_FLAG_WRITE_THROUGH 0x80000000
+#define FILE_FLAG_OVERLAPPED 0x40000000
+#define FILE_FLAG_NO_BUFFERING 0x20000000
+#define FILE_FLAG_RANDOM_ACCESS 0x10000000
+#define FILE_FLAG_SEQUENTIAL_SCAN 0x08000000
+#define FILE_FLAG_DELETE_ON_CLOSE 0x04000000
+#define FILE_FLAG_BACKUP_SEMANTICS 0x02000000
+#define FILE_FLAG_POSIX_SEMANTICS 0x01000000
+#define FILE_FLAG_OPEN_REPARSE_POINT 0x00200000
+#define FILE_FLAG_OPEN_NO_RECALL 0x00100000
+#define FILE_FLAG_FIRST_PIPE_INSTANCE 0x00080000
+
+#define CREATE_NEW 1
+#define CREATE_ALWAYS 2
+#define OPEN_EXISTING 3
+#define OPEN_ALWAYS 4
+#define TRUNCATE_EXISTING 5
 
 // wingdi.h
 #define PFD_TYPE_RGBA 0
@@ -662,12 +706,23 @@ hc_DLLIMPORT int32_t AllocConsole(void);
 hc_DLLIMPORT int32_t FreeConsole(void);
 hc_DLLIMPORT int32_t AttachConsole(uint32_t processId);
 
+hc_DLLIMPORT void *GetProcessHeap(void);
+hc_DLLIMPORT void *HeapAlloc(void *heapHandle, uint32_t flags, uint64_t size);
+hc_DLLIMPORT int32_t HeapFree(void *heapHandle, uint32_t flags, void *mem);
+
+hc_DLLIMPORT uint16_t *GetCommandLineW(void);
+hc_DLLIMPORT uint16_t **CommandLineToArgvW(uint16_t *cmdLine, int32_t *numArgs);
+
 hc_DLLIMPORT noreturn void ExitProcess(uint32_t exitCode);
 hc_DLLIMPORT int32_t TerminateProcess(void *handle, uint32_t exitCode);
 hc_DLLIMPORT void *GetCurrentProcess(void);
 
+hc_DLLIMPORT int32_t CloseHandle(void *handle);
 hc_DLLIMPORT void *GetStdHandle(uint32_t type);
+hc_DLLIMPORT void *CreateFileW(const uint16_t *fileName, uint32_t desiredAccess, uint32_t shareMode, void *securityAttributes, uint32_t creationDisposition, uint32_t flagsAndAttributes, void *templateFileHandle);
 hc_DLLIMPORT int32_t WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
+hc_DLLIMPORT int32_t ReadFile(void *fileHandle, void *buffer, uint32_t numberOfBytesToRead, uint32_t *numberOfBytesRead, void *overlapped);
+hc_DLLIMPORT int32_t GetFileSizeEx(void *fileHandle, int64_t *size);
 
 hc_DLLIMPORT void *LoadLibraryW(const uint16_t *libFileName);
 hc_DLLIMPORT int32_t FreeLibrary(void *dlHandle);
@@ -678,6 +733,9 @@ hc_DLLIMPORT int32_t QueryPerformanceCounter(int64_t *count);
 
 hc_DLLIMPORT void *VirtualAlloc(void *address, uint64_t size, uint32_t allocationType, uint32_t protect);
 hc_DLLIMPORT int32_t VirtualFree(void *address, uint64_t size, uint32_t freeType);
+
+hc_DLLIMPORT int32_t MultiByteToWideChar(uint32_t codePage, uint32_t flags, const char *multiByteStr, int32_t multiByteSize, uint16_t *wideCharStr, int32_t wideCharCount);
+hc_DLLIMPORT int32_t WideCharToMultiByte(uint32_t codePage, uint32_t flags, const uint16_t *wideCharStr, int32_t wideCharCount, char *multiByteStr, int32_t multiByteSize, const uint16_t *defaultChar, int32_t *usedDefaultChar);
 
 // user32.dll
 hc_DLLIMPORT int32_t MessageBoxW(void *windowHandle, const uint16_t *text, const uint16_t *caption, uint32_t type);

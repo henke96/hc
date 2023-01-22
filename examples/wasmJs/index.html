@@ -7,7 +7,7 @@
                     print: num => console.log("Print: " + num)
                 }
             };
-            WebAssembly.instantiateStreaming(fetch("release.wasm"), importObject).then(
+            WebAssembly.instantiateStreaming(fetch("wasmJs.wasm"), importObject).then(
                 object => {
                     let result = object.instance.exports.addAndPrint(1, 2);
                     console.log("Return: " + result);

@@ -23,8 +23,8 @@ static int32_t init_graphics(struct drmKms *graphics) {
     int32_t selectedModeHz = 0;
     for (int32_t i = 0; i < graphics->connector.count_modes; ++i) {
         struct iovec print[] = {
-            { .iov_base = "Mode \"", .iov_len = 6 },
-            { .iov_base = graphics->modeInfos[i].name, .iov_len = DRM_DISPLAY_MODE_LEN }
+            { hc_STR_COMMA_LEN("Mode \"") },
+            { graphics->modeInfos[i].name, DRM_DISPLAY_MODE_LEN }
         };
         sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print)); 
         debug_printNum("\"\n  Pixel clock: ", graphics->modeInfos[i].clock, " KHz\n");
@@ -50,8 +50,8 @@ static int32_t init_graphics(struct drmKms *graphics) {
     if (selectedModeIndex < 0) return -1;
 
     struct iovec print[] = {
-        { .iov_base = "Selected mode \"", .iov_len = 15 },
-        { .iov_base = graphics->modeInfos[selectedModeIndex].name, .iov_len = DRM_DISPLAY_MODE_LEN }
+        { hc_STR_COMMA_LEN("Selected mode \"") },
+        { graphics->modeInfos[selectedModeIndex].name, DRM_DISPLAY_MODE_LEN }
     };
     sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
     debug_printNum("\" at ", selectedModeHz, " Hz.\n");
@@ -70,7 +70,7 @@ static inline void deinit_graphics(struct drmKms *graphics) {
     drmKms_deinit(graphics);
 }
 
-int32_t main(int32_t argc, char **argv) {
+int32_t start(int32_t argc, char **argv) {
     uint64_t *auxv = util_getAuxv(util_getEnvp(argc, argv));
 
     // Find program name from the auxiliary vector.
@@ -85,12 +85,10 @@ int32_t main(int32_t argc, char **argv) {
 
     // Argument parsing.
     if (argc != 2) {
-        static const char usageStart[7] = "Usage: ";
-        static const char usageArgs[9] = " TTY_NUM\n";
         struct iovec print[] = {
-            { .iov_base = (char *)&usageStart[0], .iov_len = sizeof(usageStart) },
-            { .iov_base = (char *)programName,    .iov_len = util_cstrLen(programName) },
-            { .iov_base = (char *)&usageArgs[0],  .iov_len = sizeof(usageArgs) }
+            { hc_STR_COMMA_LEN("Usage: ") },
+            { (char *)programName, util_cstrLen(programName) },
+            { hc_STR_COMMA_LEN(" TTY_NUM\n") }
         };
         sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
         return 0;
@@ -99,8 +97,7 @@ int32_t main(int32_t argc, char **argv) {
     // Parse TTY_NUM argument.
     uint64_t ttyNumber;
     if (util_strToUint(argv[1], 100, &ttyNumber) <= 0 || ttyNumber < 1 || ttyNumber > 63) {
-        static const char error[] = "Invalid TTY_NUM argument\n";
-        sys_write(STDOUT_FILENO, &error, sizeof(error) - 1);
+        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Invalid TTY_NUM argument\n"));
         return 1;
     }
     char ttyPath[10] = "/dev/tty\0\0";
@@ -121,16 +118,14 @@ int32_t main(int32_t argc, char **argv) {
     // Open tty.
     int32_t ttyFd = sys_openat(-1, &ttyPath, O_RDWR, 0);
     if (ttyFd < 0) {
-        static const char error[] = "Failed to open tty\n";
-        sys_write(STDOUT_FILENO, &error, sizeof(error) - 1);
+        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Failed to open tty\n"));
         return 1;
     }
 
     // Set the tty as our controlling terminal.
     status = sys_ioctl(ttyFd, TIOCSCTTY, 0);
     if (status < 0) {
-        static const char error[] = "Failed to set controlling terminal\n";
-        sys_write(STDOUT_FILENO, &error, sizeof(error) - 1);
+        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Failed to set controlling terminal\n"));
         return 1;
     }
 
@@ -203,8 +198,7 @@ int32_t main(int32_t argc, char **argv) {
             if (info.ssi_signo == SIGUSR1) {
                 if (active) return 1;
                 active = true;
-                static const char message[] = "Acquired!\n";
-                sys_write(STDOUT_FILENO, &message, sizeof(message) - 1);
+                sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Acquired!\n"));
 
                 // Initialise drawing state.
                 if (init_graphics(&graphics) < 0) return 1;
@@ -221,8 +215,7 @@ int32_t main(int32_t argc, char **argv) {
                 if (status < 0) return 1;
 
                 active = false;
-                static const char message[] = "Released!\n";
-                sys_write(STDOUT_FILENO, &message, sizeof(message) - 1);
+                sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Released!\n"));
             }
         }
         if (!active) continue; // Skip drawing if not active.

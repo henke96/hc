@@ -7,7 +7,6 @@ then
     exit 1
 fi
 
-LLD_LINK="${LLD_LINK:-lld-link}$LLVM"
 ARCH="${ARCH:-x86_64}"
 if test "$ARCH" = "x86_64"; then
     machine="x64"
@@ -18,4 +17,4 @@ else
     exit 1
 fi
 
-"$LLD_LINK" -machine:$machine -def:"$1" -out:"$2"
+"${LLVM}lld-link" -machine:$machine -def:"$1" -out:"$2"

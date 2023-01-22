@@ -3,7 +3,7 @@
 
 void noreturn _start(void) {
     struct ciovec iov = {
-        .buffer = (uint8_t *)"Hello!\n",
+        .buffer = "Hello!\n",
         .bufferLength = 7
     };
     uint32_t ret;

@@ -1,3 +1,4 @@
 #!/bin/sh
 script_dir="$(dirname $0)"
-"$script_dir/../../helper.sh" "$script_dir"
+root_dir="$script_dir/../../.."
+"$root_dir/tools/build/elf.sh" "$script_dir" allocation

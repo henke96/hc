@@ -1,7 +1,7 @@
 static_assert(hc_ILP32, "Pointers not 32 bit");
 
 struct ciovec {
-    const uint8_t *buffer;
+    const char *buffer;
     uint32_t bufferLength;
 };
 

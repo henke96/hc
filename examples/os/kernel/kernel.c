@@ -22,9 +22,9 @@ asm(
     // Apply the page tables set up by bootloader (address in rcx).
     "mov %rcx, %cr3\n"
     // Jump from the temporary identity mapping to the real mapping.
-    "mov $start, %rax\n"
+    "mov $_start, %rax\n"
     "jmp *%rax\n"
-    "start:\n"
+    "_start:\n"
     // Clear direction and interrupt flags.
     "cld\n"
     "cli\n"
@@ -43,11 +43,11 @@ asm(
     "rep stosq\n"
     // Setup stack.
     "lea kernel_stackTop(%rip), %esp\n"
-    // Call the main function.
-    "call main\n"
+    // Call the start function.
+    "call start\n"
 );
 
-void noreturn main(void) {
+void noreturn start(void) {
     paging_init();
 
     struct bootloaderPage *bootloaderPage = (void *)paging_BOOTLOADER_PAGE_ADDRESS;

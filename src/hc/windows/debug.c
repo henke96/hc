@@ -1,23 +1,20 @@
 hc_UNUSED
 static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
-    char resBuffer[util_INT64_MAX_CHARS];
+    char resBuffer[util_INT64_MAX_CHARS + 1];
+    resBuffer[util_INT64_MAX_CHARS] = '\n';
     char *resStr = util_intToStr(&resBuffer[util_INT64_MAX_CHARS], res);
-    char lineBuffer[util_INT32_MAX_CHARS];
-    char *lineStr = util_intToStr(&lineBuffer[util_INT32_MAX_CHARS], line);
 
-    static const char fail[7] = " fail: ";
-    static const char equals[3] = " = ";
-    static const char end[1] = "\n";
+    char lineBuffer[util_INT32_MAX_CHARS + 1];
+    char *lineStr = util_intToStr(&lineBuffer[util_INT32_MAX_CHARS + 1], line);
+    *--lineStr = ':';
 
     void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
     WriteFile(stdOutHandle, file, (uint32_t)util_cstrLen(file), NULL, NULL);
-    WriteFile(stdOutHandle, &fail[5], 1, NULL, NULL);
-    WriteFile(stdOutHandle, lineStr, (uint32_t)(&lineBuffer[util_INT32_MAX_CHARS] - lineStr), NULL, NULL);
-    WriteFile(stdOutHandle, &fail[0], sizeof(fail), NULL, NULL);
+    WriteFile(stdOutHandle, lineStr, (uint32_t)(&lineBuffer[hc_ARRAY_LEN(lineBuffer)] - lineStr), NULL, NULL);
+    WriteFile(stdOutHandle, hc_STR_COMMA_LEN(" fail: "), NULL, NULL);
     WriteFile(stdOutHandle, expression, (uint32_t)util_cstrLen(expression), NULL, NULL);
-    WriteFile(stdOutHandle, &equals[0], sizeof(equals), NULL, NULL);
-    WriteFile(stdOutHandle, resStr, (uint32_t)(&resBuffer[util_INT64_MAX_CHARS] - resStr), NULL, NULL);
-    WriteFile(stdOutHandle, &end[0], sizeof(end), NULL, NULL);
+    WriteFile(stdOutHandle, hc_STR_COMMA_LEN(" = "), NULL, NULL);
+    WriteFile(stdOutHandle, resStr, (uint32_t)(&resBuffer[hc_ARRAY_LEN(resBuffer)] - resStr), NULL, NULL);
     ExitProcess(137);
 }
 
@@ -43,6 +40,6 @@ static hc_COLD void debug_printNum(const char *pre, int64_t num, const char *pos
 
     void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
     WriteFile(stdOutHandle, pre, (uint32_t)preLen, NULL, NULL);
-    WriteFile(stdOutHandle, numStr, (uint32_t)(&buffer[util_INT64_MAX_CHARS] - numStr), NULL, NULL);
+    WriteFile(stdOutHandle, numStr, (uint32_t)(&buffer[hc_ARRAY_LEN(buffer)] - numStr), NULL, NULL);
     WriteFile(stdOutHandle, post, (uint32_t)postLen, NULL, NULL);
 }

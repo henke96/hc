@@ -1,0 +1,9 @@
+*.bin
+*.elf
+*.efi
+*.exe
+*.wasm
+*.s
+*.img
+*.so.*
+*.lib

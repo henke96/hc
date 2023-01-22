@@ -16,3 +16,13 @@ QueryPerformanceFrequency
 QueryPerformanceCounter
 VirtualAlloc
 VirtualFree
+GetProcessHeap
+GetCommandLineW
+WideCharToMultiByte
+HeapAlloc
+HeapFree
+MultiByteToWideChar
+CreateFileW
+CloseHandle
+GetFileSizeEx
+ReadFile

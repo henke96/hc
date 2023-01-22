@@ -1,36 +1,33 @@
 hc_UNUSED
 static void hc_COLD debug_printNum(const char *pre, int64_t num, const char *post) {
     char buffer[util_INT64_MAX_CHARS];
-    char *numStr = util_intToStr(&buffer[util_INT64_MAX_CHARS], num);
+    char *numStr = util_intToStr(&buffer[hc_ARRAY_LEN(buffer)], num);
 
     struct iovec print[] = {
-        { .iov_base = (char *)pre,  .iov_len = util_cstrLen(pre) },
-        { .iov_base = numStr,       .iov_len = (int64_t)(&buffer[util_INT64_MAX_CHARS] - numStr) },
-        { .iov_base = (char *)post, .iov_len = util_cstrLen(post) }
+        { (char *)pre, util_cstrLen(pre) },
+        { numStr, (int64_t)(&buffer[hc_ARRAY_LEN(buffer)] - numStr) },
+        { (char *)post, util_cstrLen(post) }
     };
     sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
 }
 
 hc_UNUSED
 static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
-    char resBuffer[util_INT64_MAX_CHARS];
+    char resBuffer[util_INT64_MAX_CHARS + 1];
+    resBuffer[util_INT64_MAX_CHARS] = '\n';
     char *resStr = util_intToStr(&resBuffer[util_INT64_MAX_CHARS], res);
-    char lineBuffer[util_INT32_MAX_CHARS];
-    char *lineStr = util_intToStr(&lineBuffer[util_INT32_MAX_CHARS], line);
 
-    static const char fail[7] = " fail: ";
-    static const char equals[3] = " = ";
-    static const char end[1] = "\n";
+    char lineBuffer[util_INT32_MAX_CHARS + 1];
+    char *lineStr = util_intToStr(&lineBuffer[util_INT32_MAX_CHARS + 1], line);
+    *--lineStr = ':';
 
     struct iovec print[] = {
-        { .iov_base = (char *)file,       .iov_len = util_cstrLen(file) },
-        { .iov_base = (char *)&fail[5],   .iov_len = 1 },
-        { .iov_base = lineStr,            .iov_len = (int64_t)(&lineBuffer[util_INT32_MAX_CHARS] - lineStr) },
-        { .iov_base = (char *)&fail[0],   .iov_len = sizeof(fail) },
-        { .iov_base = (char *)expression, .iov_len = util_cstrLen(expression) },
-        { .iov_base = (char *)&equals[0], .iov_len = sizeof(equals) },
-        { .iov_base = resStr,             .iov_len = (int64_t)(&resBuffer[util_INT64_MAX_CHARS] - resStr) },
-        { .iov_base = (char *)&end[0],    .iov_len = sizeof(end) }
+        { (char *)file, util_cstrLen(file) },
+        { lineStr, (int64_t)(&lineBuffer[hc_ARRAY_LEN(lineBuffer)] - lineStr) },
+        { hc_STR_COMMA_LEN(" fail: ") },
+        { (char *)expression, util_cstrLen(expression) },
+        { hc_STR_COMMA_LEN(" = ") },
+        { resStr, (int64_t)(&resBuffer[hc_ARRAY_LEN(resBuffer)] - resStr) }
     };
     sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
     sys_kill(sys_getpid(), SIGABRT);

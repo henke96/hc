@@ -9,7 +9,7 @@
 #include "hc/linux/vdso.c"
 #include "hc/linux/helpers/_start.c"
 
-int32_t main(int32_t argc, char **argv) {
+int32_t start(int32_t argc, char **argv) {
     // Find the clock_gettime() function in the shared object "vDSO" provided to us by Linux.
     uint64_t *auxv = util_getAuxv(util_getEnvp(argc, argv));
     int32_t (*clock_gettime)(int32_t clock, struct timespec *time) = vdso_lookup(auxv, vdso_CLOCK_GETTIME);

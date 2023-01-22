@@ -13,7 +13,7 @@
 
 #include "../test.c"
 
-int32_t main(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
+int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
     int32_t status = test();
     debug_printNum("Status: ", status, "\n");
     return 0;

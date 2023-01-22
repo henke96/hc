@@ -1,7 +1,0 @@
-*.bin*
-*.efi*
-*.exe*
-*.wasm*
-*.img
-*.so.*
-*.lib
