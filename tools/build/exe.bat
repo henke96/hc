@@ -6,7 +6,7 @@ call "%root_dir%\tools\genLib\gen_lib.bat" "%root_dir%\src\hc\windows\dll\kernel
 call "%root_dir%\tools\genLib\gen_lib.bat" "%root_dir%\src\hc\windows\dll\user32.def" "%~1user32.lib"
 call "%root_dir%\tools\genLib\gen_lib.bat" "%root_dir%\src\hc\windows\dll\gdi32.def" "%~1gdi32.lib"
 
-set "common_flags=-L%~1 -Wl,-subsystem,windows -O2"
+set "common_flags=-L^"%~1\^" -Wl,-subsystem,windows -O2"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
 set "release_flags=%common_flags% -Ddebug_NDEBUG -s"
 call "%root_dir%\cc_pe.bat" %debug_flags% -S -o "%~1debug.%~2.exe.s" "%~1%~2.c" %FLAGS%
