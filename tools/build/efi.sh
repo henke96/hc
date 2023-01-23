@@ -13,9 +13,9 @@ prog_name="$2"
 script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
-common_flags="-Wl,-subsystem,efi_application"
-debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g -O2"
-release_flags="$common_flags -Ddebug_NDEBUG -O2 -s"
+common_flags="-Wl,-subsystem,efi_application -O2"
+debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
+release_flags="$common_flags -Ddebug_NDEBUG -s"
 eval "set -- $FLAGS"
 
 "$root_dir/cc_pe.sh" $debug_flags -S -o "$path/$prog_name.debug.efi.s" "$path/$prog_name.c" "$@"

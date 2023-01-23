@@ -4,11 +4,14 @@ script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
 # Kernel
-export ABI=${ABI:-elf} # Can also try gnux32.
+export abi="${ABI:-elf}" # Can also try gnux32.
 flags="-Wl,-T$script_dir/kernel/kernel.ld -mno-red-zone -O2 -s"
-"$script_dir/../../cc_elf.sh" $flags -S -o "$script_dir/kernel/kernel.bin.s" "$script_dir/kernel/kernel.c"
-"$script_dir/../../cc_elf.sh" $flags -o "$script_dir/kernel/kernel.bin.elf" "$script_dir/kernel/kernel.c"
-unset ABI
+ABI="$abi" "$root_dir/cc_elf.sh" $flags -S -o "$script_dir/kernel/kernel.bin.s" "$script_dir/kernel/kernel.c"
+ABI="$abi" "$root_dir/cc_elf.sh" $flags -o "$script_dir/kernel/kernel.bin.elf" "$script_dir/kernel/kernel.c"
+
+# Static analysis.
+analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
+"$root_dir/cc_elf.sh" $flags $analyse_flags "$script_dir/kernel/kernel.c"
 
 "${LLVM}llvm-objcopy" -O binary "$script_dir/kernel/kernel.bin.elf" "$script_dir/kernel/kernel.bin"
 

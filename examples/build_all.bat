@@ -1,2 +1,5 @@
 @echo off
-for /R %%f in (*build.bat) do call "%%f"
+for /R %%f in (*build.bat) do (
+    echo "%%f"
+    call "%%f"
+)

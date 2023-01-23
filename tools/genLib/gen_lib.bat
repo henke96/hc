@@ -9,7 +9,7 @@ if "%ARCH%" == "x86_64" (
         set machine=arm64
     ) else (
         echo "Invalid architecture"
-        exit 1
+        exit /b 1
     )
 )
 "%LLVM%lld-link" -machine:"%machine%" -def:"%~1" -out:"%~2"

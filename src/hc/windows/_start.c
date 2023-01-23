@@ -10,6 +10,7 @@ static int32_t _start_parseCmdLine(char *cmdLine) {
             if (!inQuote) {
                 ++argc;
                 *dst++ = '\0';
+                for (; cur[1] == ' '; ++cur);
                 continue;
             }
         } else if (*cur == '"') {
@@ -28,6 +29,8 @@ static int32_t _start_parseCmdLine(char *cmdLine) {
 
 void noreturn _start(void) {
     int32_t status = 1;
+
+    AttachConsole(ATTACH_PARENT_PROCESS);
 
     void *heap = GetProcessHeap();
     if (heap == NULL) goto cleanup_none;
