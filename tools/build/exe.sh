@@ -20,7 +20,7 @@ root_dir="$script_dir/../.."
 common_flags="-Wl,-subsystem,windows -O2"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
 release_flags="$common_flags -Ddebug_NDEBUG -s"
-eval "set -- -L\"$path\" $FLAGS"
+eval "set -- $("$script_dir/../shellUtil/shellescape.sh" "-L$path") $FLAGS"
 
 "$root_dir/cc_pe.sh" $debug_flags -S -o "$path/debug.$prog_name.exe.s" "$path/$prog_name.c" "$@"
 "$root_dir/cc_pe.sh" $debug_flags -o "$path/debug.$prog_name.exe" "$path/$prog_name.c" "$@"

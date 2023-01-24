@@ -15,4 +15,4 @@ root_dir="$script_dir/../.."
 "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/dynamic/libc.so.6.c" "$path/libc.so.6"
 "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/dynamic/libdl.so.2.c" "$path/libdl.so.2"
 
-FLAGS="-L\"$path\" $FLAGS" "$script_dir/elf.sh" "$@"
+FLAGS="$("$script_dir/../shellUtil/shellescape.sh" "-L$path") $FLAGS" "$script_dir/elf.sh" "$@"
