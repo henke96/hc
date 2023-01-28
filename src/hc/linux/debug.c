@@ -1,4 +1,9 @@
 hc_UNUSED
+static void hc_COLD debug_print(const char *str) {
+    sys_write(STDOUT_FILENO, &str[0], util_cstrLen(str));
+}
+
+hc_UNUSED
 static void hc_COLD debug_printNum(const char *pre, int64_t num, const char *post) {
     char buffer[util_INT64_MAX_CHARS];
     char *numStr = util_intToStr(&buffer[hc_ARRAY_LEN(buffer)], num);

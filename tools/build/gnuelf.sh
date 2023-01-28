@@ -3,7 +3,7 @@ set -e
 
 if test -z "$1" || test -z "$2"
 then
-    echo "Usage: $0 PATH PROGRAM_NAME"
+    echo "Usage: $0 PATH PROGRAM_NAME [EXT]"
     exit 1
 fi
 

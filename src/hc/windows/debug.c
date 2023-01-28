@@ -1,4 +1,10 @@
 hc_UNUSED
+static void hc_COLD debug_print(const char *str) {
+    void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    WriteFile(stdOutHandle, str, (uint32_t)util_cstrLen(str), NULL, NULL);
+}
+
+hc_UNUSED
 static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
     char resBuffer[util_INT64_MAX_CHARS + 1];
     resBuffer[util_INT64_MAX_CHARS] = '\n';

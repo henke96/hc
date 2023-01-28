@@ -5,5 +5,7 @@
 *.wasm
 *.s
 *.img
+*.so
 *.so.*
 *.lib
+*.dll

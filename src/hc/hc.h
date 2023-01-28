@@ -22,6 +22,12 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #error "Unsupported architecture"
 #endif
 
+#if defined(_WIN32)
+    #define hc_PE 1
+#elif defined(__linux__)
+    #define hc_ELF 1
+#endif
+
 // Are size_t, int, long and pointer types 32 bit?
 #if defined(__ILP32__)
     #define hc_ILP32 1
@@ -156,3 +162,9 @@ typedef long long int64_t;
 #define alignof _Alignof
 #define thread_local _Thread_local
 #define offsetof __builtin_offsetof
+
+typedef __builtin_va_list va_list;
+#define va_start(ap, param) __builtin_va_start(ap, param)
+#define va_end(ap) __builtin_va_end(ap)
+#define va_arg(ap, type) __builtin_va_arg(ap, type)
+#define va_copy(dest, src) __builtin_va_copy(dest, src)
