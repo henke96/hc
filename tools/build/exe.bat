@@ -2,7 +2,11 @@
 setlocal
 set "root_dir=%~dp0..\..\"
 
-if "%~3" == "" set "ext=exe" else set "ext=$~3"
+if "%~3" == "" (
+    set "ext=exe"
+) else (
+    set "ext=%~3"
+)
 
 call "%root_dir%tools\genLib\gen_lib.bat" "%root_dir%src\hc\windows\dll\kernel32.def" "%~1kernel32.lib"
 if %errorlevel% neq 0 exit /b

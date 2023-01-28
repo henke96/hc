@@ -2,7 +2,11 @@
 setlocal
 set "root_dir=%~dp0..\..\"
 
-if "%~3" == "" set "ext=elf" else set "ext=$~3"
+if "%~3" == "" (
+    set "ext=elf"
+) else (
+    set "ext=%~3"
+)
 
 set "common_flags=-O2"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
