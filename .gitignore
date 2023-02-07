@@ -6,6 +6,9 @@
 *.s
 *.img
 *.so
-*.so.*
+*.so.2
+*.so.6
 *.lib
 *.dll
+*.apk
+*.keystore
