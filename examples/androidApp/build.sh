@@ -10,14 +10,14 @@ ARCH="x86_64" "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/android
 ARCH="x86_64" FLAGS=$flags STRIP_OPT="--strip-all" "$root_dir/tools/build/elf.sh" "$script_dir" libandroidapp x86_64.so
 
 prepare_apk() {
-    mkdir -p "$script_dir/$1apk/lib/arm64-v8a/"
-    mkdir -p "$script_dir/$1apk/lib/x86_64/"
-    mv "$script_dir/$1libandroidapp.aarch64.so" "$script_dir/$1apk/lib/arm64-v8a/libandroidapp.so"
-    mv "$script_dir/$1libandroidapp.x86_64.so" "$script_dir/$1apk/lib/x86_64/libandroidapp.so"
+    mkdir -p "$script_dir/$1dist/lib/arm64-v8a/"
+    mkdir -p "$script_dir/$1dist/lib/x86_64/"
+    mv "$script_dir/$1libandroidapp.aarch64.so" "$script_dir/$1dist/lib/arm64-v8a/libandroidapp.so"
+    mv "$script_dir/$1libandroidapp.x86_64.so" "$script_dir/$1dist/lib/x86_64/libandroidapp.so"
 }
 
 build_apk() {
-    "$ANDROID_SDK/build-tools/26.0.3/aapt" package $2 -f -F "$script_dir/$1androidapp.apk" -M "$script_dir/AndroidManifest.xml" -I "$ANDROID_SDK/platforms/android-26/android.jar" "$script_dir/$1apk"
+    "$ANDROID_SDK/build-tools/26.0.3/aapt" package $2 -f -F "$script_dir/$1androidapp.apk" -M "$script_dir/AndroidManifest.xml" -I "$ANDROID_SDK/platforms/android-26/android.jar" "$script_dir/$1dist"
 }
 sign_apk() {
     "$ANDROID_SDK/build-tools/26.0.3/apksigner" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1androidapp.apk"
