@@ -2,6 +2,8 @@
 setlocal
 set "root_dir=%~dp0..\..\"
 
+set "ARCH=x86_64"
+
 :: Kernel
 if not defined ABI set ABI=elf
 set "flags=-Wl,-T^"%~dp0kernel\kernel.ld^" -mno-red-zone -O2 -s"

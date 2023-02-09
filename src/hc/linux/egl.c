@@ -1,3 +1,7 @@
+#if !defined(egl_SO_NAME)
+    #define egl_SO_NAME "libEGL.so.1"
+#endif
+
 struct egl {
     void *display;
     void *config;
@@ -24,7 +28,7 @@ static int32_t egl_init(struct egl *self) {
     self->context = egl_NO_CONTEXT;
     self->surface = egl_NO_SURFACE;
 
-    self->dlHandle = dlopen("libEGL.so.1", RTLD_NOW);
+    self->dlHandle = dlopen(egl_SO_NAME, RTLD_NOW);
     if (dlerror() != NULL) return -1;
 
     self->eglGetDisplay = dlsym(self->dlHandle, "eglGetDisplay");
@@ -81,8 +85,8 @@ static int32_t egl_createContext(struct egl *self, uint32_t api, const int32_t *
 }
 
 // Must be after `egl_createContext`.
-static int32_t egl_setupSurface(struct egl *self, uint32_t windowId) {
-    self->surface = self->eglCreateWindowSurface(self->display, self->config, (void *)(uint64_t)windowId, NULL);
+static int32_t egl_setupSurface(struct egl *self, void *window) {
+    self->surface = self->eglCreateWindowSurface(self->display, self->config, window, NULL);
     if (self->surface == egl_NO_SURFACE) return -1;
 
     if (!self->eglMakeCurrent(self->display, self->surface, self->surface, self->context)) {

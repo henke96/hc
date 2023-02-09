@@ -309,7 +309,7 @@ static int32_t window_init(char **envp) {
     }
 
     // Setup EGL surface.
-    status = egl_setupSurface(&window.egl, (uint32_t)window.windowId);
+    status = egl_setupSurface(&window.egl, (void *)(uint64_t)window.windowId);
     if (status < 0) {
         debug_printNum("Failed to setup EGL surface (", status, ")\n");
         goto cleanup_x11Setup;
