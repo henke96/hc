@@ -29,8 +29,9 @@ static int32_t egl_init(struct egl *self) {
     self->surface = egl_NO_SURFACE;
 
     self->dlHandle = dlopen(egl_SO_NAME, RTLD_NOW);
-    if (dlerror() != NULL) return -1;
+    if (self->dlHandle == NULL) return -1;
 
+    dlerror(); // Reset the error.
     self->eglGetDisplay = dlsym(self->dlHandle, "eglGetDisplay");
     self->eglInitialize = dlsym(self->dlHandle, "eglInitialize");
     self->eglChooseConfig = dlsym(self->dlHandle, "eglChooseConfig");

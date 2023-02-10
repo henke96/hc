@@ -1,15 +1,20 @@
 #include "hc/hc.h"
 #include "hc/egl.h"
+#include "hc/gl.h"
 #include "hc/util.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
+#include "hc/linux/android/android.h"
 #include "hc/linux/android/liblog.so.h"
 #include "hc/linux/android/libdl.so.h"
 #define egl_SO_NAME "libEGL.so"
 #include "hc/linux/egl.c"
 
-void ANativeActivity_onCreate(hc_UNUSED void* activity, hc_UNUSED void *savedState, hc_UNUSED uint64_t savedStateSize) {
+static void (*glClear)(uint32_t mask);
+static void (*glClearColor)(float red, float green, float blue, float alpha);
+
+static void onWindowCreated(hc_UNUSED struct ANativeActivity *activity, void *window) {
     struct egl egl;
     int32_t status = egl_init(&egl);
     if (status < 0) {
@@ -33,5 +38,23 @@ void ANativeActivity_onCreate(hc_UNUSED void* activity, hc_UNUSED void *savedSta
         return;
     }
 
+    status = egl_setupSurface(&egl, window);
+    if (status < 0) {
+        return;
+    }
+
+    if ((glClear = egl_getProcAddress(&egl, "glClear")) == NULL) return;
+    if ((glClearColor = egl_getProcAddress(&egl, "glClearColor")) == NULL) return;
+
+    glClearColor(0.5f, 0.7f, 0.3f, 1.0f);
+    glClear(gl_COLOR_BUFFER_BIT);
+
+    if (!egl_swapBuffers(&egl)) return;
+
+    __android_log_write(android_LOG_INFO, "androidApp", "Success!\n");
+}
+
+void ANativeActivity_onCreate(struct ANativeActivity *activity, hc_UNUSED void *savedState, hc_UNUSED uint64_t savedStateSize) {
+    activity->callbacks->onNativeWindowCreated = onWindowCreated;
     __android_log_write(android_LOG_INFO, "androidApp", "Hello!\n");
 }
