@@ -84,7 +84,7 @@ void ANativeActivity_onCreate(struct ANativeActivity *activity, hc_UNUSED void *
     uint32_t flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM;
     int32_t ret = sys_clone_func(flags, &threadStack[sizeof(threadStack)], NULL, 0, NULL, thread, NULL);
     if (ret < 0) {
-        debug_printNum("Failed to create thread (", ret, "\n");
+        debug_printNum("Failed to create thread (", ret, ")\n");
         return;
     }
     waitThreadDone();
