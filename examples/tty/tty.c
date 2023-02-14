@@ -7,7 +7,7 @@
 #include "hc/linux/debug.c"
 #include "hc/linux/drmKms.c"
 #include "hc/linux/helpers/_start.c"
-#include "hc/linux/helpers/sys_clone_exit.c"
+#include "hc/linux/helpers/sys_clone3_exit.c"
 
 static int32_t init_graphics(struct drmKms *graphics) {
     // Set up frame buffer.
@@ -108,7 +108,7 @@ int32_t start(int32_t argc, char **argv) {
 
     // Continue in a child process, to make sure setsid() will work.
     struct clone_args args = { .flags = CLONE_VM | CLONE_FILES | CLONE_FS | CLONE_CLEAR_SIGHAND };
-    int32_t status = sys_clone_exit(&args, sizeof(args));
+    int32_t status = sys_clone3_exit(&args, sizeof(args));
     if (status < 0) return 1;
 
     // Create new session.

@@ -5,7 +5,8 @@
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
 #include "hc/linux/helpers/_start.c"
-#include "hc/linux/helpers/sys_clone.c"
+#include "hc/linux/helpers/sys_clone_func.c"
+#include "hc/linux/helpers/sys_clone3_func.c"
 
 // 1 to use spin lock, 0 for futex-based locking.
 #define SPIN 0
@@ -13,14 +14,12 @@
 #define UNLOCKED 0
 #define LOCKED 1
 
-#define CHILD_NOT_DONE 0
-#define CHILD_DONE 1
-
-
-static char stack[4096] hc_ALIGNED(16);
+static char stack1[4096] hc_ALIGNED(16);
+static char stack2[4096] hc_ALIGNED(16);
 
 static int32_t printLock = UNLOCKED;
-static int32_t childDone = CHILD_NOT_DONE;
+static int32_t child1Done = 1;
+static int32_t child2Done = 1;
 
 static void takeLock(void) {
     for (;;) {
@@ -48,33 +47,39 @@ static noreturn void thread(void *arg) {
         debug_printNum((char *)arg, i, "\n");
         releaseLock();
     }
-
-    hc_ATOMIC_STORE(&childDone, CHILD_DONE, hc_ATOMIC_RELEASE);
-    debug_CHECK(sys_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), RES >= 0);
     sys_exit(0);
 }
 
+static void waitChild(int32_t *futex) {
+    for (;;) {
+        if (hc_ATOMIC_LOAD(futex, hc_ATOMIC_ACQUIRE) == 0) break;
+        debug_CHECK(sys_futex(futex, FUTEX_WAIT, 1, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
+    }
+}
+
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
-    // Start child thread.
+    uint32_t flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM | CLONE_CHILD_CLEARTID;
+    // Start child1 thread.
     struct clone_args args = {
-        .flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM,
-        .stack = &stack[0],
-        .stack_size = sizeof(stack)
+        .flags = flags,
+        .stack = &stack1[0],
+        .stack_size = sizeof(stack1),
+        .child_tid = &child1Done
     };
-    int32_t ret = sys_clone(&args, sizeof(args), thread, (void *)"child");
+    int32_t ret = sys_clone3_func(&args, sizeof(args), thread, (void *)"child1 ");
+    if (ret < 0) return 1;
+
+    // Start child2 thread.
+    ret = sys_clone_func(flags, &stack2[sizeof(stack2)], NULL, 0, &child2Done, thread, (void *)"child2 ");
     if (ret < 0) return 1;
 
     for (int32_t i = 0; i < 1000000; ++i) {
         takeLock();
-        debug_printNum("parent", i, "\n");
+        debug_printNum("parent ", i, "\n");
         releaseLock();
     }
 
-    // Wait for child to finish.
-    for (;;) {
-        if (hc_ATOMIC_LOAD(&childDone, hc_ATOMIC_ACQUIRE) == CHILD_DONE) break;
-        debug_CHECK(sys_futex(&childDone, FUTEX_WAIT_PRIVATE, CHILD_NOT_DONE, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
-    }
-
+    waitChild(&child1Done);
+    waitChild(&child2Done);
     return 0;
 }

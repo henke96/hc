@@ -11,3 +11,4 @@ enum android_logPriority {
 };
 
 int32_t __android_log_write(int32_t prio, const char *tag, const char *text);
+int32_t __android_log_print(int32_t prio, const char* tag, const char *fmt, ...) __attribute__((__format__(printf, 3, 4)));

@@ -15,5 +15,4 @@ root_dir="$script_dir/../.."
 "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/android/liblog.so.c" "$path/liblog.so"
 "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/android/libdl.so.c" "$path/libdl.so"
 
-# TODO: Do we need to set android in target triple?
-FLAGS="-fPIC -fpie -pie -Wl,-dynamic-linker=/system/bin/linker64 $("$root_dir/tools/shellUtil/shellescape.sh" "-L$path") $FLAGS" STRIP_OPT="--strip-all" "$script_dir/elf.sh" "$@"
+ABI="android" FLAGS="-fPIC -fpie -pie -Wl,-dynamic-linker=/system/bin/linker64 $("$root_dir/tools/shellUtil/shellescape.sh" "-L$path") $FLAGS" STRIP_OPT="--strip-all" "$script_dir/elf.sh" "$@"

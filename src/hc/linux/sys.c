@@ -1155,6 +1155,16 @@ static hc_ALWAYS_INLINE int32_t sys_clone3(hc_NONULL struct clone_args *args) {
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_clone(uint32_t flags, void *stackHigh, int32_t *parent_tid, uint64_t tls, int32_t *child_tid) {
+#if hc_X86_64
+    sys_SYSCALL5(sys_NR_clone, flags, stackHigh, parent_tid, child_tid, tls);
+#else
+    sys_SYSCALL5(sys_NR_clone, flags, stackHigh, parent_tid, tls, child_tid);
+#endif
+    return (int32_t)ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE int32_t sys_execveat(int32_t fd, hc_NONULL const char *filename, hc_NONULL const char **argv, hc_NONULL const char **envp, uint32_t flags) {
     sys_SYSCALL5(sys_NR_execveat, fd, filename, argv, envp, flags);
     return (int32_t)ret;

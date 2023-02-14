@@ -9,7 +9,7 @@
 #include "hc/linux/debug.c"
 #include "hc/linux/tls.c"
 #include "hc/linux/helpers/_start.c"
-#include "hc/linux/helpers/sys_clone.c"
+#include "hc/linux/helpers/sys_clone3_func.c"
 
 static thread_local int32_t test1 = 1;
 static thread_local char test2 = 2;
@@ -21,9 +21,7 @@ static thread_local int64_t test6 = 6;
 // For the main thread we use this array as tls area.
 static char tlsArea[tls_AREA_SIZE(64)] hc_ALIGNED(8);
 
-#define CHILD_NOT_DONE 0
-#define CHILD_DONE 1
-static int32_t childDone = CHILD_NOT_DONE;
+static int32_t childDone = 1;
 
 static noreturn void thread(void *arg) {
     test4 = -4;
@@ -42,10 +40,6 @@ static noreturn void thread(void *arg) {
     debug_printNum("child &test4 = ", (int64_t)&test4, "\n");
     debug_printNum("child &test5 = ", (int64_t)&test5, "\n");
     debug_printNum("child &test6 = ", (int64_t)&test6, "\n");
-
-    // Notify parent we are done.
-    hc_ATOMIC_STORE(&childDone, CHILD_DONE, hc_ATOMIC_RELEASE);
-    debug_CHECK(sys_futex(&childDone, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), RES >= 0);
 
     sys_exit(0);
 }
@@ -77,12 +71,13 @@ int32_t start(int32_t argc, char **argv) {
         uint64_t threadPointer = tls_initArea(tlsProgramHeader, &threadArea[stackSize]);
         debug_printNum("child thread pointer: ", (int64_t)threadPointer, "\n");
         struct clone_args args = {
-            .flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS,
+            .flags = CLONE_VM | CLONE_FS | CLONE_FILES | CLONE_SIGHAND | CLONE_THREAD | CLONE_SYSVSEM | CLONE_SETTLS | CLONE_CHILD_CLEARTID,
             .tls = threadPointer,
             .stack = threadArea,
-            .stack_size = stackSize
+            .stack_size = stackSize,
+            .child_tid = &childDone
         };
-        int32_t ret = sys_clone(&args, sizeof(args), thread, (void *)-6);
+        int32_t ret = sys_clone3_func(&args, sizeof(args), thread, (void *)-6);
         if (ret < 0) return 3;
     }
 
@@ -101,8 +96,8 @@ int32_t start(int32_t argc, char **argv) {
 
     // Wait for child to finish.
     for (;;) {
-        if (hc_ATOMIC_LOAD(&childDone, hc_ATOMIC_ACQUIRE) == CHILD_DONE) break;
-        debug_CHECK(sys_futex(&childDone, FUTEX_WAIT_PRIVATE, CHILD_NOT_DONE, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
+        if (hc_ATOMIC_LOAD(&childDone, hc_ATOMIC_ACQUIRE) == 0) break;
+        debug_CHECK(sys_futex(&childDone, FUTEX_WAIT, 1, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
     }
 
     return 0;

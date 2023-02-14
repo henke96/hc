@@ -1,11 +1,11 @@
 // Doesn't return in parent if successful, else returns negative error code. Returns 0 in child.
 // Safe to use with CLONE_VM.
-int32_t sys_clone_exit(hc_NONULL struct clone_args *args, uint64_t size);
+int32_t sys_clone3_exit(hc_NONULL struct clone_args *args, uint64_t size);
 #if hc_X86_64
 asm(
     ".section .text\n"
-    ".local sys_clone_exit\n"
-    "sys_clone_exit:\n"
+    ".local sys_clone3_exit\n"
+    "sys_clone3_exit:\n"
     "mov %rcx, %r10\n"
     "mov $435, %eax\n"
     "syscall\n"
@@ -19,8 +19,8 @@ asm(
 #elif hc_AARCH64
 asm(
     ".section .text\n"
-    ".local sys_clone_exit\n"
-    "sys_clone_exit:\n"
+    ".local sys_clone3_exit\n"
+    "sys_clone3_exit:\n"
     "mov x8, 435\n"
     "svc 0\n"
     "cmp x0, 0\n"
@@ -33,8 +33,8 @@ asm(
 #elif hc_RISCV64
 asm(
     ".section .text\n"
-    ".local sys_clone_exit\n"
-    "sys_clone_exit:\n"
+    ".local sys_clone3_exit\n"
+    "sys_clone3_exit:\n"
     "li a7, 435\n"
     "ecall\n"
     "ble a0, x0, 1f\n"

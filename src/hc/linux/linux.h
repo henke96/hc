@@ -991,6 +991,7 @@ struct sigaction {
 #define AT_MINSIGSTKSZ 51 // minimal stack size for signal delivery
 
 // sched.h
+#define CSIGNAL 0x000000ff
 #define CLONE_VM 0x00000100 // set if VM shared between processes
 #define CLONE_FS 0x00000200 // set if fs info shared between processes
 #define CLONE_FILES 0x00000400 // set if open files shared between processes
@@ -1014,6 +1015,7 @@ struct sigaction {
 #define CLONE_NEWPID 0x20000000 // New pid namespace
 #define CLONE_NEWNET 0x40000000 // New network namespace
 #define CLONE_IO 0x80000000 // Clone io context
+// clone3 only:
 #define CLONE_CLEAR_SIGHAND 0x100000000ULL // Clear any signal handler and reset to SIG_DFL.
 #define CLONE_INTO_CGROUP 0x200000000ULL // Clone into a specific cgroup given the right permissions.
 #define CLONE_NEWTIME 0x00000080 // New time namespace
