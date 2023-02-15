@@ -3,8 +3,9 @@ set -e
 script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
-ARCH="aarch64" FLAGS="-shared -l:libdl.so -l:liblog.so" "$root_dir/tools/build/androidelf.sh" "$script_dir" libandroidapp aarch64.so
-ARCH="x86_64" FLAGS="-shared -l:libdl.so -l:liblog.so" "$root_dir/tools/build/androidelf.sh" "$script_dir" libandroidapp x86_64.so
+flags="-shared -l:libdl.so -l:libandroid.so -l:liblog.so -l:libc.so $FLAGS"
+ARCH="aarch64" FLAGS="$flags" "$root_dir/tools/build/androidelf.sh" "$script_dir" libandroidapp aarch64.so
+ARCH="x86_64" FLAGS="$flags" "$root_dir/tools/build/androidelf.sh" "$script_dir" libandroidapp x86_64.so
 
 prepare_apk() {
     mkdir -p "$script_dir/$1dist/lib/arm64-v8a/"

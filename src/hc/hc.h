@@ -44,6 +44,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_STR_COMMA_LEN(STR) (STR), (hc_ARRAY_LEN(STR) - 1)
 
 // Attributes
+#define hc_FALLTHROUGH __attribute__((fallthrough))
 #define hc_UNREACHABLE __builtin_unreachable()
 #define hc_ASSUME __builtin_assume
 #define hc_NONULL __attribute__((nonnull))

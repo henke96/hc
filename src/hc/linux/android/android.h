@@ -10,7 +10,7 @@ struct ANativeActivity {
         void (*onStart)(struct ANativeActivity *activity);
         void (*onResume)(struct ANativeActivity *activity);
         // Returned pointer must come from malloc.
-        void *(*onSaveInstanceState)(struct ANativeActivity *activity, uint64_t *mallocSize);
+        void *(*onSaveInstanceState)(struct ANativeActivity *activity, uint64_t *outMallocSize);
         void (*onPause)(struct ANativeActivity *activity);
         void (*onStop)(struct ANativeActivity *activity);
         void (*onDestroy)(struct ANativeActivity *activity);

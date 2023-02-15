@@ -5,7 +5,7 @@ asm(
     ".section .text\n"
     ".local sys_clone_func\n"
     "sys_clone_func:\n"
-    "push %r12\n" // Align stack and save r12.
+    "push %r12\n" // Save r12.
     "mov 16(%rsp), %r12\n" // Save `childarg` to r12.
     "mov %r8, %r10\n"
     "mov %rcx, %r8\n"

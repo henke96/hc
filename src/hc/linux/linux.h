@@ -760,7 +760,7 @@ struct sockaddr_alg {
 #define MADV_POPULATE_READ 22 // populate (prefault) page tables readable
 #define MADV_POPULATE_WRITE 23 // populate (prefault) page tables writable
 
-// signal.h + siginfo.h
+// signal.h + siginfo.h + signal-defs.h
 #define SIGHUP 1
 #define SIGINT 2
 #define SIGQUIT 3
@@ -809,6 +809,10 @@ struct sockaddr_alg {
 #define SIG_BLOCK 0 // for blocking signals
 #define SIG_UNBLOCK 1 // for unblocking signals
 #define SIG_SETMASK 2 // for setting the signal mask
+
+#define SIG_DFL ((void *)0) // default signal handling
+#define SIG_IGN ((void *)1) // ignore signal
+#define SIG_ERR ((void *)-1) // error return from signal
 
 union sigval {
     int32_t sival_int;

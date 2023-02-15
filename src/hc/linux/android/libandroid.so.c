@@ -1,0 +1,10 @@
+void ALooper_prepare(void) {}
+void ALooper_addFd(void) {}
+void ALooper_removeFd(void) {}
+void ALooper_pollAll(void) {}
+void AInputQueue_attachLooper(void) {}
+void AInputQueue_detachLooper(void) {}
+void AInputQueue_getEvent(void) {}
+void AInputQueue_preDispatchEvent(void) {}
+void AInputQueue_finishEvent(void) {}
+void AInputEvent_getType(void) {}
