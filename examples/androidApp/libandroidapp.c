@@ -116,10 +116,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         app.inputQueue = NULL;
                         break;
                     }
-                    case nativeGlue_DESTROY: {
-                        if (app.inputQueue != NULL) AInputQueue_detachLooper(app.inputQueue);
-                        return 0;
-                    }
+                    case nativeGlue_DESTROY: return 0;
                     default: break;
                 }
                 nativeGlue_signalAppDone();
