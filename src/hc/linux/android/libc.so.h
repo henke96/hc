@@ -19,3 +19,5 @@ int32_t pthread_attr_destroy(struct pthread_attr_t *attr);
 int32_t pthread_attr_setdetachstate(struct pthread_attr_t *attr, int32_t state);
 
 void *malloc(uint64_t size);
+
+int32_t clock_gettime(int32_t clock, struct timespec *time);

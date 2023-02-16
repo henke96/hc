@@ -1,24 +1,24 @@
 #!/bin/sh
 set -e
 script_dir="$(dirname "$0")"
-root_dir="$script_dir/../.."
+root_dir="$script_dir/../../.."
 
 flags="-shared -l:libdl.so -l:libandroid.so -l:liblog.so -l:libc.so $FLAGS"
-ARCH="aarch64" FLAGS="$flags" "$root_dir/tools/build/androidelf.sh" "$script_dir" libandroidapp aarch64.so
-ARCH="x86_64" FLAGS="$flags" "$root_dir/tools/build/androidelf.sh" "$script_dir" libandroidapp x86_64.so
+ARCH="aarch64" FLAGS="$flags" "$root_dir/tools/build/androidelf.sh" "$script_dir" libopengl aarch64.so
+ARCH="x86_64" FLAGS="$flags" "$root_dir/tools/build/androidelf.sh" "$script_dir" libopengl x86_64.so
 
 prepare_apk() {
     mkdir -p "$script_dir/$1dist/lib/arm64-v8a/"
     mkdir -p "$script_dir/$1dist/lib/x86_64/"
-    mv "$script_dir/$1libandroidapp.aarch64.so" "$script_dir/$1dist/lib/arm64-v8a/libandroidapp.so"
-    mv "$script_dir/$1libandroidapp.x86_64.so" "$script_dir/$1dist/lib/x86_64/libandroidapp.so"
+    mv "$script_dir/$1libopengl.aarch64.so" "$script_dir/$1dist/lib/arm64-v8a/libopengl.so"
+    mv "$script_dir/$1libopengl.x86_64.so" "$script_dir/$1dist/lib/x86_64/libopengl.so"
 }
 
 build_apk() {
-    "$ANDROID_SDK/build-tools/26.0.3/aapt" package $2 -f -F "$script_dir/$1androidApp.apk" -M "$script_dir/AndroidManifest.xml" -I "$ANDROID_SDK/platforms/android-26/android.jar" "$script_dir/$1dist"
+    "$ANDROID_SDK/build-tools/26.0.3/aapt" package $2 -f -F "$script_dir/$1openGl.apk" -M "$script_dir/AndroidManifest.xml" -I "$ANDROID_SDK/platforms/android-26/android.jar" "$script_dir/$1dist"
 }
 sign_apk() {
-    "$ANDROID_SDK/build-tools/26.0.3/apksigner" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1androidApp.apk"
+    "$ANDROID_SDK/build-tools/26.0.3/apksigner" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1openGl.apk"
 }
 
 prepare_apk "debug."

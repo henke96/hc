@@ -601,7 +601,8 @@ static int32_t window_run(void) {
         struct timespec drawTimespec;
         debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &drawTimespec), RES == 0);
         uint64_t drawTimestamp = (uint64_t)drawTimespec.tv_sec * 1000000000 + (uint64_t)drawTimespec.tv_nsec;
-        if (game_draw(drawTimestamp) < 0 || !egl_swapBuffers(&window.egl)) return -9;
+        if (game_draw(drawTimestamp) < 0) return -9;
+        debug_CHECK(egl_swapBuffers(&window.egl), RES == 1);
     }
 }
 

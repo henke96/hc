@@ -4,3 +4,4 @@ void pthread_attr_init(void) {}
 void pthread_attr_destroy(void) {}
 void pthread_attr_setdetachstate(void) {}
 void malloc(void) {}
+void clock_gettime(void) {}

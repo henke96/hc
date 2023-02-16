@@ -15,13 +15,28 @@
 #define egl_SO_NAME "libEGL.so"
 #include "hc/linux/egl.c"
 
-static void (*glClear)(uint32_t mask);
-static void (*glClearColor)(float red, float green, float blue, float alpha);
+#define game_EXPORT(NAME) static
+
+// TODO: Implement input
+hc_UNUSED static void game_onMouseMove(int64_t deltaX, int64_t deltaY, hc_UNUSED uint64_t timestamp);
+hc_UNUSED static void game_onKeyDown(int32_t key, uint64_t timestamp);
+hc_UNUSED static void game_onKeyUp(int32_t key, uint64_t timestamp);
+
+#include "../gnulinux/gl.c"
+#include "../shaders.c"
+#include "../vertexArrays.c"
+#include "../trig.c"
+#include "../mat.c"
+#include "../game.c"
 
 struct app {
     struct egl egl;
     void *window;
     void *inputQueue;
+    int32_t width;
+    int32_t height;
+    bool running;
+    char __pad[7];
 };
 
 static struct app app;
@@ -29,9 +44,12 @@ static struct app app;
 static void app_init(void) {
     app.window = NULL;
     app.inputQueue = NULL;
+    app.width = 0;
+    app.height = 0;
+    app.running = false;
 }
 
-static int32_t app_initEgl(void) {
+static int32_t app_initEgl() {
     // No error recovery as we end up aborting anyway.
     int32_t status = egl_init(&app.egl);
     if (status != 0) {
@@ -64,8 +82,21 @@ static int32_t app_initEgl(void) {
         return -1;
     }
 
-    if ((glClear = egl_getProcAddress(&app.egl, "glClear")) == NULL) return -1;
-    if ((glClearColor = egl_getProcAddress(&app.egl, "glClearColor")) == NULL) return -1;
+    debug_CHECK(egl_swapInterval(&app.egl, 0), RES == egl_TRUE);
+
+    if (
+        egl_querySurface(&app.egl, egl_WIDTH, &app.width) != 1 ||
+        egl_querySurface(&app.egl, egl_HEIGHT, &app.height) != 1
+    ) {
+        debug_print("Failed to query EGL surface\n");
+        return -1;
+    }
+
+    if (gl_init(&app.egl) != 0) {
+        debug_print("Failed to load OpenGL functions\n");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -79,8 +110,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
         // Handle all events.
         for (;;) {
             int32_t fd;
-            int32_t timeout = 0;
-            if (app.window == NULL) timeout = -1; // Wait indefinitely.
+            int32_t timeout = app.running ? 0 : -1;
             int32_t ident = ALooper_pollAll(timeout, &fd, NULL, NULL);
             if (ident == ALOOPER_POLL_TIMEOUT) break;
             if (ident < 0) return -1;
@@ -96,12 +126,35 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         debug_ASSERT(app.window == NULL);
                         app.window = cmd.nativeWindowCreated.window;
                         if (app_initEgl() != 0) return -3;
+
+                        // Initialise game.
+                        struct timespec initTimespec;
+                        debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &initTimespec), RES == 0);
+                        uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
+                        int32_t status = game_init(
+                            app.width,
+                            app.height,
+                            initTimestamp
+                        );
+                        if (status < 0) {
+                            debug_printNum("Failed to initialise game (", status, ")\n");
+                            return -4;
+                        }
+                        app.running = true;
                         break;
                     }
-                    case nativeGlue_NATIVE_WINDOW_DESTROYED: {
-                        debug_ASSERT(app.window == cmd.nativeWindowDestroyed.window);
-                        egl_deinit(&app.egl);
-                        app.window = NULL;
+                    // TODO: Should separate game logic from rendering so we don't restart the game every time app is stopped.
+                    case nativeGlue_NATIVE_WINDOW_DESTROYED:
+                    case nativeGlue_STOP: {
+                        if (app.running) {
+                            game_deinit();
+                            app.running = false;
+                        }
+                        if (cmd.tag == nativeGlue_NATIVE_WINDOW_DESTROYED) {
+                            debug_ASSERT(app.window != NULL);
+                            egl_deinit(&app.egl);
+                            app.window = NULL;
+                        }
                         break;
                     }
                     case nativeGlue_INPUT_QUEUE_CREATED: {
@@ -129,12 +182,26 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                 }
             }
         }
-        if (app.window == NULL) continue;
+        if (!app.running) continue;
 
-        // Render.
-        glClearColor(0.5f, 0.7f, 0.3f, 1.0f);
-        glClear(gl_COLOR_BUFFER_BIT);
-        if (egl_swapBuffers(&app.egl) != 1) return -4;
+        // Check for resize before every render.
+        int32_t width, height;
+        if (
+            egl_querySurface(&app.egl, egl_WIDTH, &width) == 1 &&
+            egl_querySurface(&app.egl, egl_HEIGHT, &height) == 1 &&
+            (width != app.width || height != app.height)
+        ) {
+            app.width = width;
+            app.height = height;
+            game_onResize(app.width, app.height);
+        }
+
+        // Rendering.
+        struct timespec drawTimespec;
+        debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &drawTimespec), RES == 0);
+        uint64_t drawTimestamp = (uint64_t)drawTimespec.tv_sec * 1000000000 + (uint64_t)drawTimespec.tv_nsec;
+        if (game_draw(drawTimestamp) < 0) return -5;
+        debug_CHECK(egl_swapBuffers(&app.egl), RES == 1);
     }
 }
 

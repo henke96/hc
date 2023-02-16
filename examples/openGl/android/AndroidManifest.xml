@@ -2,22 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           android:versionCode="1"
           android:versionName="1.0"
-          package="app.androidapp">
+          package="app.opengl">
 
   <uses-sdk android:minSdkVersion="26"
             android:targetSdkVersion="26" />
 
   <application android:allowBackup="false"
                android:fullBackupContent="false"
-               android:label="AndroidApp"
+               android:label="OpenGl"
                android:hasCode="false">
 
     <activity android:name="android.app.NativeActivity"
-              android:label="AndroidApp"
+              android:label="OpenGl"
               android:configChanges="orientation|keyboardHidden"
               android:exported="true">
       <meta-data android:name="android.app.lib_name"
-                 android:value="androidapp" />
+                 android:value="opengl" />
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />

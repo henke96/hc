@@ -16,7 +16,6 @@ enum nativeGlue_cmdTag {
     nativeGlue_DESTROY, // Calling `nativeGlue_signalAppDone` not required, just return 0.
     nativeGlue_WINDOW_FOCUS_CHANGED,
     nativeGlue_NATIVE_WINDOW_CREATED,
-    nativeGlue_NATIVE_WINDOW_RESIZED,
     nativeGlue_NATIVE_WINDOW_REDRAW_NEEDED,
     nativeGlue_NATIVE_WINDOW_DESTROYED,
     nativeGlue_INPUT_QUEUE_CREATED,
@@ -43,10 +42,6 @@ struct nativeGlue_cmd {
         struct {
             void *window;
         } nativeWindowCreated;
-
-        struct {
-            void *window;
-        } nativeWindowResized;
 
         struct {
             void *window;
@@ -122,17 +117,19 @@ static void _nativeGlue_onHelperPtrArg(enum nativeGlue_cmdTag tag, void *arg) {
 }
 
 static void _nativeGlue_onStart(hc_UNUSED struct ANativeActivity *activity) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onStart\n");
+    _nativeGlue_DEBUG_PRINT("onStart enter\n");
     _nativeGlue_onHelperNoArg(nativeGlue_START);
+    _nativeGlue_DEBUG_PRINT("onStart leave\n");
 }
 
 static void _nativeGlue_onResume(hc_UNUSED struct ANativeActivity *activity) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onResume\n");
+    _nativeGlue_DEBUG_PRINT("onResume enter\n");
     _nativeGlue_onHelperNoArg(nativeGlue_RESUME);
+    _nativeGlue_DEBUG_PRINT("onResume leave\n");
 }
 
 static void *_nativeGlue_onSaveInstanceState(hc_UNUSED struct ANativeActivity *activity, uint64_t *outMallocSize) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onSaveInstanceState\n");
+    _nativeGlue_DEBUG_PRINT("onSaveInstanceState enter\n");
     void *savedState = NULL;
     struct nativeGlue_cmd cmd = {
         .tag = nativeGlue_SAVE_INSTANCE_STATE,
@@ -142,21 +139,24 @@ static void *_nativeGlue_onSaveInstanceState(hc_UNUSED struct ANativeActivity *a
         }
     };
     _nativeGlue_writeAndWait(&cmd);
+    _nativeGlue_DEBUG_PRINT("onSaveInstanceState leave\n");
     return savedState;
 }
 
 static void _nativeGlue_onPause(hc_UNUSED struct ANativeActivity *activity) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onPause\n");
+    _nativeGlue_DEBUG_PRINT("onPause enter\n");
     _nativeGlue_onHelperNoArg(nativeGlue_PAUSE);
+    _nativeGlue_DEBUG_PRINT("onPause leave\n");
 }
 
 static void _nativeGlue_onStop(hc_UNUSED struct ANativeActivity *activity) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onStop\n");
+    _nativeGlue_DEBUG_PRINT("onStop enter\n");
     _nativeGlue_onHelperNoArg(nativeGlue_STOP);
+    _nativeGlue_DEBUG_PRINT("onStop leave\n");
 }
 
 static void _nativeGlue_onDestroy(hc_UNUSED struct ANativeActivity *activity) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onDestroy\n");
+    _nativeGlue_DEBUG_PRINT("onDestroy enter\n");
     _nativeGlue_onHelperNoArg(nativeGlue_DESTROY);
 
     // Perform cleanup.
@@ -166,59 +166,64 @@ static void _nativeGlue_onDestroy(hc_UNUSED struct ANativeActivity *activity) {
     // Wait for app thread to exit.
     debug_CHECK(pthread_join(_nativeGlue.appPthread, NULL), RES == 0);
     debug_print("Application exited gracefully!\n");
+    _nativeGlue_DEBUG_PRINT("onDestroy leave\n");
 }
 
 static void _nativeGlue_onWindowFocusChanged(hc_UNUSED struct ANativeActivity *activity, int32_t hasFocus) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onWindowFocusChanged\n");
+    _nativeGlue_DEBUG_PRINT("onWindowFocusChanged enter\n");
     struct nativeGlue_cmd cmd;
     cmd.tag = nativeGlue_WINDOW_FOCUS_CHANGED;
     cmd.windowFocusChanged.hasFocus = hasFocus;
     _nativeGlue_writeAndWait(&cmd);
+    _nativeGlue_DEBUG_PRINT("onWindowFocusChanged leave\n");
 }
 
 static void _nativeGlue_onNativeWindowCreated(hc_UNUSED struct ANativeActivity *activity, void *window) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onNativeWindowCreated\n");
+    _nativeGlue_DEBUG_PRINT("onNativeWindowCreated enter\n");
     _nativeGlue_onHelperPtrArg(nativeGlue_NATIVE_WINDOW_CREATED, window);
-}
-
-static void _nativeGlue_onNativeWindowResized(hc_UNUSED struct ANativeActivity *activity, void *window) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onNativeWindowResized\n");
-    _nativeGlue_onHelperPtrArg(nativeGlue_NATIVE_WINDOW_RESIZED, window);
+    _nativeGlue_DEBUG_PRINT("onNativeWindowCreated leave\n");
 }
 
 static void _nativeGlue_onNativeWindowRedrawNeeded(hc_UNUSED struct ANativeActivity *activity, void *window) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onNativeWindowRedrawNeeded\n");
+    _nativeGlue_DEBUG_PRINT("onNativeWindowRedrawNeeded enter\n");
     _nativeGlue_onHelperPtrArg(nativeGlue_NATIVE_WINDOW_REDRAW_NEEDED, window);
+    _nativeGlue_DEBUG_PRINT("onNativeWindowRedrawNeeded leave\n");
 }
 
 static void _nativeGlue_onNativeWindowDestroyed(hc_UNUSED struct ANativeActivity *activity, void *window) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onNativeWindowDestroyed\n");
+    _nativeGlue_DEBUG_PRINT("onNativeWindowDestroyed enter\n");
     _nativeGlue_onHelperPtrArg(nativeGlue_NATIVE_WINDOW_DESTROYED, window);
+    _nativeGlue_DEBUG_PRINT("onNativeWindowDestroyed leave\n");
 }
 
 static void _nativeGlue_onInputQueueCreated(hc_UNUSED struct ANativeActivity *activity, void *inputQueue) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onInputQueueCreated\n");
+    _nativeGlue_DEBUG_PRINT("onInputQueueCreated enter\n");
     _nativeGlue_onHelperPtrArg(nativeGlue_INPUT_QUEUE_CREATED, inputQueue);
+    _nativeGlue_DEBUG_PRINT("onInputQueueCreated leave\n");
 }
 
 static void _nativeGlue_onInputQueueDestroyed(hc_UNUSED struct ANativeActivity *activity, void *inputQueue) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onInputQueueDestroyed\n");
+    _nativeGlue_DEBUG_PRINT("onInputQueueDestroyed enter\n");
     _nativeGlue_onHelperPtrArg(nativeGlue_INPUT_QUEUE_DESTROYED, inputQueue);
+    _nativeGlue_DEBUG_PRINT("onInputQueueDestroyed leave\n");
 }
 
 static void _nativeGlue_onContentRectChanged(hc_UNUSED struct ANativeActivity *activity, const struct ARect *rect) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onContentRectChanged\n");
+    _nativeGlue_DEBUG_PRINT("onContentRectChanged enter\n");
     _nativeGlue_onHelperPtrArg(nativeGlue_CONTENT_RECT_CHANGED, (void *)rect);
+    _nativeGlue_DEBUG_PRINT("onContentRectChanged leave\n");
 }
 
 static void _nativeGlue_onConfigurationChanged(hc_UNUSED struct ANativeActivity *activity) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onConfigurationChanged\n");
+    _nativeGlue_DEBUG_PRINT("onConfigurationChanged enter\n");
     _nativeGlue_onHelperNoArg(nativeGlue_CONFIGURATION_CHANGED);
+    _nativeGlue_DEBUG_PRINT("onConfigurationChanged leave\n");
 }
 
 static void _nativeGlue_onLowMemory(hc_UNUSED struct ANativeActivity *activity) {
-    _nativeGlue_DEBUG_PRINT("_nativeGlue_onLowMemory\n");
+    _nativeGlue_DEBUG_PRINT("onLowMemory enter\n");
     _nativeGlue_onHelperNoArg(nativeGlue_LOW_MEMORY);
+    _nativeGlue_DEBUG_PRINT("onLowMemory leave\n");
 }
 
 static void *_nativeGlue_appThread(hc_UNUSED void *arg) {
@@ -259,7 +264,7 @@ static int32_t nativeGlue_init(struct ANativeActivity *activity, struct nativeGl
     activity->callbacks->onDestroy = _nativeGlue_onDestroy;
     activity->callbacks->onWindowFocusChanged = _nativeGlue_onWindowFocusChanged;
     activity->callbacks->onNativeWindowCreated = _nativeGlue_onNativeWindowCreated;
-    activity->callbacks->onNativeWindowResized = _nativeGlue_onNativeWindowResized;
+    // Skip `onNativeWindowResized` as it is unreliable.
     activity->callbacks->onNativeWindowRedrawNeeded = _nativeGlue_onNativeWindowRedrawNeeded;
     activity->callbacks->onNativeWindowDestroyed = _nativeGlue_onNativeWindowDestroyed;
     activity->callbacks->onInputQueueCreated = _nativeGlue_onInputQueueCreated;
