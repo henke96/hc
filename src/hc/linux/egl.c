@@ -101,19 +101,23 @@ static int32_t egl_setupSurface(struct egl *self, void *window) {
 }
 
 // Returns boolean of success.
+hc_UNUSED
 static inline uint32_t egl_swapBuffers(struct egl *self) {
     debug_ASSERT(self->surface != NULL);
     return self->eglSwapBuffers(self->display, self->surface);
 }
 
+hc_UNUSED
 static inline void *egl_getProcAddress(struct egl *self, const char *procName) {
     return self->eglGetProcAddress(procName);
 }
 
+hc_UNUSED
 static inline uint32_t egl_swapInterval(struct egl *self, int32_t interval) {
     return self->eglSwapInterval(self->display, interval);
 }
 
+hc_UNUSED
 static uint32_t egl_querySurface(struct egl *self, int32_t attribute, int32_t *value) {
     debug_ASSERT(self->surface != NULL);
     return self->eglQuerySurface(self->display, self->surface, attribute, value);

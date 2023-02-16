@@ -262,10 +262,13 @@ static int32_t window_init(char **envp) {
         debug_printNum("Failed to initalise EGL (", status, ")\n");
         return -1;
     }
+
     const int32_t configAttributes[] = {
+        egl_BUFFER_SIZE, 32,
         egl_RED_SIZE, 8,
         egl_GREEN_SIZE, 8,
         egl_BLUE_SIZE, 8,
+        egl_ALPHA_SIZE, 8,
         egl_DEPTH_SIZE, 24,
         egl_STENCIL_SIZE, 8,
         egl_NONE

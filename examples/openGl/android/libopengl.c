@@ -58,9 +58,11 @@ static int32_t app_initEgl() {
     }
 
     const int32_t configAttributes[] = {
+        egl_BUFFER_SIZE, 32,
         egl_RED_SIZE, 8,
         egl_GREEN_SIZE, 8,
         egl_BLUE_SIZE, 8,
+        egl_ALPHA_SIZE, 8,
         egl_DEPTH_SIZE, 24,
         egl_STENCIL_SIZE, 8,
         egl_NONE
