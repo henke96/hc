@@ -71,104 +71,86 @@ static inline void deinit_graphics(struct drmKms *graphics) {
 }
 
 int32_t start(int32_t argc, char **argv) {
-    uint64_t *auxv = util_getAuxv(util_getEnvp(argc, argv));
-
-    // Find program name from the auxiliary vector.
-    char *programName;
-    for (int32_t i = 0;; i += 2) {
-        if (auxv[i] == AT_NULL) return 1; // Did not find it.
-        if (auxv[i] == AT_EXECFN) {
-            programName = (char *)auxv[i + 1];
-            break;
-        }
-    }
-
-    // Argument parsing.
-    if (argc != 2) {
-        struct iovec print[] = {
-            { hc_STR_COMMA_LEN("Usage: ") },
-            { (char *)programName, util_cstrLen(programName) },
-            { hc_STR_COMMA_LEN(" TTY_NUM\n") }
-        };
-        sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
-        return 0;
-    }
-
-    // Parse TTY_NUM argument.
-    uint64_t ttyNumber;
-    if (util_strToUint(argv[1], 100, &ttyNumber) <= 0 || ttyNumber < 1 || ttyNumber > 63) {
-        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Invalid TTY_NUM argument\n"));
-        return 1;
-    }
-    char ttyPath[10] = "/dev/tty\0\0";
-    ttyPath[sizeof(ttyPath) - 2] = argv[1][0];
-    if (ttyNumber > 9) {
-       ttyPath[sizeof(ttyPath) - 1] = argv[1][1];
-    }
-
-    // Continue in a child process, to make sure setsid() will work.
-    struct clone_args args = { .flags = CLONE_VM | CLONE_FILES | CLONE_FS | CLONE_CLEAR_SIGHAND };
-    int32_t status = sys_clone3_exit(&args, sizeof(args));
-    if (status < 0) return 1;
-
-    // Create new session.
-    status = sys_setsid();
-    if (status < 0) return 1;
-
-    // Open tty.
-    int32_t ttyFd = sys_openat(-1, &ttyPath, O_RDWR, 0);
-    if (ttyFd < 0) {
-        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Failed to open tty\n"));
-        return 1;
-    }
-
-    // Set the tty as our controlling terminal.
-    status = sys_ioctl(ttyFd, TIOCSCTTY, 0);
-    if (status < 0) {
-        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Failed to set controlling terminal\n"));
-        return 1;
-    }
-
-    // Set up signalfd for SIGUSR1 and SIGUSR2.
-    uint64_t ttySignals = sys_SIGMASK(SIGUSR1) | sys_SIGMASK(SIGUSR2);
-    status = sys_rt_sigprocmask(SIG_BLOCK, &ttySignals, NULL);
-    if (status < 0) return 1;
-
-    int32_t signalFd = sys_signalfd4(-1, &ttySignals, 0);
-    if (signalFd < 0) return 1;
-
-    // Request SIGUSR1 and SIGUSR2 when our tty is entered and left.
-    struct vt_mode vtMode = {
-        .mode = VT_PROCESS,
-        .acqsig = SIGUSR1,
-        .relsig = SIGUSR2
-    };
-    status = sys_ioctl(ttyFd, VT_SETMODE, &vtMode);
-    if (status < 0) return 1;
-
-    // Set tty to graphics mode.
-    status = sys_ioctl(ttyFd, KDSETMODE, (void *)KD_GRAPHICS);
-    if (status < 0) return 1;
-
-    // Check if our tty is already active.
-    struct vt_stat vtState;
-    vtState.v_active = 0;
-    status = sys_ioctl(ttyFd, VT_GETSTATE, &vtState);
-    if (status < 0) return 1;
-    bool active = vtState.v_active == ttyNumber;
-
     // Set up epoll.
     int32_t epollFd = sys_epoll_create1(0);
     if (epollFd < 0) return 1;
 
-    struct epoll_event signalFdEvent = {
-        .events = EPOLLIN
-    };
-    if (sys_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
+    uint64_t ttyNumber;
+    int32_t ttyFd;
+    bool active = true;
+    if (argc == 2) {
+        // Parse TTY_NUM argument.
+        if (util_strToUint(argv[1], 100, &ttyNumber) <= 0 || ttyNumber < 1 || ttyNumber > 63) {
+            sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Invalid tty argument\n"));
+            return 1;
+        }
+        char ttyPath[10] = "/dev/tty\0\0";
+        ttyPath[sizeof(ttyPath) - 2] = argv[1][0];
+        if (ttyNumber > 9) {
+        ttyPath[sizeof(ttyPath) - 1] = argv[1][1];
+        }
+
+        // Continue in a child process, to make sure setsid() will work.
+        struct clone_args args = { .flags = CLONE_VM | CLONE_FILES | CLONE_FS | CLONE_CLEAR_SIGHAND };
+        int32_t status = sys_clone3_exit(&args, sizeof(args));
+        if (status < 0) return 1;
+
+        // Create new session.
+        status = sys_setsid();
+        if (status < 0) return 1;
+
+        // Open tty.
+        ttyFd = sys_openat(-1, &ttyPath, O_RDWR, 0);
+        if (ttyFd < 0) {
+            sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Failed to open tty\n"));
+            return 1;
+        }
+
+        // Set the tty as our controlling terminal.
+        status = sys_ioctl(ttyFd, TIOCSCTTY, 0);
+        if (status < 0) {
+            sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Failed to set controlling terminal\n"));
+            return 1;
+        }
+
+        // Set up signalfd for SIGUSR1 and SIGUSR2.
+        uint64_t ttySignals = sys_SIGMASK(SIGUSR1) | sys_SIGMASK(SIGUSR2);
+        status = sys_rt_sigprocmask(SIG_BLOCK, &ttySignals, NULL);
+        if (status < 0) return 1;
+
+        int32_t signalFd = sys_signalfd4(-1, &ttySignals, 0);
+        if (signalFd < 0) return 1;
+
+        // Request SIGUSR1 and SIGUSR2 when our tty is entered and left.
+        struct vt_mode vtMode = {
+            .mode = VT_PROCESS,
+            .acqsig = SIGUSR1,
+            .relsig = SIGUSR2
+        };
+        status = sys_ioctl(ttyFd, VT_SETMODE, &vtMode);
+        if (status < 0) return 1;
+
+        // Set tty to graphics mode.
+        status = sys_ioctl(ttyFd, KDSETMODE, (void *)KD_GRAPHICS);
+        if (status < 0) return 1;
+
+        // Check if our tty is already active.
+        struct vt_stat vtState;
+        vtState.v_active = 0;
+        status = sys_ioctl(ttyFd, VT_GETSTATE, &vtState);
+        if (status < 0) return 1;
+        active = vtState.v_active == ttyNumber;
+
+        struct epoll_event signalFdEvent = {
+            .events = EPOLLIN,
+            .data.fd = signalFd
+        };
+        if (sys_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
+    }
 
     struct drmKms graphics;
     int64_t frameCounter;
-    struct timespec prev;
+    struct timespec prev = {0};
     uint32_t red;
     uint32_t green;
     uint32_t blue;
@@ -186,13 +168,14 @@ int32_t start(int32_t argc, char **argv) {
     for (;;) {
         int32_t timeout = active ? 0 : -1; // Only block if not active.
         struct epoll_event event;
-        status = sys_epoll_pwait(epollFd, &event, 1, timeout, NULL);
+        event.data.fd = 0;
+        int32_t status = sys_epoll_pwait(epollFd, &event, 1, timeout, NULL);
         if (status < 0) return 1;
         if (status > 0) {
             // Handle event.
             struct signalfd_siginfo info;
             info.ssi_signo = 0;
-            int64_t numRead = sys_read(signalFd, &info, sizeof(info));
+            int64_t numRead = sys_read(event.data.fd, &info, sizeof(info));
             if (numRead != sizeof(info)) return 1;
 
             if (info.ssi_signo == SIGUSR1) {
@@ -227,7 +210,7 @@ int32_t start(int32_t argc, char **argv) {
         drmKms_markFbDirty(&graphics);
 
         ++frameCounter;
-        struct timespec now;
+        struct timespec now = {0};
         debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), RES == 0);
         if (now.tv_sec > prev.tv_sec) {
             debug_printNum("FPS: ", frameCounter, "\n");
