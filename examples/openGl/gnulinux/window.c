@@ -257,7 +257,8 @@ static int32_t window_init(char **envp) {
     window.pointerGrabbed = false;
 
     // Initialise EGL.
-    int32_t status = egl_init(&window.egl);
+    const uint32_t platforms[] = { egl_PLATFORM_XCB_EXT };
+    int32_t status = egl_init(&window.egl, "libEGL.so.1", &platforms[0], hc_ARRAY_LEN(platforms));
     if (status < 0) {
         debug_printNum("Failed to initalise EGL (", status, ")\n");
         return -1;
@@ -312,7 +313,7 @@ static int32_t window_init(char **envp) {
     }
 
     // Setup EGL surface.
-    status = egl_setupSurface(&window.egl, (void *)(uint64_t)window.windowId);
+    status = egl_setupSurface(&window.egl, (void *)(size_t)window.windowId);
     if (status < 0) {
         debug_printNum("Failed to setup EGL surface (", status, ")\n");
         goto cleanup_x11Setup;

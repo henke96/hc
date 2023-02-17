@@ -175,6 +175,19 @@
 #define egl_IMAGE_PRESERVED 0x30D2
 #define egl_NO_IMAGE ((void *)0)
 
+// EXT_platform_xcb
+#define egl_PLATFORM_XCB_EXT 0x31DC
+#define egl_PLATFORM_XCB_SCREEN_EXT 0x31DE
+
+// KHR_platform_wayland
+#define egl_PLATFORM_WAYLAND_KHR 0x31D8
+
+// KHR_platform_android
+#define egl_PLATFORM_ANDROID_KHR 0x3141
+
+// MESA_platform_gbm
+#define egl_PLATFORM_GBM_MESA 0x31D7
+
 // EXT_device_query
 #define egl_NO_DEVICE_EXT ((void *)0)
 #define egl_BAD_DEVICE_EXT 0x322B

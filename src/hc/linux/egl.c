@@ -1,15 +1,10 @@
-#if !defined(egl_SO_NAME)
-    #define egl_SO_NAME "libEGL.so.1"
-#endif
-
 struct egl {
     void *display;
     void *config;
     void *context;
     void *surface;
     void *dlHandle;
-    void *(*eglGetDisplay)(void *display);
-    uint32_t (*eglInitialize)(void *display, int32_t *major, int32_t *minor);
+    int32_t (*eglGetError)(void);
     uint32_t (*eglChooseConfig)(void *display, const int32_t *attributes, void *configs, int32_t configsLength, int32_t *numConfigs);
     uint32_t (*eglBindAPI)(uint32_t api);
     void *(*eglCreateContext)(void *display, void *config, void *context, const int32_t *attributes);
@@ -24,52 +19,6 @@ struct egl {
     uint32_t (*eglSwapInterval)(void *display, int32_t interval);
     uint32_t (*eglQuerySurface)(void *display, void *surface, int32_t attribute, int32_t *value);
 };
-
-static int32_t egl_init(struct egl *self) {
-    self->context = egl_NO_CONTEXT;
-    self->surface = egl_NO_SURFACE;
-
-    self->dlHandle = dlopen(egl_SO_NAME, RTLD_NOW);
-    if (self->dlHandle == NULL) return -1;
-
-    dlerror(); // Reset the error.
-    self->eglGetDisplay = dlsym(self->dlHandle, "eglGetDisplay");
-    self->eglInitialize = dlsym(self->dlHandle, "eglInitialize");
-    self->eglChooseConfig = dlsym(self->dlHandle, "eglChooseConfig");
-    self->eglBindAPI = dlsym(self->dlHandle, "eglBindAPI");
-    self->eglCreateContext = dlsym(self->dlHandle, "eglCreateContext");
-    self->eglGetConfigAttrib = dlsym(self->dlHandle, "eglGetConfigAttrib");
-    self->eglCreateWindowSurface = dlsym(self->dlHandle, "eglCreateWindowSurface");
-    self->eglMakeCurrent = dlsym(self->dlHandle, "eglMakeCurrent");
-    self->eglSwapBuffers = dlsym(self->dlHandle, "eglSwapBuffers");
-    self->eglTerminate = dlsym(self->dlHandle, "eglTerminate");
-    self->eglDestroySurface = dlsym(self->dlHandle, "eglDestroySurface");
-    self->eglDestroyContext = dlsym(self->dlHandle, "eglDestroyContext");
-    self->eglGetProcAddress = dlsym(self->dlHandle, "eglGetProcAddress");
-    self->eglSwapInterval = dlsym(self->dlHandle, "eglSwapInterval");
-    self->eglQuerySurface = dlsym(self->dlHandle, "eglQuerySurface");
-    int32_t status;
-    if (dlerror() != NULL) {
-        status = -2;
-        goto cleanup_dlHandle;
-    }
-
-    self->display = self->eglGetDisplay(egl_DEFAULT_DISPLAY); // TODO: What happens on XWayland? Could consider eglGetPlatformDisplay().
-    if (self->display == egl_NO_DISPLAY) {
-        status = -3;
-        goto cleanup_dlHandle;
-    }
-
-    if (!self->eglInitialize(self->display, NULL, NULL)) {
-        status = -4;
-        goto cleanup_dlHandle;
-    }
-    return 0;
-
-    cleanup_dlHandle:
-    debug_CHECK(dlclose(self->dlHandle), RES == 0);
-    return status;
-}
 
 // Returns visualId, or negative error code.
 static int32_t egl_createContext(struct egl *self, uint32_t api, const int32_t *configAttributes, const int32_t *contextAttributes) {
@@ -121,6 +70,70 @@ hc_UNUSED
 static uint32_t egl_querySurface(struct egl *self, int32_t attribute, int32_t *value) {
     debug_ASSERT(self->surface != NULL);
     return self->eglQuerySurface(self->display, self->surface, attribute, value);
+}
+
+hc_UNUSED
+static inline int32_t egl_getError(struct egl *self) {
+    return self->eglGetError();
+}
+
+// Returns platform number (1-based) if successful.
+// Attempts `eglGetDisplay(egl_DEFAULT_DISPLAY)` as fallback, and returns 0 if that works.
+static int32_t egl_init(
+    struct egl *self,
+    const char *eglLibPath,
+    const uint32_t *platforms,
+    const int32_t platformsLen // Can be 0.
+) {
+    self->context = egl_NO_CONTEXT;
+    self->surface = egl_NO_SURFACE;
+
+    self->dlHandle = dlopen(eglLibPath, RTLD_NOW);
+    if (self->dlHandle == NULL) return -1;
+
+    dlerror(); // Reset the error.
+    void *(*eglGetDisplay)(void *display) = dlsym(self->dlHandle, "eglGetDisplay");
+    uint32_t (*eglInitialize)(void *display, int32_t *major, int32_t *minor) = dlsym(self->dlHandle, "eglInitialize");
+    self->eglGetError = dlsym(self->dlHandle, "eglGetError");
+    self->eglChooseConfig = dlsym(self->dlHandle, "eglChooseConfig");
+    self->eglBindAPI = dlsym(self->dlHandle, "eglBindAPI");
+    self->eglCreateContext = dlsym(self->dlHandle, "eglCreateContext");
+    self->eglGetConfigAttrib = dlsym(self->dlHandle, "eglGetConfigAttrib");
+    self->eglCreateWindowSurface = dlsym(self->dlHandle, "eglCreateWindowSurface");
+    self->eglMakeCurrent = dlsym(self->dlHandle, "eglMakeCurrent");
+    self->eglSwapBuffers = dlsym(self->dlHandle, "eglSwapBuffers");
+    self->eglTerminate = dlsym(self->dlHandle, "eglTerminate");
+    self->eglDestroySurface = dlsym(self->dlHandle, "eglDestroySurface");
+    self->eglDestroyContext = dlsym(self->dlHandle, "eglDestroyContext");
+    self->eglGetProcAddress = dlsym(self->dlHandle, "eglGetProcAddress");
+    self->eglSwapInterval = dlsym(self->dlHandle, "eglSwapInterval");
+    self->eglQuerySurface = dlsym(self->dlHandle, "eglQuerySurface");
+
+    int32_t status;
+    if (dlerror() != NULL) {
+        status = -2;
+        goto cleanup_dlHandle;
+    }
+
+    if (platforms > 0) {
+        void *(*eglGetPlatformDisplay)(uint32_t platform, void *display, const uint64_t *attributes) = dlsym(self->dlHandle, "eglGetPlatformDisplay");
+        if (dlerror() == NULL) {
+            for (int32_t i = 0; i < platformsLen; ++i) {
+                uint64_t noAttr = egl_NONE;
+                self->display = eglGetPlatformDisplay(platforms[i], egl_DEFAULT_DISPLAY, &noAttr);
+                if (self->display == egl_NO_DISPLAY) continue;
+                if (!eglInitialize(self->display, NULL, NULL)) continue;
+                return i + 1;
+            }
+        }
+    }
+    self->display = eglGetDisplay(egl_DEFAULT_DISPLAY);
+    if (self->display != egl_NO_DISPLAY && eglInitialize(self->display, NULL, NULL)) return 0;
+    status = -3;
+
+    cleanup_dlHandle:
+    debug_CHECK(dlclose(self->dlHandle), RES == 0);
+    return status;
 }
 
 static void egl_deinit(struct egl *self) {

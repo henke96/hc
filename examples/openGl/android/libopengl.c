@@ -12,7 +12,6 @@
 #include "hc/linux/android/libdl.so.h"
 #include "hc/linux/android/debug.c"
 #include "hc/linux/android/nativeGlue.c"
-#define egl_SO_NAME "libEGL.so"
 #include "hc/linux/egl.c"
 
 #define game_EXPORT(NAME) static
@@ -49,11 +48,11 @@ static void app_init(void) {
     app.running = false;
 }
 
-static int32_t app_initEgl() {
+static int32_t app_initEgl(void) {
     // No error recovery as we end up aborting anyway.
-    int32_t status = egl_init(&app.egl);
-    if (status != 0) {
-        debug_printNum("Failed to initialise EGL (", status, ")\n");
+    int32_t status = egl_init(&app.egl, "libEGL.so", NULL, 0);
+    if (status < 0) {
+        debug_printNum("Failed to initalise EGL (", status, ")\n");
         return -1;
     }
 
