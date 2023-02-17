@@ -17,7 +17,7 @@ struct xauth_entry {
 static int32_t xauth_init(struct xauth *self, const char *xAuthorityFile) {
     self->fileOffset = 0;
 
-    self->fd = sys_openat(-1, xAuthorityFile, O_RDONLY, 0);
+    self->fd = sys_openat(-1, xAuthorityFile, O_RDONLY | O_CLOEXEC, 0);
     if (self->fd < 0) return -1;
 
     // Find file size.

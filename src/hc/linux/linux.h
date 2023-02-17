@@ -1596,6 +1596,41 @@ struct signalfd_siginfo {
 
 #define DRM_IOCTL_MODE_GETFB2 DRM_IOWR(0xCE, struct drm_mode_fb_cmd2)
 
+enum drm_vblank_seq_type {
+    DRM_VBLANK_ABSOLUTE = 0x0, /**< Wait for specific vblank sequence number */
+    DRM_VBLANK_RELATIVE = 0x1, /**< Wait for given number of vblanks */
+    /* bits 1-6 are reserved for high crtcs */
+    DRM_VBLANK_HIGH_CRTC_MASK = 0x0000003e,
+    DRM_VBLANK_EVENT = 0x4000000, /**< Send event instead of blocking */
+    DRM_VBLANK_FLIP = 0x8000000, /**< Scheduled buffer swap should flip */
+    DRM_VBLANK_NEXTONMISS = 0x10000000, /**< If missed, wait for next vblank */
+    DRM_VBLANK_SECONDARY = 0x20000000, /**< Secondary display controller */
+    DRM_VBLANK_SIGNAL = 0x40000000 /**< Send signal instead of blocking, unsupported */
+};
+#define DRM_VBLANK_HIGH_CRTC_SHIFT 1
+
+#define DRM_VBLANK_TYPES_MASK (DRM_VBLANK_ABSOLUTE | DRM_VBLANK_RELATIVE)
+#define DRM_VBLANK_FLAGS_MASK (DRM_VBLANK_EVENT | DRM_VBLANK_SIGNAL | DRM_VBLANK_SECONDARY | DRM_VBLANK_NEXTONMISS)
+
+struct drm_wait_vblank_request {
+    enum drm_vblank_seq_type type;
+    uint32_t sequence;
+    uint64_t signal;
+};
+
+struct drm_wait_vblank_reply {
+    enum drm_vblank_seq_type type;
+    uint32_t sequence;
+    int64_t tval_sec;
+    int64_t tval_usec;
+};
+
+// DRM_IOCTL_WAIT_VBLANK ioctl argument type.
+union drm_wait_vblank {
+    struct drm_wait_vblank_request request;
+    struct drm_wait_vblank_reply reply;
+};
+
 // drm_mode.h
 #define DRM_CONNECTOR_NAME_LEN 32
 #define DRM_DISPLAY_MODE_LEN 32

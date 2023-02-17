@@ -174,3 +174,11 @@
 #define egl_GL_TEXTURE_CUBE_MAP_NEGATIVE_Z 0x30B8
 #define egl_IMAGE_PRESERVED 0x30D2
 #define egl_NO_IMAGE ((void *)0)
+
+// EXT_device_query
+#define egl_NO_DEVICE_EXT ((void *)0)
+#define egl_BAD_DEVICE_EXT 0x322B
+#define egl_DEVICE_EXT 0x322C
+
+// EXT_device_drm
+#define egl_DRM_DEVICE_FILE_EXT 0x3233
