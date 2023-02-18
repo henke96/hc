@@ -5,4 +5,4 @@ flags="$(cat "$script_dir/flags")"
 ARCH="${ARCH:-x86_64}"
 ABI="${ABI:-elf}"
 
-"${LLVM}clang" -I"$script_dir/src" $flags -target $ARCH-unknown-linux-$ABI --ld-path="${LLVM}ld.lld" -Wl,--no-dynamic-linker -Wl,--build-id=none "$@"
+"${LLVM}clang" -I"$script_dir/src" $flags -target $ARCH-unknown-linux-$ABI --ld-path="${LLVM}ld.lld" -Wl,-dynamic-linker="" -Wl,--build-id=none "$@"

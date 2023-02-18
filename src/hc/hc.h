@@ -44,6 +44,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_STR_COMMA_LEN(STR) (STR), (hc_ARRAY_LEN(STR) - 1)
 
 // Attributes
+#define hc_WEAK __attribute__((weak))
 #define hc_FALLTHROUGH __attribute__((fallthrough))
 #define hc_UNREACHABLE __builtin_unreachable()
 #define hc_ASSUME __builtin_assume
@@ -55,8 +56,6 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_SECTION(NAME) __attribute__((section(NAME)))
 #define hc_ALWAYS_INLINE __attribute__((always_inline)) inline
 #define hc_COLD __attribute__((cold))
-#define hc_DLLIMPORT __attribute__((dllimport))
-#define hc_DLLEXPORT __attribute__((dllexport))
 #if hc_X86_64
     #define hc_MS_ABI __attribute__((ms_abi))
     #define hc_SYSV_ABI __attribute__((sysv_abi))
@@ -64,15 +63,12 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_MS_ABI
     #define hc_SYSV_ABI
 #endif
-#if hc_WASM32
-    #define hc_WASM_IMPORT(MODULE, NAME) __attribute__((import_module(MODULE), import_name(NAME)))
-    #define hc_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
-    #define hc_WASM_MEMORY_SIZE __builtin_wasm_memory_size(0)
-    #define hc_WASM_MEMORY_GROW(DELTA) __builtin_wasm_memory_grow(0, DELTA)
-#else
-    #define hc_WASM_IMPORT(MODULE, NAME)
-    #define hc_WASM_EXPORT(NAME)
-#endif
+
+#define hc_DLLIMPORT __attribute__((dllimport))
+#define hc_DLLEXPORT __attribute__((dllexport))
+#define hc_ELF_EXPORT __attribute__((visibility("default")))
+#define hc_WASM_IMPORT(MODULE, NAME) __attribute__((import_module(MODULE), import_name(NAME)))
+#define hc_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
 
 // Builtins
 #define hc_ABS32 __builtin_abs
@@ -86,6 +82,8 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_MEMMOVE __builtin_memmove
 #define hc_MEMCMP __builtin_memcmp
 #define hc_MEMSET __builtin_memset
+#define hc_WASM_MEMORY_SIZE __builtin_wasm_memory_size(0)
+#define hc_WASM_MEMORY_GROW(DELTA) __builtin_wasm_memory_grow(0, DELTA)
 
 // Atomics
 #define hc_ATOMIC_RELAXED __ATOMIC_RELAXED

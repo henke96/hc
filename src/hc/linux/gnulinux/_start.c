@@ -1,21 +1,24 @@
 #define _start_FUNC "_startGnu"
 #include "hc/linux/helpers/_start.c"
 
+hc_WEAK
+int32_t __libc_start_main(
+    void *main,
+    int32_t argc,
+    char **argv,
+    void (*init)(void),
+    void (*fini)(void),
+    void (*rtld_fini)(void)
+);
+
 int32_t _startGnu(int32_t argc, char **argv) {
     if (argc < 1) return 1;
-    char **envp = util_getEnvp(argc, argv);
 
-    // Check if we have re-executed ourself through the dynamic linker yet (stage2).
-    if (util_cstrCmp(argv[argc - 1], "STAGE2=1") == 0) {
-        argv[argc - 1] = NULL;
-        // Yep, run `__libc_start_main` like a normal C program would.
-        __libc_start_main(start, argc - 1, argv, NULL, NULL, NULL);
-        return 1;
-    }
-    // Nope, run ourself through dynamic linker.
+    // Check if we have re-executed ourself through the dynamic linker yet.
+    if (__libc_start_main != 0) __libc_start_main(start, argc, argv, NULL, NULL, NULL); // Yep, hand over to libc.
 
     // Allocate space for new argv.
-    int64_t newArgvCount = (int64_t)argc + 2;
+    int64_t newArgvCount = (int64_t)argc + 1; // We need an extra argument (argv[0] for dynamic linker).
     int64_t allocSize = (newArgvCount + 1) * (int64_t)sizeof(char *);
     const char **newArgv = sys_mmap(NULL, allocSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     if ((int64_t)newArgv < 0) return 1;
@@ -41,9 +44,9 @@ int32_t _startGnu(int32_t argc, char **argv) {
             for (int64_t i = 0; i < argc; ++i) {
                 newArgv[i + 1] = argv[i];
             }
-            newArgv[newArgvCount - 1] = "STAGE2=1";
             newArgv[newArgvCount] = NULL;
 
+            char **envp = util_getEnvp(argc, argv);
             sys_execveat(-1, newArgv[0], &newArgv[0], (const char **)&envp[0], 0);
             return 1;
         }

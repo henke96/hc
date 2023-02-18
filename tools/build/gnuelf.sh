@@ -15,4 +15,5 @@ root_dir="$script_dir/../.."
 "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/libc.so.6.c" "$path/libc.so.6"
 "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/linux/gnulinux/libdl.so.2.c" "$path/libdl.so.2"
 
-FLAGS="$("$root_dir/tools/shellUtil/shellescape.sh" "-L$path") $FLAGS" "$script_dir/elf.sh" "$@"
+# Note: -fPIC seems needed for undefined weak symbols to work.
+FLAGS="-fPIC $("$root_dir/tools/shellUtil/shellescape.sh" "-L$path") $FLAGS" "$script_dir/elf.sh" "$@"

@@ -206,6 +206,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
     }
 }
 
+hc_ELF_EXPORT
 void ANativeActivity_onCreate(struct ANativeActivity *activity, hc_UNUSED void *savedState, hc_UNUSED uint64_t savedStateSize) {
     struct nativeGlue_appInfo appInfo = {
         .appThreadFunc = appThread,
