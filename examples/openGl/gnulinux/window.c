@@ -289,8 +289,25 @@ static int32_t window_init(char **envp) {
     // Initialise x11.
     struct sockaddr_un serverAddr;
     serverAddr.sun_family = AF_UNIX;
-    static const char address[] = "/tmp/.X11-unix/X0";
+    const static char address[] = "/tmp/.X11-unix/X0";
     hc_MEMCPY(&serverAddr.sun_path[0], &address[0], sizeof(address));
+
+    // Parse DISPLAY.
+    char *xDisplay = util_getEnv(envp, "DISPLAY");
+    if (xDisplay != NULL && xDisplay[0] == ':') {
+        ++xDisplay; // Skip colon.
+        int64_t prefixLen = sizeof("/tmp/.X11-unix/X") - 1;
+        int64_t maxNum = (int64_t)sizeof(serverAddr.sun_path) - prefixLen - 1; // Reserve space for prefix and null terminator.
+
+        int64_t i = 0;
+        for (; i < maxNum; ++i) {
+            int32_t c = xDisplay[i];
+            if (c < '0' || c > '9') break;
+            serverAddr.sun_path[prefixLen + i] = (char)c;
+        }
+        serverAddr.sun_path[prefixLen + i] = '\0';
+    }
+
     char *xAuthorityFile = util_getEnv(envp, "XAUTHORITY");
     struct xauth xauth;
     struct xauth_entry entry = {0};

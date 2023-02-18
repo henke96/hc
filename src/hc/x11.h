@@ -112,12 +112,18 @@ struct x11_setupRequest {
 
 #define x11_setupResponse_FAILED 0
 #define x11_setupResponse_SUCCESS 1
-struct x11_setupResponse {
+#define x11_setupResponse_AUTHENTICATE 2
+struct x11_setupResponse_header {
     uint8_t status;
-    uint8_t __pad;
-    uint16_t protocolMajorVersion;
-    uint16_t protocolMinorVersion;
+    uint8_t extra; // Length of `reason` for failed.
+    uint16_t protocolMajorVersion; // Not for authenticate.
+    uint16_t protocolMinorVersion; // Not for authenticate.
     uint16_t length;
+    uint8_t data[]; // struct x11_setupResponse for success,
+                    // reason string for failed and authenticate.
+};
+
+struct x11_setupResponse {
     uint32_t releaseNumber;
     uint32_t resourceIdBase;
     uint32_t resourceIdMask;

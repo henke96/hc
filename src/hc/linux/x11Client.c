@@ -43,56 +43,60 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
         goto cleanup_socket;
     }
 
-    struct x11_setupResponse response;
-    response.status = x11_setupResponse_FAILED;
-    int64_t numRead = sys_recvfrom(self->socketFd, &response, sizeof(response), 0, NULL, NULL);
-    if (numRead <= 0) {
-        status = -4;
-        goto cleanup_socket;
-    }
-
-    // We have read at least 1 byte, and status is the first byte.
-    if (response.status != x11_setupResponse_SUCCESS) {
-        status = -5;
-        goto cleanup_socket;
-    }
-
-    // Read all fixed size content.
-    while (numRead < (int64_t)sizeof(response)) {
-        char *readPos = (char *)&response + numRead;
-        int64_t read = sys_recvfrom(self->socketFd, readPos, (int64_t)sizeof(response) - numRead, 0, NULL, NULL);
+    // Read header.
+    struct x11_setupResponse_header header = { .status = x11_setupResponse_FAILED };
+    int64_t numRead = 0;
+    while (numRead < (int64_t)sizeof(header)) {
+        char *readPos = (char *)&header + numRead;
+        int64_t read = sys_recvfrom(self->socketFd, readPos, (int64_t)sizeof(header) - numRead, 0, NULL, NULL);
         if (read <= 0) {
-            status = -6;
+            status = -4;
             goto cleanup_socket;
         }
         numRead += read;
     }
 
-    // Do some sanity checks. TODO: what about imageByteOrder and bitmapFormatBitOrder?
-    if (response.numRoots < 1) {
-        status = -7;
-        goto cleanup_socket;
-    }
-
-    // Allocate space for rest of response.
-    self->setupResponseSize = 8 + (int32_t)response.length * 4;
+    // Allocate space for payload of response.
+    self->setupResponseSize = (int32_t)header.length * 4;
     self->setupResponse = sys_mmap(NULL, self->setupResponseSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     if ((int64_t)self->setupResponse < 0) {
-        status = -8;
+        status = -5;
         goto cleanup_socket;
     }
-    hc_MEMCPY(self->setupResponse, &response, sizeof(response));
 
-    // Read rest of response.
+    // Read payload.
+    numRead = 0;
     while (numRead < self->setupResponseSize) {
         char *readPos = (char *)self->setupResponse + numRead;
         int64_t read = sys_recvfrom(self->socketFd, readPos, self->setupResponseSize - numRead, 0, NULL, NULL);
         if (read <= 0) {
-            status = -9;
+            status = -6;
             goto cleanup_setupResponse;
         }
         numRead += read;
     }
+
+    // Check status.
+    if (header.status != x11_setupResponse_SUCCESS) {
+        if (header.status == x11_setupResponse_FAILED) {
+            char *error = (void *)self->setupResponse;
+            struct iovec print[] = {
+                { hc_STR_COMMA_LEN("X11 setup error: ") },
+                { error, header.extra },
+                { hc_STR_COMMA_LEN("\n") }
+            };
+            sys_writev(STDERR_FILENO, &print[0], hc_ARRAY_LEN(print));
+        }
+        status = -7;
+        goto cleanup_setupResponse;
+    }
+
+    // Do some sanity checks. TODO: what about imageByteOrder and bitmapFormatBitOrder?
+    if (self->setupResponse->numRoots < 1) {
+        status = -8;
+        goto cleanup_setupResponse;
+    }
+
     return 0;
 
     cleanup_setupResponse:
