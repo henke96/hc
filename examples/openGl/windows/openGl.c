@@ -8,7 +8,8 @@
 #include "hc/windows/wgl.c"
 
 #define game_EXPORT(NAME) static
-#include "gl.c"
+#define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) wgl_getProcAddress(LOADER_PTR, FUNC)
+#include "../shared/gl.c"
 #include "../shaders.c"
 #include "../vertexArrays.c"
 #include "../trig.c"

@@ -19,7 +19,8 @@ int32_t start(int32_t, char **, char **);
 #include "hc/linux/gnulinux/_start.c"
 
 #define game_EXPORT(NAME) static
-#include "gl.c"
+#define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)
+#include "../shared/gl.c"
 #include "../shaders.c"
 #include "../vertexArrays.c"
 #include "../trig.c"

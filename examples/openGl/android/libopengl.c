@@ -14,14 +14,13 @@
 #include "hc/linux/android/nativeGlue.c"
 #include "hc/linux/egl.c"
 
-#define game_EXPORT(NAME) static
-
 // TODO: Implement input
 hc_UNUSED static void game_onMouseMove(int64_t deltaX, int64_t deltaY, hc_UNUSED uint64_t timestamp);
 hc_UNUSED static void game_onKeyDown(int32_t key, uint64_t timestamp);
 hc_UNUSED static void game_onKeyUp(int32_t key, uint64_t timestamp);
-
-#include "../gnulinux/gl.c"
+#define game_EXPORT(NAME) static
+#define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)
+#include "../shared/gl.c"
 #include "../shaders.c"
 #include "../vertexArrays.c"
 #include "../trig.c"
