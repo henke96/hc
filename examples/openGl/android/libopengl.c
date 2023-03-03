@@ -1,6 +1,7 @@
 #include "hc/hc.h"
 #include "hc/egl.h"
 #include "hc/gl.h"
+#include "hc/jni.h"
 #include "hc/util.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
@@ -15,7 +16,6 @@
 #include "hc/linux/egl.c"
 
 // TODO: Implement input
-hc_UNUSED static void game_onMouseMove(int64_t deltaX, int64_t deltaY, hc_UNUSED uint64_t timestamp);
 hc_UNUSED static void game_onKeyDown(int32_t key, uint64_t timestamp);
 hc_UNUSED static void game_onKeyUp(int32_t key, uint64_t timestamp);
 #define game_EXPORT(NAME) static
@@ -82,7 +82,7 @@ static int32_t app_initEgl(void) {
         return -1;
     }
 
-    debug_CHECK(egl_swapInterval(&app.egl, 0), RES == egl_TRUE);
+    debug_CHECK(egl_swapInterval(&app.egl, 1), RES == egl_TRUE); // TODO: Replace vsync with choreographer.
 
     if (
         egl_querySurface(&app.egl, egl_WIDTH, &app.width) != 1 ||
@@ -122,6 +122,10 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                 if (ret != sizeof(cmd)) return -2;
 
                 switch (cmd.tag) {
+                    case nativeGlue_WINDOW_FOCUS_CHANGED: {
+                        if (cmd.windowFocusChanged.hasFocus) *cmd.windowFocusChanged.requestPointerCapture = true;
+                        break;
+                    }
                     case nativeGlue_NATIVE_WINDOW_CREATED: {
                         debug_ASSERT(app.window == NULL);
                         app.window = cmd.nativeWindowCreated.window;
@@ -178,7 +182,23 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                 void *inputEvent;
                 while (AInputQueue_getEvent(app.inputQueue, &inputEvent) >= 0) {
                     if (AInputQueue_preDispatchEvent(app.inputQueue, inputEvent) != 0) continue;
-                    AInputQueue_finishEvent(app.inputQueue, inputEvent, 1);
+                    int32_t handled = 0;
+                    if (app.running) {
+                        int32_t type = AInputEvent_getType(inputEvent);
+                        int32_t source = AInputEvent_getSource(inputEvent);
+                        if (type == AINPUT_EVENT_TYPE_MOTION && source == AINPUT_SOURCE_MOUSE_RELATIVE) {
+                            int32_t action = AMotionEvent_getAction(inputEvent);
+                            if (action == AMOTION_EVENT_ACTION_MOVE) {
+                                int64_t dXTemp = (int64_t)(AMotionEvent_getRawX(inputEvent, 0) * 65536.0);
+                                int64_t dYTemp = (int64_t)(AMotionEvent_getRawY(inputEvent, 0) * 65536.0);
+                                uint64_t dX = (uint64_t)dXTemp * 65536u;
+                                uint64_t dY = (uint64_t)dYTemp * 65536u;
+                                game_onMouseMove((int64_t)dX, (int64_t)dY, 0);
+                                handled = 1;
+                            }
+                        }
+                    }
+                    AInputQueue_finishEvent(app.inputQueue, inputEvent, handled);
                 }
             }
         }

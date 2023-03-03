@@ -86,9 +86,7 @@ int32_t start(int32_t argc, char **argv) {
         }
         char ttyPath[10] = "/dev/tty\0\0";
         ttyPath[sizeof(ttyPath) - 2] = argv[1][0];
-        if (ttyNumber > 9) {
-        ttyPath[sizeof(ttyPath) - 1] = argv[1][1];
-        }
+        if (ttyNumber > 9) ttyPath[sizeof(ttyPath) - 1] = argv[1][1];
 
         // Continue in a child process, to make sure setsid() will work.
         struct clone_args args = { .flags = CLONE_VM | CLONE_FILES | CLONE_FS | CLONE_CLEAR_SIGHAND };

@@ -28,8 +28,8 @@ struct ANativeActivity {
         void (*onLowMemory)(struct ANativeActivity *activity);
     } *callbacks;
 
-    struct jni_invokeInterface *vm;
-    struct jni_env *env;
+    struct jni_invokeInterface **vm;
+    struct jni_env **env;
     void *activityObj;
 
     const char *internalDataPath;

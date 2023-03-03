@@ -37,6 +37,7 @@ struct nativeGlue_cmd {
         struct {
             int32_t hasFocus;
             int32_t __pad;
+            bool *requestPointerCapture;
         } windowFocusChanged;
 
         struct {
@@ -169,12 +170,38 @@ static void _nativeGlue_onDestroy(hc_UNUSED struct ANativeActivity *activity) {
     _nativeGlue_DEBUG_PRINT("onDestroy leave\n");
 }
 
-static void _nativeGlue_onWindowFocusChanged(hc_UNUSED struct ANativeActivity *activity, int32_t hasFocus) {
+static void _nativeGlue_onWindowFocusChanged(struct ANativeActivity *activity, int32_t hasFocus) {
     _nativeGlue_DEBUG_PRINT("onWindowFocusChanged enter\n");
+    bool requestPointerCapture = false;
+
     struct nativeGlue_cmd cmd;
     cmd.tag = nativeGlue_WINDOW_FOCUS_CHANGED;
     cmd.windowFocusChanged.hasFocus = hasFocus;
+    cmd.windowFocusChanged.requestPointerCapture = &requestPointerCapture;
     _nativeGlue_writeAndWait(&cmd);
+
+    if (requestPointerCapture) {
+        struct jni_env **env = activity->env;
+        void *activityObj = activity->activityObj;
+
+        void *activityClass = (*env)->getObjectClass(env, activityObj);
+        if (activityClass == NULL) debug_abort();
+
+        void *nativeViewField = (*env)->getFieldId(env, activityClass, "mNativeContentView", "Landroid/app/NativeActivity$NativeContentView;");
+        if (nativeViewField == NULL) debug_abort();
+
+        void *nativeViewObj = (*env)->getObjectField(env, activityObj, nativeViewField);
+        if (nativeViewObj == NULL) debug_abort();
+
+        void *nativeViewClass = (*env)->getObjectClass(env, nativeViewObj);
+        if (nativeViewClass == NULL) debug_abort();
+
+        void *requestPointerCaptureMethod = (*env)->getMethodId(env, nativeViewClass, "requestPointerCapture", "()V");
+        if (requestPointerCaptureMethod == NULL) debug_abort();
+
+        (*env)->callVoidMethod(env, nativeViewObj, requestPointerCaptureMethod);
+        _nativeGlue_DEBUG_PRINT("onWindowFocusChanged requested pointer capture\n");
+    }
     _nativeGlue_DEBUG_PRINT("onWindowFocusChanged leave\n");
 }
 

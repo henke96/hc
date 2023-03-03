@@ -132,8 +132,8 @@
                         let onMouseMove = (event) => {
                             // Convert movements to 32.32 fixed point.
                             wasmExports.game_onMouseMove(
-                                BigInt(event.movementX) * 4294967296n,
-                                BigInt(event.movementY) * 4294967296n,
+                                BigInt(Math.round(event.movementX * 65536)) * 65536n,
+                                BigInt(Math.round(event.movementY * 65536)) * 65536n,
                                 BigInt(Math.round(event.timeStamp * 1000)) * 1000n
                             );
                         };

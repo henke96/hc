@@ -9,3 +9,7 @@ hc_ELF_EXPORT void AInputQueue_getEvent(void) {}
 hc_ELF_EXPORT void AInputQueue_preDispatchEvent(void) {}
 hc_ELF_EXPORT void AInputQueue_finishEvent(void) {}
 hc_ELF_EXPORT void AInputEvent_getType(void) {}
+hc_ELF_EXPORT void AInputEvent_getSource(void) {}
+hc_ELF_EXPORT void AMotionEvent_getAction(void) {}
+hc_ELF_EXPORT void AMotionEvent_getRawX(void) {}
+hc_ELF_EXPORT void AMotionEvent_getRawY(void) {}
