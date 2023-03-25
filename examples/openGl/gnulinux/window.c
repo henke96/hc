@@ -15,10 +15,11 @@ struct window {
     uint32_t wmStateAtom;
     uint32_t wmStateFullscreenAtom;
     uint32_t wmBypassCompositorAtom;
+    uint32_t motifWmHintsAtom;
     uint8_t xinputMajorOpcode;
     uint8_t xfixesMajorOpcode;
     bool pointerGrabbed;
-    char __pad[1];
+    char __pad[5];
 };
 
 static struct window window;
@@ -35,7 +36,6 @@ static int32_t window_x11Setup(uint32_t visualId) {
     struct requests {
         struct x11_createWindow createWindow;
         uint32_t createWindowValues[1];
-        struct x11_mapWindow mapWindow;
         struct x11_queryExtension queryXfixes;
         char queryXfixesName[sizeof(x11_XFIXES_NAME) - 1];
         uint8_t queryXfixesPad[math_PAD_BYTES(sizeof(x11_XFIXES_NAME) - 1, 4)];
@@ -57,6 +57,9 @@ static int32_t window_x11Setup(uint32_t visualId) {
         struct x11_internAtom wmBypassCompositorAtom;
         char wmBypassCompositorAtomName[sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1];
         uint8_t wmBypassCompositorAtomPad[math_PAD_BYTES(sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1, 4)];
+        struct x11_internAtom motifWmHintsAtom;
+        char motifWmHintsAtomName[sizeof("_MOTIF_WM_HINTS") - 1];
+        uint8_t motifWmHintsAtomPad[math_PAD_BYTES(sizeof("_MOTIF_WM_HINTS") - 1, 4)];
         struct x11_getKeyboardMapping getKeyboardMapping;
         struct x11_getModifierMapping getModifierMapping;
     };
@@ -84,11 +87,6 @@ static int32_t window_x11Setup(uint32_t visualId) {
                 x11_EVENT_KEY_PRESS_BIT |
                 x11_EVENT_KEY_RELEASE_BIT
             )
-        },
-        .mapWindow = {
-            .opcode = x11_mapWindow_OPCODE,
-            .length = sizeof(windowRequests.mapWindow) / 4,
-            .windowId = windowRequests.createWindow.windowId
         },
         .queryXfixes = {
             .opcode = x11_queryExtension_OPCODE,
@@ -137,6 +135,13 @@ static int32_t window_x11Setup(uint32_t visualId) {
             .nameLength = sizeof(windowRequests.wmBypassCompositorAtomName)
         },
         .wmBypassCompositorAtomName = "_NET_WM_BYPASS_COMPOSITOR",
+        .motifWmHintsAtom = {
+            .opcode = x11_internAtom_OPCODE,
+            .onlyIfExists = 0,
+            .length = (sizeof(windowRequests.motifWmHintsAtom) + sizeof(windowRequests.motifWmHintsAtomName) + sizeof(windowRequests.motifWmHintsAtomPad)) / 4,
+            .nameLength = sizeof(windowRequests.motifWmHintsAtomName)
+        },
+        .motifWmHintsAtomName = "_MOTIF_WM_HINTS",
         .getKeyboardMapping = {
             .opcode = x11_getKeyboardMapping_OPCODE,
             .length = sizeof(windowRequests.getKeyboardMapping) / 4,
@@ -152,7 +157,7 @@ static int32_t window_x11Setup(uint32_t visualId) {
     if (status < 0) return -1;
 
     // Wait for all replies.
-    int32_t nextSequenceNumber = 3;
+    int32_t nextSequenceNumber = 2;
     for (;;) {
         int32_t msgLength = x11Client_nextMessage(&window.x11Client);
         if (msgLength == 0) {
@@ -174,41 +179,46 @@ static int32_t window_x11Setup(uint32_t visualId) {
             if (generic->sequenceNumber != nextSequenceNumber) return -5;
 
             switch (nextSequenceNumber) {
-                case 3: {
+                case 2: {
                     struct x11_queryExtensionResponse *response = (void *)generic;
                     if (!response->present) return -6;
                     window.xfixesMajorOpcode = response->majorOpcode;
                     break;
                 }
-                case 4: {
+                case 3: {
                     struct x11_queryExtensionResponse *response = (void *)generic;
                     if (!response->present) return -7;
                     window.xinputMajorOpcode = response->majorOpcode;
                     break;
                 }
-                case 5: {
+                case 4: {
                     struct x11_internAtomResponse *response = (void *)generic;
                     window.wmProtocolsAtom = response->atom;
                     break;
                 }
-                case 6: {
+                case 5: {
                     struct x11_internAtomResponse *response = (void *)generic;
                     window.wmDeleteWindowAtom = response->atom;
                     break;
                 }
-                case 7: {
+                case 6: {
                     struct x11_internAtomResponse *response = (void *)generic;
                     window.wmStateAtom = response->atom;
                     break;
                 }
-                case 8: {
+                case 7: {
                     struct x11_internAtomResponse *response = (void *)generic;
                     window.wmStateFullscreenAtom = response->atom;
                     break;
                 }
-                case 9: {
+                case 8: {
                     struct x11_internAtomResponse *response = (void *)generic;
                     window.wmBypassCompositorAtom = response->atom;
+                    break;
+                }
+                case 9: {
+                    struct x11_internAtomResponse *response = (void *)generic;
+                    window.motifWmHintsAtom = response->atom;
                     break;
                 }
                 case window_GETKEYBOARDMAPPING_SEQ: {
@@ -495,7 +505,10 @@ static int32_t window_run(void) {
         uint32_t changePropertyData;
         struct x11_changeProperty bypassCompositor;
         uint32_t bypassCompositorData;
+        struct x11_changeProperty disableDecorations;
+        struct x11_motifWmHints disableDecorationsData;
         struct x11_xfixesQueryVersion queryXfixesVersion; // Need to do this once to tell server what version we expect.
+        struct x11_mapWindow mapWindow;
     };
     struct requests setupRequests = {
         .changeProperty = {
@@ -520,15 +533,34 @@ static int32_t window_run(void) {
             .dataLength = 1
         },
         .bypassCompositorData = 1,
+        .disableDecorations = {
+            .opcode = x11_changeProperty_OPCODE,
+            .mode = x11_changeProperty_REPLACE,
+            .length = (sizeof(setupRequests.disableDecorations) + sizeof(setupRequests.disableDecorationsData)) / 4,
+            .window = window.windowId,
+            .property = window.motifWmHintsAtom,
+            .type = window.motifWmHintsAtom,
+            .format = 32,
+            .dataLength = sizeof(setupRequests.disableDecorationsData) / 4
+        },
+        .disableDecorationsData = {
+            .flags = x11_motifWmHints_DECORATIONS,
+            .decorations = 0
+        },
         .queryXfixesVersion = {
             .majorOpcode = window.xfixesMajorOpcode,
             .opcode = x11_xfixesQueryVersion_OPCODE,
             .length = sizeof(setupRequests.queryXfixesVersion) / 4,
             .majorVersion = 4,
             .minorVersion = 0
-        }
+        },
+        .mapWindow = {
+            .opcode = x11_mapWindow_OPCODE,
+            .length = sizeof(setupRequests.mapWindow) / 4,
+            .windowId = window.windowId
+        },
     };
-    if (x11Client_sendRequests(&window.x11Client, &setupRequests, sizeof(setupRequests), 3) < 0) return -1;
+    if (x11Client_sendRequests(&window.x11Client, &setupRequests, sizeof(setupRequests), 5) < 0) return -1;
 
     // Main loop.
     for (;;) {

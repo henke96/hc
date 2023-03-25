@@ -524,6 +524,42 @@ struct x11_getModifierMappingResponse {
     uint8_t keycodes[];
 };
 
+// Motif WM Hints.
+struct x11_motifWmHints {
+    uint32_t flags;
+    uint32_t functions;
+    uint32_t decorations;
+    int32_t inputMode;
+    uint32_t status;
+};
+// flags
+#define x11_motifWmHints_FUNCTIONS (1 << 0)
+#define x11_motifWmHints_DECORATIONS (1 << 1)
+#define x11_motifWmHints_INPUT_MODE (1 << 2)
+#define x11_motifWmHints_STATUS (1 << 3)
+// functions
+#define x11_motifWmHints_FUNC_ALL (1 << 0)
+#define x11_motifWmHints_FUNC_RESIZE (1 << 1)
+#define x11_motifWmHints_FUNC_MOVE (1 << 2)
+#define x11_motifWmHints_FUNC_MINIMIZE (1 << 3)
+#define x11_motifWmHints_FUNC_MAXIMIZE (1 << 4)
+#define x11_motifWmHints_FUNC_CLOSE (1 << 5)
+// decorations
+#define x11_motifWmHints_DECOR_ALL (1 << 0)
+#define x11_motifWmHints_DECOR_BORDER (1 << 1)
+#define x11_motifWmHints_DECOR_RESIZEH (1 << 2)
+#define x11_motifWmHints_DECOR_TITLE (1 << 3)
+#define x11_motifWmHints_DECOR_MENU (1 << 4)
+#define x11_motifWmHints_DECOR_MINIMIZE (1 << 5)
+#define x11_motifWmHints_DECOR_MAXIMIZE (1 << 6)
+// inputMode
+#define x11_motifWmHints_INPUT_MODELESS 0
+#define x11_motifWmHints_INPUT_PRIMARY_APPLICATION_MODAL 1
+#define x11_motifWmHints_INPUT_SYSTEM_MODAL 2
+#define x11_motifWmHints_INPUT_FULL_APPLICATION_MODAL 3
+// status
+#define x11_motifWmHints_TEAROFF_WINDOW (1 << 0)
+
 // XInput2 extension.
 #define x11_XINPUT_NAME "XInputExtension"
 
