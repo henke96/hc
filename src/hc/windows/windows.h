@@ -510,6 +510,21 @@ struct RECT {
     int32_t bottom;
 };
 
+struct WINDOWPOS {
+    void *windowHandle;
+    void *windowHandleInsertAfter;
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
+    uint32_t flags;
+};
+
+struct NCCALCSIZE_PARAMS {
+    struct RECT rects[3];
+    struct WINDOWPOS *windowPos;
+};
+
 #define GWL_STYLE (-16)
 #define GWL_EXSTYLE (-20)
 #define GWL_ID (-12)

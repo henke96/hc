@@ -77,6 +77,13 @@ static int64_t window_proc(
                 goto cleanup_context;
             }
             window.initialised = true;
+
+            // Force a WM_NCCALCSIZE message to remove window decorations.
+            SetWindowPos(
+                windowHandle, NULL,
+                0, 0, 0, 0,
+                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+            );
             return 0;
 
             cleanup_context:
@@ -93,6 +100,11 @@ static int64_t window_proc(
                 debug_CHECK(ReleaseDC(windowHandle, window.dc), RES == 1);
                 PostQuitMessage(0);
             }
+            return 0;
+        }
+        case WM_NCCALCSIZE: {
+            if (!wParam) return DefWindowProcW(windowHandle, message, wParam, lParam);
+            // Handle this to prevent window decorations.
             return 0;
         }
         case WM_SIZE: {
