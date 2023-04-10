@@ -13,4 +13,3 @@ if "%ARCH%" == "x86_64" (
     )
 )
 "%LLVM%lld-link" -machine:"%machine%" -def:"%~1" -out:"%~2"
-endlocal

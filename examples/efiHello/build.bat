@@ -3,5 +3,3 @@ setlocal
 set "root_dir=%~dp0..\..\"
 
 call "%root_dir%tools\build\efi.bat" "%~dp0" efiHello
-
-endlocal

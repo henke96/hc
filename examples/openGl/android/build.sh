@@ -18,11 +18,13 @@ build_apk() {
     "$ANDROID_SDK/build-tools/26.0.3/aapt" package $2 -f -F "$script_dir/$1openGl.apk" -M "$script_dir/AndroidManifest.xml" -I "$ANDROID_SDK/platforms/android-26/android.jar" "$script_dir/$1dist"
 }
 sign_apk() {
-    "$ANDROID_SDK/build-tools/26.0.3/apksigner" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1openGl.apk"
+    "$JAVA" -jar "$ANDROID_SDK/build-tools/26.0.3/lib/apksigner.jar" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1openGl.apk"
 }
 
 prepare_apk "debug."
 prepare_apk ""
+
+JAVA="$("$JAVA_HOME/bin/java":-java)"
 
 # Download android command line tools: https://developer.android.com/studio (scroll down)
 # bin/sdkmanager --sdk_root=. --install "build-tools;26.0.3" "platforms;android-26"

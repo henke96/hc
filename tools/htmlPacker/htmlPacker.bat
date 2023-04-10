@@ -19,5 +19,3 @@ call "%root_dir%cc_pe.bat" -L"%~dp0windows\\" "%~dp0windows\htmlPacker.c" -o "%~
 if %errorlevel% neq 0 exit /b
 
 "%~dp0windows\htmlPacker.exe" %*
-
-endlocal

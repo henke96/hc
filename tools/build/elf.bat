@@ -29,4 +29,3 @@ set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyz
 call "%root_dir%cc_elf.bat" %debug_flags% %analyse_flags% "%~1%~2.c" %FLAGS%
 if %errorlevel% neq 0 exit /b
 call "%root_dir%cc_elf.bat" %release_flags% %analyse_flags% "%~1%~2.c" %FLAGS%
-endlocal

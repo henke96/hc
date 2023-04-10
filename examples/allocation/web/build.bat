@@ -9,5 +9,3 @@ if %errorlevel% neq 0 exit /b
 cd "%~dp0"
 if %errorlevel% neq 0 exit /b
 call "..\..\..\tools\htmlPacker\htmlPacker.bat" _start.html allocation
-
-endlocal

@@ -23,4 +23,3 @@ if %errorlevel% neq 0 exit /b
 :: Bootloader (with kernel binary embedded)
 set "FLAGS=-I^"%~dp0kernel\\^" -Os"
 call "%root_dir%tools\build\efi.bat" "%~dp0bootloader\" bootloader
-endlocal
