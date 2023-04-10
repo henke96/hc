@@ -24,7 +24,11 @@ sign_apk() {
 prepare_apk "debug."
 prepare_apk ""
 
-JAVA="$("$JAVA_HOME/bin/java":-java)"
+if test -z "$JAVA_HOME"; then
+    JAVA="java"
+else
+    JAVA="$JAVA_HOME/bin/java"
+fi
 
 # Download android command line tools: https://developer.android.com/studio (scroll down)
 # bin/sdkmanager --sdk_root=. --install "build-tools;26.0.3" "platforms;android-26"
