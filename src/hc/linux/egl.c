@@ -77,8 +77,8 @@ static inline int32_t egl_getError(struct egl *self) {
     return self->eglGetError();
 }
 
-// Returns platform number (1-based) if successful.
-// Attempts `eglGetDisplay(egl_DEFAULT_DISPLAY)` as fallback, and returns 0 if that works.
+// Returns platform index if successful.
+// Attempts `eglGetDisplay(egl_DEFAULT_DISPLAY)` as fallback, and returns `platformsLen` if that works.
 static int32_t egl_init(
     struct egl *self,
     const char *eglLibPath,
@@ -123,12 +123,12 @@ static int32_t egl_init(
                 self->display = eglGetPlatformDisplay(platforms[i], egl_DEFAULT_DISPLAY, &noAttr);
                 if (self->display == egl_NO_DISPLAY) continue;
                 if (!eglInitialize(self->display, NULL, NULL)) continue;
-                return i + 1;
+                return i;
             }
         }
     }
     self->display = eglGetDisplay(egl_DEFAULT_DISPLAY);
-    if (self->display != egl_NO_DISPLAY && eglInitialize(self->display, NULL, NULL)) return 0;
+    if (self->display != egl_NO_DISPLAY && eglInitialize(self->display, NULL, NULL)) return platformsLen;
     status = -3;
 
     cleanup_dlHandle:
