@@ -1,13 +1,10 @@
-#define window_x11_DEFAULT_WIDTH 640
-#define window_x11_DEFAULT_HEIGHT 480
-
 static int32_t window_x11_setup(uint32_t visualId) {
     window.x11.windowId = x11Client_nextId(&window.x11.client);
     uint64_t rootsOffset = (
         math_ALIGN_FORWARD(window.x11.client.setupResponse->vendorLength, 4) +
         sizeof(struct x11_format) * window.x11.client.setupResponse->numPixmapFormats
     );
-    struct x11_screen *screen = (void *)&window.x11.client.setupResponse->data[rootsOffset]; // Use first screen.
+    struct x11_screen *screen = (void *)&window.x11.client.setupResponse->data[rootsOffset]; // Use screen 0.
     window.x11.rootWindowId = screen->windowId;
 
     struct requests {
@@ -48,9 +45,9 @@ static int32_t window_x11_setup(uint32_t visualId) {
             .length = (sizeof(windowRequests.createWindow) + sizeof(windowRequests.createWindowValues)) / 4,
             .windowId = window.x11.windowId,
             .parentId = window.x11.rootWindowId,
-            .width = window_x11_DEFAULT_WIDTH,
-            .height = window_x11_DEFAULT_HEIGHT,
-            .borderWidth = 1,
+            .width = window.width,
+            .height = window.height,
+            .borderWidth = 0,
             .class = x11_INPUT_OUTPUT,
             .visualId = visualId,
             .valueMask = x11_createWindow_EVENT_MASK
@@ -240,7 +237,26 @@ static int32_t window_x11_setup(uint32_t visualId) {
     }
 }
 
-static int32_t window_x11_init(char **envp, uint32_t eglVisualId) {
+static int32_t window_x11_init(char **envp) {
+    uint64_t platformAttrs[] = {
+        egl_PLATFORM_XCB_SCREEN_EXT, 0, // We always use screen 0.
+        egl_NONE
+    };
+    int32_t status = egl_initContext(
+        &window.egl,
+        egl_PLATFORM_XCB_EXT,
+        &platformAttrs[0],
+        egl_DEFAULT_DISPLAY,
+        egl_OPENGL_ES_API,
+        &window_configAttributes[0],
+        &window_contextAttributes[0]
+    );
+    if (status < 0) {
+        debug_printNum("Failed to initialise EGL context (", status, ")\n");
+        return -1;
+    }
+    uint32_t eglVisualId = (uint32_t)status;
+
     // Initialise x11.
     struct sockaddr_un serverAddr;
     serverAddr.sun_family = AF_UNIX;
@@ -263,7 +279,6 @@ static int32_t window_x11_init(char **envp, uint32_t eglVisualId) {
         serverAddr.sun_path[prefixLen + i] = '\0';
     }
 
-    int32_t status;
     char *xAuthorityFile = util_getEnv(envp, "XAUTHORITY");
     struct xauth xauth;
     struct xauth_entry entry = {0};
@@ -276,7 +291,7 @@ static int32_t window_x11_init(char **envp, uint32_t eglVisualId) {
     }
     if (status < 0) {
         debug_printNum("Failed to initialise x11Client (", status, ")\n");
-        goto cleanup_none;
+        goto cleanup_eglContext;
     }
 
     status = window_x11_setup(eglVisualId);
@@ -300,20 +315,6 @@ static int32_t window_x11_init(char **envp, uint32_t eglVisualId) {
         goto cleanup_x11Setup;
     }
 
-    // Initialise game.
-    struct timespec initTimespec;
-    debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &initTimespec), RES == 0);
-    uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
-    status = game_init(
-        window_x11_DEFAULT_WIDTH,
-        window_x11_DEFAULT_HEIGHT,
-        initTimestamp
-    );
-    if (status < 0) {
-        debug_printNum("Failed to initialise game (", status, ")\n");
-        goto cleanup_x11Setup;
-    }
-
     struct epoll_event x11SocketEvent = {
         .events = EPOLLIN,
         .data.ptr = &window.x11.client.socketFd
@@ -328,7 +329,8 @@ static int32_t window_x11_init(char **envp, uint32_t eglVisualId) {
     debug_CHECK(sys_munmap(window.x11.keyboardMap, window.x11.keyboardMapSize), RES == 0);
     cleanup_x11Client:
     x11Client_deinit(&window.x11.client);
-    cleanup_none:
+    cleanup_eglContext:
+    egl_deinitContext(&window.egl);
     return -1;
 }
 
@@ -534,7 +536,9 @@ static int32_t window_x11_run(void) {
                         }
                         case x11_configureNotify_TYPE: {
                             struct x11_configureNotify *configureNotify = (void *)generic;
-                            game_onResize(configureNotify->width, configureNotify->height);
+                            window.width = configureNotify->width;
+                            window.height = configureNotify->height;
+                            game_onResize(window.width, window.height);
                             break;
                         }
                         case x11_genericEvent_TYPE: {
@@ -596,7 +600,7 @@ static int32_t window_x11_run(void) {
 }
 
 static void window_x11_deinit(void) {
-    game_deinit();
     debug_CHECK(sys_munmap(window.x11.keyboardMap, window.x11.keyboardMapSize), RES == 0);
     x11Client_deinit(&window.x11.client);
+    egl_deinitContext(&window.egl);
 }

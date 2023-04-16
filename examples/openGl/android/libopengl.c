@@ -39,22 +39,23 @@ struct app {
 
 static struct app app;
 
-static void app_init(void) {
+static int32_t app_init(void) {
     app.window = NULL;
     app.inputQueue = NULL;
     app.width = 0;
     app.height = 0;
     app.running = false;
-}
 
-static int32_t app_initEgl(void) {
-    // No error recovery as we end up aborting anyway.
-    int32_t status = egl_init(&app.egl, "libEGL.so", NULL, 0);
+    int32_t status = egl_init(&app.egl, "libEGL.so");
     if (status < 0) {
         debug_printNum("Failed to initalise EGL (", status, ")\n");
         return -1;
     }
+    return 0;
+}
 
+static int32_t app_initEgl(void) {
+    // No error recovery as we end up aborting anyway.
     const int32_t configAttributes[] = {
         egl_BUFFER_SIZE, 32,
         egl_RED_SIZE, 8,
@@ -70,9 +71,17 @@ static int32_t app_initEgl(void) {
         egl_CONTEXT_MINOR_VERSION, 0,
         egl_NONE
     };
-    status = egl_createContext(&app.egl, egl_OPENGL_ES_API, &configAttributes[0], &contextAttributes[0]);
+    int32_t status = egl_initContext(
+        &app.egl,
+        -1,
+        NULL,
+        egl_DEFAULT_DISPLAY,
+        egl_OPENGL_ES_API,
+        &configAttributes[0],
+        &contextAttributes[0]
+    );
     if (status < 0) {
-        debug_printNum("Failed to create EGL context (", status, ")\n");
+        debug_printNum("Failed to initialise EGL context (", status, ")\n");
         return -1;
     }
 
@@ -103,7 +112,7 @@ static int32_t app_initEgl(void) {
 #define INPUT_QUEUE_LOOPER_ID 1
 
 static int32_t appThread(void *looper, hc_UNUSED void *arg) {
-    app_init();
+    if (app_init() != 0) return -1;
 
     // Main loop.
     for (;;) {
@@ -113,13 +122,13 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
             int32_t timeout = app.running ? 0 : -1;
             int32_t ident = ALooper_pollAll(timeout, &fd, NULL, NULL);
             if (ident == ALOOPER_POLL_TIMEOUT) break;
-            if (ident < 0) return -1;
+            if (ident < 0) return -2;
 
             if (ident == nativeGlue_LOOPER_ID) {
                 struct nativeGlue_cmd cmd;
                 cmd.tag = nativeGlue_NO_CMD;
                 int64_t ret = sys_read(fd, &cmd, sizeof(cmd));
-                if (ret != sizeof(cmd)) return -2;
+                if (ret != sizeof(cmd)) return -3;
 
                 switch (cmd.tag) {
                     case nativeGlue_WINDOW_FOCUS_CHANGED: {
@@ -129,7 +138,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                     case nativeGlue_NATIVE_WINDOW_CREATED: {
                         debug_ASSERT(app.window == NULL);
                         app.window = cmd.nativeWindowCreated.window;
-                        if (app_initEgl() != 0) return -3;
+                        if (app_initEgl() != 0) return -4;
 
                         // Initialise game.
                         struct timespec initTimespec;
@@ -142,7 +151,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         );
                         if (status < 0) {
                             debug_printNum("Failed to initialise game (", status, ")\n");
-                            return -4;
+                            return -5;
                         }
                         app.running = true;
                         break;
@@ -156,7 +165,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         }
                         if (cmd.tag == nativeGlue_NATIVE_WINDOW_DESTROYED) {
                             debug_ASSERT(app.window != NULL);
-                            egl_deinit(&app.egl);
+                            egl_deinitContext(&app.egl);
                             app.window = NULL;
                         }
                         break;
@@ -173,7 +182,10 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         app.inputQueue = NULL;
                         break;
                     }
-                    case nativeGlue_DESTROY: return 0;
+                    case nativeGlue_DESTROY: {
+                        egl_deinit(&app.egl);
+                        return 0;
+                    }
                     default: break;
                 }
                 nativeGlue_signalAppDone();
@@ -220,7 +232,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
         struct timespec drawTimespec;
         debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &drawTimespec), RES == 0);
         uint64_t drawTimestamp = (uint64_t)drawTimespec.tv_sec * 1000000000 + (uint64_t)drawTimespec.tv_nsec;
-        if (game_draw(drawTimestamp) < 0) return -5;
+        if (game_draw(drawTimestamp) < 0) return -6;
         debug_CHECK(egl_swapBuffers(&app.egl), RES == 1);
     }
 }

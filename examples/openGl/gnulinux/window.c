@@ -1,4 +1,4 @@
-enum window_platforms {
+enum window_platform {
     window_X11,
 };
 
@@ -23,9 +23,11 @@ struct window_x11 {
 struct window {
     struct egl egl;
     int32_t epollFd;
-    enum window_platforms platform;
+    enum window_platform platform;
+    uint16_t width;
+    uint16_t height;
     bool pointerGrabbed;
-    char __pad[7];
+    char __pad[3];
     union {
         struct window_x11 x11;
     };
@@ -33,74 +35,82 @@ struct window {
 
 static struct window window;
 
+static const int32_t window_configAttributes[] = {
+    egl_BUFFER_SIZE, 32,
+    egl_RED_SIZE, 8,
+    egl_GREEN_SIZE, 8,
+    egl_BLUE_SIZE, 8,
+    egl_ALPHA_SIZE, 8,
+    egl_DEPTH_SIZE, 24,
+    egl_STENCIL_SIZE, 8,
+    egl_NONE
+};
+static const int32_t window_contextAttributes[] = {
+    egl_CONTEXT_MAJOR_VERSION, 3,
+    egl_CONTEXT_MINOR_VERSION, 0,
+    egl_NONE
+};
+static const char *window_platforms[] = {
+    [window_X11] = "X11"
+};
+
 #include "window_x11.c"
 
 static int32_t window_init(char **envp) {
     window.pointerGrabbed = false;
+    window.width = 640;
+    window.height = 480;
 
     window.epollFd = sys_epoll_create1(0);
     if (window.epollFd < 0) return -1;
 
-    // Platforms.
-    const uint32_t eglPlatforms[] = {
-        [window_X11] = egl_PLATFORM_XCB_EXT
-    };
-    const char *platformNames[] = {
-        [window_X11] = "X11"
-    };
-
-    // Initialise EGL and detect platform.
-    int32_t status = egl_init(&window.egl, "libEGL.so.1", &eglPlatforms[0], hc_ARRAY_LEN(eglPlatforms));
+    int32_t status = egl_init(&window.egl, "libEGL.so.1");
     if (status < 0) {
         debug_printNum("Failed to initalise EGL (", status, ")\n");
         goto cleanup_epollFd;
-    } else if (status == hc_ARRAY_LEN(eglPlatforms)) {
-        status = window_X11; // Guess X11.
     }
-    window.platform = (enum window_platforms)status;
 
-    // Print detected platform.
-    struct iovec print[] = {
-        { hc_STR_COMMA_LEN("Detected platform: ") },
-        { (char *)platformNames[window.platform], util_cstrLen(platformNames[window.platform]) },
-        { hc_STR_COMMA_LEN("\n") },
-    };
-    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
+    for (uint32_t platform = 0; platform < hc_ARRAY_LEN(window_platforms); ++platform) {
+        switch (platform) {
+            case window_X11: status = window_x11_init(envp); break;
+            default: hc_UNREACHABLE;
+        }
+        struct iovec print[] = {
+            { hc_STR_COMMA_LEN("Using platform ") },
+            { (char *)window_platforms[platform], util_cstrLen(window_platforms[platform]) },
+            { hc_STR_COMMA_LEN("\n") },
+        };
+        if (status < 0) print[0] = (struct iovec) { hc_STR_COMMA_LEN("Failed using platform ") };
+        sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
+        if (status == 0) {
+            window.platform = platform;
+            goto initialisedPlatform;
+        }
+    }
+    // Failed all platforms.
+    goto cleanup_egl;
 
-    // Create EGL context.
-    const int32_t configAttributes[] = {
-        egl_BUFFER_SIZE, 32,
-        egl_RED_SIZE, 8,
-        egl_GREEN_SIZE, 8,
-        egl_BLUE_SIZE, 8,
-        egl_ALPHA_SIZE, 8,
-        egl_DEPTH_SIZE, 24,
-        egl_STENCIL_SIZE, 8,
-        egl_NONE
-    };
-    const int32_t contextAttributes[] = {
-        egl_CONTEXT_MAJOR_VERSION, 3,
-        egl_CONTEXT_MINOR_VERSION, 0,
-        egl_NONE
-    };
-    status = egl_createContext(&window.egl, egl_OPENGL_ES_API, &configAttributes[0], &contextAttributes[0]);
+    initialisedPlatform:;
+    // Initialise game.
+    struct timespec initTimespec;
+    debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &initTimespec), RES == 0);
+    uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
+    status = game_init(
+        window.width,
+        window.height,
+        initTimestamp
+    );
     if (status < 0) {
-        debug_printNum("Failed to create EGL context (", status, ")\n");
-        goto cleanup_egl;
-    }
-    uint32_t eglVisualId = (uint32_t)status;
-
-    // Initialise platform.
-    switch (window.platform) {
-        case window_X11: status = window_x11_init(envp, eglVisualId); break;
-        default: hc_UNREACHABLE;
-    }
-    if (status < 0) {
-        debug_printNum("Failed to initialise platform (", status, ")\n");
-        goto cleanup_egl;
+        debug_printNum("Failed to initialise game (", status, ")\n");
+        goto cleanup_platform;
     }
     return 0;
 
+    cleanup_platform:
+    switch (window.platform) {
+        case window_X11: window_x11_deinit(); break;
+        default: hc_UNREACHABLE;
+    }
     cleanup_egl:
     egl_deinit(&window.egl);
     cleanup_epollFd:
@@ -116,6 +126,7 @@ static inline int32_t window_run(void) {
 }
 
 static void window_deinit(void) {
+    game_deinit();
     switch (window.platform) {
         case window_X11: window_x11_deinit(); break;
         default: hc_UNREACHABLE;
