@@ -237,12 +237,12 @@ static int32_t window_x11_setup(uint32_t visualId) {
     }
 }
 
-static int32_t window_x11_init(char **envp) {
+static int32_t window_x11_init(void **eglWindow, char **envp) {
     uint64_t platformAttrs[] = {
         egl_PLATFORM_XCB_SCREEN_EXT, 0, // We always use screen 0.
         egl_NONE
     };
-    int32_t status = egl_initContext(
+    int32_t status = egl_createContext(
         &window.egl,
         egl_PLATFORM_XCB_EXT,
         &platformAttrs[0],
@@ -300,21 +300,6 @@ static int32_t window_x11_init(char **envp) {
         goto cleanup_x11Client;
     }
 
-    // Setup EGL surface.
-    status = egl_setupSurface(&window.egl, (void *)(size_t)window.x11.windowId);
-    if (status < 0) {
-        debug_printNum("Failed to setup EGL surface (", status, ")\n");
-        goto cleanup_x11Setup;
-    }
-    debug_CHECK(egl_swapInterval(&window.egl, 0), RES == egl_TRUE);
-
-    // Load OpenGL functions.
-    status = gl_init(&window.egl);
-    if (status < 0) {
-        debug_printNum("Failed to initialise GL (", status, ")\n");
-        goto cleanup_x11Setup;
-    }
-
     struct epoll_event x11SocketEvent = {
         .events = EPOLLIN,
         .data.ptr = &window.x11.client.socketFd
@@ -322,7 +307,7 @@ static int32_t window_x11_init(char **envp) {
     if (sys_epoll_ctl(window.epollFd, EPOLL_CTL_ADD, window.x11.client.socketFd, &x11SocketEvent) < 0) {
         goto cleanup_x11Setup;
     }
-
+    *eglWindow = (void *)(size_t)window.x11.windowId;
     return 0;
 
     cleanup_x11Setup:
@@ -330,7 +315,7 @@ static int32_t window_x11_init(char **envp) {
     cleanup_x11Client:
     x11Client_deinit(&window.x11.client);
     cleanup_eglContext:
-    egl_deinitContext(&window.egl);
+    egl_destroyContext(&window.egl);
     return -1;
 }
 
@@ -602,5 +587,5 @@ static int32_t window_x11_run(void) {
 static void window_x11_deinit(void) {
     debug_CHECK(sys_munmap(window.x11.keyboardMap, window.x11.keyboardMapSize), RES == 0);
     x11Client_deinit(&window.x11.client);
-    egl_deinitContext(&window.egl);
+    egl_destroyContext(&window.egl);
 }

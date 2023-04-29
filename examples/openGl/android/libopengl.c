@@ -71,7 +71,7 @@ static int32_t app_initEgl(void) {
         egl_CONTEXT_MINOR_VERSION, 0,
         egl_NONE
     };
-    int32_t status = egl_initContext(
+    int32_t status = egl_createContext(
         &app.egl,
         -1,
         NULL,
@@ -85,7 +85,7 @@ static int32_t app_initEgl(void) {
         return -1;
     }
 
-    status = egl_setupSurface(&app.egl, app.window);
+    status = egl_createSurface(&app.egl, app.window);
     if (status != 0) {
         debug_printNum("Failed to setup EGL surface (", status, ")\n");
         return -1;
@@ -165,7 +165,8 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         }
                         if (cmd.tag == nativeGlue_NATIVE_WINDOW_DESTROYED) {
                             debug_ASSERT(app.window != NULL);
-                            egl_deinitContext(&app.egl);
+                            egl_destroySurface(&app.egl);
+                            egl_destroyContext(&app.egl);
                             app.window = NULL;
                         }
                         break;

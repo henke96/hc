@@ -2,14 +2,10 @@
 #define drmKms_MAX_MODES 64
 
 struct drmKms {
-    int32_t cardFd;
-    struct drm_mode_fb_cmd frameBufferInfo;
     struct drm_mode_get_connector connector;
     struct drm_mode_modeinfo modeInfos[drmKms_MAX_MODES];
-    uint32_t *frameBuffer; // If not NULL, a framebuffer is setup.
-    int64_t frameBufferSize;
+    int32_t cardFd;
     uint32_t crtcId;
-    int32_t __pad;
 };
 
 static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
@@ -66,8 +62,6 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
         status = -6;
         goto cleanup_cardFd;
     }
-
-    self->frameBuffer = NULL; // No framebuffer setup yet.
     return 0;
 
     cleanup_cardFd:
@@ -75,85 +69,98 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
     return status;
 }
 
-static int32_t drmKms_setupFb(struct drmKms *self, int32_t modeIndex) {
-    // Create dumb buffer.
-    struct drm_mode_create_dumb dumbBuffer = {
-        .width = self->modeInfos[modeIndex].hdisplay,
-        .height = self->modeInfos[modeIndex].vdisplay,
-        .bpp = 32
-    };
-    int32_t status = sys_ioctl(self->cardFd, DRM_IOCTL_MODE_CREATE_DUMB, &dumbBuffer);
-    if (status < 0) return -1;
-    self->frameBufferSize = (int64_t)dumbBuffer.size;
+hc_UNUSED
+static inline int32_t drmKms_createDumbBuffer(struct drmKms *self, struct drm_mode_create_dumb *dumbBuffer) {
+    return sys_ioctl(self->cardFd, DRM_IOCTL_MODE_CREATE_DUMB, dumbBuffer);
+}
 
-    // Create frame buffer based on the dumb buffer.
-    hc_MEMSET(&self->frameBufferInfo, 0, sizeof(self->frameBufferInfo));
-    self->frameBufferInfo.width = dumbBuffer.width;
-    self->frameBufferInfo.height = dumbBuffer.height;
-    self->frameBufferInfo.pitch = dumbBuffer.pitch;
-    self->frameBufferInfo.bpp = dumbBuffer.bpp;
-    self->frameBufferInfo.depth = 24;
-    self->frameBufferInfo.handle = dumbBuffer.handle;
-    status = sys_ioctl(self->cardFd, DRM_IOCTL_MODE_ADDFB, &self->frameBufferInfo);
-    if (status < 0) {
-        status = -2;
-        goto cleanup_dumbBuffer;
-    }
+hc_UNUSED
+static void drmKms_destroyDumbBuffer(struct drmKms *self, uint32_t handle) {
+    struct drm_mode_destroy_dumb destroy = { .handle = handle };
+    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy), RES == 0);
+}
 
-    // Prepare dumb buffer for mapping.
-    struct drm_mode_map_dumb mapDumpBuffer = {
-        .handle = dumbBuffer.handle
-    };
-    status = sys_ioctl(self->cardFd, DRM_IOCTL_MODE_MAP_DUMB, &mapDumpBuffer);
-    if (status < 0) {
-        status = -3;
-        goto cleanup_frameBufferInfo;
-    }
+hc_UNUSED
+static void *drmKms_mmapDumbBuffer(struct drmKms *self, uint32_t handle, int64_t length) {
+    struct drm_mode_map_dumb mapDumpBuffer = { .handle = handle };
+    int32_t status = sys_ioctl(self->cardFd, DRM_IOCTL_MODE_MAP_DUMB, &mapDumpBuffer);
+    if (status < 0) return (void *)(ssize_t)-1;
 
-    // Map the buffer.
-    self->frameBuffer = sys_mmap(NULL, self->frameBufferSize, PROT_READ | PROT_WRITE, MAP_SHARED, self->cardFd, (int64_t)mapDumpBuffer.offset);
-    if ((int64_t)self->frameBuffer < 0) {
-        status = -4;
-        goto cleanup_frameBufferInfo;
-    }
+    return sys_mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, self->cardFd, (int64_t)mapDumpBuffer.offset);
+}
 
-    // Set CRTC configuration.
+hc_UNUSED
+static inline int32_t drmKms_createFrameBuffer(struct drmKms *self, struct drm_mode_fb_cmd *frameBuffer) {
+    return sys_ioctl(self->cardFd, DRM_IOCTL_MODE_ADDFB, frameBuffer);
+}
+
+hc_UNUSED
+static inline void drmKms_destroyFrameBuffer(struct drmKms *self, uint32_t fbId) {
+    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &fbId), RES == 0);
+}
+
+hc_UNUSED
+static void drmKms_markFrameBufferDirty(struct drmKms *self, uint32_t fbId) {
+    struct drm_mode_fb_dirty_cmd fbDirty = { .fb_id = fbId };
+    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DIRTYFB, &fbDirty), RES == 0 || RES == -ENOSYS);
+}
+
+hc_UNUSED
+static int32_t drmKms_setCrtc(struct drmKms *self, int32_t modeIndex, uint32_t fbId) {
     struct drm_mode_crtc setCrtc = {
         .set_connectors_ptr = &self->connector.connector_id,
         .count_connectors = 1,
         .crtc_id = self->crtcId,
-        .fb_id = self->frameBufferInfo.fb_id,
+        .fb_id = fbId,
         .mode_valid = 1,
         .mode = self->modeInfos[modeIndex]
     };
-    status = sys_ioctl(self->cardFd, DRM_IOCTL_MODE_SETCRTC, &setCrtc);
-    if (status < 0) {
-        status = -5;
-        goto cleanup_frameBuffer;
-    }
-    return 0;
-
-    cleanup_frameBuffer:
-    debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), RES == 0);
-    self->frameBuffer = NULL;
-    cleanup_frameBufferInfo:
-    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id), RES == 0);
-    cleanup_dumbBuffer:
-    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = dumbBuffer.handle }), RES == 0);
-    return status;
+    return sys_ioctl(self->cardFd, DRM_IOCTL_MODE_SETCRTC, &setCrtc);
 }
 
-// Call after updating framebuffer to make sure it gets displayed on screen.
-static inline void drmKms_markFbDirty(struct drmKms *self) {
-    struct drm_mode_fb_dirty_cmd fbDirty = { .fb_id = self->frameBufferInfo.fb_id };
-    debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DIRTYFB, &fbDirty), RES == 0 || RES == -ENOSYS);
+hc_UNUSED
+static int32_t drmKms_pageFlip(struct drmKms *self, uint32_t fbId, uint32_t flags) {
+    struct drm_mode_crtc_page_flip pageFlip = {
+        .crtc_id = self->crtcId,
+        .fb_id = fbId,
+        .flags = flags
+    };
+    return sys_ioctl(self->cardFd, DRM_IOCTL_MODE_PAGE_FLIP, &pageFlip);
+}
+
+hc_UNUSED
+static int32_t drmKms_awaitPageFlipEvent(struct drmKms *self) {
+    struct drm_event_vblank event;
+    event.base.type = 0;
+    for (;;) {
+        int64_t numRead = sys_read(self->cardFd, &event, sizeof(event));
+        if (numRead <= 0) return -1;
+        if (event.base.type == DRM_EVENT_FLIP_COMPLETE) return 0;
+    }
+}
+
+hc_UNUSED
+static int32_t drmKms_bestModeIndex(struct drmKms *self) {
+    int32_t bestModeIndex = 0;
+    uint16_t bestModeWidth = 0;
+    uint16_t bestModeHeight = 0;
+    int32_t bestModeHz = 0;
+    for (int32_t i = 0; i < self->connector.count_modes; ++i) {
+        if (self->modeInfos[i].hdisplay < bestModeWidth) continue;
+        if (self->modeInfos[i].hdisplay == bestModeWidth) {
+            if (self->modeInfos[i].vdisplay < bestModeHeight) continue;
+            if (self->modeInfos[i].vdisplay == bestModeHeight) {
+                if (self->modeInfos[i].vrefresh <= bestModeHz) continue;
+            }
+        }
+        bestModeIndex = i;
+        bestModeWidth = self->modeInfos[i].hdisplay;
+        bestModeHeight = self->modeInfos[i].vdisplay;
+        bestModeHz = self->modeInfos[i].vrefresh;
+    }
+    return bestModeIndex;
 }
 
 static inline void drmKms_deinit(struct drmKms *self) {
-    if (self->frameBuffer != NULL) {
-        debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), RES == 0);
-        debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &self->frameBufferInfo.fb_id), RES == 0);
-        debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &(struct drm_mode_destroy_dumb) { .handle = self->frameBufferInfo.handle }), RES == 0);
-    }
     debug_CHECK(sys_close(self->cardFd), RES == 0);
 }

@@ -9,66 +9,7 @@
 #include "hc/linux/helpers/_start.c"
 #include "hc/linux/helpers/sys_clone3_exit.c"
 
-static int32_t init_graphics(struct drmKms *graphics) {
-    // Set up frame buffer.
-    int32_t status = drmKms_init(graphics, "/dev/dri/card0");
-    if (status < 0) {
-        debug_printNum("Failed to initialise graphics (", status, ")\n");
-        return -1;
-    }
-
-    // Find the best display mode, prioritising resolution and refresh rate.
-    int32_t selectedModeIndex = -1;
-    int32_t selectedModeWidth = 0;
-    int32_t selectedModeHz = 0;
-    for (int32_t i = 0; i < graphics->connector.count_modes; ++i) {
-        struct iovec print[] = {
-            { hc_STR_COMMA_LEN("Mode \"") },
-            { graphics->modeInfos[i].name, DRM_DISPLAY_MODE_LEN }
-        };
-        sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print)); 
-        debug_printNum("\"\n  Pixel clock: ", graphics->modeInfos[i].clock, " KHz\n");
-        debug_printNum("  Width: ", graphics->modeInfos[i].hdisplay, " pixels\n");
-        debug_printNum("  Height: ", graphics->modeInfos[i].vdisplay, " pixels\n");
-        debug_printNum("  Hsync: start=", graphics->modeInfos[i].hsync_start, ", ");
-        debug_printNum("end=", graphics->modeInfos[i].hsync_end, ", ");
-        debug_printNum("total=", graphics->modeInfos[i].htotal, "\n");
-        debug_printNum("  Vsync: start=", graphics->modeInfos[i].vsync_start, ", ");
-        debug_printNum("end=", graphics->modeInfos[i].vsync_end, ", ");
-        debug_printNum("total=", graphics->modeInfos[i].vtotal, "\n");
-        debug_printNum("  Refresh rate: ", graphics->modeInfos[i].vrefresh, " Hz\n");
-
-        if (
-            graphics->modeInfos[i].hdisplay > selectedModeWidth ||
-            (graphics->modeInfos[i].hdisplay == selectedModeWidth && graphics->modeInfos[i].vrefresh > selectedModeHz)
-        ) {
-            selectedModeIndex = i;
-            selectedModeWidth = graphics->modeInfos[i].hdisplay;
-            selectedModeHz = graphics->modeInfos[i].vrefresh;
-        }
-    }
-    if (selectedModeIndex < 0) return -1;
-
-    struct iovec print[] = {
-        { hc_STR_COMMA_LEN("Selected mode \"") },
-        { graphics->modeInfos[selectedModeIndex].name, DRM_DISPLAY_MODE_LEN }
-    };
-    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
-    debug_printNum("\" at ", selectedModeHz, " Hz.\n");
-
-    // Setup framebuffer using the selected mode.
-    status = drmKms_setupFb(graphics, selectedModeIndex);
-    if (status < 0) {
-        debug_printNum("Failed to setup framebuffer (", status, ")\n");
-        return -1;
-    }
-
-    return 0;
-}
-
-static inline void deinit_graphics(struct drmKms *graphics) {
-    drmKms_deinit(graphics);
-}
+#include "graphics.c"
 
 int32_t start(int32_t argc, char **argv) {
     // Set up epoll.
@@ -146,19 +87,13 @@ int32_t start(int32_t argc, char **argv) {
         if (sys_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
     }
 
-    struct drmKms graphics;
+    struct graphics graphics;
     int64_t frameCounter;
     struct timespec prev = {0};
-    uint32_t red;
-    uint32_t green;
-    uint32_t blue;
 
     if (active) {
         // Initialise drawing state.
-        if (init_graphics(&graphics) < 0) return 1;
-        red = 0;
-        green = 0;
-        blue = 0;
+        if (graphics_init(&graphics) < 0) return 1;
         frameCounter = 0;
         debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
     }
@@ -181,17 +116,14 @@ int32_t start(int32_t argc, char **argv) {
                 active = true;
                 sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Acquired!\n"));
 
-                // Initialise drawing state.
-                if (init_graphics(&graphics) < 0) return 1;
-                red = 0;
-                green = 0;
-                blue = 0;
+                // Initialise graphics.
+                if (graphics_init(&graphics) < 0) return 1;
                 frameCounter = 0;
                 debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
             } else if (info.ssi_signo == SIGUSR2) {
                 if (!active) return 1;
 
-                deinit_graphics(&graphics);
+                graphics_deinit(&graphics);
                 status = sys_ioctl(ttyFd, VT_RELDISP, (void *)1);
                 if (status < 0) return 1;
 
@@ -201,12 +133,7 @@ int32_t start(int32_t argc, char **argv) {
         }
         if (!active) continue; // Skip drawing if not active.
 
-        // Do drawing.
-        uint32_t colour = (red << 16) | (green << 8) | blue;
-        int32_t numPixels = (int32_t)(graphics.frameBufferSize >> 2);
-        for (int32_t i = 0; i < numPixels; ++i) graphics.frameBuffer[i] = colour;
-        drmKms_markFbDirty(&graphics);
-
+        graphics_draw(&graphics);
         ++frameCounter;
         struct timespec now = {0};
         debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), RES == 0);
@@ -215,16 +142,6 @@ int32_t start(int32_t argc, char **argv) {
             frameCounter = 0;
             prev = now;
         }
-        // Continuous iteration of colours.
-        if (red == 0 && green == 0 && blue != 255) ++blue;
-        else if (red == 0 && green != 255 && blue == 255) ++green;
-        else if (red == 0 && green == 255 && blue != 0) --blue;
-        else if (red != 255 && green == 255 && blue == 0) ++red;
-        else if (red == 255 && green == 255 && blue != 255) ++blue;
-        else if (red == 255 && green != 0 && blue == 255) --green;
-        else if (red == 255 && green == 0 && blue != 0) --blue;
-        else --red;
     }
-
     return 0;
 }

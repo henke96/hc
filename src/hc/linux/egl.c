@@ -24,7 +24,7 @@ struct egl {
 };
 
 // Returns visualId, or negative error code.
-static int32_t egl_initContext(
+static int32_t egl_createContext(
     struct egl *self,
     int32_t eglPlatform, // -1 to use `eglGetDisplay()`.
     const uint64_t *platformAttrs, // Only used if `eglPlatform` is specified.
@@ -76,21 +76,22 @@ static int32_t egl_initContext(
     return status;
 }
 
-static void egl_deinitContext(struct egl *self) {
-    if (self->surface != egl_NO_SURFACE) debug_CHECK(self->eglDestroySurface(self->display, self->surface), RES == egl_TRUE);
+static void egl_destroyContext(struct egl *self) {
     debug_CHECK(self->eglMakeCurrent(self->display, egl_NO_SURFACE, egl_NO_SURFACE, egl_NO_CONTEXT), RES == egl_TRUE);
     debug_CHECK(self->eglDestroyContext(self->display, self->context), RES == egl_TRUE);
     debug_CHECK(self->eglTerminate(self->display), RES == egl_TRUE);
 }
 
-// Must be after `egl_initContext`.
-static int32_t egl_setupSurface(struct egl *self, void *window) {
+static void egl_destroySurface(struct egl *self) {
+    debug_CHECK(self->eglDestroySurface(self->display, self->surface), RES == egl_TRUE);
+}
+
+static int32_t egl_createSurface(struct egl *self, void *window) {
     self->surface = self->eglCreateWindowSurface(self->display, self->config, window, NULL);
     if (self->surface == egl_NO_SURFACE) return -1;
 
     if (!self->eglMakeCurrent(self->display, self->surface, self->surface, self->context)) {
-        debug_CHECK(self->eglDestroySurface(self->display, self->surface), RES == egl_TRUE);
-        self->surface = egl_NO_SURFACE;
+        egl_destroySurface(self);
         return -2;
     }
     return 0;
@@ -99,7 +100,6 @@ static int32_t egl_setupSurface(struct egl *self, void *window) {
 // Returns boolean of success.
 hc_UNUSED
 static inline uint32_t egl_swapBuffers(struct egl *self) {
-    debug_ASSERT(self->surface != NULL);
     return self->eglSwapBuffers(self->display, self->surface);
 }
 
@@ -115,7 +115,6 @@ static inline uint32_t egl_swapInterval(struct egl *self, int32_t interval) {
 
 hc_UNUSED
 static uint32_t egl_querySurface(struct egl *self, int32_t attribute, int32_t *value) {
-    debug_ASSERT(self->surface != NULL);
     return self->eglQuerySurface(self->display, self->surface, attribute, value);
 }
 
@@ -130,8 +129,6 @@ static int32_t egl_init(
     struct egl *self,
     const char *eglLibPath
 ) {
-    self->surface = egl_NO_SURFACE;
-
     self->dlHandle = dlopen(eglLibPath, RTLD_NOW);
     if (self->dlHandle == NULL) return -1;
 

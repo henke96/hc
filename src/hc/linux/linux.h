@@ -1631,6 +1631,34 @@ union drm_wait_vblank {
     struct drm_wait_vblank_reply reply;
 };
 
+struct drm_event {
+    uint32_t type;
+    uint32_t length; // Including header.
+};
+
+#define DRM_EVENT_VBLANK 0x01
+#define DRM_EVENT_FLIP_COMPLETE 0x02
+#define DRM_EVENT_CRTC_SEQUENCE 0x03
+
+struct drm_event_vblank {
+    struct drm_event base;
+    uint64_t user_data;
+    uint32_t tv_sec;
+    uint32_t tv_usec;
+    uint32_t sequence;
+    uint32_t crtc_id; /* 0 on older kernels that do not support this */
+};
+
+/* Event delivered at sequence. Time stamp marks when the first pixel
+ * of the refresh cycle leaves the display engine for the display
+ */
+struct drm_event_crtc_sequence {
+    struct drm_event base;
+    uint64_t user_data;
+    int64_t time_ns;
+    uint64_t sequence;
+};
+
 // drm_mode.h
 #define DRM_CONNECTOR_NAME_LEN 32
 #define DRM_DISPLAY_MODE_LEN 32
@@ -2785,6 +2813,10 @@ enum drm_connector_status {
      */
     DRM_CONNECTOR_STATUS_UNKNOWN = 3,
 };
+
+// drm_fourcc.h
+#define fourcc_code(a, b, c, d) ((uint32_t)(a) | ((uint32_t)(b) << 8) | ((uint32_t)(c) << 16) | ((uint32_t)(d) << 24))
+#define DRM_FORMAT_XRGB8888 fourcc_code('X', 'R', '2', '4') /* [31:0] x:R:G:B 8:8:8:8 little endian */
 
 // prctl.h
 #define ARCH_SET_GS 0x1001

@@ -1,5 +1,6 @@
 enum window_platform {
     window_X11,
+    window_GBM
 };
 
 struct window_x11 {
@@ -20,6 +21,14 @@ struct window_x11 {
     char __pad[2];
 };
 
+struct window_gbm {
+    struct gbm gbm;
+    struct drmKms drmKms;
+    void *gbmSurface;
+    uint32_t gbmFormat;
+    int32_t drmModeIndex;
+};
+
 struct window {
     struct egl egl;
     int32_t epollFd;
@@ -30,6 +39,7 @@ struct window {
     char __pad[3];
     union {
         struct window_x11 x11;
+        struct window_gbm gbm;
     };
 };
 
@@ -51,10 +61,12 @@ static const int32_t window_contextAttributes[] = {
     egl_NONE
 };
 static const char *window_platforms[] = {
-    [window_X11] = "X11"
+    [window_X11] = "X11",
+    [window_GBM] = "GBM"
 };
 
 #include "window_x11.c"
+#include "window_gbm.c"
 
 static int32_t window_init(char **envp) {
     window.pointerGrabbed = false;
@@ -70,9 +82,11 @@ static int32_t window_init(char **envp) {
         goto cleanup_epollFd;
     }
 
+    void *eglWindow;
     for (uint32_t platform = 0; platform < hc_ARRAY_LEN(window_platforms); ++platform) {
         switch (platform) {
-            case window_X11: status = window_x11_init(envp); break;
+            case window_X11: status = window_x11_init(&eglWindow, envp); break;
+            case window_GBM: status = window_gbm_init(&eglWindow); break;
             default: hc_UNREACHABLE;
         }
         struct iovec print[] = {
@@ -91,6 +105,22 @@ static int32_t window_init(char **envp) {
     goto cleanup_egl;
 
     initialisedPlatform:;
+    // Create EGL surface.
+    status = egl_createSurface(&window.egl, eglWindow);
+    if (status < 0) {
+        debug_printNum("Failed to create EGL surface (", status, ")\n");
+        goto cleanup_platform;
+    }
+
+    debug_CHECK(egl_swapInterval(&window.egl, 0), RES == egl_TRUE);
+
+    // Load OpenGL functions.
+    status = gl_init(&window.egl);
+    if (status < 0) {
+        debug_printNum("Failed to initialise GL (", status, ")\n");
+        goto cleanup_eglSurface;
+    }
+
     // Initialise game.
     struct timespec initTimespec;
     debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &initTimespec), RES == 0);
@@ -102,13 +132,16 @@ static int32_t window_init(char **envp) {
     );
     if (status < 0) {
         debug_printNum("Failed to initialise game (", status, ")\n");
-        goto cleanup_platform;
+        goto cleanup_eglSurface;
     }
     return 0;
 
+    cleanup_eglSurface:
+    egl_destroySurface(&window.egl);
     cleanup_platform:
     switch (window.platform) {
         case window_X11: window_x11_deinit(); break;
+        case window_GBM: window_gbm_deinit(); break;
         default: hc_UNREACHABLE;
     }
     cleanup_egl:
@@ -121,14 +154,17 @@ static int32_t window_init(char **envp) {
 static inline int32_t window_run(void) {
     switch (window.platform) {
         case window_X11: return window_x11_run();
+        case window_GBM: return window_gbm_run();
         default: hc_UNREACHABLE;
     }
 }
 
 static void window_deinit(void) {
     game_deinit();
+    egl_destroySurface(&window.egl);
     switch (window.platform) {
         case window_X11: window_x11_deinit(); break;
+        case window_GBM: window_gbm_deinit(); break;
         default: hc_UNREACHABLE;
     }
     egl_deinit(&window.egl);

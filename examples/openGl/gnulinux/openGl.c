@@ -15,6 +15,8 @@
 #include "hc/linux/gnulinux/libdl.so.2.h"
 #include "hc/egl.h"
 #include "hc/linux/egl.c"
+#include "hc/linux/gbm.c"
+#include "hc/linux/drmKms.c"
 int32_t start(int32_t, char **, char **);
 #include "hc/linux/gnulinux/_start.c"
 

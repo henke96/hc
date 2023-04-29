@@ -185,8 +185,8 @@
 // KHR_platform_android
 #define egl_PLATFORM_ANDROID_KHR 0x3141
 
-// MESA_platform_gbm
-#define egl_PLATFORM_GBM_MESA 0x31D7
+// KHR_platform_gbm
+#define egl_PLATFORM_GBM_KHR 0x31D7
 
 // EXT_device_query
 #define egl_NO_DEVICE_EXT ((void *)0)
