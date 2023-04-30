@@ -110,10 +110,11 @@ static void _nativeGlue_onHelperNoArg(enum nativeGlue_cmdTag tag) {
     _nativeGlue_writeAndWait(&cmd);
 }
 
-static void _nativeGlue_onHelperPtrArg(enum nativeGlue_cmdTag tag, void *arg) {
+static void _nativeGlue_onHelperPtrArg(enum nativeGlue_cmdTag tag, const void *arg) {
     struct nativeGlue_cmd cmd;
     cmd.tag = tag;
-    cmd.nativeWindowCreated.window = arg;
+    // Abuse union a bit.
+    cmd.contentRectChanged.rect = arg;
     _nativeGlue_writeAndWait(&cmd);
 }
 
@@ -237,7 +238,7 @@ static void _nativeGlue_onInputQueueDestroyed(hc_UNUSED struct ANativeActivity *
 
 static void _nativeGlue_onContentRectChanged(hc_UNUSED struct ANativeActivity *activity, const struct ARect *rect) {
     _nativeGlue_DEBUG_PRINT("onContentRectChanged enter\n");
-    _nativeGlue_onHelperPtrArg(nativeGlue_CONTENT_RECT_CHANGED, (void *)rect);
+    _nativeGlue_onHelperPtrArg(nativeGlue_CONTENT_RECT_CHANGED, rect);
     _nativeGlue_DEBUG_PRINT("onContentRectChanged leave\n");
 }
 

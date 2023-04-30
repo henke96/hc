@@ -47,7 +47,7 @@ int32_t _startGnu(int32_t argc, char **argv) {
             newArgv[newArgvCount] = NULL;
 
             char **envp = util_getEnvp(argc, argv);
-            sys_execveat(-1, newArgv[0], &newArgv[0], (const char **)&envp[0], 0);
+            sys_execveat(-1, newArgv[0], &newArgv[0], (const char *const *)&envp[0], 0);
             return 1;
         }
     }
@@ -57,4 +57,3 @@ int32_t _startGnu(int32_t argc, char **argv) {
 int32_t atexit(void (*func)(void)) {
     return __cxa_atexit((void *)func, NULL, NULL);
 }
-

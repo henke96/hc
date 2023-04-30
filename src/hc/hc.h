@@ -6,9 +6,8 @@ _Static_assert(sizeof(short) == 2, "short not 2 bytes");
 _Static_assert(sizeof(void *) == 4 || sizeof(void *) == 8, "void * not 4 or 8 bytes");
 _Static_assert(-1 == ~0, "not two's complement");
 _Static_assert((-1 >> 1) == -1, "not arithmetic shift right");
-_Static_assert(sizeof(u""[0]) == 2, "u string literal not 2 bytes");
+_Static_assert(sizeof(L""[0]) == 2, "L string literal not 2 bytes");
 _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
-// Don't use `long` or `L""` types, they differ between targets.
 
 #if defined(__x86_64__)
     #define hc_X86_64 1
@@ -31,7 +30,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 // Are size_t, int, long and pointer types 32 bit?
 #if defined(__ILP32__)
     #define hc_ILP32 1
-    #define hc_ILP32_PAD(NAME) int32_t NAME 
+    #define hc_ILP32_PAD(NAME) int32_t NAME;
 #else
     #define hc_ILP32 0
     #define hc_ILP32_PAD(NAME)
@@ -48,9 +47,10 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_FALLTHROUGH __attribute__((fallthrough))
 #define hc_UNREACHABLE __builtin_unreachable()
 #define hc_ASSUME __builtin_assume
+#define hc_ASSUME_ALIGNED __builtin_assume_aligned
 #define hc_NONULL __attribute__((nonnull))
 #define hc_UNUSED __attribute__((unused))
-#define hc_PACKED __attribute__((packed))
+#define hc_PACKED(N) __attribute__((packed, aligned(N)))
 #define hc_FALLTHROUGH __attribute__((fallthrough))
 #define hc_ALIGNED(N) __attribute__((aligned(N)))
 #define hc_SECTION(NAME) __attribute__((section(NAME)))

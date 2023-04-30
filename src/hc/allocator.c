@@ -3,7 +3,7 @@
 
 struct allocator {
     void *mem;
-    hc_ILP32_PAD(__pad);
+    hc_ILP32_PAD(__pad)
     int64_t size;
     int64_t maxSize;
 };

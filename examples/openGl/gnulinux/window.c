@@ -89,12 +89,12 @@ static int32_t window_init(char **envp) {
             case window_GBM: status = window_gbm_init(&eglWindow); break;
             default: hc_UNREACHABLE;
         }
-        struct iovec print[] = {
+        struct iovec_const print[] = {
             { hc_STR_COMMA_LEN("Using platform ") },
-            { (char *)window_platforms[platform], util_cstrLen(window_platforms[platform]) },
+            { window_platforms[platform], util_cstrLen(window_platforms[platform]) },
             { hc_STR_COMMA_LEN("\n") },
         };
-        if (status < 0) print[0] = (struct iovec) { hc_STR_COMMA_LEN("Failed using platform ") };
+        if (status < 0) print[0] = (struct iovec_const) { hc_STR_COMMA_LEN("Failed using platform ") };
         sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
         if (status == 0) {
             window.platform = platform;

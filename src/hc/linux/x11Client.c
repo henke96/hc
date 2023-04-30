@@ -30,7 +30,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
         .authProtocolNameLength = authEntry->nameLength,
         .authProtocolDataLength = authEntry->dataLength
     };
-    struct iovec iov[] = {
+    struct iovec_const iov[] = {
         { .iov_base = &request,        .iov_len = sizeof(request) },
         { .iov_base = authEntry->name, .iov_len = request.authProtocolNameLength },
         { .iov_base = &request,        .iov_len = math_PAD_BYTES(request.authProtocolNameLength, 4) },
@@ -38,7 +38,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
         { .iov_base = &request,        .iov_len = math_PAD_BYTES(request.authProtocolDataLength, 4) }
     };
     int64_t sendLength = sizeof(request) + math_ALIGN_FORWARD(request.authProtocolNameLength, 4) + math_ALIGN_FORWARD(request.authProtocolDataLength, 4);
-    if (sys_sendmsg(self->socketFd, &(struct msghdr) { .msg_iov = &iov[0], .msg_iovlen = hc_ARRAY_LEN(iov) }, MSG_NOSIGNAL) != sendLength) {
+    if (sys_sendmsg(self->socketFd, &(struct msghdr_const) { .msg_iov = &iov[0], .msg_iovlen = hc_ARRAY_LEN(iov) }, MSG_NOSIGNAL) != sendLength) {
         status = -3;
         goto cleanup_socket;
     }
@@ -80,7 +80,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     if (header.status != x11_setupResponse_SUCCESS) {
         if (header.status == x11_setupResponse_FAILED) {
             char *error = (void *)self->setupResponse;
-            struct iovec print[] = {
+            struct iovec_const print[] = {
                 { hc_STR_COMMA_LEN("X11 setup error: ") },
                 { error, header.extra },
                 { hc_STR_COMMA_LEN("\n") }
@@ -153,7 +153,7 @@ static int32_t x11Client_nextMessage(struct x11Client *self) {
     }
     // Read atleast 32 bytes before calculating reply or generic event length.
     if (self->receiveLength < 32) return 0;
-    uint32_t length = *(uint32_t *)&self->receiveBuffer[4];
+    uint32_t length = *(uint32_t *)hc_ASSUME_ALIGNED(&self->receiveBuffer[4], 4);
     if (length > (INT32_MAX - 32) / 4) return 0; // Too long, would overflow.
 
     uint32_t realLength = 32 + length * 4;

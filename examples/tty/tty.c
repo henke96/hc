@@ -85,16 +85,15 @@ int32_t start(int32_t argc, char **argv) {
             .data.fd = signalFd
         };
         if (sys_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
-    }
+    } else return 1; // TODO: Open current TTY instead.
 
     struct graphics graphics;
-    int64_t frameCounter;
+    int64_t frameCounter = 0;
     struct timespec prev = {0};
 
     if (active) {
         // Initialise drawing state.
         if (graphics_init(&graphics) < 0) return 1;
-        frameCounter = 0;
         debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &prev), RES == 0);
     }
 
@@ -143,5 +142,4 @@ int32_t start(int32_t argc, char **argv) {
             prev = now;
         }
     }
-    return 0;
 }

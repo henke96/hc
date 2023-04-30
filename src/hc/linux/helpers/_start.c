@@ -12,7 +12,7 @@ asm(
     "pop %rdi\n"       // argc -> rdi
     "mov %rsp, %rsi\n" // argv -> rsi
     "and $-16, %rsp\n" // Make sure stack is 16 byte aligned.
-    "call " hc_XSTR(_start_FUNC) "\n"
+    "call " _start_FUNC "\n"
     "mov %eax, %edi\n"
     "mov $231, %eax\n"
     "syscall\n"        // Run exit_group with the return from start.
@@ -25,7 +25,7 @@ asm(
     "ldr x0, [sp]\n"    // argc -> x0
     "add x1, sp, 8\n"   // argv -> x1
     "and sp, x1, -16\n" // Make sure stack is 16 byte aligned.
-    "bl " hc_XSTR(_start_FUNC) "\n"
+    "bl " _start_FUNC "\n"
     "mov x8, 94\n"
     "svc 0\n"           // Run exit_group with the return from start.
 );
@@ -41,7 +41,7 @@ asm(
     "ld a0, 0(sp)\n"              // argc -> a0
     "addi a1, sp, 8\n"            // argv -> a1
     "andi sp, sp, -16\n"          // Make sure stack is 16 byte aligned.
-    "call " hc_XSTR(_start_FUNC) "\n"
+    "call " _start_FUNC "\n"
     "li a7, 94\n"
     "ecall\n"                     // Run exit_group with the return from start.
 );

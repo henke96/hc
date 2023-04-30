@@ -55,7 +55,7 @@ hc_UNUSED static int32_t util_strToUint(const void *buffer, int64_t maxChars, ui
     uint64_t result = 0;
     int32_t i = 0;
     for (; i < maxChars; ++i) {
-        uint64_t digitValue = (uint64_t)((uint8_t *)buffer)[i] - '0';
+        uint64_t digitValue = (uint64_t)((const uint8_t *)buffer)[i] - '0';
         if (digitValue > 9) break;
 
         if (result > (UINT64_MAX - digitValue) / 10) return -1;
@@ -72,14 +72,14 @@ hc_UNUSED static int32_t util_strToInt(const void *buffer, int64_t maxChars, int
     if (maxChars <= 0) return 0;
 
     uint64_t negative;
-    if (((char *)buffer)[0] == '-') negative = 1;
+    if (((const char *)buffer)[0] == '-') negative = 1;
     else negative = 0;
 
     uint64_t maxNumber = (uint64_t)INT64_MAX + negative;
     uint64_t result = 0;
     int32_t i = (int32_t)negative;
     for (; i < maxChars; ++i) {
-        uint64_t digitValue = (uint64_t)((uint8_t *)buffer)[i] - '0';
+        uint64_t digitValue = (uint64_t)((const uint8_t *)buffer)[i] - '0';
         if (digitValue > 9) break;
 
         if (result > (maxNumber - digitValue) / 10) return -1;
@@ -99,7 +99,7 @@ hc_UNUSED static int32_t util_hexToUint(const void *buffer, int64_t maxChars, ui
     uint64_t result = 0;
     int32_t i = 0;
     for (; i < maxChars; ++i) {
-        uint64_t digitValue = ((uint8_t *)buffer)[i];
+        uint64_t digitValue = ((const uint8_t *)buffer)[i];
         digitValue -= '0';
         if (digitValue > 9) {
             digitValue += (uint64_t)'0' - 'A';

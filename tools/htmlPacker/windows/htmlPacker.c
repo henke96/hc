@@ -29,7 +29,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
         pathZ, utf16Count
     );
     if (utf16Count <= 0) return -3;
-    pathZ[utf16Count] = u'\0';
+    pathZ[utf16Count] = L'\0';
 
     // Open file and get size.
     void *pathHandle = CreateFileW(

@@ -20,7 +20,7 @@ static int32_t graphics_init(struct graphics *self) {
     }
 
     int32_t modeIndex = drmKms_bestModeIndex(&self->drmKms);
-    struct iovec print[] = {
+    struct iovec_const print[] = {
         { hc_STR_COMMA_LEN("Selected mode \"") },
         { self->drmKms.modeInfos[modeIndex].name, DRM_DISPLAY_MODE_LEN }
     };

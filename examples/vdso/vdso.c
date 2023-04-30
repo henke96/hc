@@ -41,7 +41,7 @@ int32_t start(int32_t argc, char **argv) {
     char resultSyscall[34] = "With syscall:                    \n";
     util_uintToStr(&result[sizeof(result) - 1], count);
     util_uintToStr(&resultSyscall[sizeof(resultSyscall) - 1], countSyscall);
-    struct iovec print[] = {
+    struct iovec_const print[] = {
         { .iov_base = &result[0], .iov_len = sizeof(result) },
         { .iov_base = &resultSyscall[0], .iov_len = sizeof(resultSyscall) }
     };

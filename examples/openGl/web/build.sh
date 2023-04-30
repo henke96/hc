@@ -13,4 +13,3 @@ FLAGS="-Wl,--no-entry" "$root_dir/tools/build/wasm.sh" "$script_dir" openGl
         "../../../tools/htmlPacker/htmlPacker.sh" _start.html openGl
     fi
 )
-

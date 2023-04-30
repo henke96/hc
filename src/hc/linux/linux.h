@@ -276,11 +276,28 @@ struct iovec {
     int64_t iov_len;
 };
 
+struct iovec_const {
+    const void *iov_base;
+    int64_t iov_len;
+};
+
 struct msghdr {
     void *msg_name;
     int32_t msg_namelen;
     int32_t __pad1;
     struct iovec *msg_iov;
+    int64_t msg_iovlen;
+    void *msg_control;
+    int64_t msg_controllen;
+    uint32_t msg_flags;
+    int32_t __pad2;
+};
+
+struct msghdr_const {
+    void *msg_name;
+    int32_t msg_namelen;
+    int32_t __pad1;
+    struct iovec_const *msg_iov;
     int64_t msg_iovlen;
     void *msg_control;
     int64_t msg_controllen;
@@ -328,8 +345,8 @@ enum {
 /**
  * struct so_timestamping - SO_TIMESTAMPING parameter
  *
- * @flags: SO_TIMESTAMPING flags
- * @bind_phc: Index of PTP virtual clock bound to sock. This is available if flag SOF_TIMESTAMPING_BIND_PHC is set.
+ * flags: SO_TIMESTAMPING flags
+ * bind_phc: Index of PTP virtual clock bound to sock. This is available if flag SOF_TIMESTAMPING_BIND_PHC is set.
  */
 struct so_timestamping {
     uint32_t flags;
@@ -339,15 +356,15 @@ struct so_timestamping {
 /**
  * struct hwtstamp_config - %SIOCGHWTSTAMP and %SIOCSHWTSTAMP parameter
  *
- * @flags: one of HWTSTAMP_FLAG_*
- * @tx_type: one of HWTSTAMP_TX_*
- * @rx_filter: one of HWTSTAMP_FILTER_*
+ * flags: one of HWTSTAMP_FLAG_*
+ * tx_type: one of HWTSTAMP_TX_*
+ * rx_filter: one of HWTSTAMP_FILTER_*
  *
  * %SIOCGHWTSTAMP and %SIOCSHWTSTAMP expect a &struct ifreq with a
  * ifr_data pointer to this structure.  For %SIOCSHWTSTAMP, if the
- * driver or hardware does not support the requested @rx_filter value,
+ * driver or hardware does not support the requested rx_filter value,
  * the driver may use a more general filter mode.  In this case
- * @rx_filter will indicate the actual mode on return.
+ * rx_filter will indicate the actual mode on return.
  */
 struct hwtstamp_config {
     uint32_t flags;
@@ -674,7 +691,7 @@ union epoll_data {
     int32_t fd;
     uint32_t u32;
     uint64_t u64;
-};
+} hc_PACKED(4);
 
 struct epoll_event {
     uint32_t events;
@@ -682,11 +699,7 @@ struct epoll_event {
     uint32_t __pad;
 #endif
     union epoll_data data;
-}
-#if hc_X86_64
-hc_PACKED
-#endif
-;
+};
 
 // if_alg.h
 struct sockaddr_alg {
@@ -1807,21 +1820,21 @@ struct drm_event_crtc_sequence {
 
 /**
  * struct drm_mode_modeinfo - Display mode information.
- * @clock: pixel clock in kHz
- * @hdisplay: horizontal display size
- * @hsync_start: horizontal sync start
- * @hsync_end: horizontal sync end
- * @htotal: horizontal total size
- * @hskew: horizontal skew
- * @vdisplay: vertical display size
- * @vsync_start: vertical sync start
- * @vsync_end: vertical sync end
- * @vtotal: vertical total size
- * @vscan: vertical scan
- * @vrefresh: approximate vertical refresh rate in Hz
- * @flags: bitmask of misc. flags, see DRM_MODE_FLAG_* defines
- * @type: bitmask of type flags, see DRM_MODE_TYPE_* defines
- * @name: string describing the mode resolution
+ * clock: pixel clock in kHz
+ * hdisplay: horizontal display size
+ * hsync_start: horizontal sync start
+ * hsync_end: horizontal sync end
+ * htotal: horizontal total size
+ * hskew: horizontal skew
+ * vdisplay: vertical display size
+ * vsync_start: vertical sync start
+ * vsync_end: vertical sync end
+ * vtotal: vertical total size
+ * vscan: vertical scan
+ * vrefresh: approximate vertical refresh rate in Hz
+ * flags: bitmask of misc. flags, see DRM_MODE_FLAG_* defines
+ * type: bitmask of type flags, see DRM_MODE_TYPE_* defines
+ * name: string describing the mode resolution
  *
  * This is the user-space API display mode information structure. For the
  * kernel version see struct drm_display_mode.
@@ -1905,40 +1918,40 @@ struct drm_mode_set_plane {
  * Userspace can perform a GETPLANE ioctl to retrieve information about a
  * plane.
  *
- * To retrieve the number of formats supported, set @count_format_types to zero
- * and call the ioctl. @count_format_types will be updated with the value.
+ * To retrieve the number of formats supported, set count_format_types to zero
+ * and call the ioctl. count_format_types will be updated with the value.
  *
  * To retrieve these formats, allocate an array with the memory needed to store
- * @count_format_types formats. Point @format_type_ptr to this array and call
- * the ioctl again (with @count_format_types still set to the value returned in
+ * count_format_types formats. Point format_type_ptr to this array and call
+ * the ioctl again (with count_format_types still set to the value returned in
  * the first ioctl call).
  */
 struct drm_mode_get_plane {
     /**
-     * @plane_id: Object ID of the plane whose information should be
+     * plane_id: Object ID of the plane whose information should be
      * retrieved. Set by caller.
      */
     uint32_t plane_id;
 
-    /** @crtc_id: Object ID of the current CRTC. */
+    /** crtc_id: Object ID of the current CRTC. */
     uint32_t crtc_id;
-    /** @fb_id: Object ID of the current fb. */
+    /** fb_id: Object ID of the current fb. */
     uint32_t fb_id;
 
     /**
-     * @possible_crtcs: Bitmask of CRTC's compatible with the plane. CRTC's
+     * possible_crtcs: Bitmask of CRTC's compatible with the plane. CRTC's
      * are created and they receive an index, which corresponds to their
      * position in the bitmask. Bit N corresponds to
      * :ref:`CRTC index<crtc_index>` N.
      */
     uint32_t possible_crtcs;
-    /** @gamma_size: Never used. */
+    /** gamma_size: Never used. */
     uint32_t gamma_size;
 
-    /** @count_format_types: Number of formats. */
+    /** count_format_types: Number of formats. */
     uint32_t count_format_types;
     /**
-     * @format_type_ptr: Pointer to ``uint32_t`` array of formats that are
+     * format_type_ptr: Pointer to ``uint32_t`` array of formats that are
      * supported by the plane. These formats do not require modifiers.
      */
     uint64_t format_type_ptr;
@@ -2018,13 +2031,13 @@ enum drm_mode_subconnector {
  * by performing this ioctl at least twice: the first time to retrieve the
  * number of elements, the second time to retrieve the elements themselves.
  *
- * To retrieve the number of elements, set @count_props and @count_encoders to
- * zero, set @count_modes to 1, and set @modes_ptr to a temporary struct
+ * To retrieve the number of elements, set count_props and count_encoders to
+ * zero, set count_modes to 1, and set modes_ptr to a temporary struct
  * drm_mode_modeinfo element.
  *
- * To retrieve the elements, allocate arrays for @encoders_ptr, @modes_ptr,
- * @props_ptr and @prop_values_ptr, then set @count_modes, @count_props and
- * @count_encoders to their capacity.
+ * To retrieve the elements, allocate arrays for encoders_ptr, modes_ptr,
+ * props_ptr and prop_values_ptr, then set count_modes, count_props and
+ * count_encoders to their capacity.
  *
  * Performing the ioctl only twice may be racy: the number of elements may have
  * changed with a hotplug event in-between the two ioctls. User-space is
@@ -2033,7 +2046,7 @@ enum drm_mode_subconnector {
  *
  * **Force-probing a connector**
  *
- * If the @count_modes field is set to zero and the DRM client is the current
+ * If the count_modes field is set to zero and the DRM client is the current
  * DRM master, the kernel will perform a forced probe on the connector to
  * refresh the connector status, modes and EDID. A forced-probe can be slow,
  * might cause flickering and the ioctl will block.
@@ -2044,34 +2057,34 @@ enum drm_mode_subconnector {
  * shouldn't perform a forced-probe in other situations.
  */
 struct drm_mode_get_connector {
-    /** @encoders_ptr: Pointer to ``uint32_t`` array of object IDs. */
+    /** encoders_ptr: Pointer to ``uint32_t`` array of object IDs. */
     uint32_t *encoders_ptr;
-    /** @modes_ptr: Pointer to struct drm_mode_modeinfo array. */
+    /** modes_ptr: Pointer to struct drm_mode_modeinfo array. */
     struct drm_mode_modeinfo *modes_ptr;
-    /** @props_ptr: Pointer to ``uint32_t`` array of property IDs. */
+    /** props_ptr: Pointer to ``uint32_t`` array of property IDs. */
     uint32_t *props_ptr;
-    /** @prop_values_ptr: Pointer to ``uint64_t`` array of property values. */
+    /** prop_values_ptr: Pointer to ``uint64_t`` array of property values. */
     uint64_t *prop_values_ptr;
 
-    /** @count_modes: Number of modes. */
+    /** count_modes: Number of modes. */
     int32_t count_modes;
-    /** @count_props: Number of properties. */
+    /** count_props: Number of properties. */
     int32_t count_props;
-    /** @count_encoders: Number of encoders. */
+    /** count_encoders: Number of encoders. */
     int32_t count_encoders;
 
-    /** @encoder_id: Object ID of the current encoder. */
+    /** encoder_id: Object ID of the current encoder. */
     uint32_t encoder_id;
-    /** @connector_id: Object ID of the connector. */
+    /** connector_id: Object ID of the connector. */
     uint32_t connector_id;
     /**
-     * @connector_type: Type of the connector.
+     * connector_type: Type of the connector.
      *
      * See DRM_MODE_CONNECTOR_* defines.
      */
     uint32_t connector_type;
     /**
-     * @connector_type_id: Type-specific connector number.
+     * connector_type_id: Type-specific connector number.
      *
      * This is not an object ID. This is a per-type connector number. Each
      * (type, type_id) combination is unique across all connectors of a DRM
@@ -2080,23 +2093,23 @@ struct drm_mode_get_connector {
     uint32_t connector_type_id;
 
     /**
-     * @connection: Status of the connector.
+     * connection: Status of the connector.
      *
      * See enum drm_connector_status.
      */
     uint32_t connection;
-    /** @mm_width: Width of the connected sink in millimeters. */
+    /** mm_width: Width of the connected sink in millimeters. */
     uint32_t mm_width;
-    /** @mm_height: Height of the connected sink in millimeters. */
+    /** mm_height: Height of the connected sink in millimeters. */
     uint32_t mm_height;
     /**
-     * @subpixel: Subpixel order of the connected sink.
+     * subpixel: Subpixel order of the connected sink.
      *
      * See enum subpixel_order.
      */
     uint32_t subpixel;
 
-    /** @pad: Padding, must be zero. */
+    /** pad: Padding, must be zero. */
     uint32_t pad;
 };
 
@@ -2126,8 +2139,8 @@ struct drm_mode_get_connector {
 
 /**
  * struct drm_mode_property_enum - Description for an enum/bitfield entry.
- * @value: numeric value for this enum entry.
- * @name: symbolic name for this enum entry.
+ * value: numeric value for this enum entry.
+ * name: symbolic name for this enum entry.
  *
  * See struct drm_property_enum for details.
  */
@@ -2143,12 +2156,12 @@ struct drm_mode_property_enum {
  * property. The same property may be attached to multiple objects, see
  * "Modeset Base Object Abstraction".
  *
- * The meaning of the @values_ptr field changes depending on the property type.
+ * The meaning of the values_ptr field changes depending on the property type.
  * See &drm_property.flags for more details.
  *
- * The @enum_blob_ptr and @count_enum_blobs fields are only meaningful when the
+ * The enum_blob_ptr and count_enum_blobs fields are only meaningful when the
  * property has the type &DRM_MODE_PROP_ENUM or &DRM_MODE_PROP_BITMASK. For
- * backwards compatibility, the kernel will always set @count_enum_blobs to
+ * backwards compatibility, the kernel will always set count_enum_blobs to
  * zero when the property has the type &DRM_MODE_PROP_BLOB. User-space must
  * ignore these two fields if the property has a different type.
  *
@@ -2156,42 +2169,42 @@ struct drm_mode_property_enum {
  * at least twice: the first time to retrieve the number of elements, the
  * second time to retrieve the elements themselves.
  *
- * To retrieve the number of elements, set @count_values and @count_enum_blobs
- * to zero, then call the ioctl. @count_values will be updated with the number
+ * To retrieve the number of elements, set count_values and count_enum_blobs
+ * to zero, then call the ioctl. count_values will be updated with the number
  * of elements. If the property has the type &DRM_MODE_PROP_ENUM or
- * &DRM_MODE_PROP_BITMASK, @count_enum_blobs will be updated as well.
+ * &DRM_MODE_PROP_BITMASK, count_enum_blobs will be updated as well.
  *
- * To retrieve the elements themselves, allocate an array for @values_ptr and
- * set @count_values to its capacity. If the property has the type
+ * To retrieve the elements themselves, allocate an array for values_ptr and
+ * set count_values to its capacity. If the property has the type
  * &DRM_MODE_PROP_ENUM or &DRM_MODE_PROP_BITMASK, allocate an array for
- * @enum_blob_ptr and set @count_enum_blobs to its capacity. Calling the ioctl
+ * enum_blob_ptr and set count_enum_blobs to its capacity. Calling the ioctl
  * again will fill the arrays.
  */
 struct drm_mode_get_property {
-    /** @values_ptr: Pointer to a ``uint64_t`` array. */
+    /** values_ptr: Pointer to a ``uint64_t`` array. */
     uint64_t values_ptr;
-    /** @enum_blob_ptr: Pointer to a struct drm_mode_property_enum array. */
+    /** enum_blob_ptr: Pointer to a struct drm_mode_property_enum array. */
     uint64_t enum_blob_ptr;
 
     /**
-     * @prop_id: Object ID of the property which should be retrieved. Set
+     * prop_id: Object ID of the property which should be retrieved. Set
      * by the caller.
      */
     uint32_t prop_id;
     /**
-     * @flags: ``DRM_MODE_PROP_*`` bitfield. See &drm_property.flags for
+     * flags: ``DRM_MODE_PROP_*`` bitfield. See &drm_property.flags for
      * a definition of the flags.
      */
     uint32_t flags;
     /**
-     * @name: Symbolic property name. User-space should use this field to
+     * name: Symbolic property name. User-space should use this field to
      * recognize properties.
      */
     char name[DRM_PROP_NAME_LEN];
 
-    /** @count_values: Number of elements in @values_ptr. */
+    /** count_values: Number of elements in values_ptr. */
     uint32_t count_values;
-    /** @count_enum_blobs: Number of elements in @enum_blob_ptr. */
+    /** count_enum_blobs: Number of elements in enum_blob_ptr. */
     uint32_t count_enum_blobs;
 };
 
@@ -2414,57 +2427,57 @@ struct drm_color_lut {
  */
 struct hdr_metadata_infoframe {
     /**
-     * @eotf: Electro-Optical Transfer Function (EOTF)
+     * eotf: Electro-Optical Transfer Function (EOTF)
      * used in the stream.
      */
     uint8_t eotf;
     /**
-     * @metadata_type: Static_Metadata_Descriptor_ID.
+     * metadata_type: Static_Metadata_Descriptor_ID.
      */
     uint8_t metadata_type;
     /**
-     * @display_primaries: Color Primaries of the Data.
+     * display_primaries: Color Primaries of the Data.
      * These are coded as unsigned 16-bit values in units of
      * 0.00002, where 0x0000 represents zero and 0xC350
      * represents 1.0000.
-     * @display_primaries.x: X cordinate of color primary.
-     * @display_primaries.y: Y cordinate of color primary.
+     * display_primaries.x: X cordinate of color primary.
+     * display_primaries.y: Y cordinate of color primary.
      */
     struct {
         uint16_t x, y;
     } display_primaries[3];
     /**
-     * @white_point: White Point of Colorspace Data.
+     * white_point: White Point of Colorspace Data.
      * These are coded as unsigned 16-bit values in units of
      * 0.00002, where 0x0000 represents zero and 0xC350
      * represents 1.0000.
-     * @white_point.x: X cordinate of whitepoint of color primary.
-     * @white_point.y: Y cordinate of whitepoint of color primary.
+     * white_point.x: X cordinate of whitepoint of color primary.
+     * white_point.y: Y cordinate of whitepoint of color primary.
      */
     struct {
         uint16_t x, y;
     } white_point;
     /**
-     * @max_display_mastering_luminance: Max Mastering Display Luminance.
+     * max_display_mastering_luminance: Max Mastering Display Luminance.
      * This value is coded as an unsigned 16-bit value in units of 1 cd/m2,
      * where 0x0001 represents 1 cd/m2 and 0xFFFF represents 65535 cd/m2.
      */
     uint16_t max_display_mastering_luminance;
     /**
-     * @min_display_mastering_luminance: Min Mastering Display Luminance.
+     * min_display_mastering_luminance: Min Mastering Display Luminance.
      * This value is coded as an unsigned 16-bit value in units of
      * 0.0001 cd/m2, where 0x0001 represents 0.0001 cd/m2 and 0xFFFF
      * represents 6.5535 cd/m2.
      */
     uint16_t min_display_mastering_luminance;
     /**
-     * @max_cll: Max Content Light Level.
+     * max_cll: Max Content Light Level.
      * This value is coded as an unsigned 16-bit value in units of 1 cd/m2,
      * where 0x0001 represents 1 cd/m2 and 0xFFFF represents 65535 cd/m2.
      */
     uint16_t max_cll;
     /**
-     * @max_fall: Max Frame Average Light Level.
+     * max_fall: Max Frame Average Light Level.
      * This value is coded as an unsigned 16-bit value in units of 1 cd/m2,
      * where 0x0001 represents 1 cd/m2 and 0xFFFF represents 65535 cd/m2.
      */
@@ -2478,11 +2491,11 @@ struct hdr_metadata_infoframe {
  */
 struct hdr_output_metadata {
     /**
-     * @metadata_type: Static_Metadata_Descriptor_ID.
+     * metadata_type: Static_Metadata_Descriptor_ID.
      */
     uint32_t metadata_type;
     /**
-     * @hdmi_metadata_type1: HDR Metadata Infoframe.
+     * hdmi_metadata_type1: HDR Metadata Infoframe.
      */
     union {
         struct hdr_metadata_infoframe hdmi_metadata_type1;
@@ -2662,17 +2675,17 @@ struct drm_format_modifier {
  * and returning new blob ID.
  */
 struct drm_mode_create_blob {
-    /** @data: Pointer to data to copy. */
+    /** data: Pointer to data to copy. */
     uint64_t data;
-    /** @length: Length of data to copy. */
+    /** length: Length of data to copy. */
     uint32_t length;
-    /** @blob_id: Return: new property ID. */
+    /** blob_id: Return: new property ID. */
     uint32_t blob_id;
 };
 
 /**
  * struct drm_mode_destroy_blob - Destroy user blob
- * @blob_id: blob_id to destroy
+ * blob_id: blob_id to destroy
  *
  * Destroy a user-created blob property.
  *
@@ -2692,16 +2705,16 @@ struct drm_mode_destroy_blob {
  * Lease mode resources, creating another drm_master.
  */
 struct drm_mode_create_lease {
-    /** @object_ids: Pointer to array of object ids (uint32_t) */
+    /** object_ids: Pointer to array of object ids (uint32_t) */
     uint64_t object_ids;
-    /** @object_count: Number of object ids */
+    /** object_count: Number of object ids */
     uint32_t object_count;
-    /** @flags: flags for new FD (O_CLOEXEC, etc) */
+    /** flags: flags for new FD (O_CLOEXEC, etc) */
     uint32_t flags;
 
-    /** @lessee_id: Return: unique identifier for lessee. */
+    /** lessee_id: Return: unique identifier for lessee. */
     uint32_t lessee_id;
-    /** @fd: Return: file descriptor to new drm_master file */
+    /** fd: Return: file descriptor to new drm_master file */
     uint32_t fd;
 };
 
@@ -2712,7 +2725,7 @@ struct drm_mode_create_lease {
  */
 struct drm_mode_list_lessees {
     /**
-     * @count_lessees: Number of lessees.
+     * count_lessees: Number of lessees.
      *
      * On input, provides length of the array.
      * On output, provides total number. No
@@ -2721,11 +2734,11 @@ struct drm_mode_list_lessees {
      * the size and then the data.
      */
     uint32_t count_lessees;
-    /** @pad: Padding. */
+    /** pad: Padding. */
     uint32_t pad;
 
     /**
-     * @lessees_ptr: Pointer to lessees.
+     * lessees_ptr: Pointer to lessees.
      *
      * Pointer to uint64_t array of lessee ids
      */
@@ -2739,7 +2752,7 @@ struct drm_mode_list_lessees {
  */
 struct drm_mode_get_lease {
     /**
-     * @count_objects: Number of leased objects.
+     * count_objects: Number of leased objects.
      *
      * On input, provides length of the array.
      * On output, provides total number. No
@@ -2748,11 +2761,11 @@ struct drm_mode_get_lease {
      * the size and then the data.
      */
     uint32_t count_objects;
-    /** @pad: Padding. */
+    /** pad: Padding. */
     uint32_t pad;
 
     /**
-     * @objects_ptr: Pointer to objects.
+     * objects_ptr: Pointer to objects.
      *
      * Pointer to uint32_t array of object ids.
      */
@@ -2763,16 +2776,16 @@ struct drm_mode_get_lease {
  * struct drm_mode_revoke_lease - Revoke lease
  */
 struct drm_mode_revoke_lease {
-    /** @lessee_id: Unique ID of lessee */
+    /** lessee_id: Unique ID of lessee */
     uint32_t lessee_id;
 };
 
 /**
  * struct drm_mode_rect - Two dimensional rectangle.
- * @x1: Horizontal starting coordinate (inclusive).
- * @y1: Vertical starting coordinate (inclusive).
- * @x2: Horizontal ending coordinate (exclusive).
- * @y2: Vertical ending coordinate (exclusive).
+ * x1: Horizontal starting coordinate (inclusive).
+ * y1: Vertical starting coordinate (inclusive).
+ * x2: Horizontal ending coordinate (exclusive).
+ * y2: Vertical ending coordinate (exclusive).
  *
  * With drm subsystem using struct drm_rect to manage rectangular area this
  * export it to user-space.
@@ -2789,12 +2802,12 @@ struct drm_mode_rect {
 // drm_connector.h
 enum drm_connector_status {
     /**
-     * @DRM_CONNECTOR_STATUS_CONNECTED: The connector is definitely connected to
+     * DRM_CONNECTOR_STATUS_CONNECTED: The connector is definitely connected to
      * a sink device, and can be enabled.
      */
     DRM_CONNECTOR_STATUS_CONNECTED = 1,
     /**
-     * @DRM_CONNECTOR_STATUS_DISCONNECTED: The connector isn't connected to a
+     * DRM_CONNECTOR_STATUS_DISCONNECTED: The connector isn't connected to a
      * sink device which can be autodetect. For digital outputs like DP or
      * HDMI (which can be realiable probed) this means there's really
      * nothing there. It is driver-dependent whether a connector with this
@@ -2802,14 +2815,14 @@ enum drm_connector_status {
      */
     DRM_CONNECTOR_STATUS_DISCONNECTED = 2,
     /**
-     * @DRM_CONNECTOR_STATUS_UNKNOWN: The connector's status could not be
+     * DRM_CONNECTOR_STATUS_UNKNOWN: The connector's status could not be
      * reliably detected. This happens when probing would either cause
      * flicker (like load-detection when the connector is in use), or when a
      * hardware resource isn't available (like when load-detection needs a
      * free CRTC). It should be possible to light up the connector with one
      * of the listed fallback modes. For default configuration userspace
      * should only try to light up connectors with unknown status when
-     * there's not connector with @connector_status_connected.
+     * there's not connector with connector_status_connected.
      */
     DRM_CONNECTOR_STATUS_UNKNOWN = 3,
 };
@@ -3803,7 +3816,7 @@ struct linux_dirent64 {
     uint16_t d_reclen; /* Size of this dirent */
     uint8_t d_type; /* File type */
     char d_name[]; /* Filename (null-terminated) */
-} hc_PACKED;
+} hc_PACKED(1);
 
 // fs.h
 #define SEEK_SET 0 /* seek relative to beginning of file */

@@ -202,8 +202,8 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         if (type == AINPUT_EVENT_TYPE_MOTION && source == AINPUT_SOURCE_MOUSE_RELATIVE) {
                             int32_t action = AMotionEvent_getAction(inputEvent);
                             if (action == AMOTION_EVENT_ACTION_MOVE) {
-                                int64_t dXTemp = (int64_t)(AMotionEvent_getRawX(inputEvent, 0) * 65536.0);
-                                int64_t dYTemp = (int64_t)(AMotionEvent_getRawY(inputEvent, 0) * 65536.0);
+                                int64_t dXTemp = (int64_t)((double)AMotionEvent_getRawX(inputEvent, 0) * 65536.0);
+                                int64_t dYTemp = (int64_t)((double)AMotionEvent_getRawY(inputEvent, 0) * 65536.0);
                                 uint64_t dX = (uint64_t)dXTemp * 65536u;
                                 uint64_t dY = (uint64_t)dYTemp * 65536u;
                                 game_onMouseMove((int64_t)dX, (int64_t)dY, 0);

@@ -5,9 +5,9 @@
 
 static void *heap_reserve(int64_t size) {
     uint32_t numPages = (uint32_t)(((uint64_t)size + heap_WASM_PAGE_SIZE - 1) >> heap_WASM_PAGE_SHIFT);
-    void *mem = (void *)hc_WASM_MEMORY_GROW(numPages);
-    if ((int64_t)mem < 0) return NULL;
-    return mem;
+    ssize_t mem = (ssize_t)hc_WASM_MEMORY_GROW(numPages);
+    if (mem == -1) return NULL;
+    return (void *)mem;
 }
 
 static void heap_unreserve(hc_UNUSED void *address, hc_UNUSED int64_t size) {}

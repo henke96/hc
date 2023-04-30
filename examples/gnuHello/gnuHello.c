@@ -13,4 +13,3 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
     printf("Hello world!\n");
     return 0;
 }
-

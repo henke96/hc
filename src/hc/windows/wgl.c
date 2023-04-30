@@ -13,7 +13,7 @@ struct wgl {
 };
 
 static int32_t wgl_init(struct wgl *self) {
-    self->dlHandle = LoadLibraryW(u"opengl32.dll");
+    self->dlHandle = LoadLibraryW(L"opengl32.dll");
     if (self->dlHandle == NULL) return -1;
 
     int32_t status = -2;
@@ -25,7 +25,7 @@ static int32_t wgl_init(struct wgl *self) {
     // Create dummy window.
     struct WNDCLASSW windowClass = {
         .instanceHandle = __ImageBase,
-        .className = u"dummy",
+        .className = L"dummy",
         .windowProc = DefWindowProcW,
         .style = CS_OWNDC
     };
@@ -37,7 +37,7 @@ static int32_t wgl_init(struct wgl *self) {
     void *windowHandle = CreateWindowExW(
         0,
         windowClass.className,
-        u"",
+        L"",
         0,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
         NULL,
