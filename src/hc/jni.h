@@ -256,7 +256,7 @@ struct jni_env {
 
     void *(*newStringUTF)(struct jni_env **env, const char *utf);
     int32_t (*getStringUTFLength)(struct jni_env **env, void *str);
-    const char* (*getStringUTFChars)(struct jni_env **env, void *str, uint8_t *isCopy);
+    const char *(*getStringUTFChars)(struct jni_env **env, void *str, uint8_t *isCopy);
     void (*releaseStringUTFChars)(struct jni_env **env, void *str, const char *chars);
 
     int32_t (*getArrayLength)(struct jni_env **env, void *array);
@@ -324,7 +324,7 @@ struct jni_env {
     void *(*getPrimitiveArrayCritical)(struct jni_env **env, void *array, uint8_t *isCopy);
     void (*releasePrimitiveArrayCritical)(struct jni_env **env, void *array, void *carray, int32_t mode);
 
-    const uint16_t * (*getStringCritical)(struct jni_env **env, void *string, uint8_t *isCopy);
+    const uint16_t *(*getStringCritical)(struct jni_env **env, void *string, uint8_t *isCopy);
     void (*releaseStringCritical)(struct jni_env **env, void *string, const uint16_t *cstring);
 
     void *(*newWeakGlobalRef)(struct jni_env **env, void *obj);
@@ -332,11 +332,11 @@ struct jni_env {
 
     uint8_t (*exceptionCheck)(struct jni_env **env);
 
-    void *(*newDirectByteBuffer)(struct jni_env* env, void* address, int64_t capacity);
-    void *(*getDirectBufferAddress)(struct jni_env* env, void *buf);
-    int64_t (*getDirectBufferCapacity)(struct jni_env* env, void *buf);
+    void *(*newDirectByteBuffer)(struct jni_env **env, void *address, int64_t capacity);
+    void *(*getDirectBufferAddress)(struct jni_env **env, void *buf);
+    int64_t (*getDirectBufferCapacity)(struct jni_env **env, void *buf);
 
-    enum jni_objectRefType (*getObjectRefType)(struct jni_env* env, void *obj);
-    void *(*getModule)(struct jni_env* env, void *class);
-    uint8_t (*isVirtualThread)(struct jni_env* env, void *obj);
+    enum jni_objectRefType (*getObjectRefType)(struct jni_env **env, void *obj);
+    void *(*getModule)(struct jni_env **env, void *class);
+    uint8_t (*isVirtualThread)(struct jni_env **env, void *obj);
 };
