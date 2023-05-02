@@ -17,7 +17,7 @@ int32_t start(int32_t argc, char **argv) {
     if (epollFd < 0) return 1;
 
     uint64_t ttyNumber;
-    int32_t ttyFd;
+    int32_t ttyFd = -1;
     bool active = true;
     if (argc == 2) {
         // Parse TTY_NUM argument.
@@ -85,7 +85,7 @@ int32_t start(int32_t argc, char **argv) {
             .data.fd = signalFd
         };
         if (sys_epoll_ctl(epollFd, EPOLL_CTL_ADD, signalFd, &signalFdEvent) < 0) return 1;
-    } else return 1; // TODO: Open current TTY instead.
+    }
 
     struct graphics graphics;
     int64_t frameCounter = 0;
