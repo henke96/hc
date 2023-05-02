@@ -1,12 +1,12 @@
 #if !hc_LIBC
-// Symbols expected by gcc/clang in freestanding mode.
-void *memset(void *dest, int32_t c, size_t n) {
+// Symbols expected by clang in freestanding mode.
+void *memset(void *dest, int32_t c, size_t n) hc_NO_BUILTIN {
     char *d = dest;
     for (; n != 0; --n) *d++ = (char)c;
     return dest;
 }
 
-void *memmove(void *dest, const void *src, size_t n) {
+void *memmove(void *dest, const void *src, size_t n) hc_NO_BUILTIN {
     char *d = dest;
     const char *s = src;
     if (d < s) {
@@ -20,14 +20,14 @@ void *memmove(void *dest, const void *src, size_t n) {
     return dest;
 }
 
-void *memcpy(void *restrict dest, const void *restrict src, size_t n) {
+void *memcpy(void *restrict dest, const void *restrict src, size_t n) hc_NO_BUILTIN {
     char *d = dest;
     const char *s = src;
     for (; n != 0; --n) *d++ = *s++;
     return dest;
 }
 
-int32_t memcmp(const void *left, const void *right, size_t n) {
+int32_t memcmp(const void *left, const void *right, size_t n) hc_NO_BUILTIN {
     const char *l = left;
     const char *r = right;
     for (;;) {

@@ -9,8 +9,6 @@ struct drmKms {
 };
 
 static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
-    hc_MEMSET(&self->modeInfos, 0x00, sizeof(self->modeInfos));
-
     self->cardFd = sys_openat(-1, driCardPath, O_RDWR | O_CLOEXEC, 0);
     if (self->cardFd < 0) return -1;
 

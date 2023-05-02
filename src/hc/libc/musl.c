@@ -26,8 +26,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
 #if !hc_LIBC
-// Symbols expected by gcc/clang in freestanding mode.
-void *memset(void *dest, int32_t c, size_t n)
+// Symbols expected by clang in freestanding mode.
+void *memset(void *dest, int32_t c, size_t n) hc_NO_BUILTIN
 {
     unsigned char *s = dest;
     uint64_t k;
@@ -110,7 +110,7 @@ void *memset(void *dest, int32_t c, size_t n)
     return dest;
 }
 
-void *memmove(void *dest, const void *src, size_t n)
+void *memmove(void *dest, const void *src, size_t n) hc_NO_BUILTIN
 {
     typedef __attribute__((__may_alias__)) uint64_t WT;
 #define WS (sizeof(WT))
@@ -143,7 +143,7 @@ void *memmove(void *dest, const void *src, size_t n)
     return dest;
 }
 
-void *memcpy(void *restrict dest, const void *restrict src, size_t n)
+void *memcpy(void *restrict dest, const void *restrict src, size_t n) hc_NO_BUILTIN
 {
     unsigned char *d = dest;
     const unsigned char *s = src;
@@ -253,7 +253,7 @@ void *memcpy(void *restrict dest, const void *restrict src, size_t n)
     return dest;
 }
 
-int32_t memcmp(const void *vl, const void *vr, size_t n)
+int32_t memcmp(const void *vl, const void *vr, size_t n) hc_NO_BUILTIN
 {
     const unsigned char *l=vl, *r=vr;
     for (; n && *l == *r; n--, l++, r++);
