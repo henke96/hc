@@ -8,6 +8,7 @@
 *.so
 *.so.2
 *.so.6
+*.so.7
 *.lib
 *.dll
 *.apk
