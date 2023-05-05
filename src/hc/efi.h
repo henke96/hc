@@ -30,7 +30,7 @@ struct efi_memoryDescriptor {
 #if !hc_ILP32
 
 // Error codes.
-#define efi_BUFFER_TOO_SMALL (int64_t)(0x8000000000000000u + 5)
+#define efi_BUFFER_TOO_SMALL (int64_t)(0x8000000000000000ull + 5)
 
 // GUIDs.
 #define efi_guid_GRAPHICS_OUTPUT_PROTOCOL { 0x9042a9de, 0x23dc, 0x4a38, { 0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a } }

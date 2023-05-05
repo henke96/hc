@@ -186,9 +186,9 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     }
     hc_MEMSET(&bootloaderPage->pageTableL2, 0, 4 * 512 * sizeof(bootloaderPage->pageTableL2[0]));
     bootloaderPage->pageTableL2[0] = kernelPageAddress | 0b10000011;
-    bootloaderPage->pageTableL2[paging_BOOTLOADER_PAGE_ADDRESS / paging_PAGE_SIZE] = bootloaderPageAddress | 0b10000011;
+    bootloaderPage->pageTableL2[paging_BOOTLOADER_PAGE_ADDRESS >> paging_PAGE_SHIFT] = bootloaderPageAddress | 0b10000011;
     // Identity map the page containing the kernel start code, since that's where we enable paging.
-    bootloaderPage->pageTableL2[kernelPageAddress / paging_PAGE_SIZE] = kernelPageAddress | 0b10000011;
+    bootloaderPage->pageTableL2[kernelPageAddress >> paging_PAGE_SHIFT] = kernelPageAddress | 0b10000011;
 
     // Jump to kernel start.
     asm volatile(

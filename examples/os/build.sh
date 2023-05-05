@@ -5,7 +5,7 @@ root_dir="$script_dir/../.."
 
 # Kernel
 abi="${ABI:-elf}" # Can also try gnux32.
-flags="-Wl,-T$script_dir/kernel/kernel.ld -mno-red-zone -O2 -s"
+flags="-Wl,-T$script_dir/kernel/kernel.ld -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -O2 -s"
 ARCH="x86_64" ABI="$abi" "$root_dir/cc_elf.sh" $flags -S -o "$script_dir/kernel/kernel.bin.s" "$script_dir/kernel/kernel.c"
 ARCH="x86_64" ABI="$abi" "$root_dir/cc_elf.sh" $flags -o "$script_dir/kernel/kernel.bin.elf" "$script_dir/kernel/kernel.c"
 

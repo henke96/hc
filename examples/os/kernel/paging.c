@@ -1,14 +1,14 @@
 static void paging_init(void) {
     // Setup PAT.
     uint64_t pat = (
-        ((uint64_t)msr_MEM_TYPE_WB       << 0 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WT       << 1 * 8) |
-        ((uint64_t)msr_MEM_TYPE_UC_MINUS << 2 * 8) |
-        ((uint64_t)msr_MEM_TYPE_UC       << 3 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WB       << 4 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WT       << 5 * 8) |
-        ((uint64_t)msr_MEM_TYPE_UC_MINUS << 6 * 8) |
-        ((uint64_t)msr_MEM_TYPE_WC       << 7 * 8)
+        (msr_MEM_TYPE_WB       << 0 * 8) |
+        (msr_MEM_TYPE_WT       << 1 * 8) |
+        (msr_MEM_TYPE_UC_MINUS << 2 * 8) |
+        (msr_MEM_TYPE_UC       << 3 * 8) |
+        (msr_MEM_TYPE_WB       << 4 * 8) |
+        (msr_MEM_TYPE_WT       << 5 * 8) |
+        (msr_MEM_TYPE_UC_MINUS << 6 * 8) |
+        (msr_MEM_TYPE_WC       << 7 * 8)
     );
     msr_wrmsr(msr_PAT, pat);
 
@@ -28,16 +28,16 @@ static void paging_init(void) {
     );
 
     // Remove the temporary identity mapping of kernel start code.
-    bootloaderPage->pageTableL2[kernelPagePhysicalAddress / paging_PAGE_SIZE] = 0;
+    bootloaderPage->pageTableL2[kernelPagePhysicalAddress >> paging_PAGE_SHIFT] = 0;
 
     // Map the frame buffer.
-    uint64_t frameBufferMapStart = bootloaderPage->frameBufferBase & ~(paging_PAGE_SIZE - 1);
+    uint64_t frameBufferMapStart = bootloaderPage->frameBufferBase & paging_PAGE_MASK;
     uint64_t frameBufferSize = sizeof(uint32_t) * bootloaderPage->frameBufferWidth * bootloaderPage->frameBufferHeight;
     uint64_t frameBufferMapEnd = math_ALIGN_FORWARD(bootloaderPage->frameBufferBase + frameBufferSize, paging_PAGE_SIZE);
-    uint64_t numPages = (frameBufferMapEnd - frameBufferMapStart) / paging_PAGE_SIZE;
+    uint64_t numPages = (frameBufferMapEnd - frameBufferMapStart) >> paging_PAGE_SHIFT;
     for (uint64_t i = 0; i < numPages; ++i) {
         // Enable write-combine for framebuffer pages.
-        bootloaderPage->pageTableL2[(paging_FRAMEBUFFER_ADDRESS / paging_PAGE_SIZE) + i] = (frameBufferMapStart + i * paging_PAGE_SIZE) | 0b1000010011011;
+        bootloaderPage->pageTableL2[(paging_FRAMEBUFFER_ADDRESS >> paging_PAGE_SHIFT) + i] = (frameBufferMapStart + (i << paging_PAGE_SHIFT)) | 0b1000010011011;
     }
 
     asm volatile(
