@@ -10,6 +10,7 @@ int32_t start(int32_t, char **, char **);
 #include "hc/linux/gnulinux/_start.c"
 
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
-    printf("Hello world!\n");
+    int32_t status = printf("Hello!\n");
+    if (status < 0) return 1;
     return 0;
 }
