@@ -3,12 +3,13 @@
 #include "hc/util.c"
 #include "hc/base64.c"
 #include "hc/libc/small.c"
-#include "hc/linux/linux.h"
-#include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
-#include "hc/linux/heap.c"
+#include "hc/freebsd/freebsd.h"
+#include "hc/freebsd/libc.so.7.h"
+#include "hc/freebsd/debug.c"
+#include "hc/freebsd/heap.c"
 #include "hc/allocator.c"
-#include "hc/linux/helpers/_start.c"
+int32_t start(int32_t, char **);
+#include "hc/freebsd/_start.c"
 
 #include "../common.c"
 
@@ -20,18 +21,17 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
     pathZ[pathLen] = '\0';
 
     // Open file and get size.
-    int32_t pathFd = sys_openat(AT_FDCWD, pathZ, O_RDONLY, 0);
+    int32_t pathFd = openat(AT_FDCWD, pathZ, O_RDONLY, 0);
     if (pathFd < 0) return -2;
 
     int32_t status;
 
-    struct statx contentStat;
-    contentStat.stx_size = 0;
-    if (sys_statx(pathFd, "", AT_EMPTY_PATH, STATX_SIZE, &contentStat) < 0) {
+    struct stat contentStat;
+    if (fstatat(pathFd, "", &contentStat, AT_EMPTY_PATH) < 0) {
         status = -3;
         goto cleanup_pathFd;
     }
-    int64_t contentLen = (int64_t)contentStat.stx_size;
+    int64_t contentLen = contentStat.st_size;
 
     // Resize buffer.
     int64_t insertLen = contentLen;
@@ -56,9 +56,9 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
     int64_t remaining = contentLen;
     while (remaining > 0) {
         int64_t index = contentLen - remaining;
-        int64_t numRead = sys_read(pathFd, &content[index], remaining);
+        int64_t numRead = read(pathFd, &content[index], remaining);
         if (numRead < 0) {
-            if (numRead == -EINTR) continue;
+            if (errno == EINTR) continue;
             status = -5;
             goto cleanup_pathFd;
         }
@@ -66,7 +66,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
     }
     // Verify we are at end of file.
     char eofTest;
-    if (sys_read(pathFd, &eofTest, 1) != 0) {
+    if (read(pathFd, &eofTest, 1) != 0) {
         status = -6;
         goto cleanup_pathFd;
     }
@@ -76,21 +76,21 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
 
     status = 0;
     cleanup_pathFd:
-    debug_CHECK(sys_close(pathFd), RES == 0);
+    debug_CHECK(close(pathFd), RES == 0);
     return status;
 }
 
 static int32_t writeToFile(char *path, char *content, int64_t contentLen) {
-    int32_t fd = sys_openat(AT_FDCWD, path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+    int32_t fd = openat(AT_FDCWD, path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
     if (fd < 0) return -1;
 
     int32_t status;
     int64_t remaining = contentLen;
     while (remaining > 0) {
         int64_t index = contentLen - remaining;
-        int64_t written = sys_write(fd, &content[index], remaining);
+        int64_t written = write(fd, &content[index], remaining);
         if (written < 0) {
-            if (written == -EINTR) continue;
+            if (written == EINTR) continue;
             status = -2;
             goto cleanup_fd;
         }
@@ -99,6 +99,6 @@ static int32_t writeToFile(char *path, char *content, int64_t contentLen) {
 
     status = 0;
     cleanup_fd:
-    debug_CHECK(sys_close(fd), RES == 0);
+    debug_CHECK(close(fd), RES == 0);
     return status;
 }
