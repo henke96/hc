@@ -139,25 +139,25 @@
 #define AT_EMPTY_PATH 0x4000
 
 // mman.h
-#define PROT_NONE 0x00
-#define PROT_READ 0x01
-#define PROT_WRITE 0x02
-#define PROT_EXEC 0x04
-#define MAP_SHARED 0x0001
-#define MAP_PRIVATE 0x0002
+#define PROT_NONE 0x0
+#define PROT_READ 0x1
+#define PROT_WRITE 0x2
+#define PROT_EXEC 0x4
+#define MAP_SHARED 0x1
+#define MAP_PRIVATE 0x2
 #define MAP_COPY MAP_PRIVATE
-#define MAP_FIXED 0x0010
-#define MAP_HASSEMAPHORE 0x0200
-#define MAP_STACK 0x0400
-#define MAP_NOSYNC 0x0800
-#define MAP_FILE 0x0000
+#define MAP_FIXED 0x10
+#define MAP_HASSEMAPHORE 0x200
+#define MAP_STACK 0x400
+#define MAP_NOSYNC 0x800
+#define MAP_FILE 0x0
 #define MAP_ANON 0x1000
 #define MAP_ANONYMOUS MAP_ANON
-#define MAP_GUARD 0x00002000
-#define MAP_EXCL 0x00004000
-#define MAP_NOCORE 0x00020000
-#define MAP_PREFAULT_READ 0x00040000
-#define MAP_32BIT 0x00080000
+#define MAP_GUARD 0x2000
+#define MAP_EXCL 0x4000
+#define MAP_NOCORE 0x20000
+#define MAP_PREFAULT_READ 0x40000
+#define MAP_32BIT 0x80000
 
 // _timespec.h
 struct timespec {
