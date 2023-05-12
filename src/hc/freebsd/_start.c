@@ -8,7 +8,8 @@ void _start(char **ap, void (*cleanup)(void)) {
     char **env = &ap[2 + argc];
     __libc_start1(argc, argv, env, cleanup, start);
 }
-#else
-// TODO aarch64
-#error "Unsupported architecture"
+#elif hc_AARCH64 || hc_RISCV64
+void _start(int32_t argc, char **argv, char **env, void (*cleanup)(void)) {
+    __libc_start1(argc, argv, env, cleanup, start);
+}
 #endif
