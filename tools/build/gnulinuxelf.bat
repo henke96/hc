@@ -8,4 +8,5 @@ call "%root_dir%tools\genLib\gen_so.bat" "%root_dir%src\hc\linux\gnulinux\libdl.
 if %errorlevel% neq 0 exit /b
 
 set "FLAGS=-fPIC -L^"%~1\^" %FLAGS%"
+set "STRIP_OPT=--strip-sections"
 call "%~dp0elf.bat" %*

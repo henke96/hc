@@ -28,5 +28,6 @@ SECTIONS {
     ASSERT(. <= 0x200000, "Using too much memory")
     /DISCARD/ : {
         *(.comment);
+        *(.debug*);
     }
 }

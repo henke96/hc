@@ -5,19 +5,13 @@ set "root_dir=%~dp0..\..\"
 set "ARCH=x86_64"
 
 :: Kernel
-if not defined ABI set ABI=elf
-set "flags=-Wl,-T^"%~dp0kernel\kernel.ld^" -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -O2 -s"
-call "%root_dir%cc_elf.bat" %flags% -S -o "%~dp0kernel\kernel.bin.s" "%~dp0kernel\kernel.c"
-if %errorlevel% neq 0 exit /b
-call "%root_dir%cc_elf.bat" %flags% -o "%~dp0kernel\kernel.bin.elf" "%~dp0kernel\kernel.c"
+set "FLAGS=-Wl,-T^"%~dp0kernel\kernel.ld^" -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
+call "%root_dir%tools\build\elf.bat" "%~dp0kernel\" kernel
 if %errorlevel% neq 0 exit /b
 
-:: Static analysis.
-set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-call "%root_dir%cc_elf.bat" %flags% %analyse_flags% "%~dp0kernel\kernel.c"
+"%LLVM%llvm-objcopy" -O binary "%~dp0kernel\kernel.elf" "%~dp0kernel\kernel.bin"
 if %errorlevel% neq 0 exit /b
-
-"%LLVM%llvm-objcopy" -O binary "%~dp0kernel\kernel.bin.elf" "%~dp0kernel\kernel.bin"
+"%LLVM%llvm-objcopy" -O binary "%~dp0kernel\debug.kernel.elf" "%~dp0kernel\debug.kernel.bin"
 if %errorlevel% neq 0 exit /b
 
 :: Bootloader (with kernel binary embedded)

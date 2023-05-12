@@ -19,7 +19,7 @@ root_dir="$script_dir/../.."
 "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$path/gdi32.lib"
 
 common_flags="-Wl,-subsystem,windows -O2"
-debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
+debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -gcodeview"
 release_flags="$common_flags -Ddebug_NDEBUG -s"
 eval "set -- $("$script_dir/../shellUtil/shellescape.sh" "-L$path") $FLAGS"
 

@@ -11,7 +11,7 @@ if %errorlevel% neq 0 exit /b
 call "%root_dir%tools\genLib\gen_so.bat" "%root_dir%src\hc\linux\android\libc.so.c" "%~1libc.so"
 if %errorlevel% neq 0 exit /b
 
-set "ABI=android"
+set "ABI=linux-android26"
 set "STRIP_OPT=--strip-all"
 set "FLAGS=-fPIC -fpie -pie -Wl,-dynamic-linker=/system/bin/linker64 -L^"%~1\^" %FLAGS%"
 call "%~dp0elf.bat" %*
