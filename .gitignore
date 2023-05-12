@@ -11,5 +11,6 @@
 *.so.7
 *.lib
 *.dll
+*.pdb
 *.apk
 *.keystore
