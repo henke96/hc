@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal disabledelayedexpansion
 
 if not defined ARCH set ARCH=x86_64
 if "%ARCH%" == "x86_64" (

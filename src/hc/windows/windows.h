@@ -741,7 +741,7 @@ hc_DLLIMPORT void *CreateFileW(const uint16_t *fileName, uint32_t desiredAccess,
 hc_DLLIMPORT int32_t WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
 hc_DLLIMPORT int32_t ReadFile(void *fileHandle, void *buffer, uint32_t numberOfBytesToRead, uint32_t *numberOfBytesRead, void *overlapped);
 hc_DLLIMPORT int32_t GetFileSizeEx(void *fileHandle, int64_t *size);
-hc_DLLIMPORT int32_t SetCurrentDirectory(const uint16_t *path);
+hc_DLLIMPORT int32_t SetCurrentDirectoryW(const uint16_t *path);
 
 hc_DLLIMPORT void *LoadLibraryW(const uint16_t *libFileName);
 hc_DLLIMPORT int32_t FreeLibrary(void *dlHandle);

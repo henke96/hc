@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal disabledelayedexpansion
 cd "%~dp0"
-if %errorlevel% neq 0 exit /b
+if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 git clean -fdqX --exclude="!*.keystore"

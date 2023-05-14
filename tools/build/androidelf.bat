@@ -1,15 +1,15 @@
 @echo off
-setlocal
+setlocal disabledelayedexpansion
 set "root_dir=%~dp0..\..\"
 
 call "%root_dir%tools\genLib\gen_so.bat" "%root_dir%src\hc\linux\android\liblog.so.c" "%~1liblog.so"
-if %errorlevel% neq 0 exit /b
+if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 call "%root_dir%tools\genLib\gen_so.bat" "%root_dir%src\hc\linux\android\libdl.so.c" "%~1libdl.so"
-if %errorlevel% neq 0 exit /b
+if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 call "%root_dir%tools\genLib\gen_so.bat" "%root_dir%src\hc\linux\android\libandroid.so.c" "%~1libandroid.so"
-if %errorlevel% neq 0 exit /b
+if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 call "%root_dir%tools\genLib\gen_so.bat" "%root_dir%src\hc\linux\android\libc.so.c" "%~1libc.so"
-if %errorlevel% neq 0 exit /b
+if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
 set "ABI=linux-android26"
 set "STRIP_OPT=--strip-all"

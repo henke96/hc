@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal disabledelayedexpansion
 set /p flags=<"%~dp0flags"
 if not defined ARCH set ARCH=x86_64
 if not defined ABI set ABI=linux-elf

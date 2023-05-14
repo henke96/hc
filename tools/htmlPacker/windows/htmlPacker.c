@@ -11,8 +11,8 @@
 
 #include "../common.c"
 
-// Convert utf8 (optionally null terminated) into null terminated utf16. If `utf8Length` is `-1`, then `utf8` is null terminated.
-// Result is placed at `alloc.mem[bufferLen], and the result length including null terminator is returned (negative on failure).
+// Convert utf8 (optionally null terminated if `utf8Length` is -1) into null terminated utf16.
+// Returns result length (negative on error). Result is placed at the end of `alloc.mem`.
 static int32_t utf8ToUtf16(char *utf8, int32_t utf8Length) {
     int32_t utf16Count = MultiByteToWideChar(
         CP_UTF8, MB_ERR_INVALID_CHARS,
@@ -21,9 +21,9 @@ static int32_t utf8ToUtf16(char *utf8, int32_t utf8Length) {
     );
     if (utf16Count <= 0) return -1;
 
-    uint16_t *utf16Z = &alloc.mem[bufferLen];
+    uint16_t *utf16Z = &alloc.mem[alloc.size];
     int32_t utf16ZCount = utf16Count + (utf8Length != -1);
-    if (allocator_resize(&alloc, bufferLen + utf16ZCount * (int64_t)sizeof(uint16_t)) < 0) return -1;
+    if (allocator_resize(&alloc, alloc.size + utf16ZCount * (int64_t)sizeof(uint16_t)) < 0) return -1;
 
     if (
         MultiByteToWideChar(
@@ -37,16 +37,16 @@ static int32_t utf8ToUtf16(char *utf8, int32_t utf8Length) {
 }
 
 static int32_t changeDir(char *path) {
+    uint16_t *pathZ = &alloc.mem[alloc.size];
     if (utf8ToUtf16(path, -1) < 0) return -1;
-    uint16_t *pathZ = &alloc.mem[bufferLen];
 
-    if (!SetCurrentDirectory(pathZ)) return -1;
+    if (!SetCurrentDirectoryW(pathZ)) return -1;
     return 0;
 }
 
 static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *path, int32_t pathLen, bool asBase64) {
+    uint16_t *pathZ = &alloc.mem[alloc.size];
     if (utf8ToUtf16(path, pathLen) < 0) return -1;
-    uint16_t *pathZ = &alloc.mem[bufferLen];
 
     // Open file and get size.
     void *pathHandle = CreateFileW(
@@ -122,8 +122,8 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
 }
 
 static int32_t writeToFile(char *path, char *content, int64_t contentLen) {
+    uint16_t *pathZ = &alloc.mem[alloc.size];
     if (utf8ToUtf16(path, -1) < 0) return -1;
-    uint16_t *pathZ = &alloc.mem[bufferLen];
 
     void *pathHandle = CreateFileW(
         pathZ,

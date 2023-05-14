@@ -1,15 +1,8 @@
 @echo off
-setlocal
-cd "%~dp0"
-if %errorlevel% neq 0 exit /b
+setlocal disabledelayedexpansion
 
-for /R %%f in (*build.bat) do (
-    endlocal
-
+for /r "%~dp0" %%f in (*build.bat) do (
     echo "%%f"
     call "%%f"
-
-    setlocal
-    cd "%~dp0"
-    if %errorlevel% neq 0 exit /b
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 )

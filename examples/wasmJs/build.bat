@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal disabledelayedexpansion
 set "root_dir=%~dp0..\..\"
 
 set "FLAGS=-Wl,--no-entry"
