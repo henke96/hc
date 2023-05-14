@@ -5,4 +5,4 @@ root_dir="$script_dir/../../.."
 
 FLAGS="-Wl,--no-entry $FLAGS" "$root_dir/tools/build/wasm.sh" "$script_dir" allocation
 
-(cd "$script_dir"; "../../../tools/htmlPacker/htmlPacker.sh" _start.html allocation)
+"$root_dir/tools/htmlPacker/htmlPacker.sh" "$script_dir" _start.html allocation

@@ -950,6 +950,12 @@ static hc_ALWAYS_INLINE int32_t sys_openat(int32_t dirfd, hc_NONULL const void *
 }
 
 hc_UNUSED
+static hc_ALWAYS_INLINE int32_t sys_chdir(const char *path) {
+    sys_SYSCALL1(sys_NR_chdir, path)
+    return (int32_t)ret;
+}
+
+hc_UNUSED
 static hc_ALWAYS_INLINE int64_t sys_read(int32_t fd, hc_NONULL void *buf, int64_t count) {
     sys_SYSCALL3(sys_NR_read, fd, buf, count)
     return ret;

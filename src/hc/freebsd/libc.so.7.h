@@ -11,3 +11,4 @@ int32_t fstatat(int32_t fd, const char *path, struct stat *stat, uint32_t flags)
 int64_t read(int32_t fd, void *buffer, int64_t size);
 int64_t write(int32_t fd, const void *buffer, int64_t size);
 int32_t close(int32_t fd);
+int32_t chdir(const char *path);

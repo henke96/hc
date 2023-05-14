@@ -12,3 +12,4 @@ hc_ELF_EXPORT void fstatat(void) {}
 hc_ELF_EXPORT void read(void) {}
 hc_ELF_EXPORT void write(void) {}
 hc_ELF_EXPORT void close(void) {}
+hc_ELF_EXPORT void chdir(void) {}

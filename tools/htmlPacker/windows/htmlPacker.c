@@ -11,25 +11,42 @@
 
 #include "../common.c"
 
-static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *path, int32_t pathLen, bool asBase64) {
-    // Convert path to null terminated UTF-16.
+// Convert utf8 (optionally null terminated) into null terminated utf16. If `utf8Length` is `-1`, then `utf8` is null terminated.
+// Result is placed at `alloc.mem[bufferLen], and the result length including null terminator is returned (negative on failure).
+static int32_t utf8ToUtf16(char *utf8, int32_t utf8Length) {
     int32_t utf16Count = MultiByteToWideChar(
         CP_UTF8, MB_ERR_INVALID_CHARS,
-        path, pathLen,
+        utf8, utf8Length,
         NULL, 0
     );
     if (utf16Count <= 0) return -1;
 
-    uint16_t *pathZ = &alloc.mem[bufferLen];
-    if (allocator_resize(&alloc, bufferLen + (utf16Count + 1) * (int64_t)sizeof(uint16_t)) < 0) return -2;
+    uint16_t *utf16Z = &alloc.mem[bufferLen];
+    int32_t utf16ZCount = utf16Count + (utf8Length != -1);
+    if (allocator_resize(&alloc, bufferLen + utf16ZCount * (int64_t)sizeof(uint16_t)) < 0) return -1;
 
-    utf16Count = MultiByteToWideChar(
-        CP_UTF8, MB_ERR_INVALID_CHARS,
-        path, pathLen,
-        pathZ, utf16Count
-    );
-    if (utf16Count <= 0) return -3;
-    pathZ[utf16Count] = L'\0';
+    if (
+        MultiByteToWideChar(
+            CP_UTF8, MB_ERR_INVALID_CHARS,
+            utf8, utf8Length,
+            utf16Z, utf16Count
+        ) != utf16Count
+    ) return -1;
+    utf16Z[utf16ZCount - 1] = L'\0';
+    return utf16ZCount;
+}
+
+static int32_t changeDir(char *path) {
+    if (utf8ToUtf16(path, -1) < 0) return -1;
+    uint16_t *pathZ = &alloc.mem[bufferLen];
+
+    if (!SetCurrentDirectory(pathZ)) return -1;
+    return 0;
+}
+
+static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *path, int32_t pathLen, bool asBase64) {
+    if (utf8ToUtf16(path, pathLen) < 0) return -1;
+    uint16_t *pathZ = &alloc.mem[bufferLen];
 
     // Open file and get size.
     void *pathHandle = CreateFileW(
@@ -105,22 +122,8 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
 }
 
 static int32_t writeToFile(char *path, char *content, int64_t contentLen) {
-    int32_t utf16Count = MultiByteToWideChar(
-        CP_UTF8, MB_ERR_INVALID_CHARS,
-        path, -1,
-        NULL, 0
-    );
-    if (utf16Count <= 0) return -1;
-
-    uint16_t *pathZ = &alloc.mem[alloc.size];
-    if (allocator_resize(&alloc, alloc.size + utf16Count * (int64_t)sizeof(uint16_t)) < 0) return -2;
-
-    utf16Count = MultiByteToWideChar(
-        CP_UTF8, MB_ERR_INVALID_CHARS,
-        path, -1,
-        pathZ, utf16Count
-    );
-    if (utf16Count <= 0) return -3;
+    if (utf8ToUtf16(path, -1) < 0) return -1;
+    uint16_t *pathZ = &alloc.mem[bufferLen];
 
     void *pathHandle = CreateFileW(
         pathZ,

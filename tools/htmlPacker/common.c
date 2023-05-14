@@ -1,3 +1,4 @@
+static int32_t changeDir(char *path);
 static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *path, int32_t pathLen, bool asBase64);
 static int32_t writeToFile(char *path, char *content, int64_t contentLen);
 
@@ -21,7 +22,10 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
     if (startPatternI < 0) return 1;
     int64_t endPatternLen = util_cstrLen(endPattern);
     int64_t endPatternI = findPattern(startPatternI, endPattern, endPatternLen);
-    if (endPatternI < 0) return -1; // TODO: Error message for unclosed include.
+    if (endPatternI < 0) {
+        debug_print("Unclosed include!\n");
+        return -1;
+    }
     int64_t nameI = startPatternI + startPatternLen;
     int64_t nameLen = endPatternI - nameI;
     if (nameLen > INT32_MAX) return -1;
@@ -41,11 +45,13 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
 }
 
 int32_t start(int32_t argc, char **argv) {
-    if (argc != 3) return 1;
-
+    if (argc != 4) return 1;
     if (allocator_init(&alloc, (int64_t)1 << 32) < 0) return 1;
 
-    int32_t status = replaceWithFile(0, 0, argv[1], (int32_t)util_cstrLen(argv[1]), false);
+    int32_t status = changeDir(argv[1]);
+    if (status < 0) return 1;
+
+    status = replaceWithFile(0, 0, argv[2], (int32_t)util_cstrLen(argv[2]), false);
     if (status < 0) return 1;
 
     int32_t complete = 0;
@@ -71,14 +77,14 @@ int32_t start(int32_t argc, char **argv) {
         complete &= status;
     }
 
-    int64_t outNameLen = util_cstrLen(argv[2]);
+    int64_t outNameLen = util_cstrLen(argv[3]);
     int64_t outNameHtmlLen = outNameLen + (int64_t)sizeof(".html");
     char *outNameHtml = &alloc.mem[bufferLen];
     if (allocator_resize(&alloc, bufferLen + outNameHtmlLen) < 0) {
         status = 1;
         goto cleanup_alloc;
     }
-    hc_MEMCPY(&outNameHtml[0], argv[2], (uint64_t)outNameLen);
+    hc_MEMCPY(&outNameHtml[0], argv[3], (uint64_t)outNameLen);
     hc_MEMCPY(&outNameHtml[outNameLen], hc_STR_COMMA_LEN(".html\0"));
     status = writeToFile(outNameHtml, &alloc.mem[0], bufferLen);
     if (status < 0) {
