@@ -15,5 +15,5 @@ if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
 :: Bootloader (with kernel binary embedded)
-set "FLAGS=-I^"%~dp0kernel\\^" -Os"
+set "FLAGS=-I^"%~dp0kernel\\^""
 call "%root_dir%tools\build\efi.bat" "%~dp0bootloader\" bootloader

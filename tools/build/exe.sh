@@ -18,9 +18,9 @@ root_dir="$script_dir/../.."
 "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/user32.def" "$path/user32.lib"
 "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$path/gdi32.lib"
 
-common_flags="-Wl,-subsystem,windows -O2"
+common_flags="-Wl,-subsystem,windows"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="
-release_flags="$common_flags -Ddebug_NDEBUG -s"
+release_flags="$common_flags -Ddebug_NDEBUG -s -Os"
 eval "set -- $("$script_dir/../shellUtil/shellescape.sh" "-L$path") $FLAGS"
 
 "$root_dir/cc_pe.sh" $debug_flags -S -o "$path/debug.$prog_name.$ext.s" "$path/$prog_name.c" "$@"

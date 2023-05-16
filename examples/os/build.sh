@@ -10,4 +10,4 @@ ARCH="x86_64" FLAGS="$flags" "$root_dir/tools/build/elf.sh" "$script_dir/kernel"
 "${LLVM}llvm-objcopy" -O binary "$script_dir/kernel/debug.kernel.elf" "$script_dir/kernel/debug.kernel.bin"
 
 # Bootloader (with kernel binary embedded)
-ARCH="x86_64" FLAGS="-I$script_dir/kernel -Os" "$root_dir/tools/build/efi.sh" "$script_dir/bootloader" bootloader
+ARCH="x86_64" FLAGS="-I$script_dir/kernel" "$root_dir/tools/build/efi.sh" "$script_dir/bootloader" bootloader

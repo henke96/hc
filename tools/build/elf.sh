@@ -14,9 +14,8 @@ ext="${3:-elf}"
 script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
-common_flags="-O2"
-debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-release_flags="$common_flags -Ddebug_NDEBUG -s"
+debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
+release_flags="-Ddebug_NDEBUG -s -Os"
 eval "set -- $FLAGS"
 
 "$root_dir/cc_elf.sh" $debug_flags -S -o "$path/debug.$prog_name.$ext.s" "$path/$prog_name.c" "$@"

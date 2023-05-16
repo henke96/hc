@@ -13,9 +13,8 @@ prog_name="$2"
 script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
-common_flags="-O2"
-debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-release_flags="$common_flags -Ddebug_NDEBUG -s"
+debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
+release_flags="-Ddebug_NDEBUG -s -Os"
 eval "set -- $FLAGS"
 
 "$root_dir/cc_wasm.sh" $debug_flags -S -o "$path/debug.$prog_name.wasm.s" "$path/$prog_name.c" "$@"
