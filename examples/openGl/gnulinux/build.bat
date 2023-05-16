@@ -2,5 +2,5 @@
 setlocal disabledelayedexpansion
 set "root_dir=%~dp0..\..\..\"
 
-set "FLAGS=-l:libc.so.6 -l:libdl.so.2 %FLAGS%"
+set LINK_LIBC=1 & set LINK_LIBDL=1
 call "%root_dir%tools\build\gnulinuxelf.bat" "%~dp0" openGl
