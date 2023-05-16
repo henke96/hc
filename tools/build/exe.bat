@@ -8,12 +8,21 @@ if "%~3" == "" (
     set "ext=%~3"
 )
 
-call "%root_dir%tools\genLib\gen_lib.bat" "%root_dir%src\hc\windows\dll\kernel32.def" "%~1kernel32.lib"
-if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-call "%root_dir%tools\genLib\gen_lib.bat" "%root_dir%src\hc\windows\dll\user32.def" "%~1user32.lib"
-if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-call "%root_dir%tools\genLib\gen_lib.bat" "%root_dir%src\hc\windows\dll\gdi32.def" "%~1gdi32.lib"
-if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+if defined LINK_KERNEL32 (
+    call "%root_dir%tools\genLib\gen_lib.bat" "%root_dir%src\hc\windows\dll\kernel32.def" "%~1kernel32.lib"
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    set "FLAGS=-l:kernel32.lib %FLAGS%"
+)
+if defined LINK_USER32 (
+    call "%root_dir%tools\genLib\gen_lib.bat" "%root_dir%src\hc\windows\dll\user32.def" "%~1user32.lib"
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    set "FLAGS=-l:user32.lib %FLAGS%"
+)
+if defined LINK_GDI32 (
+    call "%root_dir%tools\genLib\gen_lib.bat" "%root_dir%src\hc\windows\dll\gdi32.def" "%~1gdi32.lib"
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    set "FLAGS=-l:gdi32.lib %FLAGS%"
+)
 
 set "common_flags=-L^"%~1\^" -Wl,-subsystem,windows"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="

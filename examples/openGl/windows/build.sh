@@ -3,4 +3,5 @@ set -e
 script_dir="$(dirname "$0")"
 root_dir="$script_dir/../../.."
 
-FLAGS="-l:kernel32.lib -l:user32.lib -l:gdi32.lib $FLAGS" "$root_dir/tools/build/exe.sh" "$script_dir" openGl
+export LINK_KERNEL32=1 LINK_USER32=1 LINK_GDI32=1
+"$root_dir/tools/build/exe.sh" "$script_dir" openGl

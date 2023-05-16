@@ -14,9 +14,18 @@ ext="${3:-exe}"
 script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
-"$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/kernel32.def" "$path/kernel32.lib"
-"$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/user32.def" "$path/user32.lib"
-"$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$path/gdi32.lib"
+if test -n "$LINK_KERNEL32"; then
+    "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/kernel32.def" "$path/kernel32.lib"
+    FLAGS="-l:kernel32.lib $FLAGS"
+fi
+if test -n "$LINK_USER32"; then
+    "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/user32.def" "$path/user32.lib"
+    FLAGS="-l:user32.lib $FLAGS"
+fi
+if test -n "$LINK_GDI32"; then
+    "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$path/gdi32.lib"
+    FLAGS="-l:gdi32.lib $FLAGS"
+fi
 
 common_flags="-Wl,-subsystem,windows"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="

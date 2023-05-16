@@ -2,12 +2,13 @@
 setlocal disabledelayedexpansion
 set "root_dir=%~dp0..\..\..\"
 
-set "FLAGS=-shared -l:libdl.so -l:libandroid.so -l:liblog.so -l:libc.so %FLAGS%"
-set "ARCH=aarch64"
-call "%root_dir%tools\build\androidelf.bat" "%~dp0" libopengl aarch64.so
+set LINK_LIBDL=1 & set LINK_LIBANDROID=1 & set LINK_LIBLOG=1 & set LINK_LIBC=1
+set "FLAGS=-shared %FLAGS%"
+
+set "ARCH=aarch64" & call "%root_dir%tools\build\androidelf.bat" "%~dp0" libopengl aarch64.so
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-set "ARCH=x86_64"
-call "%root_dir%tools\build\androidelf.bat" "%~dp0" libopengl x86_64.so
+
+set "ARCH=x86_64" & call "%root_dir%tools\build\androidelf.bat" "%~dp0" libopengl x86_64.so
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
 call :prepare_apk "debug."

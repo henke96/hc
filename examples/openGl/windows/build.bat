@@ -2,5 +2,5 @@
 setlocal disabledelayedexpansion
 set "root_dir=%~dp0..\..\.."
 
-set "FLAGS=-l:kernel32.lib -l:user32.lib -l:gdi32.lib %FLAGS%"
+set LINK_KERNEL32=1 & set LINK_USER32=1 & set LINK_GDI32=1
 call "%root_dir%\tools\build\exe.bat" "%~dp0" openGl
