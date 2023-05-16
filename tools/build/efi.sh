@@ -18,12 +18,13 @@ debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefin
 release_flags="$common_flags -Ddebug_NDEBUG -s -Os"
 eval "set -- $FLAGS"
 
-"$root_dir/cc_pe.sh" $debug_flags -S -o "$path/debug.$prog_name.efi.s" "$path/$prog_name.c" "$@"
+if test -n "$ASSEMBLY"; then
+    "$root_dir/cc_pe.sh" $debug_flags -S -o "$path/debug.$prog_name.efi.s" "$path/$prog_name.c" "$@"
+    "$root_dir/cc_pe.sh" $release_flags -S -o "$path/$prog_name.efi.s" "$path/$prog_name.c" "$@"
+fi
 "$root_dir/cc_pe.sh" $debug_flags -o "$path/debug.$prog_name.efi" "$path/$prog_name.c" "$@"
-"$root_dir/cc_pe.sh" $release_flags -S -o "$path/$prog_name.efi.s" "$path/$prog_name.c" "$@"
 "$root_dir/cc_pe.sh" $release_flags -o "$path/$prog_name.efi" "$path/$prog_name.c" "$@"
 
-# Static analysis.
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 "$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$path/$prog_name.c" "$@"
 "$root_dir/cc_pe.sh" $release_flags $analyse_flags "$path/$prog_name.c" "$@"

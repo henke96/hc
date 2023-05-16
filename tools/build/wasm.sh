@@ -17,12 +17,13 @@ debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
 release_flags="-Ddebug_NDEBUG -s -Os"
 eval "set -- $FLAGS"
 
-"$root_dir/cc_wasm.sh" $debug_flags -S -o "$path/debug.$prog_name.wasm.s" "$path/$prog_name.c" "$@"
+if test -n "$ASSEMBLY"; then
+    "$root_dir/cc_wasm.sh" $debug_flags -S -o "$path/debug.$prog_name.wasm.s" "$path/$prog_name.c" "$@"
+    "$root_dir/cc_wasm.sh" $release_flags -S -o "$path/$prog_name.wasm.s" "$path/$prog_name.c" "$@"
+fi
 "$root_dir/cc_wasm.sh" $debug_flags -o "$path/debug.$prog_name.wasm" "$path/$prog_name.c" "$@"
-"$root_dir/cc_wasm.sh" $release_flags -S -o "$path/$prog_name.wasm.s" "$path/$prog_name.c" "$@"
 "$root_dir/cc_wasm.sh" $release_flags -o "$path/$prog_name.wasm" "$path/$prog_name.c" "$@"
 
-# Static analysis.
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 "$root_dir/cc_wasm.sh" $debug_flags $analyse_flags "$path/$prog_name.c" "$@"
 "$root_dir/cc_wasm.sh" $release_flags $analyse_flags "$path/$prog_name.c" "$@"
