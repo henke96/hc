@@ -1,19 +1,23 @@
 @echo off
 setlocal disabledelayedexpansion
-set "root_dir=%~dp0..\..\"
+set "script_dir=%~dp0"
+set "script_dir=%script_dir:~0,-1%"
+set "root_dir=%script_dir%\..\.."
 
-set "ARCH=x86_64"
+if defined LLVM set "llvm_prefix=%LLVM%\bin\"
 
-:: Kernel
-set "FLAGS=-Wl,-T^"%~dp0kernel\kernel.ld^" -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
-call "%root_dir%tools\build\elf.bat" "%~dp0kernel\" kernel
+set NO_AARCH64=1 & set NO_RISCV64=1
+
+rem Kernel
+set "FLAGS=-Wl,-T^"%script_dir%\kernel\kernel.ld^" -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
+call "%root_dir%\tools\build\elf.bat" "%script_dir%\kernel" kernel
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
-"%LLVM%llvm-objcopy" -O binary "%~dp0kernel\kernel.elf" "%~dp0kernel\kernel.bin"
+"%llvm_prefix%llvm-objcopy" -O binary "%script_dir%\kernel\x86_64\kernel.elf" "%script_dir%\kernel\x86_64\kernel.bin"
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-"%LLVM%llvm-objcopy" -O binary "%~dp0kernel\debug.kernel.elf" "%~dp0kernel\debug.kernel.bin"
+"%llvm_prefix%llvm-objcopy" -O binary "%script_dir%\kernel\x86_64\debug.kernel.elf" "%script_dir%\kernel\x86_64\debug.kernel.bin"
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
-:: Bootloader (with kernel binary embedded)
-set "FLAGS=-I^"%~dp0kernel\\^""
-call "%root_dir%tools\build\efi.bat" "%~dp0bootloader\" bootloader
+rem Bootloader (with kernel binary embedded)
+set "FLAGS=" & set "FLAGS_X86_64=-I^"%script_dir%\kernel\x86_64^""
+call "%root_dir%\tools\build\efi.bat" "%script_dir%\bootloader" bootloader

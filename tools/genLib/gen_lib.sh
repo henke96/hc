@@ -1,13 +1,11 @@
 #!/bin/sh
 set -e
 
-if test -z "$1" || test -z "$2"
-then
-    echo "Usage: $0 INPUT.def OUTPUT.lib"
-    exit 1
-fi
+if test -n "$LLVM"; then llvm_prefix="$LLVM/bin/"; fi
 
-ARCH="${ARCH:-x86_64}"
+input="$1"
+output="$2"
+
 if test "$ARCH" = "x86_64"; then
     machine="x64"
 elif test "$ARCH" = "aarch64"; then
@@ -17,4 +15,4 @@ else
     exit 1
 fi
 
-"${LLVM}lld-link" -machine:$machine -def:"$1" -out:"$2"
+"${llvm_prefix}lld-link" -machine:"$machine" -def:"$input" -out:"$output"

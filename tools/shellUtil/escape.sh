@@ -1,3 +1,4 @@
+#!/bin/sh
 # Credit to mtraceur :)
 printf \'
 unescaped=$1

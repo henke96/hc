@@ -1,5 +1,6 @@
 @echo off
 setlocal disabledelayedexpansion
-cd "%~dp0"
-if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-git clean -fdqX --exclude="!*.keystore"
+set "script_dir=%~dp0"
+set "script_dir=%script_dir:~0,-1%"
+
+git -C "%script_dir%" clean -fdqX --exclude="!*.keystore"

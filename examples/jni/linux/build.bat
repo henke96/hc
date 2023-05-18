@@ -1,6 +1,8 @@
 @echo off
 setlocal disabledelayedexpansion
-set "root_dir=%~dp0..\..\..\"
+set "script_dir=%~dp0"
+set "script_dir=%script_dir:~0,-1%"
+set "root_dir=%script_dir%\..\..\.."
 
 set "FLAGS=-shared -fPIC %FLAGS%"
-call "%root_dir%tools\build\elf.bat" "%~dp0" libtest so
+call "%root_dir%\tools\build\elf.bat" "%script_dir%" libtest so

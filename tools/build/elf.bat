@@ -1,32 +1,60 @@
 @echo off
 setlocal disabledelayedexpansion
-set "root_dir=%~dp0..\..\"
+set "script_dir=%~dp0"
+set "script_dir=%script_dir:~0,-1%"
+set "root_dir=%script_dir%\..\.."
 
-if "%~3" == "" (
-    set "ext=elf"
-) else (
-    set "ext=%~3"
-)
+if defined LLVM set "llvm_prefix=%LLVM%\bin\"
+
+set "prog_path=%~1"
+set "prog_name=%~2"
+if "%~3" == "" ( set "ext=elf" ) else set "ext=%~3"
 
 if not defined STRIP_OPT set STRIP_OPT=--strip-sections
 
 set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
 set "release_flags=-fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
 
-if defined ASSEMBLY (
-    call "%root_dir%cc_elf.bat" %debug_flags% -S -o "%~1debug.%~2.%ext%.s" "%~1%~2.c" %FLAGS%
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-    call "%root_dir%cc_elf.bat" %release_flags% -S -o "%~1%~2.%ext%.s" "%~1%~2.c" %FLAGS%
+if not defined NO_X86_64 (
+    set "ARCH=x86_64" & call :build "%FLAGS_X86_64%"
     if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 )
-call "%root_dir%cc_elf.bat" %debug_flags% -o "%~1debug.%~2.%ext%" "%~1%~2.c" %FLAGS%
+if not defined NO_AARCH64 (
+    set "ARCH=aarch64" & call :build "%FLAGS_AARCH64%"
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+)
+if not defined NO_RISCV64 (
+    set "ARCH=riscv64" & call :build "%FLAGS_RISCV64%"
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+)
+exit /b
+
+:build
+setlocal
+set "FLAGS=-L^"%prog_path%\%ARCH%^" %FLAGS% %~1"
+if not exist "%prog_path%\%ARCH%" (
+    mkdir "%prog_path%\%ARCH%"
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+)
+
+if defined ASSEMBLY (
+    call "%root_dir%\cc_elf.bat" %debug_flags% -S -o "%prog_path%\%ARCH%\debug.%prog_name%.%ext%.s" "%prog_path%\%prog_name%.c" %FLAGS%
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    call "%root_dir%\cc_elf.bat" %release_flags% -S -o "%prog_path%\%ARCH%\%prog_name%.%ext%.s" "%prog_path%\%prog_name%.c" %FLAGS%
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+)
+call "%root_dir%\cc_elf.bat" %debug_flags% -o "%prog_path%\%ARCH%\debug.%prog_name%.%ext%" "%prog_path%\%prog_name%.c" %FLAGS%
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-call "%root_dir%cc_elf.bat" %release_flags% -o "%~1%~2.%ext%" "%~1%~2.c" %FLAGS%
+call "%root_dir%\cc_elf.bat" %release_flags% -o "%prog_path%\%ARCH%\%prog_name%.%ext%" "%prog_path%\%prog_name%.c" %FLAGS%
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-"%LLVM%llvm-objcopy" %STRIP_OPT% "%~1%~2.%ext%"
+"%llvm_prefix%llvm-objcopy" %STRIP_OPT% "%prog_path%\%ARCH%\%prog_name%.%ext%"
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
-set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-call "%root_dir%cc_elf.bat" %debug_flags% %analyse_flags% "%~1%~2.c" %FLAGS%
-if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-call "%root_dir%cc_elf.bat" %release_flags% %analyse_flags% "%~1%~2.c" %FLAGS%
+if not defined NO_ANALYSIS (
+    set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
+    call "%root_dir%\cc_elf.bat" %debug_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    call "%root_dir%\cc_elf.bat" %release_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%
+    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+)
+exit /b

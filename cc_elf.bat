@@ -1,6 +1,10 @@
 @echo off
 setlocal disabledelayedexpansion
-set /p flags=<"%~dp0flags"
-if not defined ARCH set ARCH=x86_64
+set "script_dir=%~dp0"
+set "script_dir=%script_dir:~0,-1%"
+
+if defined LLVM set "llvm_prefix=%LLVM%\bin\"
+
+set /p flags=<"%script_dir%\flags"
 if not defined ABI set ABI=linux-elf
-"%LLVM%clang" -I"%~dp0src" %flags% -target %ARCH%-unknown-%ABI% --ld-path="%LLVM%ld.lld" -Wl,-dynamic-linker="" -Wl,--build-id=none %*
+"%llvm_prefix%clang" -I"%script_dir%\src" %flags% -target %ARCH%-unknown-%ABI% --ld-path="%llvm_prefix%ld.lld" -Wl,-dynamic-linker="" -Wl,--build-id=none %*

@@ -3,16 +3,6 @@ set -e
 script_dir="$(dirname "$0")"
 root_dir="$script_dir/../../.."
 
-if test -z "$JAVA_HOME"; then
-    JAVA="java"
-else
-    JAVA="$JAVA_HOME/bin/java"
-fi
-
-export LINK_LIBDL=1 LINK_LIBLOG=1 LINK_LIBANDROID=1 LINK_LIBC=1
-export FLAGS="-shared $FLAGS"
-"$root_dir/tools/build/androidelf.sh" "$script_dir" libopengl so
-
 prepare_apk() {
     android_arch="$ARCH"
     if test "$ARCH" = "aarch64"; then android_arch="arm64-v8a"; fi
@@ -26,6 +16,16 @@ build_apk() {
 sign_apk() {
     "$JAVA" -jar "$ANDROID_SDK/build-tools/26.0.3/lib/apksigner.jar" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1openGl.apk"
 }
+
+if test -n "$JAVA_HOME"; then
+    JAVA="$JAVA_HOME/bin/java"
+else
+    JAVA="java"
+fi
+
+export LINK_LIBDL=1 LINK_LIBLOG=1 LINK_LIBANDROID=1 LINK_LIBC=1
+export FLAGS="-shared $FLAGS"
+"$root_dir/tools/build/androidelf.sh" "$script_dir" libopengl so
 
 if test -z "$NO_AARCH64"; then
     export ARCH=aarch64
