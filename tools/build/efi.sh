@@ -15,16 +15,25 @@ root_dir="$script_dir/../.."
 
 common_flags="-Wl,-subsystem,efi_application"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined"
-release_flags="$common_flags -Ddebug_NDEBUG -s -Os"
-eval "set -- $FLAGS"
+release_flags="$common_flags -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
 
-if test -n "$ASSEMBLY"; then
-    "$root_dir/cc_pe.sh" $debug_flags -S -o "$path/debug.$prog_name.efi.s" "$path/$prog_name.c" "$@"
-    "$root_dir/cc_pe.sh" $release_flags -S -o "$path/$prog_name.efi.s" "$path/$prog_name.c" "$@"
-fi
-"$root_dir/cc_pe.sh" $debug_flags -o "$path/debug.$prog_name.efi" "$path/$prog_name.c" "$@"
-"$root_dir/cc_pe.sh" $release_flags -o "$path/$prog_name.efi" "$path/$prog_name.c" "$@"
+build() {
+    mkdir -p "$path/$ARCH"
+    eval "set -- $FLAGS $1"
 
-analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-"$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$path/$prog_name.c" "$@"
-"$root_dir/cc_pe.sh" $release_flags $analyse_flags "$path/$prog_name.c" "$@"
+    if test -n "$ASSEMBLY"; then
+        "$root_dir/cc_pe.sh" $debug_flags -S -o "$path/$ARCH/debug.$prog_name.efi.s" "$path/$prog_name.c" "$@"
+        "$root_dir/cc_pe.sh" $release_flags -S -o "$path/$ARCH/$prog_name.efi.s" "$path/$prog_name.c" "$@"
+    fi
+    "$root_dir/cc_pe.sh" $debug_flags -o "$path/$ARCH/debug.$prog_name.efi" "$path/$prog_name.c" "$@"
+    "$root_dir/cc_pe.sh" $release_flags -o "$path/$ARCH/$prog_name.efi" "$path/$prog_name.c" "$@"
+
+    if test -z "$NO_ANALYSIS"; then
+        analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
+        "$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$path/$prog_name.c" "$@"
+        "$root_dir/cc_pe.sh" $release_flags $analyse_flags "$path/$prog_name.c" "$@"
+    fi
+}
+
+if test -z "$NO_X86_64"; then ARCH="x86_64" build "$FLAGS_X86_64"; fi
+if test -z "$NO_AARCH64"; then ARCH="aarch64" build "$FLAGS_AARCH64"; fi

@@ -3,7 +3,7 @@ setlocal disabledelayedexpansion
 set "root_dir=%~dp0..\..\"
 
 set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-set "release_flags=-Ddebug_NDEBUG -s -Os"
+set "release_flags=-Ddebug_NDEBUG -fomit-frame-pointer -s -Os"
 
 if defined ASSEMBLY (
     call "%root_dir%cc_wasm.bat" %debug_flags% -S -o "%~1debug.%~2.wasm.s" "%~1%~2.c" %FLAGS%

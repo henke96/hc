@@ -14,5 +14,4 @@ if defined LINK_LIBDL (
 )
 
 set "FLAGS=-fPIC -L^"%~1\^" %FLAGS%"
-set "STRIP_OPT=--strip-sections"
 call "%~dp0elf.bat" %*

@@ -23,4 +23,4 @@ dev=$(udisksctl loop-setup -f "$script_dir/${prefix}disk.img" | sed -E 's/^Mappe
 mnt=$(udisksctl mount -b "$dev" 2>&1 | sed -E 's/^Mounted .+ at ([^.]+).*$/\1/' | sed -E 's/.+ already mounted at `(.+)'\''.*$/\1/')
 
 mkdir -p "$mnt/efi/boot"
-cp "$script_dir/bootloader/${prefix}bootloader.efi" "$mnt/efi/boot/bootx64.efi"
+cp "$script_dir/bootloader/x86_64/${prefix}bootloader.efi" "$mnt/efi/boot/bootx64.efi"

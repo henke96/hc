@@ -26,7 +26,7 @@ if defined LINK_GDI32 (
 
 set "common_flags=-L^"%~1\^" -Wl,-subsystem,windows"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="
-set "release_flags=%common_flags% -Ddebug_NDEBUG -s -Os"
+set "release_flags=%common_flags% -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
 
 if defined ASSEMBLY (
     call "%root_dir%cc_pe.bat" %debug_flags% -S -o "%~1debug.%~2.%ext%.s" "%~1%~2.c" %FLAGS%

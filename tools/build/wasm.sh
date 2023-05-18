@@ -14,7 +14,7 @@ script_dir="$(dirname "$0")"
 root_dir="$script_dir/../.."
 
 debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-release_flags="-Ddebug_NDEBUG -s -Os"
+release_flags="-Ddebug_NDEBUG -fomit-frame-pointer -s -Os"
 eval "set -- $FLAGS"
 
 if test -n "$ASSEMBLY"; then
@@ -24,6 +24,8 @@ fi
 "$root_dir/cc_wasm.sh" $debug_flags -o "$path/debug.$prog_name.wasm" "$path/$prog_name.c" "$@"
 "$root_dir/cc_wasm.sh" $release_flags -o "$path/$prog_name.wasm" "$path/$prog_name.c" "$@"
 
-analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-"$root_dir/cc_wasm.sh" $debug_flags $analyse_flags "$path/$prog_name.c" "$@"
-"$root_dir/cc_wasm.sh" $release_flags $analyse_flags "$path/$prog_name.c" "$@"
+if test -z "$NO_ANALYSIS"; then
+    analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
+    "$root_dir/cc_wasm.sh" $debug_flags $analyse_flags "$path/$prog_name.c" "$@"
+    "$root_dir/cc_wasm.sh" $release_flags $analyse_flags "$path/$prog_name.c" "$@"
+fi

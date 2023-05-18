@@ -10,5 +10,4 @@ if defined LINK_LIBC (
 
 set "ABI=freebsd14"
 set "FLAGS=-fPIC -Wl,-dynamic-linker=/libexec/ld-elf.so.1 -Wl,--export-dynamic -L^"%~1\^" %FLAGS%"
-set "STRIP_OPT=--strip-sections"
 call "%~dp0elf.bat" %*

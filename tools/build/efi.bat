@@ -4,7 +4,7 @@ set "root_dir=%~dp0..\..\"
 
 set "common_flags=-Wl,-subsystem,efi_application"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined"
-set "release_flags=%common_flags% -Ddebug_NDEBUG -s -Os"
+set "release_flags=%common_flags% -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
 
 if defined ASSEMBLY (
     call "%root_dir%cc_pe.bat" %debug_flags% -S -o "%~1debug.%~2.efi.s" "%~1%~2.c" %FLAGS%

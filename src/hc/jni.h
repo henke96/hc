@@ -1,7 +1,7 @@
 #if hc_PE
     #define jni_EXPORT hc_DLLEXPORT
 #else
-    #define jni_EXPORT
+    #define jni_EXPORT hc_ELF_EXPORT
 #endif
 
 union jni_value {
