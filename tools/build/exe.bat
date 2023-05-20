@@ -8,6 +8,7 @@ set "prog_path=%~1"
 set "prog_name=%~2"
 if "%~3" == "" ( set "ext=exe" ) else set "ext=%~3"
 
+set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 set "common_flags=-L^"%prog_path%^" -Wl,-subsystem,windows"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="
 set "release_flags=%common_flags% -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
@@ -55,11 +56,10 @@ if defined ASSEMBLY (
 )
 call "%root_dir%\cc_pe.bat" %debug_flags% -o "%prog_path%\%ARCH%\debug.%prog_name%.%ext%" "%prog_path%\%prog_name%.c" %FLAGS%
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-call "%root_dir%\cc_pe.bat" %release_flags% -o "%prog_path%\%ARCH%\%~2.%ext%" "%prog_path%\%prog_name%.c" %FLAGS%
+call "%root_dir%\cc_pe.bat" %release_flags% -o "%prog_path%\%ARCH%\%prog_name%.%ext%" "%prog_path%\%prog_name%.c" %FLAGS%
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
 if not defined NO_ANALYSIS (
-    set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
     call "%root_dir%\cc_pe.bat" %debug_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%
     if not errorlevel 0 exit /b & if errorlevel 1 exit /b
     call "%root_dir%\cc_pe.bat" %release_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%

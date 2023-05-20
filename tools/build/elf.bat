@@ -12,6 +12,7 @@ if "%~3" == "" ( set "ext=elf" ) else set "ext=%~3"
 
 if not defined STRIP_OPT set STRIP_OPT=--strip-sections
 
+set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
 set "release_flags=-fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
 
@@ -51,7 +52,6 @@ if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
 if not defined NO_ANALYSIS (
-    set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
     call "%root_dir%\cc_elf.bat" %debug_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%
     if not errorlevel 0 exit /b & if errorlevel 1 exit /b
     call "%root_dir%\cc_elf.bat" %release_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%

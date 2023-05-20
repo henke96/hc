@@ -19,7 +19,6 @@ build() {
     "$root_dir/cc_pe.sh" $release_flags -o "$prog_path/$ARCH/$prog_name.$ext" "$prog_path/$prog_name.c" "$@"
 
     if test -z "$NO_ANALYSIS"; then
-        analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
         "$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
         "$root_dir/cc_pe.sh" $release_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
     fi
@@ -29,6 +28,7 @@ prog_path="$1"
 prog_name="$2"
 ext="${3:-exe}"
 
+analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 common_flags="-Wl,-subsystem,windows"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="
 release_flags="$common_flags -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"

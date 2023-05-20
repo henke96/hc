@@ -7,6 +7,7 @@ set "root_dir=%script_dir%\..\.."
 set "prog_path=%~1"
 set "prog_name=%~2"
 
+set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 set "common_flags=-Wl,-subsystem,efi_application"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined"
 set "release_flags=%common_flags% -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
@@ -41,7 +42,6 @@ call "%root_dir%\cc_pe.bat" %release_flags% -o "%prog_path%\%ARCH%\%prog_name%.e
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
 if not defined NO_ANALYSIS (
-    set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
     call "%root_dir%\cc_pe.bat" %debug_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%
     if not errorlevel 0 exit /b & if errorlevel 1 exit /b
     call "%root_dir%\cc_pe.bat" %release_flags% %analyse_flags% "%prog_path%\%prog_name%.c" %FLAGS%
