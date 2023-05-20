@@ -71,9 +71,7 @@ hc_UNUSED static int32_t util_strToUint(const void *buffer, int64_t maxChars, ui
 hc_UNUSED static int32_t util_strToInt(const void *buffer, int64_t maxChars, int64_t *number) {
     if (maxChars <= 0) return 0;
 
-    uint64_t negative;
-    if (((const char *)buffer)[0] == '-') negative = 1;
-    else negative = 0;
+    uint64_t negative = ((const char *)buffer)[0] == '-';
 
     uint64_t maxNumber = (uint64_t)INT64_MAX + negative;
     uint64_t result = 0;
@@ -87,7 +85,7 @@ hc_UNUSED static int32_t util_strToInt(const void *buffer, int64_t maxChars, int
     }
 
     if (i > (int32_t)negative) {
-        *number = (int64_t)(result * -negative);
+        *number = (int64_t)(result * (1 - (negative << 1)));
         return i;
     }
     return 0;
