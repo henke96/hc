@@ -14,14 +14,10 @@ build_apk() {
     "$ANDROID_SDK/build-tools/26.0.3/aapt" package $2 -f -F "$script_dir/$1openGl.apk" -M "$script_dir/AndroidManifest.xml" -I "$ANDROID_SDK/platforms/android-26/android.jar" "$script_dir/$1dist"
 }
 sign_apk() {
-    "$JAVA" -jar "$ANDROID_SDK/build-tools/26.0.3/lib/apksigner.jar" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1openGl.apk"
+    "${java_prefix}java" -jar "$ANDROID_SDK/build-tools/26.0.3/lib/apksigner.jar" sign --ks "$KEYSTORE" --ks-pass "$KEYSTORE_PASS" "$script_dir/$1openGl.apk"
 }
 
-if test -n "$JAVA_HOME"; then
-    JAVA="$JAVA_HOME/bin/java"
-else
-    JAVA="java"
-fi
+if test -n "$JAVA_HOME"; then java_prefix="$JAVA_HOME/bin/"; fi
 
 export LINK_LIBDL=1 LINK_LIBLOG=1 LINK_LIBANDROID=1 LINK_LIBC=1
 export FLAGS="-shared $FLAGS"

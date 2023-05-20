@@ -4,11 +4,7 @@ set "script_dir=%~dp0"
 set "script_dir=%script_dir:~0,-1%"
 set "root_dir=%script_dir%\..\..\.."
 
-if defined JAVA_HOME (
-    set "JAVA=%JAVA_HOME%\bin\java.exe"
-) else (
-    set "JAVA=java.exe"
-)
+if defined JAVA_HOME set "java_prefix=%JAVA_HOME%\bin\"
 
 set LINK_LIBDL=1 & set LINK_LIBLOG=1 & set LINK_LIBANDROID=1 & set LINK_LIBC=1
 set "FLAGS=-shared %FLAGS%"
@@ -72,5 +68,5 @@ exit /b
 
 :sign_apk
 setlocal
-"%JAVA%" -jar "%ANDROID_SDK%\build-tools\26.0.3\lib\apksigner.jar" sign --ks "%KEYSTORE%" --ks-pass "%KEYSTORE_PASS%" "%script_dir%\%~1openGl.apk"
+"%java_prefix%java" -jar "%ANDROID_SDK%\build-tools\26.0.3\lib\apksigner.jar" sign --ks "%KEYSTORE%" --ks-pass "%KEYSTORE_PASS%" "%script_dir%\%~1openGl.apk"
 exit /b
