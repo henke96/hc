@@ -8,7 +8,6 @@
     #define debug_CHECK(EXPR, COND) do { typeof(EXPR) RES = (EXPR); if (!(COND)) debug_fail((int64_t)RES, #EXPR, __FILE_NAME__, __LINE__); } while (0)
 #endif
 
-hc_UNUSED
 static noreturn hc_INLINE void debug_abort(void) {
     abort();
 }
