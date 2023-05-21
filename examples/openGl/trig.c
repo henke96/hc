@@ -30,6 +30,6 @@ static float trig_sin(uint32_t angle) {
     return trig_sinTable[angle];
 }
 
-static inline float trig_cos(uint32_t angle) {
+static float trig_cos(uint32_t angle) {
     return trig_sin((angle + 1024) & 4095);
 }

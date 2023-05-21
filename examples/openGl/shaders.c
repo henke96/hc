@@ -51,6 +51,6 @@ static int32_t shaders_init(void) {
     return -2;
 }
 
-static inline void shaders_deinit(void) {
+static void shaders_deinit(void) {
     gl_deleteProgram(shaders_mainProgram);
 }

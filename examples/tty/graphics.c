@@ -76,7 +76,7 @@ static int32_t graphics_init(struct graphics *self) {
     return -1;
 }
 
-static inline void graphics_deinit(struct graphics *self) {
+static void graphics_deinit(struct graphics *self) {
     debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), RES == 0);
     drmKms_destroyFrameBuffer(&self->drmKms, self->frameBufferInfo.fb_id);
     drmKms_destroyDumbBuffer(&self->drmKms, self->frameBufferInfo.handle);

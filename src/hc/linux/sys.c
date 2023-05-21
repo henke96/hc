@@ -925,243 +925,203 @@ asm volatile( \
 #endif
 #endif
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_write(int32_t fd, hc_NONULL const void *buf, int64_t count) {
+static hc_INLINE int64_t sys_write(int32_t fd, hc_NONULL const void *buf, int64_t count) {
     sys_SYSCALL3(sys_NR_write, fd, buf, count)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_writev(int32_t fd, hc_NONULL const struct iovec_const *iov, int32_t iovlen) {
+static hc_INLINE int64_t sys_writev(int32_t fd, hc_NONULL const struct iovec_const *iov, int32_t iovlen) {
     sys_SYSCALL3(sys_NR_writev, fd, iov, iovlen)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_close(int32_t fd) {
+static hc_INLINE int32_t sys_close(int32_t fd) {
     sys_SYSCALL1(sys_NR_close, fd)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_openat(int32_t dirfd, hc_NONULL const void *pathname, uint32_t flags, uint16_t mode) {
+static hc_INLINE int32_t sys_openat(int32_t dirfd, hc_NONULL const void *pathname, uint32_t flags, uint16_t mode) {
     sys_SYSCALL4(sys_NR_openat, dirfd, pathname, flags, mode)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_chdir(const char *path) {
+static hc_INLINE int32_t sys_chdir(const char *path) {
     sys_SYSCALL1(sys_NR_chdir, path)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_read(int32_t fd, hc_NONULL void *buf, int64_t count) {
+static hc_INLINE int64_t sys_read(int32_t fd, hc_NONULL void *buf, int64_t count) {
     sys_SYSCALL3(sys_NR_read, fd, buf, count)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_pread64(int32_t fd, hc_NONULL void *buf, int64_t count, int64_t offset) {
+static hc_INLINE int64_t sys_pread64(int32_t fd, hc_NONULL void *buf, int64_t count, int64_t offset) {
     sys_SYSCALL4(sys_NR_pread64, fd, buf, count, offset)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE noreturn void sys_exit(int32_t exitcode) {
+static hc_INLINE noreturn void sys_exit(int32_t exitcode) {
     sys_SYSCALL1(sys_NR_exit, exitcode)
     hc_UNREACHABLE;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE noreturn void sys_exit_group(int32_t exitcode) {
+static hc_INLINE noreturn void sys_exit_group(int32_t exitcode) {
     sys_SYSCALL1(sys_NR_exit_group, exitcode)
     hc_UNREACHABLE;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_getpid(void) {
+static hc_INLINE int32_t sys_getpid(void) {
     sys_SYSCALL0(sys_NR_getpid)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_kill(int32_t pid, int32_t signal) {
+static hc_INLINE int32_t sys_kill(int32_t pid, int32_t signal) {
     sys_SYSCALL2(sys_NR_kill, pid, signal)
     return (int32_t)ret;
 }
 
 #define sys_SIGMASK(SIGNAL) (1UL << ((SIGNAL) - 1))
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_rt_sigprocmask(uint32_t how, uint64_t *set, uint64_t *oldset) {
+static hc_INLINE int32_t sys_rt_sigprocmask(uint32_t how, uint64_t *set, uint64_t *oldset) {
     sys_SYSCALL4(sys_NR_rt_sigprocmask, how, set, oldset, 8)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_signalfd4(int32_t fd, hc_NONULL const uint64_t *mask, uint32_t flags) {
+static hc_INLINE int32_t sys_signalfd4(int32_t fd, hc_NONULL const uint64_t *mask, uint32_t flags) {
     sys_SYSCALL4(sys_NR_signalfd4, fd, mask, 8, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_rt_sigaction(int32_t sig, const struct sigaction *act, struct sigaction *oldact) {
+static hc_INLINE int32_t sys_rt_sigaction(int32_t sig, const struct sigaction *act, struct sigaction *oldact) {
     sys_SYSCALL4(sys_NR_rt_sigaction, sig, act, oldact, 8)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_socket(int32_t family, int32_t type, int32_t protocol) {
+static hc_INLINE int32_t sys_socket(int32_t family, int32_t type, int32_t protocol) {
     sys_SYSCALL3(sys_NR_socket, family, type, protocol)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_setsockopt(int32_t fd, int32_t level, int32_t optname, const void *optval, int32_t optlen) {
+static hc_INLINE int32_t sys_setsockopt(int32_t fd, int32_t level, int32_t optname, const void *optval, int32_t optlen) {
     sys_SYSCALL5(sys_NR_setsockopt, fd, level, optname, optval, optlen)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_connect(int32_t fd, hc_NONULL const void *addr, int32_t addrlen) {
+static hc_INLINE int32_t sys_connect(int32_t fd, hc_NONULL const void *addr, int32_t addrlen) {
     sys_SYSCALL3(sys_NR_connect, fd, addr, addrlen)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_bind(int32_t fd, hc_NONULL const void *addr, int32_t addrlen) {
+static hc_INLINE int32_t sys_bind(int32_t fd, hc_NONULL const void *addr, int32_t addrlen) {
     sys_SYSCALL3(sys_NR_bind, fd, addr, addrlen)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_listen(int32_t fd, int32_t backlog) {
+static hc_INLINE int32_t sys_listen(int32_t fd, int32_t backlog) {
     sys_SYSCALL2(sys_NR_listen, fd, backlog)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_accept4(int32_t fd, void *addr, int32_t *restrict addrlen, uint32_t flags) {
+static hc_INLINE int32_t sys_accept4(int32_t fd, void *addr, int32_t *restrict addrlen, uint32_t flags) {
     sys_SYSCALL4(sys_NR_accept4, fd, addr, addrlen, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_sendto(int32_t fd, hc_NONULL const void *buf, int64_t len, uint32_t flags, const void *addr, int32_t addrlen) {
+static hc_INLINE int64_t sys_sendto(int32_t fd, hc_NONULL const void *buf, int64_t len, uint32_t flags, const void *addr, int32_t addrlen) {
     sys_SYSCALL6(sys_NR_sendto, fd, buf, len, flags, addr, addrlen)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_sendmsg(int32_t fd, hc_NONULL const struct msghdr_const *msg, uint32_t flags) {
+static hc_INLINE int64_t sys_sendmsg(int32_t fd, hc_NONULL const struct msghdr_const *msg, uint32_t flags) {
     sys_SYSCALL3(sys_NR_sendmsg, fd, msg, flags)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_recvmsg(int32_t fd, hc_NONULL const struct msghdr *msg, uint32_t flags) {
+static hc_INLINE int64_t sys_recvmsg(int32_t fd, hc_NONULL const struct msghdr *msg, uint32_t flags) {
     sys_SYSCALL3(sys_NR_recvmsg, fd, msg, flags)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_recvfrom(int32_t fd, hc_NONULL const void *restrict buf, int64_t len, uint32_t flags, const void *restrict addr, int32_t *restrict addrlen) {
+static hc_INLINE int64_t sys_recvfrom(int32_t fd, hc_NONULL const void *restrict buf, int64_t len, uint32_t flags, const void *restrict addr, int32_t *restrict addrlen) {
     sys_SYSCALL6(sys_NR_recvfrom, fd, buf, len, flags, addr, addrlen)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_epoll_create1(uint32_t flags) {
+static hc_INLINE int32_t sys_epoll_create1(uint32_t flags) {
     sys_SYSCALL1(sys_NR_epoll_create1, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_epoll_ctl(int32_t epfd, int32_t op, int32_t fd, struct epoll_event *event) {
+static hc_INLINE int32_t sys_epoll_ctl(int32_t epfd, int32_t op, int32_t fd, struct epoll_event *event) {
     sys_SYSCALL4(sys_NR_epoll_ctl, epfd, op, fd, event)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_epoll_pwait(int32_t epfd, hc_NONULL struct epoll_event *events, int32_t maxevents, int32_t timeout, const int64_t *sigmask) {
+static hc_INLINE int32_t sys_epoll_pwait(int32_t epfd, hc_NONULL struct epoll_event *events, int32_t maxevents, int32_t timeout, const int64_t *sigmask) {
     sys_SYSCALL6(sys_NR_epoll_pwait, epfd, events, maxevents, timeout, sigmask, sizeof(*sigmask))
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_timerfd_create(int32_t clockid, uint32_t flags) {
+static hc_INLINE int32_t sys_timerfd_create(int32_t clockid, uint32_t flags) {
     sys_SYSCALL2(sys_NR_timerfd_create, clockid, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_timerfd_settime(int32_t fd, uint32_t flags, hc_NONULL const struct itimerspec *new, struct itimerspec *old) {
+static hc_INLINE int32_t sys_timerfd_settime(int32_t fd, uint32_t flags, hc_NONULL const struct itimerspec *new, struct itimerspec *old) {
     sys_SYSCALL4(sys_NR_timerfd_settime, fd, flags, new, old)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE void *sys_mmap(void *addr, int64_t length, int32_t prot, uint32_t flags, int32_t fd, int64_t offset) {
+static hc_INLINE void *sys_mmap(void *addr, int64_t length, int32_t prot, uint32_t flags, int32_t fd, int64_t offset) {
     sys_SYSCALL6(sys_NR_mmap, addr, length, prot, flags, fd, offset)
     return (void *)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_munmap(hc_NONULL void *addr, int64_t length) {
+static hc_INLINE int32_t sys_munmap(hc_NONULL void *addr, int64_t length) {
     sys_SYSCALL2(sys_NR_munmap, addr, length)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE void *sys_mremap(hc_NONULL void *oldaddr, int64_t oldsize, int64_t newsize, uint32_t flags) {
+static hc_INLINE void *sys_mremap(hc_NONULL void *oldaddr, int64_t oldsize, int64_t newsize, uint32_t flags) {
     sys_SYSCALL5(sys_NR_mremap, oldaddr, oldsize, newsize, flags, NULL)
     return (void *)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_madvise(hc_NONULL void *addr, int64_t size, uint32_t advice) {
+static hc_INLINE int32_t sys_madvise(hc_NONULL void *addr, int64_t size, uint32_t advice) {
     sys_SYSCALL3(sys_NR_madvise, addr, size, advice)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_mprotect(hc_NONULL void *addr, int64_t size, uint32_t prot) {
+static hc_INLINE int32_t sys_mprotect(hc_NONULL void *addr, int64_t size, uint32_t prot) {
     sys_SYSCALL3(sys_NR_mprotect, addr, size, prot)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_msync(hc_NONULL void *addr, int64_t size, uint32_t flags) {
+static hc_INLINE int32_t sys_msync(hc_NONULL void *addr, int64_t size, uint32_t flags) {
     sys_SYSCALL3(sys_NR_msync, addr, size, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_clock_gettime(int32_t clock, hc_NONULL struct timespec *time) {
+static hc_INLINE int32_t sys_clock_gettime(int32_t clock, hc_NONULL struct timespec *time) {
     sys_SYSCALL2(sys_NR_clock_gettime, clock, time)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_clock_nanosleep(int32_t clock, uint32_t flags, hc_NONULL const struct timespec *request, struct timespec *remain) {
+static hc_INLINE int32_t sys_clock_nanosleep(int32_t clock, uint32_t flags, hc_NONULL const struct timespec *request, struct timespec *remain) {
     sys_SYSCALL4(sys_NR_clock_nanosleep, clock, flags, request, remain)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_getrandom(hc_NONULL void *buf, int64_t buflen, uint32_t flags) {
+static hc_INLINE int64_t sys_getrandom(hc_NONULL void *buf, int64_t buflen, uint32_t flags) {
     sys_SYSCALL3(sys_NR_getrandom, buf, buflen, flags)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_clone3(hc_NONULL struct clone_args *args) {
+static hc_INLINE int32_t sys_clone3(hc_NONULL struct clone_args *args) {
     sys_SYSCALL2(sys_NR_clone3, args, sizeof(*args))
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_clone(uint32_t flags, void *stackHigh, int32_t *parent_tid, uint64_t tls, int32_t *child_tid) {
+static hc_INLINE int32_t sys_clone(uint32_t flags, void *stackHigh, int32_t *parent_tid, uint64_t tls, int32_t *child_tid) {
 #if hc_X86_64
     sys_SYSCALL5(sys_NR_clone, flags, stackHigh, parent_tid, child_tid, tls)
 #else
@@ -1170,116 +1130,97 @@ static hc_ALWAYS_INLINE int32_t sys_clone(uint32_t flags, void *stackHigh, int32
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_execveat(int32_t fd, hc_NONULL const char *filename, hc_NONULL const char *const *argv, hc_NONULL const char *const *envp, uint32_t flags) {
+static hc_INLINE int32_t sys_execveat(int32_t fd, hc_NONULL const char *filename, hc_NONULL const char *const *argv, hc_NONULL const char *const *envp, uint32_t flags) {
     sys_SYSCALL5(sys_NR_execveat, fd, filename, argv, envp, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_wait4(int32_t pid, int32_t *status, int32_t options, struct rusage *rusage) {
+static hc_INLINE int32_t sys_wait4(int32_t pid, int32_t *status, int32_t options, struct rusage *rusage) {
     sys_SYSCALL4(sys_NR_wait4, pid, status, options, rusage)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_futex(hc_NONULL int32_t *addr, int32_t op, int32_t val, struct timespec *timeout, int32_t *addr2, int32_t val3) {
+static hc_INLINE int32_t sys_futex(hc_NONULL int32_t *addr, int32_t op, int32_t val, struct timespec *timeout, int32_t *addr2, int32_t val3) {
     sys_SYSCALL6(sys_NR_futex, addr, op, val, timeout, addr2, val3)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_setsid(void) {
+static hc_INLINE int32_t sys_setsid(void) {
     sys_SYSCALL0(sys_NR_setsid)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_setpgid(int32_t pid, int32_t pgid) {
+static hc_INLINE int32_t sys_setpgid(int32_t pid, int32_t pgid) {
     sys_SYSCALL2(sys_NR_setpgid, pid, pgid)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_getpgid(int32_t pid) {
+static hc_INLINE int32_t sys_getpgid(int32_t pid) {
     sys_SYSCALL1(sys_NR_getpgid, pid)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_ioctl(int32_t fd, uint32_t cmd, void *arg) {
+static hc_INLINE int32_t sys_ioctl(int32_t fd, uint32_t cmd, void *arg) {
     sys_SYSCALL3(sys_NR_ioctl, fd, cmd, arg)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_statx(int32_t dfd, hc_NONULL const char *filename, uint32_t flags, uint32_t mask, hc_NONULL struct statx *stat) {
+static hc_INLINE int32_t sys_statx(int32_t dfd, hc_NONULL const char *filename, uint32_t flags, uint32_t mask, hc_NONULL struct statx *stat) {
     sys_SYSCALL5(sys_NR_statx, dfd, filename, flags, mask, stat)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_sync(void) {
+static hc_INLINE int32_t sys_sync(void) {
     sys_SYSCALL0(sys_NR_sync)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_reboot(uint32_t magic1, uint32_t magic2, uint32_t cmd, void *arg) {
+static hc_INLINE int32_t sys_reboot(uint32_t magic1, uint32_t magic2, uint32_t cmd, void *arg) {
     sys_SYSCALL4(sys_NR_reboot, magic1, magic2, cmd, arg)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_mount(hc_NONULL const char *dev_name, hc_NONULL const char *dir_name, hc_NONULL const char *type, uint64_t flags, const void *data) {
+static hc_INLINE int32_t sys_mount(hc_NONULL const char *dev_name, hc_NONULL const char *dir_name, hc_NONULL const char *type, uint64_t flags, const void *data) {
     sys_SYSCALL5(sys_NR_mount, dev_name, dir_name, type, flags, data)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_umount2(hc_NONULL const char *name, uint32_t flags) {
+static hc_INLINE int32_t sys_umount2(hc_NONULL const char *name, uint32_t flags) {
     sys_SYSCALL2(sys_NR_umount2, name, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int64_t sys_getdents64(int32_t fd, hc_NONULL void *dirents, int64_t count) {
+static hc_INLINE int64_t sys_getdents64(int32_t fd, hc_NONULL void *dirents, int64_t count) {
     sys_SYSCALL3(sys_NR_getdents64, fd, dirents, count)
     return ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_readlinkat(int32_t dfd, hc_NONULL const char *pathname, hc_NONULL char *buf, int32_t bufsize) {
+static hc_INLINE int32_t sys_readlinkat(int32_t dfd, hc_NONULL const char *pathname, hc_NONULL char *buf, int32_t bufsize) {
     sys_SYSCALL4(sys_NR_readlinkat, dfd, pathname, buf, bufsize)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_faccessat(int32_t dfd, hc_NONULL const char *filename, uint32_t mode) {
+static hc_INLINE int32_t sys_faccessat(int32_t dfd, hc_NONULL const char *filename, uint32_t mode) {
     sys_SYSCALL3(sys_NR_faccessat, dfd, filename, mode)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_unlinkat(int32_t dfd, hc_NONULL const char *pathname, uint32_t flags) {
+static hc_INLINE int32_t sys_unlinkat(int32_t dfd, hc_NONULL const char *pathname, uint32_t flags) {
     sys_SYSCALL3(sys_NR_unlinkat, dfd, pathname, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_inotify_init1(uint32_t flags) {
+static hc_INLINE int32_t sys_inotify_init1(uint32_t flags) {
     sys_SYSCALL1(sys_NR_inotify_init1, flags)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_inotify_add_watch(int32_t fd, hc_NONULL const char *pathname, uint32_t mask) {
+static hc_INLINE int32_t sys_inotify_add_watch(int32_t fd, hc_NONULL const char *pathname, uint32_t mask) {
     sys_SYSCALL3(sys_NR_inotify_add_watch, fd, pathname, mask)
     return (int32_t)ret;
 }
 
-hc_UNUSED
-static hc_ALWAYS_INLINE int32_t sys_pipe2(int32_t *fds, uint32_t flags) {
+static hc_INLINE int32_t sys_pipe2(int32_t *fds, uint32_t flags) {
     sys_SYSCALL2(sys_NR_pipe2, fds, flags)
     return (int32_t)ret;
 }

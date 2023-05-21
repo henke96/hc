@@ -12,7 +12,7 @@
 #define msr_MEM_TYPE_WB 0x6ull
 #define msr_MEM_TYPE_UC_MINUS 0x7ull // PAT only.
 
-static hc_ALWAYS_INLINE uint64_t msr_rdmsr(uint32_t msrId) {
+static hc_INLINE uint64_t msr_rdmsr(uint32_t msrId) {
     register uint32_t id asm("ecx") = msrId;
     register uint32_t low asm("eax");
     register uint32_t high asm("edx");
@@ -24,7 +24,7 @@ static hc_ALWAYS_INLINE uint64_t msr_rdmsr(uint32_t msrId) {
     return ((uint64_t)high << 32) | (uint64_t)low;
 }
 
-static hc_ALWAYS_INLINE void msr_wrmsr(uint32_t msrId, uint64_t value) {
+static hc_INLINE void msr_wrmsr(uint32_t msrId, uint64_t value) {
     register uint32_t id asm("ecx") = msrId;
     register uint32_t low asm("eax") = (uint32_t)value;
     register uint32_t high asm("edx") = (uint32_t)(value >> 32);

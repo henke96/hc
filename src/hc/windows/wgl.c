@@ -140,6 +140,6 @@ static void *wgl_getProcAddress(struct wgl *self, const char *procName) {
 }
 
 hc_UNUSED
-static inline int32_t wgl_swapInterval(struct wgl *self, int32_t interval) {
+static int32_t wgl_swapInterval(struct wgl *self, int32_t interval) {
     return self->wglSwapIntervalEXT(interval);
 }

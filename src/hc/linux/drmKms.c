@@ -68,7 +68,7 @@ static int32_t drmKms_init(struct drmKms *self, const char *driCardPath) {
 }
 
 hc_UNUSED
-static inline int32_t drmKms_createDumbBuffer(struct drmKms *self, struct drm_mode_create_dumb *dumbBuffer) {
+static int32_t drmKms_createDumbBuffer(struct drmKms *self, struct drm_mode_create_dumb *dumbBuffer) {
     return sys_ioctl(self->cardFd, DRM_IOCTL_MODE_CREATE_DUMB, dumbBuffer);
 }
 
@@ -88,12 +88,12 @@ static void *drmKms_mmapDumbBuffer(struct drmKms *self, uint32_t handle, int64_t
 }
 
 hc_UNUSED
-static inline int32_t drmKms_createFrameBuffer(struct drmKms *self, struct drm_mode_fb_cmd *frameBuffer) {
+static int32_t drmKms_createFrameBuffer(struct drmKms *self, struct drm_mode_fb_cmd *frameBuffer) {
     return sys_ioctl(self->cardFd, DRM_IOCTL_MODE_ADDFB, frameBuffer);
 }
 
 hc_UNUSED
-static inline void drmKms_destroyFrameBuffer(struct drmKms *self, uint32_t fbId) {
+static void drmKms_destroyFrameBuffer(struct drmKms *self, uint32_t fbId) {
     debug_CHECK(sys_ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &fbId), RES == 0);
 }
 
@@ -159,6 +159,6 @@ static int32_t drmKms_bestModeIndex(struct drmKms *self) {
     return bestModeIndex;
 }
 
-static inline void drmKms_deinit(struct drmKms *self) {
+static void drmKms_deinit(struct drmKms *self) {
     debug_CHECK(sys_close(self->cardFd), RES == 0);
 }

@@ -1,5 +1,4 @@
-hc_UNUSED
-static inline char **util_getEnvp(int32_t argc, char **argv) {
+static hc_INLINE char **util_getEnvp(int32_t argc, char **argv) {
     return argv + argc + 1;
 }
 

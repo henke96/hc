@@ -10,13 +10,13 @@
  * integer types.
  */
 
-static hc_ALWAYS_INLINE uint64_t curve25519_getUnalignedLe64(const uint8_t *a) {
+static hc_INLINE uint64_t curve25519_getUnalignedLe64(const uint8_t *a) {
     uint64_t l;
     hc_MEMCPY(&l, a, sizeof(l));
     return l;
 }
 
-static hc_ALWAYS_INLINE void curve25519_putUnalignedLe64(uint64_t s, uint8_t *d) {
+static hc_INLINE void curve25519_putUnalignedLe64(uint64_t s, uint8_t *d) {
     hc_MEMCPY(d, &s, sizeof(s));
 }
 
@@ -25,12 +25,12 @@ static void curve25519_memzeroExplicit(void *s, size_t count) {
     asm volatile("": :"r"(s) :"memory");
 }
 
-static hc_ALWAYS_INLINE void curve25519_clampSecret(uint8_t *secret) {
+static hc_INLINE void curve25519_clampSecret(uint8_t *secret) {
     secret[0] &= 248;
     secret[31] = (secret[31] & 127) | 64;
 }
 
-static hc_ALWAYS_INLINE uint64_t curve25519_u64EqMask(uint64_t a, uint64_t b) {
+static hc_INLINE uint64_t curve25519_u64EqMask(uint64_t a, uint64_t b) {
     uint64_t x = a ^ b;
     uint64_t minus_x = ~x + (uint64_t)1U;
     uint64_t x_or_minus_x = x | minus_x;
@@ -39,7 +39,7 @@ static hc_ALWAYS_INLINE uint64_t curve25519_u64EqMask(uint64_t a, uint64_t b) {
     return c;
 }
 
-static hc_ALWAYS_INLINE uint64_t curve25519_u64GteMask(uint64_t a, uint64_t b) {
+static hc_INLINE uint64_t curve25519_u64GteMask(uint64_t a, uint64_t b) {
     uint64_t x = a;
     uint64_t y = b;
     uint64_t x_xor_y = x ^ y;
@@ -52,7 +52,7 @@ static hc_ALWAYS_INLINE uint64_t curve25519_u64GteMask(uint64_t a, uint64_t b) {
     return c;
 }
 
-static hc_ALWAYS_INLINE void curve25519_moduloCarryTop(uint64_t *b) {
+static hc_INLINE void curve25519_moduloCarryTop(uint64_t *b) {
     uint64_t b4 = b[4];
     uint64_t b0 = b[0];
     uint64_t b4_ = b4 & 0x7ffffffffffffLLU;
@@ -61,7 +61,7 @@ static hc_ALWAYS_INLINE void curve25519_moduloCarryTop(uint64_t *b) {
     b[0] = b0_;
 }
 
-static hc_ALWAYS_INLINE void curve25519_fproductCopyFromWide_(uint64_t *output, uint128_t *input) {
+static hc_INLINE void curve25519_fproductCopyFromWide_(uint64_t *output, uint128_t *input) {
     {
         uint128_t xi = input[0];
         output[0] = ((uint64_t)(xi));
@@ -84,7 +84,7 @@ static hc_ALWAYS_INLINE void curve25519_fproductCopyFromWide_(uint64_t *output, 
     }
 }
 
-static hc_ALWAYS_INLINE void curve25519_fproductSumScalarMultiplication_(uint128_t *output, uint64_t *input, uint64_t s) {
+static hc_INLINE void curve25519_fproductSumScalarMultiplication_(uint128_t *output, uint64_t *input, uint64_t s) {
     output[0] += (uint128_t)input[0] * s;
     output[1] += (uint128_t)input[1] * s;
     output[2] += (uint128_t)input[2] * s;
@@ -92,7 +92,7 @@ static hc_ALWAYS_INLINE void curve25519_fproductSumScalarMultiplication_(uint128
     output[4] += (uint128_t)input[4] * s;
 }
 
-static hc_ALWAYS_INLINE void curve25519_fproductCarryWide(uint128_t *tmp) {
+static hc_INLINE void curve25519_fproductCarryWide(uint128_t *tmp) {
     {
         uint32_t ctr = 0;
         uint128_t tctr = tmp[ctr];
@@ -132,7 +132,7 @@ static hc_ALWAYS_INLINE void curve25519_fproductCarryWide(uint128_t *tmp) {
     }
 }
 
-static hc_ALWAYS_INLINE void curve25519_fmulShiftReduce(uint64_t *output) {
+static hc_INLINE void curve25519_fmulShiftReduce(uint64_t *output) {
     uint64_t tmp = output[4];
     uint64_t b0;
     {
@@ -160,7 +160,7 @@ static hc_ALWAYS_INLINE void curve25519_fmulShiftReduce(uint64_t *output) {
     output[0] = 19 * b0;
 }
 
-static hc_ALWAYS_INLINE void curve25519_fmulMulShiftReduce_(uint128_t *output, uint64_t *input, uint64_t *input21) {
+static hc_INLINE void curve25519_fmulMulShiftReduce_(uint128_t *output, uint64_t *input, uint64_t *input21) {
     {
         uint64_t input2i = input21[0];
         curve25519_fproductSumScalarMultiplication_(output, input, input2i);
@@ -186,7 +186,7 @@ static hc_ALWAYS_INLINE void curve25519_fmulMulShiftReduce_(uint128_t *output, u
     curve25519_fproductSumScalarMultiplication_(output, input, input2i);
 }
 
-static hc_ALWAYS_INLINE void curve25519_fmulFmul(uint64_t *output, uint64_t *input, uint64_t *input21) {
+static hc_INLINE void curve25519_fmulFmul(uint64_t *output, uint64_t *input, uint64_t *input21) {
     uint64_t tmp[5] = { input[0], input[1], input[2], input[3], input[4] };
     {
         uint128_t b4;
@@ -216,7 +216,7 @@ static hc_ALWAYS_INLINE void curve25519_fmulFmul(uint64_t *output, uint64_t *inp
     }
 }
 
-static hc_ALWAYS_INLINE void curve25519_fsquareFsquare__(uint128_t *tmp, uint64_t *output) {
+static hc_INLINE void curve25519_fsquareFsquare__(uint128_t *tmp, uint64_t *output) {
     uint64_t r0 = output[0];
     uint64_t r1 = output[1];
     uint64_t r2 = output[2];
@@ -239,7 +239,7 @@ static hc_ALWAYS_INLINE void curve25519_fsquareFsquare__(uint128_t *tmp, uint64_
     tmp[4] = s4;
 }
 
-static hc_ALWAYS_INLINE void curve25519_fsquareFsquare_(uint128_t *tmp, uint64_t *output) {
+static hc_INLINE void curve25519_fsquareFsquare_(uint128_t *tmp, uint64_t *output) {
     uint128_t b4;
     uint128_t b0;
     uint128_t b4_;
@@ -265,24 +265,24 @@ static hc_ALWAYS_INLINE void curve25519_fsquareFsquare_(uint128_t *tmp, uint64_t
     output[1] = i1_;
 }
 
-static hc_ALWAYS_INLINE void curve25519_fsquareFsquareTimes_(uint64_t *output, uint128_t *tmp, uint32_t count1) {
+static hc_INLINE void curve25519_fsquareFsquareTimes_(uint64_t *output, uint128_t *tmp, uint32_t count1) {
     uint32_t i;
     curve25519_fsquareFsquare_(tmp, output);
     for (i = 1; i < count1; ++i) curve25519_fsquareFsquare_(tmp, output);
 }
 
-static hc_ALWAYS_INLINE void curve25519_fsquareFsquareTimes(uint64_t *output, uint64_t *input, uint32_t count1) {
+static hc_INLINE void curve25519_fsquareFsquareTimes(uint64_t *output, uint64_t *input, uint32_t count1) {
     uint128_t t[5];
     hc_MEMCPY(output, input, 5 * sizeof(*input));
     curve25519_fsquareFsquareTimes_(output, t, count1);
 }
 
-static hc_ALWAYS_INLINE void curve25519_fsquareFsquareTimesInplace(uint64_t *output, uint32_t count1) {
+static hc_INLINE void curve25519_fsquareFsquareTimesInplace(uint64_t *output, uint32_t count1) {
     uint128_t t[5];
     curve25519_fsquareFsquareTimes_(output, t, count1);
 }
 
-static hc_ALWAYS_INLINE void curve25519_crecip_crecip(uint64_t *out, uint64_t *z) {
+static hc_INLINE void curve25519_crecip_crecip(uint64_t *out, uint64_t *z) {
     uint64_t buf[20] = { 0 };
     uint64_t *a0 = buf;
     uint64_t *t00 = buf + 5;
@@ -325,7 +325,7 @@ static hc_ALWAYS_INLINE void curve25519_crecip_crecip(uint64_t *out, uint64_t *z
     curve25519_fmulFmul(out, t0, a);
 }
 
-static hc_ALWAYS_INLINE void curve25519_fsum(uint64_t *a, uint64_t *b) {
+static hc_INLINE void curve25519_fsum(uint64_t *a, uint64_t *b) {
     a[0] += b[0];
     a[1] += b[1];
     a[2] += b[2];
@@ -333,7 +333,7 @@ static hc_ALWAYS_INLINE void curve25519_fsum(uint64_t *a, uint64_t *b) {
     a[4] += b[4];
 }
 
-static hc_ALWAYS_INLINE void curve25519_fdifference(uint64_t *a, uint64_t *b) {
+static hc_INLINE void curve25519_fdifference(uint64_t *a, uint64_t *b) {
     uint64_t tmp[5] = { 0 };
     uint64_t b0;
     uint64_t b1;
@@ -378,7 +378,7 @@ static hc_ALWAYS_INLINE void curve25519_fdifference(uint64_t *a, uint64_t *b) {
     }
 }
 
-static hc_ALWAYS_INLINE void curve25519_fscalar(uint64_t *output, uint64_t *b, uint64_t s) {
+static hc_INLINE void curve25519_fscalar(uint64_t *output, uint64_t *b, uint64_t s) {
     uint128_t tmp[5];
     uint128_t b4;
     uint128_t b0;
@@ -414,15 +414,15 @@ static hc_ALWAYS_INLINE void curve25519_fscalar(uint64_t *output, uint64_t *b, u
     curve25519_fproductCopyFromWide_(output, tmp);
 }
 
-static hc_ALWAYS_INLINE void curve25519_fmul(uint64_t *output, uint64_t *a, uint64_t *b) {
+static hc_INLINE void curve25519_fmul(uint64_t *output, uint64_t *a, uint64_t *b) {
     curve25519_fmulFmul(output, a, b);
 }
 
-static hc_ALWAYS_INLINE void curve25519_crecip(uint64_t *output, uint64_t *input) {
+static hc_INLINE void curve25519_crecip(uint64_t *output, uint64_t *input) {
     curve25519_crecip_crecip(output, input);
 }
 
-static hc_ALWAYS_INLINE void curve25519_pointSwapConditionalStep(uint64_t *a, uint64_t *b, uint64_t swap1, uint32_t ctr) {
+static hc_INLINE void curve25519_pointSwapConditionalStep(uint64_t *a, uint64_t *b, uint64_t swap1, uint32_t ctr) {
     uint32_t i = ctr - 1;
     uint64_t ai = a[i];
     uint64_t bi = b[i];
@@ -433,7 +433,7 @@ static hc_ALWAYS_INLINE void curve25519_pointSwapConditionalStep(uint64_t *a, ui
     b[i] = bi1;
 }
 
-static hc_ALWAYS_INLINE void curve25519_pointSwapConditional5(uint64_t *a, uint64_t *b, uint64_t swap1) {
+static hc_INLINE void curve25519_pointSwapConditional5(uint64_t *a, uint64_t *b, uint64_t swap1) {
     curve25519_pointSwapConditionalStep(a, b, swap1, 5);
     curve25519_pointSwapConditionalStep(a, b, swap1, 4);
     curve25519_pointSwapConditionalStep(a, b, swap1, 3);
@@ -441,18 +441,18 @@ static hc_ALWAYS_INLINE void curve25519_pointSwapConditional5(uint64_t *a, uint6
     curve25519_pointSwapConditionalStep(a, b, swap1, 1);
 }
 
-static hc_ALWAYS_INLINE void curve25519_pointSwapConditional(uint64_t *a, uint64_t *b, uint64_t iswap) {
+static hc_INLINE void curve25519_pointSwapConditional(uint64_t *a, uint64_t *b, uint64_t iswap) {
     uint64_t swap1 = 0 - iswap;
     curve25519_pointSwapConditional5(a, b, swap1);
     curve25519_pointSwapConditional5(a + 5, b + 5, swap1);
 }
 
-static hc_ALWAYS_INLINE void curve25519_pointCopy(uint64_t *output, uint64_t *input) {
+static hc_INLINE void curve25519_pointCopy(uint64_t *output, uint64_t *input) {
     hc_MEMCPY(output, input, 5 * sizeof(*input));
     hc_MEMCPY(output + 5, input + 5, 5 * sizeof(*input));
 }
 
-static hc_ALWAYS_INLINE void curve25519_addanddoubleFmonty(uint64_t *pp, uint64_t *ppq, uint64_t *p, uint64_t *pq, uint64_t *qmqp) {
+static hc_INLINE void curve25519_addanddoubleFmonty(uint64_t *pp, uint64_t *ppq, uint64_t *p, uint64_t *pq, uint64_t *qmqp) {
     uint64_t *qx = qmqp;
     uint64_t *x2 = pp;
     uint64_t *z2 = pp + 5;
@@ -516,7 +516,7 @@ static hc_ALWAYS_INLINE void curve25519_addanddoubleFmonty(uint64_t *pp, uint64_
     }
 }
 
-static hc_ALWAYS_INLINE void
+static hc_INLINE void
 curve25519_ladderSmallloopCmultSmallLoopStep(uint64_t *nq, uint64_t *nqpq, uint64_t *nq2, uint64_t *nqpq2, uint64_t *q, uint8_t byt) {
     uint64_t bit0 = (uint64_t)(byt >> 7);
     uint64_t bit;
@@ -526,7 +526,7 @@ curve25519_ladderSmallloopCmultSmallLoopStep(uint64_t *nq, uint64_t *nqpq, uint6
     curve25519_pointSwapConditional(nq2, nqpq2, bit);
 }
 
-static hc_ALWAYS_INLINE void
+static hc_INLINE void
 curve25519_ladderSmallloopCmultSmallLoopDoubleStep(uint64_t *nq, uint64_t *nqpq, uint64_t *nq2, uint64_t *nqpq2, uint64_t *q, uint8_t byt) {
     uint8_t byt1;
     curve25519_ladderSmallloopCmultSmallLoopStep(nq, nqpq, nq2, nqpq2, q, byt);
@@ -534,7 +534,7 @@ curve25519_ladderSmallloopCmultSmallLoopDoubleStep(uint64_t *nq, uint64_t *nqpq,
     curve25519_ladderSmallloopCmultSmallLoopStep(nq2, nqpq2, nq, nqpq, q, byt1);
 }
 
-static hc_ALWAYS_INLINE void
+static hc_INLINE void
 curve25519_ladderSmallloopCmultSmallLoop(uint64_t *nq, uint64_t *nqpq, uint64_t *nq2, uint64_t *nqpq2, uint64_t *q, uint8_t byt, uint32_t i) {
     while (i--) {
         curve25519_ladderSmallloopCmultSmallLoopDoubleStep(nq, nqpq, nq2, nqpq2, q, byt);
@@ -542,7 +542,7 @@ curve25519_ladderSmallloopCmultSmallLoop(uint64_t *nq, uint64_t *nqpq, uint64_t 
     }
 }
 
-static hc_ALWAYS_INLINE void
+static hc_INLINE void
 curve25519_ladderBigloopCmultBigLoop(uint8_t *n1, uint64_t *nq, uint64_t *nqpq, uint64_t *nq2, uint64_t *nqpq2, uint64_t *q, uint32_t i) {
     while (i--) {
         uint8_t byte = n1[i];
@@ -562,7 +562,7 @@ static void curve25519_ladderCmult(uint64_t *result, uint8_t *n1, uint64_t *q) {
     curve25519_pointCopy(result, nq);
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFexpand(uint64_t *output, const uint8_t *input) {
+static hc_INLINE void curve25519_formatFexpand(uint64_t *output, const uint8_t *input) {
     const uint8_t *x00 = input + 6;
     const uint8_t *x01 = input + 12;
     const uint8_t *x02 = input + 19;
@@ -585,7 +585,7 @@ static hc_ALWAYS_INLINE void curve25519_formatFexpand(uint64_t *output, const ui
     output[4] = output4;
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFcontractFirstCarryPass(uint64_t *input) {
+static hc_INLINE void curve25519_formatFcontractFirstCarryPass(uint64_t *input) {
     uint64_t t0 = input[0];
     uint64_t t1 = input[1];
     uint64_t t2 = input[2];
@@ -606,12 +606,12 @@ static hc_ALWAYS_INLINE void curve25519_formatFcontractFirstCarryPass(uint64_t *
     input[4] = t4_;
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFcontractFirstCarryFull(uint64_t *input) {
+static hc_INLINE void curve25519_formatFcontractFirstCarryFull(uint64_t *input) {
     curve25519_formatFcontractFirstCarryPass(input);
     curve25519_moduloCarryTop(input);
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFcontractSecondCarryPass(uint64_t *input) {
+static hc_INLINE void curve25519_formatFcontractSecondCarryPass(uint64_t *input) {
     uint64_t t0 = input[0];
     uint64_t t1 = input[1];
     uint64_t t2 = input[2];
@@ -632,7 +632,7 @@ static hc_ALWAYS_INLINE void curve25519_formatFcontractSecondCarryPass(uint64_t 
     input[4] = t4_;
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFcontractSecondCarryFull(uint64_t *input) {
+static hc_INLINE void curve25519_formatFcontractSecondCarryFull(uint64_t *input) {
     uint64_t i0;
     uint64_t i1;
     uint64_t i0_;
@@ -647,7 +647,7 @@ static hc_ALWAYS_INLINE void curve25519_formatFcontractSecondCarryFull(uint64_t 
     input[1] = i1_;
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFcontractTrim(uint64_t *input) {
+static hc_INLINE void curve25519_formatFcontractTrim(uint64_t *input) {
     uint64_t a0 = input[0];
     uint64_t a1 = input[1];
     uint64_t a2 = input[2];
@@ -671,7 +671,7 @@ static hc_ALWAYS_INLINE void curve25519_formatFcontractTrim(uint64_t *input) {
     input[4] = a4_;
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFcontractStore(uint8_t *output, uint64_t *input) {
+static hc_INLINE void curve25519_formatFcontractStore(uint8_t *output, uint64_t *input) {
     uint64_t t0 = input[0];
     uint64_t t1 = input[1];
     uint64_t t2 = input[2];
@@ -691,14 +691,14 @@ static hc_ALWAYS_INLINE void curve25519_formatFcontractStore(uint8_t *output, ui
     curve25519_putUnalignedLe64(o3, b3);
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatFcontract(uint8_t *output, uint64_t *input) {
+static hc_INLINE void curve25519_formatFcontract(uint8_t *output, uint64_t *input) {
     curve25519_formatFcontractFirstCarryFull(input);
     curve25519_formatFcontractSecondCarryFull(input);
     curve25519_formatFcontractTrim(input);
     curve25519_formatFcontractStore(output, input);
 }
 
-static hc_ALWAYS_INLINE void curve25519_formatScalarOfPoint(uint8_t *scalar, uint64_t *point) {
+static hc_INLINE void curve25519_formatScalarOfPoint(uint8_t *scalar, uint64_t *point) {
     uint64_t *x = point;
     uint64_t *z = point + 5;
     uint64_t buf[10] hc_ALIGNED(32) = { 0 };

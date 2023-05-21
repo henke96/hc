@@ -87,7 +87,7 @@ static void nativeGlue_signalAppDone(void) {
     debug_CHECK(sys_futex(&_nativeGlue.appDoneFutex, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0), RES >= 0);
 }
 
-static inline void _nativeGlue_resetAppDone(void) {
+static hc_INLINE void _nativeGlue_resetAppDone(void) {
     hc_ATOMIC_STORE(&_nativeGlue.appDoneFutex, 0, hc_ATOMIC_RELAXED);
 }
 

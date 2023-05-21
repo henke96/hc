@@ -54,7 +54,7 @@ static void gbm_deinit(struct gbm *self) {
 }
 
 hc_UNUSED
-static inline void *gbm_surfaceCreate(
+static void *gbm_surfaceCreate(
     struct gbm *self,
     uint32_t width,
     uint32_t height,
@@ -65,27 +65,27 @@ static inline void *gbm_surfaceCreate(
 }
 
 hc_UNUSED
-static inline void gbm_surfaceDestroy(struct gbm *self, void *surface) {
+static void gbm_surfaceDestroy(struct gbm *self, void *surface) {
     self->gbmSurfaceDestroy(surface);
 }
 
 hc_UNUSED
-static inline void *gbm_surfaceLockFrontBuffer(struct gbm *self, void *surface) {
+static void *gbm_surfaceLockFrontBuffer(struct gbm *self, void *surface) {
     return self->gbmSurfaceLockFrontBuffer(surface);
 }
 
 hc_UNUSED
-static inline void gbm_surfaceReleaseBuffer(struct gbm *self, void *surface, void *bo) {
+static void gbm_surfaceReleaseBuffer(struct gbm *self, void *surface, void *bo) {
     self->gbmSurfaceReleaseBuffer(surface, bo);
 }
 
 hc_UNUSED
-static inline void *gbm_boGetUserData(struct gbm *self, void *bo) {
+static void *gbm_boGetUserData(struct gbm *self, void *bo) {
     return self->gbmBoGetUserData(bo);
 }
 
 hc_UNUSED
-static inline void gbm_boSetUserData(
+static void gbm_boSetUserData(
     struct gbm *self,
     void *bo,
     void *data,
@@ -95,11 +95,11 @@ static inline void gbm_boSetUserData(
 }
 
 hc_UNUSED
-static inline uint32_t gbm_boGetStride(struct gbm *self, void *bo) {
+static uint32_t gbm_boGetStride(struct gbm *self, void *bo) {
     return self->gbmBoGetStride(bo);
 }
 
 hc_UNUSED
-static inline uint32_t gbm_boGetHandle(struct gbm *self, void *bo) {
+static uint32_t gbm_boGetHandle(struct gbm *self, void *bo) {
     return self->gbmBoGetHandle(bo);
 }
