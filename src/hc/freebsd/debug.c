@@ -19,12 +19,10 @@ static noreturn void debug_fail(int64_t res, const char *expression, const char 
     debug_abort();
 }
 
-hc_UNUSED
 static void hc_INLINE debug_print(const char *str) {
     printf(str);
 }
 
-hc_UNUSED
 static void hc_INLINE debug_printNum(const char *pre, int64_t num, const char *post) {
     printf("%s%lld%s", pre, num, post);
 }
