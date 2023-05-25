@@ -1224,3 +1224,13 @@ static hc_INLINE int32_t sys_pipe2(int32_t *fds, uint32_t flags) {
     sys_SYSCALL2(sys_NR_pipe2, fds, flags)
     return (int32_t)ret;
 }
+
+static hc_INLINE int32_t sys_memfd_create(const char *name, uint32_t flags) {
+    sys_SYSCALL2(sys_NR_memfd_create, name, flags)
+    return (int32_t)ret;
+}
+
+static hc_INLINE int32_t sys_ftruncate(int32_t fd, int64_t size) {
+    sys_SYSCALL2(sys_NR_ftruncate, fd, size)
+    return (int32_t)ret;
+}

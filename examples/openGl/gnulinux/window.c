@@ -7,7 +7,7 @@ struct window_x11 {
     struct x11Client client;
     struct x11_getKeyboardMappingResponse *keyboardMap;
     struct x11_getModifierMappingResponse *modifierMap;
-    uint32_t keyboardMapSize;
+    int32_t keyboardMapSize;
     uint32_t windowId;
     uint32_t rootWindowId;
     uint32_t wmProtocolsAtom;

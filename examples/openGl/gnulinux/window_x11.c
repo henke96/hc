@@ -133,17 +133,17 @@ static int32_t window_x11_setup(uint32_t visualId) {
     // Wait for all replies.
     int32_t nextSequenceNumber = 2;
     for (;;) {
-        int32_t msgLength = x11Client_nextMessage(&window.x11.client);
-        if (msgLength == 0) {
+        int32_t msgSize = x11Client_nextMessage(&window.x11.client);
+        if (msgSize == 0) {
             int32_t numRead = x11Client_receive(&window.x11.client);
             if (numRead <= 0) return -2;
             continue;
         }
         // We only handle big responses for keyboard map.
         #define window_GETKEYBOARDMAPPING_SEQ 10
-        if (msgLength < 0 && nextSequenceNumber != window_GETKEYBOARDMAPPING_SEQ) return -3;
+        if (msgSize < 0 && nextSequenceNumber != window_GETKEYBOARDMAPPING_SEQ) return -3;
 
-        struct x11_genericResponse *generic = (void *)&window.x11.client.receiveBuffer[0];
+        struct x11_genericResponse *generic = (void *)&window.x11.client.buffer[window.x11.client.bufferPos];
         if (generic->type == x11_TYPE_ERROR) {
             debug_printNum("X11 request failed (seq=", (int32_t)generic->sequenceNumber, "\n");
             return -4;
@@ -196,13 +196,13 @@ static int32_t window_x11_setup(uint32_t visualId) {
                     break;
                 }
                 case window_GETKEYBOARDMAPPING_SEQ: {
-                    window.x11.keyboardMapSize = (uint32_t)hc_ABS32(msgLength);
+                    window.x11.keyboardMapSize = hc_ABS32(msgSize);
                     window.x11.keyboardMap = sys_mmap(NULL, window.x11.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
                     if ((int64_t)window.x11.keyboardMap < 0) return -8;
 
                     // Handle big response.
-                    if (msgLength < 0) {
-                        uint32_t totalRead = window.x11.client.receiveLength;
+                    if (msgSize < 0) {
+                        int32_t totalRead = window.x11.client.receivedSize;
                         while (totalRead < window.x11.keyboardMapSize) {
                             int32_t read = (int32_t)sys_recvfrom(
                                 window.x11.client.socketFd,
@@ -211,13 +211,13 @@ static int32_t window_x11_setup(uint32_t visualId) {
                                 0, NULL, NULL
                             );
                             if (read <= 0) return -9;
-                            totalRead += (uint32_t)read;
+                            totalRead += read;
                         }
 
-                        // Make msgLength normal again.
-                        msgLength = (int32_t)window.x11.client.receiveLength;
+                        // Make msgSize normal again.
+                        msgSize = window.x11.client.receivedSize;
                     }
-                    hc_MEMCPY(window.x11.keyboardMap, &window.x11.client.receiveBuffer[0], (uint32_t)msgLength);
+                    hc_MEMCPY(window.x11.keyboardMap, &window.x11.client.buffer[window.x11.client.bufferPos], (uint64_t)msgSize);
                     break;
                 }
                 case 11: {
@@ -226,14 +226,14 @@ static int32_t window_x11_setup(uint32_t visualId) {
                     struct x11_getModifierMappingResponse *response = (void *)generic;
 
                     // Done.
-                    x11Client_ackMessage(&window.x11.client, msgLength);
+                    x11Client_ackMessage(&window.x11.client, msgSize);
                     return 0;
                 }
                 default: hc_UNREACHABLE;
             }
             ++nextSequenceNumber;
         }
-        x11Client_ackMessage(&window.x11.client, msgLength);
+        x11Client_ackMessage(&window.x11.client, msgSize);
     }
 }
 
@@ -508,11 +508,11 @@ static int32_t window_x11_run(void) {
 
                 // Handle all received messages.
                 for (;;) {
-                    int32_t msgLength = x11Client_nextMessage(&window.x11.client);
-                    if (msgLength == 0) break;
-                    if (msgLength < 0) return -3;
+                    int32_t msgSize = x11Client_nextMessage(&window.x11.client);
+                    if (msgSize == 0) break;
+                    if (msgSize < 0) return -3;
 
-                    struct x11_genericResponse *generic = (void *)&window.x11.client.receiveBuffer[0];
+                    struct x11_genericResponse *generic = (void *)&window.x11.client.buffer[window.x11.client.bufferPos];
                     int32_t type = generic->type & x11_TYPE_MASK;
                     switch (type) {
                         case x11_TYPE_ERROR: {
@@ -571,7 +571,7 @@ static int32_t window_x11_run(void) {
                             break;
                         }
                     }
-                    x11Client_ackMessage(&window.x11.client, msgLength);
+                    x11Client_ackMessage(&window.x11.client, msgSize);
                 }
             }
         }
