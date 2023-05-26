@@ -9,12 +9,12 @@
 #endif
 
 hc_UNUSED
-static noreturn hc_COLD void debug_abort(void) {
+static noreturn void debug_abort(void) {
     ExitProcess(137);
 }
 
 hc_UNUSED
-static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
+static noreturn void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
     char resBuffer[util_INT64_MAX_CHARS + 1];
     resBuffer[util_INT64_MAX_CHARS] = '\n';
     char *resStr = util_intToStr(&resBuffer[util_INT64_MAX_CHARS], res);
@@ -34,13 +34,13 @@ static noreturn hc_COLD void debug_fail(int64_t res, const char *expression, con
 }
 
 hc_UNUSED
-static void hc_COLD debug_print(const char *str) {
+static void debug_print(const char *str) {
     void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
     WriteFile(stdOutHandle, str, (uint32_t)util_cstrLen(str), NULL, NULL);
 }
 
 hc_UNUSED
-static hc_COLD void debug_printNum(const char *pre, int64_t num, const char *post) {
+static void debug_printNum(const char *pre, int64_t num, const char *post) {
     char buffer[util_INT64_MAX_CHARS];
     char *numStr = util_intToStr(&buffer[util_INT64_MAX_CHARS], num);
 
