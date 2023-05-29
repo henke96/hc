@@ -103,9 +103,12 @@ static int64_t window_proc(
             return 0;
         }
         case WM_NCCALCSIZE: {
-            if (!wParam) return DefWindowProcW(windowHandle, message, wParam, lParam);
+            if (!wParam) break;
             // Handle this to prevent window decorations.
             return 0;
+        }
+        case WM_NCHITTEST: {
+            return HTCLIENT; // TODO
         }
         case WM_SIZE: {
             int32_t width = lParam & 0xffff;

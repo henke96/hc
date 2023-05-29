@@ -456,6 +456,33 @@ struct PIXELFORMATDESCRIPTOR {
 #define PM_QS_PAINT (QS_PAINT << 16)
 #define PM_QS_SENDMESSAGE (QS_SENDMESSAGE << 16)
 
+#define HTBORDER 18
+#define HTBOTTOM 15
+#define HTBOTTOMLEFT 16
+#define HTBOTTOMRIGHT 17
+#define HTCAPTION 2
+#define HTCLIENT 1
+#define HTCLOSE 20
+#define HTERROR -2
+#define HTGROWBOX 4
+#define HTHELP 21
+#define HTHSCROLL 6
+#define HTLEFT 10
+#define HTMENU 5
+#define HTMAXBUTTON 9
+#define HTMINBUTTON 8
+#define HTNOWHERE 0
+#define HTREDUCE 8
+#define HTRIGHT 11
+#define HTSIZE 4
+#define HTSYSMENU 3
+#define HTTOP 12
+#define HTTOPLEFT 13
+#define HTTOPRIGHT 14
+#define HTTRANSPARENT -1
+#define HTVSCROLL 7
+#define HTZOOM 9
+
 struct WNDCLASSW {
     uint32_t style;
     int32_t __pad;
