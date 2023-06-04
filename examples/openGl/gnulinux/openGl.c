@@ -34,7 +34,7 @@ int32_t start(int32_t, char **, char **);
 #include "window.c"
 
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
-    openGl_pageSize = util_getPageSize(util_getAuxv(envp));
+    openGl_pageSize = (int64_t)getauxval(AT_PAGESZ);
 
     int32_t status = window_init(envp);
     if (status < 0) return 1;

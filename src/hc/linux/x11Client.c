@@ -34,7 +34,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     }
 
     self->buffer = sys_mmap(NULL, 2 * x11Client_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
-    if (self->buffer < 0) {
+    if ((int64_t)self->buffer < 0) {
         status = -3;
         goto cleanup_bufferMemFd;
     }

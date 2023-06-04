@@ -14,5 +14,7 @@
 *.pdb
 *.apk
 *.keystore
+*.profraw
+*.profdata
 .vscode
 .vs

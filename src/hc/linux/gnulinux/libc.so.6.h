@@ -11,3 +11,4 @@ int32_t __cxa_atexit(void (*func)(void *), void *arg, void *dso);
 
 int32_t printf(const char *restrict fmt, ...);
 int32_t clock_gettime(int32_t clockid, struct timespec *time);
+uint64_t getauxval(uint64_t type);
