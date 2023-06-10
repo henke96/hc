@@ -28,5 +28,5 @@ common_flags="-Wl,-subsystem,efi_application"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined"
 release_flags="$common_flags -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
 
-if test -z "$NO_X86_64"; then ARCH="x86_64" build "$FLAGS_X86_64"; fi
-if test -z "$NO_AARCH64"; then ARCH="aarch64" build "$FLAGS_AARCH64"; fi
+if test -z "$NO_X86_64"; then export ARCH="x86_64"; build "$FLAGS_X86_64"; fi
+if test -z "$NO_AARCH64"; then export ARCH="aarch64"; build "$FLAGS_AARCH64"; fi

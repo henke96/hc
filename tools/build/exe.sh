@@ -37,5 +37,5 @@ if test -n "$LINK_KERNEL32"; then FLAGS="-l:kernel32.lib $FLAGS"; fi
 if test -n "$LINK_USER32"; then FLAGS="-l:user32.lib $FLAGS"; fi
 if test -n "$LINK_GDI32"; then FLAGS="-l:gdi32.lib $FLAGS"; fi
 
-if test -z "$NO_X86_64"; then ARCH="x86_64" build "$FLAGS_X86_64"; fi
-if test -z "$NO_AARCH64"; then ARCH="aarch64" build "$FLAGS_AARCH64"; fi
+if test -z "$NO_X86_64"; then export ARCH="x86_64"; build "$FLAGS_X86_64"; fi
+if test -z "$NO_AARCH64"; then export ARCH="aarch64"; build "$FLAGS_AARCH64"; fi

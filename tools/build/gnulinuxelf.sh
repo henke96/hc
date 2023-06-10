@@ -14,9 +14,9 @@ prog_path="$1"
 if test -n "$LINK_LIBC"; then FLAGS="-l:libc.so.6 $FLAGS"; fi
 if test -n "$LINK_LIBDL"; then FLAGS="-l:libdl.so.2 $FLAGS"; fi
 
-if test -z "$NO_X86_64"; then ARCH="x86_64" build; fi
-if test -z "$NO_AARCH64"; then ARCH="aarch64" build; fi
-if test -z "$NO_RISCV64"; then ARCH="riscv64" build; fi
+if test -z "$NO_X86_64"; then export ARCH="x86_64"; build; fi
+if test -z "$NO_AARCH64"; then export ARCH="aarch64"; build; fi
+if test -z "$NO_RISCV64"; then export ARCH="riscv64"; build; fi
 
 # Note: -fPIC seems needed for undefined weak symbols to work.
 export FLAGS="-fPIC $FLAGS"
