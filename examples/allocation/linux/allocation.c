@@ -15,7 +15,7 @@ int64_t pageSize;
 
 #include "../test.c"
 
-int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     pageSize = util_getPageSize(util_getAuxv(envp));
     int32_t status = test();
     debug_printNum("Status: ", status, "\n");
