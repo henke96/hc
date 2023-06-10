@@ -19,7 +19,6 @@ static int64_t openGl_pageSize;
 #include "hc/linux/egl.c"
 #include "hc/linux/gbm.c"
 #include "hc/linux/drmKms.c"
-int32_t start(int32_t, char **, char **);
 #include "hc/linux/gnulinux/_start.c"
 
 #define game_EXPORT(NAME) static

@@ -138,6 +138,22 @@
 #define AT_RESOLVE_BENEATH 0x2000
 #define AT_EMPTY_PATH 0x4000
 
+// elf_common.h
+#define	AT_PAGESZ 6
+#define	AT_EXECPATH 15
+#define	AT_CANARY 16
+#define	AT_OSRELDATE 18
+#define	AT_NCPUS 19
+#define	AT_PAGESIZES 20
+#define	AT_TIMEKEEP 22
+#define	AT_HWCAP 25
+#define	AT_HWCAP2 26
+#define	AT_BSDFLAGS 27
+#define	AT_PS_STRINGS 32
+#define	AT_FXRNG 33
+#define	AT_USRSTACKBASE 35
+#define	AT_USRSTACKLIM 36
+
 // mman.h
 #define PROT_NONE 0x0
 #define PROT_READ 0x1

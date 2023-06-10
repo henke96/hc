@@ -20,7 +20,7 @@ static void sigaction(int32_t sig, struct siginfo *info, hc_UNUSED void *ucontex
     debug_printNum("  si_uid: ", info->si_uid, "\n");
 }
 
-int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv) {
+int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
     // Set up a `sa_handler` handler for SIGINT.
     // Test with Ctrl-C.
     {

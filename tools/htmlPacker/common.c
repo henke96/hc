@@ -1,3 +1,4 @@
+static void initialise(int32_t argc, char **argv, char **envp);
 static int32_t changeDir(char *path);
 static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *path, int32_t pathLen, bool asBase64);
 static int32_t writeToFile(char *path, char *content, int64_t contentLen);
@@ -44,9 +45,11 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
     return 0;
 }
 
-int32_t start(int32_t argc, char **argv) {
+#define common_ALLOC_RESERVE_SIZE ((int64_t)1 << 32)
+int32_t start(int32_t argc, char **argv, char **envp) {
     if (argc != 4) return 1;
-    if (allocator_init(&alloc, (int64_t)1 << 32) < 0) return 1;
+    initialise(argc, argv, envp);
+    if (allocator_init(&alloc, common_ALLOC_RESERVE_SIZE) < 0) return 1;
 
     int32_t status = changeDir(argv[1]);
     if (status < 0) return 1;
@@ -95,6 +98,6 @@ int32_t start(int32_t argc, char **argv) {
 
     status = 0;
     cleanup_alloc:
-    allocator_deinit(&alloc);
+    allocator_deinit(&alloc, common_ALLOC_RESERVE_SIZE);
     return status;
 }

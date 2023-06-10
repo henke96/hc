@@ -1,6 +1,8 @@
 #define _start_FUNC "_startGnu"
 #include "hc/linux/helpers/_start.c"
 
+int32_t start(int32_t argc, char **argv, char **envp);
+
 hc_WEAK
 int32_t __libc_start_main(
     void *main,
@@ -11,7 +13,7 @@ int32_t __libc_start_main(
     void (*rtld_fini)(void)
 );
 
-int32_t _startGnu(int32_t argc, char **argv) {
+int32_t _startGnu(int32_t argc, char **argv, char **envp) {
     if (argc < 1) return 1;
 
     // Check if we have re-executed ourself through the dynamic linker yet.
@@ -46,7 +48,6 @@ int32_t _startGnu(int32_t argc, char **argv) {
             }
             newArgv[newArgvCount] = NULL;
 
-            char **envp = util_getEnvp(argc, argv);
             sys_execveat(-1, newArgv[0], &newArgv[0], (const char *const *)&envp[0], 0);
             return 1;
         }

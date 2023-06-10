@@ -1,7 +1,3 @@
-static hc_INLINE char **util_getEnvp(int32_t argc, char **argv) {
-    return argv + argc + 1;
-}
-
 hc_UNUSED
 static char *util_getEnv(char **envp, const char *name) {
     for (; *envp != NULL; ++envp) {

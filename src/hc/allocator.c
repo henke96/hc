@@ -1,27 +1,29 @@
-// For now we always allocate in pages of 4096 bytes.
-#define allocator_PAGE_SIZE 4096
+#ifndef allocator_PAGE_SIZE
+    #error "Please define `allocator_PAGE_SIZE`"
+#endif
 
 struct allocator {
     void *mem;
     hc_ILP32_PAD(__pad)
     int64_t size;
-    int64_t maxSize;
 };
 
-static int32_t allocator_init(struct allocator *self, int64_t maxSize) {
-    self->maxSize = maxSize;
+static int32_t allocator_init(struct allocator *self, int64_t reserveSize) {
+    reserveSize = math_ALIGN_FORWARD(reserveSize, (int64_t)allocator_PAGE_SIZE);
     self->size = 0;
-    self->mem = heap_reserve(maxSize);
+    self->mem = heap_reserve(reserveSize);
     if (self->mem == NULL) return -1;
     return 0;
 }
 
-static void allocator_deinit(struct allocator *self) {
-    heap_unreserve(self->mem, self->maxSize);
+static void allocator_deinit(struct allocator *self, int64_t reserveSize) {
+    reserveSize = math_ALIGN_FORWARD(reserveSize, (int64_t)allocator_PAGE_SIZE);
+    debug_ASSERT(self->size <= reserveSize);
+    heap_unreserve(self->mem, reserveSize);
 }
 
 static int32_t allocator_resize(struct allocator *self, int64_t newSize) {
-    newSize = math_ALIGN_FORWARD(newSize, allocator_PAGE_SIZE);
+    newSize = math_ALIGN_FORWARD(newSize, (int64_t)allocator_PAGE_SIZE);
 
     int64_t diff = newSize - self->size;
     if (diff == 0) return 0;
@@ -29,7 +31,6 @@ static int32_t allocator_resize(struct allocator *self, int64_t newSize) {
     if (diff < 0) {
         heap_decommit(self->mem + newSize, -diff);
     } else {
-        if (newSize > self->maxSize) return -1;
         int32_t status = heap_commit(self->mem + self->size, diff);
         if (status < 0) return -1;
     }

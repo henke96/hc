@@ -11,7 +11,7 @@
 
 #include "graphics.c"
 
-int32_t start(int32_t argc, char **argv) {
+int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     // Set up epoll.
     int32_t epollFd = sys_epoll_create1(0);
     if (epollFd < 0) return 1;

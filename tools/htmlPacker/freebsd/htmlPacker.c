@@ -7,11 +7,17 @@
 #include "hc/freebsd/libc.so.7.h"
 #include "hc/freebsd/debug.c"
 #include "hc/freebsd/heap.c"
+
+static int32_t pageSize;
+#define allocator_PAGE_SIZE pageSize
 #include "hc/allocator.c"
-int32_t start(int32_t, char **);
 #include "hc/freebsd/_start.c"
 
 #include "../common.c"
+
+static void initialise(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+    debug_CHECK(elf_aux_info(AT_PAGESZ, &pageSize, sizeof(pageSize)), RES == 0);
+}
 
 static int32_t changeDir(char *path) {
     return chdir(path);

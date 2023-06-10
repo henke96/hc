@@ -710,7 +710,7 @@ struct WINDOWPLACEMENT {
     struct RECT deviceRect;
 };
 
-// Memory Protection Constants.
+// WinNT.h
 #define PAGE_EXECUTE 0x10
 #define PAGE_EXECUTE_READ 0x20
 #define PAGE_EXECUTE_READWRITE 0x40
@@ -726,7 +726,7 @@ struct WINDOWPLACEMENT {
 #define PAGE_NOCACHE 0x200
 #define PAGE_WRITECOMBINE 0x400
 
-// VirtualAlloc
+// memoryapi.h
 #define MEM_COMMIT 0x00001000
 #define MEM_RESERVE 0x00002000
 #define MEM_RESET 0x00080000
@@ -737,14 +737,36 @@ struct WINDOWPLACEMENT {
 #define MEM_TOP_DOWN 0x00100000
 #define MEM_WRITE_WATCH 0x00200000
 
-// VirtualFree
 #define MEM_DECOMMIT 0x00004000
 #define MEM_RELEASE 0x00008000
 
 #define MEM_COALESCE_PLACEHOLDERS 0x00000001
 #define MEM_PRESERVE_PLACEHOLDER 0x00000002
 
+// sysinfoapi.h
+struct SYSTEMINFO {
+    union {
+        uint32_t oemId;
+        struct {
+            uint16_t processorArchitecture;
+            uint16_t reserved;
+        };
+    };
+    uint32_t pageSize;
+    void *minimumApplicationAddress;
+    void *maximumApplicationAddress;
+    uint32_t *activeProcessorMask;
+    uint32_t numberOfProcessors;
+    uint32_t processorType;
+    uint32_t allocationGranularity;
+    uint16_t processorLevel;
+    uint16_t processorRevision;
+};
+
 // kernel32.dll
+hc_DLLIMPORT uint16_t *GetEnvironmentStringsW(void);
+hc_DLLIMPORT int32_t FreeEnvironmentStringsW(uint16_t *strings);
+hc_DLLIMPORT void GetSystemInfo(struct SYSTEMINFO *info);
 hc_DLLIMPORT uint32_t GetLastError(void);
 
 hc_DLLIMPORT int32_t AllocConsole(void);

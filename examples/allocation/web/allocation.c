@@ -3,6 +3,8 @@
 #include "hc/wasm/heap.c"
 
 #include "debug.h"
+#include "hc/wasm/debug.c"
+#define allocator_PAGE_SIZE 65536
 #include "hc/allocator.c"
 
 #include "../test.c"

@@ -5,12 +5,20 @@
 #include "hc/libc/small.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
+#include "hc/linux/util.c"
 #include "hc/linux/debug.c"
 #include "hc/linux/heap.c"
+
+int64_t pageSize;
+#define allocator_PAGE_SIZE pageSize
 #include "hc/allocator.c"
 #include "hc/linux/helpers/_start.c"
 
 #include "../common.c"
+
+static void initialise(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
+    pageSize = util_getPageSize(util_getAuxv(envp));
+}
 
 static int32_t changeDir(char *path) {
     return sys_chdir(path);

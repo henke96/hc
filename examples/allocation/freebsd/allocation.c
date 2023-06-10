@@ -2,21 +2,19 @@
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/libc/small.c"
-#include "hc/linux/linux.h"
-#include "hc/linux/util.c"
-#include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
-#include "hc/linux/heap.c"
-#include "hc/linux/helpers/_start.c"
-
-int64_t pageSize;
+#include "hc/freebsd/freebsd.h"
+#include "hc/freebsd/libc.so.7.h"
+#include "hc/freebsd/_start.c"
+#include "hc/freebsd/debug.c"
+#include "hc/freebsd/heap.c"
+static int32_t pageSize;
 #define allocator_PAGE_SIZE pageSize
 #include "hc/allocator.c"
 
 #include "../test.c"
 
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
-    pageSize = util_getPageSize(util_getAuxv(envp));
+    debug_CHECK(elf_aux_info(AT_PAGESZ, &pageSize, sizeof(pageSize)), RES == 0);
     int32_t status = test();
     debug_printNum("Status: ", status, "\n");
     return 0;

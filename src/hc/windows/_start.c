@@ -1,4 +1,4 @@
-int32_t start(int32_t argc, char **argv);
+int32_t start(int32_t argc, char **argv, char **envp);
 
 static int32_t _start_parseCmdLine(char *cmdLine) {
     int32_t argc = 1;
@@ -55,23 +55,72 @@ void noreturn _start(void) {
         cmdLine, cmdLineSize,
         NULL, NULL
     );
-    if (cmdLineSize == 0) goto cleanup_cmdLine;
+    if (cmdLineSize <= 0) goto cleanup_cmdLine;
 
     int32_t argc = _start_parseCmdLine(cmdLine);
     char **argv = HeapAlloc(heap, 0, sizeof(char *) * (uint64_t)argc + 1);
     if (argv == NULL) goto cleanup_cmdLine;
 
-    argv[0] = cmdLine;
-    argv[argc] = NULL;
-
-    char *cur = cmdLine;
-    for (int32_t i = 1; i < argc; ++i) {
-        for (; *cur != '\0'; ++cur);
-        argv[i] = ++cur;
+    {
+        char *curr = cmdLine;
+        for (int32_t i = 0; i < argc; ++i) {
+            argv[i] = curr;
+            while (*curr++ != '\0');
+        }
+        argv[argc] = NULL;
     }
 
-    status = start(argc, argv);
+    uint16_t *envUtf16 = GetEnvironmentStringsW();
+    if (envUtf16 == NULL) goto cleanup_argv;
 
+    int32_t envUtf16Len = 2;
+    int32_t envCount = 0;
+    for (;; ++envUtf16Len) {
+        if (envUtf16[envUtf16Len - 2] == L'\0') {
+            ++envCount;
+            if (envUtf16[envUtf16Len - 1] == L'\0') break;
+        }
+    }
+
+    int32_t envSize = WideCharToMultiByte(
+        CP_UTF8,
+        WC_ERR_INVALID_CHARS,
+        envUtf16, envUtf16Len,
+        NULL, 0,
+        NULL, NULL
+    );
+    if (envSize <= 0) goto cleanup_environment_strings;
+
+    char *env = HeapAlloc(heap, 0, (uint64_t)envSize);
+    if (env == NULL) goto cleanup_environment_strings;
+
+    envSize = WideCharToMultiByte(
+        CP_UTF8,
+        WC_ERR_INVALID_CHARS,
+        envUtf16, envUtf16Len,
+        env, envSize,
+        NULL, NULL
+    );
+    if (envSize <= 0) goto cleanup_env;
+
+    char **envp = HeapAlloc(heap, 0, sizeof(char *) * (uint64_t)envCount + 1);
+    if (envp == NULL) goto cleanup_env;
+
+    char *curr = env;
+    for (int32_t i = 0; i < envCount; ++i) {
+        envp[i] = curr;
+        while (*curr++ != '\0');
+    }
+    envp[envCount] = NULL;
+
+    status = start(argc, argv, envp);
+
+    debug_CHECK(HeapFree(heap, 0, envp), RES != 0);
+    cleanup_env:
+    debug_CHECK(HeapFree(heap, 0, env), RES != 0);
+    cleanup_environment_strings:
+    debug_CHECK(FreeEnvironmentStringsW(envUtf16), RES != 0);
+    cleanup_argv:
     debug_CHECK(HeapFree(heap, 0, argv), RES != 0);
     cleanup_cmdLine:
     debug_CHECK(HeapFree(heap, 0, cmdLine), RES != 0);

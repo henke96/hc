@@ -7,9 +7,16 @@
 #include "hc/windows/debug.c"
 #include "hc/windows/heap.c"
 #include "hc/windows/_start.c"
+
+static struct SYSTEMINFO systemInfo;
+#define allocator_PAGE_SIZE systemInfo.pageSize
 #include "hc/allocator.c"
 
 #include "../common.c"
+
+void initialise(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+    GetSystemInfo(&systemInfo);
+}
 
 // Convert utf8 (optionally null terminated if `utf8Length` is -1) into null terminated utf16.
 // Returns result length (negative on error). Result is placed at the end of `alloc.mem`.

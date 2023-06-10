@@ -44,8 +44,8 @@ static noreturn void thread(void *arg) {
     sys_exit(0);
 }
 
-int32_t start(int32_t argc, char **argv) {
-    uint64_t *auxv = util_getAuxv(util_getEnvp(argc, argv));
+int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
+    uint64_t *auxv = util_getAuxv(envp);
 
     struct elf_programHeader *tlsProgramHeader = tls_findProgramHeader(auxv);
     if (tlsProgramHeader == NULL) return 1;

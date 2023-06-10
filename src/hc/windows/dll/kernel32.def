@@ -27,3 +27,6 @@ CloseHandle
 GetFileSizeEx
 ReadFile
 SetCurrentDirectoryW
+GetSystemInfo
+GetEnvironmentStringsW
+FreeEnvironmentStringsW

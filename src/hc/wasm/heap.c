@@ -12,8 +12,8 @@ static void *heap_reserve(int64_t size) {
 
 static void heap_unreserve(hc_UNUSED void *address, hc_UNUSED int64_t size) {}
 
-static int32_t heap_commit(hc_UNUSED void *address, hc_UNUSED int64_t len) {
+static int32_t heap_commit(hc_UNUSED void *address, hc_UNUSED int64_t size) {
     return 0;
 }
 
-static void heap_decommit(hc_UNUSED void *address, hc_UNUSED int64_t len) {}
+static void heap_decommit(hc_UNUSED void *address, hc_UNUSED int64_t size) {}

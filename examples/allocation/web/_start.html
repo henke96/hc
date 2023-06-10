@@ -15,10 +15,24 @@
                             for (preEnd = pre; wasmMemoryU8[preEnd]; ++preEnd);
                             for (postEnd = post; wasmMemoryU8[postEnd]; ++postEnd);
                             console.log(textDecoder.decode(wasmMemoryU8.subarray(pre, preEnd)) + num + textDecoder.decode(wasmMemoryU8.subarray(post, postEnd)));
+                        },
+                        debug_fail: (res, expression, file, line) => {
+                            let wasmMemoryU8 = new Uint8Array(wasmExports.memory.buffer);
+                            let expressionEnd, fileEnd;
+                            for (expressionEnd = expression; wasmMemoryU8[expressionEnd]; ++expressionEnd);
+                            for (fileEnd = file; wasmMemoryU8[fileEnd]; ++fileEnd);
+                            throw (
+                                textDecoder.decode(wasmMemoryU8.subarray(file, fileEnd)) +
+                                ":" +
+                                line +
+                                " fail: " +
+                                textDecoder.decode(wasmMemoryU8.subarray(expression, expressionEnd)) +
+                                " = " + res
+                            );
                         }
                     }
                 };
-                let wasmBase64 = "/*INCLUDE_BASE64(allocation.wasm)*/";
+                let wasmBase64 = "/*INCLUDE_BASE64(debug.allocation.wasm)*/";
                 let wasmBuffer = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0)).buffer;
                 WebAssembly.instantiate(wasmBuffer, importObject).then(
                     object => {

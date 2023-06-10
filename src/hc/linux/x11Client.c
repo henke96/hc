@@ -1,5 +1,5 @@
 #ifndef x11Client_PAGE_SIZE
-    #error "Please define `x11Client_PAGE_SIZE` as a int64_t"
+    #error "Please define `x11Client_PAGE_SIZE`"
 #endif
 
 struct x11Client {
@@ -27,13 +27,13 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     self->bufferMemFd = sys_memfd_create("", MFD_CLOEXEC);
     if (self->bufferMemFd < 0) return -1;
 
-    int32_t status = sys_ftruncate(self->bufferMemFd, x11Client_PAGE_SIZE);
+    int32_t status = sys_ftruncate(self->bufferMemFd, (int64_t)x11Client_PAGE_SIZE);
     if (status < 0) {
         status = -2;
         goto cleanup_bufferMemFd;
     }
 
-    self->buffer = sys_mmap(NULL, 2 * x11Client_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    self->buffer = sys_mmap(NULL, 2 * (int64_t)x11Client_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     if ((int64_t)self->buffer < 0) {
         status = -3;
         goto cleanup_bufferMemFd;
@@ -41,8 +41,8 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
 
     for (int32_t i = 0; i < 2; ++i) {
         void *address = sys_mmap(
-            self->buffer + i * x11Client_PAGE_SIZE,
-            x11Client_PAGE_SIZE,
+            self->buffer + i * (int64_t)x11Client_PAGE_SIZE,
+            (int64_t)x11Client_PAGE_SIZE,
             PROT_READ | PROT_WRITE,
             MAP_FIXED | MAP_SHARED,
             self->bufferMemFd,
@@ -148,7 +148,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     cleanup_socket:
     debug_CHECK(sys_close(self->socketFd), RES == 0);
     cleanup_buffer:
-    debug_CHECK(sys_munmap(self->buffer, 2 * x11Client_PAGE_SIZE), RES == 0);
+    debug_CHECK(sys_munmap(self->buffer, 2 * (int64_t)x11Client_PAGE_SIZE), RES == 0);
     cleanup_bufferMemFd:
     debug_CHECK(sys_close(self->bufferMemFd), RES == 0);
     return status;
@@ -181,7 +181,7 @@ static int32_t x11Client_receive(struct x11Client *self) {
     int32_t numRead = (int32_t)sys_recvfrom(
         self->socketFd,
         &self->buffer[self->bufferPos],
-        (x11Client_PAGE_SIZE - self->receivedSize),
+        ((int64_t)x11Client_PAGE_SIZE - self->receivedSize),
         0, NULL, NULL
     );
     if (numRead <= 0) return numRead;
@@ -203,20 +203,20 @@ static int32_t x11Client_nextMessage(struct x11Client *self) {
     if (length > (INT32_MAX - 32) / 4) return 0; // Too long, would overflow.
 
     uint32_t size = 32 + length * 4;
-    if (size > x11Client_PAGE_SIZE) return (int32_t)-size;
+    if (size > (uint32_t)x11Client_PAGE_SIZE) return (int32_t)-size;
     if ((uint32_t)self->receivedSize >= size) return (int32_t)size;
     return 0;
 }
 
 // Acks a message of size `size`, so that the next one can be read.
 static void x11Client_ackMessage(struct x11Client *self, int32_t size) {
-    self->bufferPos = (int32_t)((self->bufferPos + size) & (x11Client_PAGE_SIZE - 1));
+    self->bufferPos = (int32_t)((self->bufferPos + size) & ((int32_t)x11Client_PAGE_SIZE - 1));
     self->receivedSize -= size;
 }
 
 static void x11Client_deinit(struct x11Client *self) {
     debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseSize), RES == 0);
     debug_CHECK(sys_close(self->socketFd), RES == 0);
-    debug_CHECK(sys_munmap(self->buffer, 2 * x11Client_PAGE_SIZE), RES == 0);
+    debug_CHECK(sys_munmap(self->buffer, 2 * (int64_t)x11Client_PAGE_SIZE), RES == 0);
     debug_CHECK(sys_close(self->bufferMemFd), RES == 0);
 }
