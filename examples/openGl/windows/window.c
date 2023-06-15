@@ -218,7 +218,7 @@ static int32_t window_init(void) {
     int32_t status;
     struct WNDCLASSW windowClass = {
         .instanceHandle = __ImageBase,
-        .className = L"gl",
+        .className = u"gl",
         .windowProc = window_proc,
         .style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW,
         .cursorHandle = LoadCursorW(NULL, IDC_ARROW)
@@ -231,7 +231,7 @@ static int32_t window_init(void) {
     window.windowHandle = CreateWindowExW(
         0,
         windowClass.className,
-        L"",
+        u"",
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
         CW_USEDEFAULT, CW_USEDEFAULT, window_DEFAULT_WIDTH, window_DEFAULT_HEIGHT,
         NULL,
@@ -292,6 +292,6 @@ static void window_run(void) {
 }
 
 static void window_deinit(void) {
-    debug_CHECK(UnregisterClassW(L"gl", __ImageBase), RES == 1);
+    debug_CHECK(UnregisterClassW(u"gl", __ImageBase), RES == 1);
     wgl_deinit(&window.wgl);
 }

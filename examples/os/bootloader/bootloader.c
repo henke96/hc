@@ -58,14 +58,14 @@ static int64_t setupGraphics(struct efi_systemTable *systemTable, struct efi_gra
             info->horizontalResolution == info->pixelsPerScanLine // Don't wanna deal with this weirdness.
         );
 
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L"Index: ");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Index: ");
         printNum(systemTable->consoleOut, i);
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L", Width: ");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u", Width: ");
         printNum(systemTable->consoleOut, info->horizontalResolution);
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L", Height: ");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u", Height: ");
         printNum(systemTable->consoleOut, info->verticalResolution);
-        if (isOk) systemTable->consoleOut->outputString(systemTable->consoleOut, L" OK\r\n");
-        else      systemTable->consoleOut->outputString(systemTable->consoleOut, L"\r\n");
+        if (isOk) systemTable->consoleOut->outputString(systemTable->consoleOut, u" OK\r\n");
+        else      systemTable->consoleOut->outputString(systemTable->consoleOut, u"\r\n");
 
         uint64_t area = (uint64_t)info->horizontalResolution * (uint64_t)info->verticalResolution;
         if (area > bestModeArea) {
@@ -111,16 +111,16 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     struct efi_graphicsOutputProtocol *graphics;
     int64_t status = setupGraphics(systemTable, &graphics);
     if (status < 0) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L"Failed to setup graphics (");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed to setup graphics (");
         printNum(systemTable->consoleOut, status);
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L")\r\n");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u")\r\n");
         return 1;
     }
 
     // Ask user about screen mode.
-    systemTable->consoleOut->outputString(systemTable->consoleOut, L"Press 'a' to use mode ");
+    systemTable->consoleOut->outputString(systemTable->consoleOut, u"Press 'a' to use mode ");
     printNum(systemTable->consoleOut, status);
-    systemTable->consoleOut->outputString(systemTable->consoleOut, L", any other key to keep current.");
+    systemTable->consoleOut->outputString(systemTable->consoleOut, u", any other key to keep current.");
     struct efi_inputKey key;
     readKey(systemTable, &key);
     if (key.unicodeChar == L'a') {
@@ -134,16 +134,16 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     uint64_t descriptorSize;
     status = getMemoryMap(systemTable, &memoryMap, &memoryMapSize, &memoryMapKey, &descriptorSize);
     if (status < 0) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L"Failed to get memory map (");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed to get memory map (");
         printNum(systemTable->consoleOut, status);
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L")\r\n");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u")\r\n");
         return 1;
     }
 
     // Make sure the memory map will fit in the bootloader page.
     uint64_t memoryMapLength = memoryMapSize / descriptorSize;
     if (memoryMapLength * sizeof(struct efi_memoryDescriptor) > paging_PAGE_SIZE - offsetof(struct bootloaderPage, memoryMap)) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L"Memory map too big!\r\n");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Memory map too big!\r\n");
         return 1;
     }
 
@@ -159,9 +159,9 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     // Exit boot services.
     status = systemTable->bootServices->exitBootServices(imageHandle, memoryMapKey);
     if (status < 0) {
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L"Failed exit boot services (");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u"Failed exit boot services (");
         printNum(systemTable->consoleOut, status);
-        systemTable->consoleOut->outputString(systemTable->consoleOut, L")\r\n");
+        systemTable->consoleOut->outputString(systemTable->consoleOut, u")\r\n");
         return 1;
     }
     // We are on our own!
