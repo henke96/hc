@@ -3,6 +3,7 @@
 #include "hc/gl.h"
 #include "hc/jni.h"
 #include "hc/util.c"
+#include "hc/debug.h"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/helpers/sys_clone_func.c"

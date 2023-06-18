@@ -2,6 +2,7 @@
 #include "hc/elf.h"
 #include "hc/math.c"
 #include "hc/util.c"
+#include "hc/debug.h"
 #include "hc/libc/small.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/util.c"

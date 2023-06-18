@@ -1,6 +1,7 @@
 #include "hc/hc.h"
 #include "hc/math.c"
 #include "hc/util.c"
+#include "hc/debug.h"
 #include "hc/libc/small.c"
 #include "hc/freebsd/freebsd.h"
 #include "hc/freebsd/libc.so.7.h"

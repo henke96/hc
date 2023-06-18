@@ -2,6 +2,7 @@
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/base64.c"
+#include "hc/debug.h"
 #include "hc/libc/small.c"
 #include "hc/windows/windows.h"
 #include "hc/windows/debug.c"

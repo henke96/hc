@@ -1,9 +1,9 @@
 #include "hc/hc.h"
 #include "hc/math.c"
+#include "hc/debug.h"
 #include "hc/wasm/heap.c"
 
-#include "debug.h"
-#include "hc/wasm/debug.c"
+#include "debug.c"
 #define allocator_PAGE_SIZE 65536
 #include "hc/allocator.c"
 
