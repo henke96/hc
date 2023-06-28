@@ -53,6 +53,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_SECTION(NAME) __attribute__((section(NAME)))
 #define hc_INLINE __attribute__((always_inline)) inline
 #define hc_NO_BUILTIN __attribute__((no_builtin))
+#define hc_NO_DISCARD __attribute__((warn_unused_result))
 #if hc_X86_64
     #define hc_MS_ABI __attribute__((ms_abi))
     #define hc_SYSV_ABI __attribute__((sysv_abi))

@@ -17,7 +17,7 @@ struct x11Client {
     uint8_t __pad[6];
 };
 
-static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t sockaddrLen, struct xauth_entry *authEntry) {
+static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t sockaddrSize, struct xauth_entry *authEntry) {
     self->sequenceNumber = 1;
     self->nextId = 0;
     self->bufferPos = 0;
@@ -62,7 +62,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
         goto cleanup_buffer;
     }
 
-    status = sys_connect(self->socketFd, sockaddr, sockaddrLen);
+    status = sys_connect(self->socketFd, sockaddr, sockaddrSize);
     if (status < 0) {
         status = -6;
         goto cleanup_socket;
@@ -180,7 +180,7 @@ static int32_t x11Client_sendRequests(struct x11Client *self, void *requests, in
 static int32_t x11Client_receive(struct x11Client *self) {
     int32_t numRead = (int32_t)sys_recvfrom(
         self->socketFd,
-        &self->buffer[self->bufferPos],
+        &self->buffer[self->bufferPos + self->receivedSize],
         ((int64_t)x11Client_PAGE_SIZE - self->receivedSize),
         0, NULL, NULL
     );
