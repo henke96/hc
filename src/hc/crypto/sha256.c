@@ -1,9 +1,10 @@
 // Based on code by D. J. Bernstein, public domain.
 
 #define sha256_HASH_SIZE 32
-#define _sha256_BLOCK_SHIFT 6
-#define _sha256_BLOCK_MASK 63
+
 #define _sha256_BLOCK_SIZE 64
+#define _sha256_BLOCK_MASK 63
+#define _sha256_BLOCK_SHIFT 6
 
 struct sha256 {
     uint32_t state[8];
@@ -61,7 +62,7 @@ static void _sha256_blocks(uint32_t *state, const uint8_t *in, int64_t numBlocks
 
     for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
 
-    for (; numBlocks > 0; --numBlocks) {
+    do {
         for (int32_t i = 0; i < 16; ++i) w[i] = _sha256_loadU32BE(&in[4 * i]);
 
         for (int32_t i = 0;; ++i) {
@@ -89,7 +90,7 @@ static void _sha256_blocks(uint32_t *state, const uint8_t *in, int64_t numBlocks
             state[i] = r[7 - i] = x;
         }
         in += _sha256_BLOCK_SIZE;
-    }
+    } while (--numBlocks);
 }
 
 static void sha256_init(struct sha256 *self) {
@@ -118,8 +119,10 @@ static void sha256_update(struct sha256 *self, const uint8_t *in, int64_t size) 
         size -= numToRead;
     }
     int64_t numBlocks = size >> _sha256_BLOCK_SHIFT;
-    _sha256_blocks(&self->state[0], in, numBlocks);
-    self->blockCounter += (uint64_t)numBlocks;
+    if (numBlocks > 0) {
+        _sha256_blocks(&self->state[0], in, numBlocks);
+        self->blockCounter += (uint64_t)numBlocks;
+    }
 
     self->bufferSize = size & _sha256_BLOCK_MASK;
     if (self->bufferSize > 0) {

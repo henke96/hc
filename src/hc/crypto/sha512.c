@@ -1,9 +1,10 @@
 // Based on code by D. J. Bernstein, public domain.
 
 #define sha512_HASH_SIZE 64
-#define _sha512_BLOCK_SHIFT 7
-#define _sha512_BLOCK_MASK 127
+
 #define _sha512_BLOCK_SIZE 128
+#define _sha512_BLOCK_MASK 127
+#define _sha512_BLOCK_SHIFT 7
 
 struct sha512 {
     uint64_t state[8];
@@ -60,7 +61,7 @@ static void _sha512_blocks(uint64_t *state, const uint8_t *in, int64_t numBlocks
 
     for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
 
-    for (; numBlocks > 0; --numBlocks) {
+    do {
         for (int32_t i = 0; i < 16; ++i) w[i] = _sha512_loadU64BE(&in[8 * i]);
 
         for (int32_t i = 0;; ++i) {
@@ -88,7 +89,7 @@ static void _sha512_blocks(uint64_t *state, const uint8_t *in, int64_t numBlocks
             state[i] = r[7 - i] = x;
         }
         in += _sha512_BLOCK_SIZE;
-    }
+    } while (--numBlocks);
 }
 
 static void sha512_init(struct sha512 *self) {
@@ -117,8 +118,10 @@ static void sha512_update(struct sha512 *self, const uint8_t *in, int64_t size) 
         size -= numToRead;
     }
     int64_t numBlocks = size >> _sha512_BLOCK_SHIFT;
-    _sha512_blocks(&self->state[0], in, numBlocks);
-    self->blockCounter += (uint64_t)numBlocks;
+    if (numBlocks > 0) {
+        _sha512_blocks(&self->state[0], in, numBlocks);
+        self->blockCounter += (uint64_t)numBlocks;
+    }
 
     self->bufferSize = size & _sha512_BLOCK_MASK;
     if (self->bufferSize > 0) {

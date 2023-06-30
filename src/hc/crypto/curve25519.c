@@ -356,6 +356,7 @@ static void _curve25519_crecip(uint64_t *out, const uint64_t *z) {
 
 static const uint8_t curve25519_ecdhBasepoint[32] = { 9 };
 
+// All arguments are 32 bytes.
 static void curve25519(uint8_t *out, const uint8_t *secret, const uint8_t *public) {
     uint64_t bp[5], x[5], z[5], zmone[5];
     uint8_t e[32];
