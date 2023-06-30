@@ -2,7 +2,6 @@
 
 #include "crypto/sha.c"
 
-int32_t common_tests(void) {
+static void common_tests(void) {
     sha_tests();
-    return 0;
 }
