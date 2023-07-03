@@ -10,10 +10,11 @@
 
 #include "hc/crypto/sha512.c"
 #include "hc/crypto/sha256.c"
-#include "hc/crypto/poly1305.c"
 #include "hc/crypto/curve25519.c"
 #include "hc/crypto/x25519.c"
 #include "hc/crypto/ed25519.c"
+#include "hc/crypto/chacha20.c"
+#include "hc/crypto/poly1305.c"
 
 #include "../common/common.c"
 
