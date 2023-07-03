@@ -952,6 +952,7 @@ static void ed25519_sign(const uint8_t *message, int64_t messageSize, const uint
     ed25519_modm_store(&signatureOut[32], S);
 }
 
+// Returns 0 if valid.
 static int32_t ed25519_verifySignature(const uint8_t *message, int64_t messageSize, const uint8_t *public, const uint8_t *signature) {
     struct ed25519_ge A;
     if ((signature[63] & 224) || !ed25519_ge_unpackNegativeVartime(&A, public)) return 1;
