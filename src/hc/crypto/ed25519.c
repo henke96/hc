@@ -982,7 +982,7 @@ static void ed25519_x25519Basepoint(const uint8_t *secret, uint8_t *publicOut) {
     // Load and clamp.
     uint64_t s[5];
     uint8_t ec[32];
-	hc_MEMCPY(&ec[0], secret, sizeof(ec));
+    hc_MEMCPY(&ec[0], secret, sizeof(ec));
     ec[0] &= 248;
     ec[31] &= 127;
     ec[31] |= 64;
