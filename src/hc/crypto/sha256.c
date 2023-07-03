@@ -13,22 +13,6 @@ struct sha256 {
     int64_t bufferSize;
 };
 
-static hc_INLINE uint32_t _sha256_loadU32BE(const uint8_t *in) {
-    uint32_t x;
-    hc_MEMCPY(&x, in, 4);
-    return hc_BSWAP32(x);
-}
-
-static hc_INLINE void _sha256_storeU32BE(uint8_t *out, uint32_t in) {
-    in = hc_BSWAP32(in);
-    hc_MEMCPY(out, &in, 4);
-}
-
-static hc_INLINE void _sha256_storeU64BE(uint8_t *out, uint64_t in) {
-    in = hc_BSWAP64(in);
-    hc_MEMCPY(out, &in, 8);
-}
-
 #define _sha256_SIGMA0_A(X) (hc_ROTR32(X, 7) ^ hc_ROTR32(X, 18) ^ ((X) >> 3))
 #define _sha256_SIGMA1_A(X) (hc_ROTR32(X, 17) ^ hc_ROTR32(X, 19) ^ ((X) >> 10))
 
@@ -63,7 +47,7 @@ static void _sha256_blocks(uint32_t *state, const uint8_t *in, int64_t numBlocks
     for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
 
     do {
-        for (int32_t i = 0; i < 16; ++i) w[i] = _sha256_loadU32BE(&in[4 * i]);
+        for (int32_t i = 0; i < 16; ++i) w[i] = mem_loadU32BE(&in[4 * i]);
 
         for (int32_t i = 0;; ++i) {
             uint32_t y = w[i];
@@ -141,7 +125,7 @@ static void sha256_finish(struct sha256 *self, uint8_t *hash) {
         self->bufferSize = 0;
     }
     hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(56 - self->bufferSize));
-    _sha256_storeU64BE(&self->buffer[56], numBits);
+    mem_storeU64BE(&self->buffer[56], numBits);
     _sha256_blocks(&self->state[0], &self->buffer[0], 1);
-    for (int32_t i = 0; i < 8; ++i) _sha256_storeU32BE(&hash[i * 4], self->state[i]);
+    for (int32_t i = 0; i < 8; ++i) mem_storeU32BE(&hash[i * 4], self->state[i]);
 }

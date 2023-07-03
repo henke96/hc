@@ -15,7 +15,7 @@ static void _poly1305_test(const uint8_t *input, int64_t inputSize, const uint8_
     CHECK(hc_MEMCMP(&mac[0], &expected[0], poly1305_MAC_SIZE), RES == 0);
 }
 
-static void poly1305_tests(void) {
+static void poly1305_tests(hc_UNUSED uint64_t level) {
     // Test vector from RFC 7539.
     _poly1305_test(
         (uint8_t *)hc_STR_COMMA_LEN("Cryptographic Forum Research Group"),

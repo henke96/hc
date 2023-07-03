@@ -28,10 +28,8 @@ static void _poly1305_blocks(struct poly1305 *self, const uint8_t *in, int64_t n
 
     do {
         // h += m[i]
-        uint64_t t0;
-        hc_MEMCPY(&t0, &in[0], 8);
-        uint64_t t1;
-        hc_MEMCPY(&t1, &in[8], 8);
+        uint64_t t0 = mem_loadU64(&in[0]);
+        uint64_t t1 = mem_loadU64(&in[8]);
 
         h0 += t0 & 0xFFFFFFFFFFF;
         h1 += ((t0 >> 44) | (t1 << 20)) & 0xFFFFFFFFFFF;
@@ -65,10 +63,8 @@ static void poly1305_init(struct poly1305 *self, const uint8_t *key) {
     self->bufferSize = 0;
 
     // r &= 0xFFFFFFC0FFFFFFC0FFFFFFC0FFFFFFF
-    uint64_t t0;
-    hc_MEMCPY(&t0, &key[0], 8);
-    uint64_t t1;
-    hc_MEMCPY(&t1, &key[8], 8);
+    uint64_t t0 = mem_loadU64(&key[0]);
+    uint64_t t1 = mem_loadU64(&key[8]);
 
     self->r[0] = t0 & 0xFFC0FFFFFFF;
     self->r[1] = ((t0 >> 44) | (t1 << 20)) & 0xFFFFFC0FFFF;
@@ -164,13 +160,6 @@ static void poly1305_finish(struct poly1305 *self, uint8_t *mac) {
     h0 = h0 | (h1 << 44);
     h1 = (h1 >> 20) | (h2 << 24);
 
-    hc_MEMCPY(&mac[0], &h0, 8);
-    hc_MEMCPY(&mac[8], &h1, 8);
-}
-
-// Returns 0 if equal.
-hc_UNUSED static int32_t poly1305_verify(const uint8_t *mac1, const uint8_t *mac2) hc_NO_BUILTIN {
-    int32_t diff = 0;
-    for (int32_t i = 0; i < poly1305_MAC_SIZE; ++i) diff |= (mac1[i] ^ mac2[i]);
-    return diff;
+    mem_storeU64(&mac[0], h0);
+    mem_storeU64(&mac[8], h1);
 }

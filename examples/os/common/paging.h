@@ -2,7 +2,6 @@
 #define paging_PAGE_MASK (~(paging_PAGE_SIZE - 1))
 #define paging_PAGE_SHIFT 21
 
-
 // NOTE: With the X32 ABI, clang 14 miscompiles stores to addresses at 0x80000000 and above, so we avoid those for now.
 // See: https://github.com/llvm/llvm-project/issues/55061
 

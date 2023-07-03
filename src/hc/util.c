@@ -49,9 +49,25 @@ hc_UNUSED static char *util_uintToStr(char *bufferEnd, uint64_t number) {
     return bufferEnd;
 }
 
+static const uint8_t util_hexTable[16] = "0123456789ABCDEF";
+
+#define util_UINT32_MAX_HEX_CHARS 8
+#define util_UINT64_MAX_HEX_CHARS 16
+// Writes max 16 characters.
+// `bufferEnd` points 1 past where last digit is written.
+// Returns pointer to first character of result.
+hc_UNUSED static char *util_uintToHex(char *bufferEnd, uint64_t number) {
+    do {
+        *--bufferEnd = util_hexTable[number & 0xF];
+        *--bufferEnd = util_hexTable[(number >> 4) & 0xF];
+        number >>= 8;
+    } while (number != 0);
+    return bufferEnd;
+}
+
 // Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
 // The result is stored in `*number` if successful.
-hc_UNUSED static int32_t util_strToUint(const void *buffer, int64_t maxChars, uint64_t *number) {
+hc_UNUSED static int32_t util_strToUint(const void *buffer, int32_t maxChars, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
     for (; i < maxChars; ++i) {
@@ -68,7 +84,7 @@ hc_UNUSED static int32_t util_strToUint(const void *buffer, int64_t maxChars, ui
 
 // Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
 // The result is stored in `*number` if successful.
-hc_UNUSED static int32_t util_strToInt(const void *buffer, int64_t maxChars, int64_t *number) {
+hc_UNUSED static int32_t util_strToInt(const void *buffer, int32_t maxChars, int64_t *number) {
     if (maxChars <= 0) return 0;
 
     uint64_t negative = ((const char *)buffer)[0] == '-';
@@ -93,7 +109,7 @@ hc_UNUSED static int32_t util_strToInt(const void *buffer, int64_t maxChars, int
 
 // Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
 // The result is stored in `*number` if successful.
-hc_UNUSED static int32_t util_hexToUint(const void *buffer, int64_t maxChars, uint64_t *number) {
+hc_UNUSED static int32_t util_hexToUint(const void *buffer, int32_t maxChars, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
     for (; i < maxChars; ++i) {

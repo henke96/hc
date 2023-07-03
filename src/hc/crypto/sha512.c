@@ -13,17 +13,6 @@ struct sha512 {
     int64_t bufferSize;
 };
 
-static hc_INLINE uint64_t _sha512_loadU64BE(const uint8_t *in) {
-    uint64_t x;
-    hc_MEMCPY(&x, in, 8);
-    return hc_BSWAP64(x);
-}
-
-static hc_INLINE void _sha512_storeU64BE(uint8_t *out, uint64_t in) {
-    in = hc_BSWAP64(in);
-    hc_MEMCPY(out, &in, 8);
-}
-
 #define _sha512_SIGMA0_A(X) (hc_ROTR64(X, 1) ^ hc_ROTR64(X, 8) ^ ((X) >> 7))
 #define _sha512_SIGMA1_A(X) (hc_ROTR64(X, 19) ^ hc_ROTR64(X, 61) ^ ((X) >> 6))
 
@@ -62,7 +51,7 @@ static void _sha512_blocks(uint64_t *state, const uint8_t *in, int64_t numBlocks
     for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
 
     do {
-        for (int32_t i = 0; i < 16; ++i) w[i] = _sha512_loadU64BE(&in[8 * i]);
+        for (int32_t i = 0; i < 16; ++i) w[i] = mem_loadU64BE(&in[8 * i]);
 
         for (int32_t i = 0;; ++i) {
             uint64_t y = w[i];
@@ -144,8 +133,8 @@ static void sha512_finish(struct sha512 *self, uint8_t *hash) {
         self->bufferSize = 0;
     }
     hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(112 - self->bufferSize));
-    _sha512_storeU64BE(&self->buffer[112], numBits.u64[1]);
-    _sha512_storeU64BE(&self->buffer[120], numBits.u64[0]);
+    mem_storeU64BE(&self->buffer[112], numBits.u64[1]);
+    mem_storeU64BE(&self->buffer[120], numBits.u64[0]);
     _sha512_blocks(&self->state[0], &self->buffer[0], 1);
-    for (int32_t i = 0; i < 8; ++i) _sha512_storeU64BE(&hash[i * 8], self->state[i]);
+    for (int32_t i = 0; i < 8; ++i) mem_storeU64BE(&hash[i * 8], self->state[i]);
 }
