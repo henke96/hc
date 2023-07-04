@@ -18,7 +18,7 @@
 
 #include "../common/common.c"
 
-int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     uint64_t level;
     common_tests(argc, argv, &level);
     sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Tests passed!\n"));

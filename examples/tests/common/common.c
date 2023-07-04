@@ -7,12 +7,12 @@
 #include "crypto/poly1305.c"
 
 static void common_tests(int32_t argc, char **argv, uint64_t *level) {
-    int32_t parsed = 0;
+    *level = 0;
     if (argc >= 2) {
-        parsed = util_strToUint(argv[1], util_UINT64_MAX_CHARS, level);
-        if (parsed < 0) *level = UINT64_MAX; // Overflow.
+        if (util_strToUint(argv[1], util_UINT64_MAX_CHARS, level) < 0) {
+            *level = UINT64_MAX; // Overflow.
+        }
     }
-    if (parsed == 0) *level = 0;
 
     sha_tests(*level);
     x25519_tests(*level);
