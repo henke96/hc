@@ -1,3 +1,5 @@
+#include "_ed25519_cases.h"
+
 static void _ed25519_test(
     const uint8_t *message,
     int64_t messageSize,
@@ -42,4 +44,50 @@ static void ed25519_tests(hc_UNUSED uint64_t level) {
         (const uint8_t *)"\x83\x3f\xe6\x24\x09\x23\x7b\x9d\x62\xec\x77\x58\x75\x20\x91\x1e\x9a\x75\x9c\xec\x1d\x19\x75\x5b\x7d\xa9\x01\xb9\x6d\xca\x3d\x42",
         (const uint8_t *)"\xdc\x2a\x44\x59\xe7\x36\x96\x33\xa5\x2b\x1b\xf2\x77\x83\x9a\x00\x20\x10\x09\xa3\xef\xbf\x3e\xcb\x69\xbe\xa2\x18\x6c\x26\xb5\x89\x09\x35\x1f\xc9\xac\x90\xb3\xec\xfd\xfb\xc7\xc6\x64\x31\xe0\x30\x3d\xca\x17\x9c\x13\x8a\xc1\x7a\xd9\xbe\xf1\x17\x73\x31\xa7\x04"
     );
+    // Test vectors from http://ed25519.cr.yp.to/software.html.
+    if (level >= 1) {
+        int32_t offset = 0;
+        for (int32_t caseN = 0; caseN < 1024; ++caseN) {
+            uint8_t secret[32];
+            uint8_t expected[64];
+            uint8_t message[1023];
+
+            // Parse secret.
+            for (int32_t i = 0; i < 32; i += 8) {
+                uint64_t val;
+                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 16, &val);
+                CHECK(status, RES == 16);
+                mem_storeU64BE(&secret[i], val);
+            }
+            offset += 64;
+
+            // Parse expected.
+            for (int32_t i = 0; i < 64; i += 8) {
+                uint64_t val;
+                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 16, &val);
+                CHECK(status, RES == 16);
+                mem_storeU64BE(&expected[i], val);
+            }
+            offset += 128;
+
+            // Parse message.
+            int32_t i = 0;
+            for (; i < math_ALIGN_BACKWARD(caseN, 8); i += 8) {
+                uint64_t val;
+                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 16, &val);
+                CHECK(status, RES == 16);
+                mem_storeU64BE(&message[i], val);
+            }
+            for (; i < caseN; ++i) {
+                uint64_t val;
+                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 2, &val);
+                CHECK(status, RES == 2);
+                message[i] = (uint8_t)val;
+            }
+            offset += caseN << 1;
+
+            // Run the test case.
+            _ed25519_test(&message[0], caseN, &secret[0], &expected[0]);
+        }
+    }
 }

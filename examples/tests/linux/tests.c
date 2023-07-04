@@ -1,6 +1,7 @@
 #include "hc/hc.h"
 #include "hc/debug.h"
 #include "hc/util.c"
+#include "hc/math.c"
 #include "hc/mem.c"
 #include "hc/libc/small.c"
 #include "hc/linux/linux.h"
