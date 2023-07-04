@@ -10,8 +10,6 @@ set "prog_path=%~1"
 set "prog_name=%~2"
 if "%~3" == "" ( set "ext=elf" ) else set "ext=%~3"
 
-if not defined STRIP_OPT set STRIP_OPT=--strip-sections
-
 set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
 set "release_flags=-fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
@@ -48,7 +46,9 @@ call "%root_dir%\cc_elf.bat" %debug_flags% -o "%prog_path%\%ARCH%\debug.%prog_na
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 call "%root_dir%\cc_elf.bat" %release_flags% -o "%prog_path%\%ARCH%\%prog_name%.%ext%" "%prog_path%\%prog_name%.c" %FLAGS%
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
-"%llvm_prefix%llvm-objcopy" %STRIP_OPT% "%prog_path%\%ARCH%\%prog_name%.%ext%"
+if defined STRIP_OPT (
+    "%llvm_prefix%llvm-objcopy" %STRIP_OPT% "%prog_path%\%ARCH%\%prog_name%.%ext%"
+)
 if not errorlevel 0 exit /b & if errorlevel 1 exit /b
 
 if not defined NO_ANALYSIS (

@@ -21,8 +21,9 @@ if not defined NO_AARCH64 (
 )
 
 set NO_RISCV64=1
-set "ABI=linux-android26" & set "STRIP_OPT=--strip-all"
+set "ABI=linux-android26"
 set "FLAGS=-fPIC -fpie -pie -Wl,-dynamic-linker=/system/bin/linker64 %FLAGS%"
+if not defined STRIP_OPT set STRIP_OPT=--strip-all
 call "%script_dir%\elf.bat" %*
 exit /b
 

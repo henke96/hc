@@ -18,4 +18,5 @@ if test -z "$NO_RISCV64"; then export ARCH="riscv64"; build; fi
 
 export ABI="freebsd14"
 export FLAGS="-fPIC -Wl,-dynamic-linker=/libexec/ld-elf.so.1 -Wl,--export-dynamic $FLAGS"
+export STRIP_OPT="${STRIP_OPT:---strip-sections}"
 "$script_dir/elf.sh" "$@"

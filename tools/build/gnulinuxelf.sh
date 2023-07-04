@@ -20,4 +20,5 @@ if test -z "$NO_RISCV64"; then export ARCH="riscv64"; build; fi
 
 # Note: -fPIC seems needed for undefined weak symbols to work.
 export FLAGS="-fPIC $FLAGS"
+export STRIP_OPT="${STRIP_OPT:---strip-sections}"
 "$script_dir/elf.sh" "$@"

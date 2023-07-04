@@ -13,7 +13,9 @@ build() {
     fi
     "$root_dir/cc_elf.sh" $debug_flags -o "$prog_path/$ARCH/debug.$prog_name.$ext" "$prog_path/$prog_name.c" "$@"
     "$root_dir/cc_elf.sh" $release_flags -o "$prog_path/$ARCH/$prog_name.$ext" "$prog_path/$prog_name.c" "$@"
-    "${llvm_prefix}llvm-objcopy" $STRIP_OPT "$prog_path/$ARCH/$prog_name.$ext"
+    if test -n "$STRIP_OPT"; then
+        "${llvm_prefix}llvm-objcopy" $STRIP_OPT "$prog_path/$ARCH/$prog_name.$ext"
+    fi
 
     if test -z "$NO_ANALYSIS"; then
         "$root_dir/cc_elf.sh" $debug_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
@@ -26,8 +28,6 @@ if test -n "$LLVM"; then llvm_prefix="$LLVM/bin/"; fi
 prog_path="$1"
 prog_name="$2"
 ext="${3:-elf}"
-
-STRIP_OPT="${STRIP_OPT:---strip-sections}"
 
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"

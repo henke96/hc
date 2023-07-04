@@ -5,4 +5,4 @@ set "script_dir=%script_dir:~0,-1%"
 set "root_dir=%script_dir%\..\..\.."
 
 set "FLAGS=-shared -fPIC %FLAGS%"
-call "%root_dir%\tools\build\elf.bat" "%script_dir%" libtest so
+call "%root_dir%\tools\build\linuxelf.bat" "%script_dir%" libtest so

@@ -23,6 +23,7 @@ if not defined NO_RISCV64 (
 
 set "ABI=freebsd14"
 set "FLAGS=-fPIC -Wl,-dynamic-linker=/libexec/ld-elf.so.1 -Wl,--export-dynamic %FLAGS%"
+if not defined STRIP_OPT set STRIP_OPT=--strip-sections
 call "%script_dir%\elf.bat" %*
 exit /b
 
