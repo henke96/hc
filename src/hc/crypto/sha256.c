@@ -3,7 +3,6 @@
 #define sha256_HASH_SIZE 32
 
 #define _sha256_BLOCK_SIZE 64
-#define _sha256_BLOCK_MASK 63
 #define _sha256_BLOCK_SHIFT 6
 
 struct sha256 {
@@ -108,9 +107,9 @@ static void sha256_update(struct sha256 *self, const uint8_t *in, int64_t size) 
         self->blockCounter += (uint64_t)numBlocks;
     }
 
-    self->bufferSize = size & _sha256_BLOCK_MASK;
+    self->bufferSize = math_ALIGN_REMAINDER(size, _sha256_BLOCK_SIZE);
     if (self->bufferSize > 0) {
-        in += size & ~(int64_t)_sha256_BLOCK_MASK;
+        in += math_ALIGN_BACKWARD(size, _sha256_BLOCK_SIZE);
         for (int64_t i = 0; i < self->bufferSize; ++i) self->buffer[i] = in[i];
     }
 }

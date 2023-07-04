@@ -153,7 +153,7 @@
 #define egl_SIGNALED 0x30F2
 #define egl_UNSIGNALED 0x30F3
 #define egl_SYNC_FLUSH_COMMANDS_BIT 0x0001
-#define egl_FOREVER 0xFFFFFFFFFFFFFFFFull
+#define egl_FOREVER 0xFFFFFFFFFFFFFFFF
 #define egl_TIMEOUT_EXPIRED 0x30F5
 #define egl_CONDITION_SATISFIED 0x30F6
 #define egl_NO_SYNC ((void *)0)

@@ -210,7 +210,7 @@ static int32_t x11Client_nextMessage(struct x11Client *self) {
 
 // Acks a message of size `size`, so that the next one can be read.
 static void x11Client_ackMessage(struct x11Client *self, int32_t size) {
-    self->bufferPos = (int32_t)((self->bufferPos + size) & ((int32_t)x11Client_PAGE_SIZE - 1));
+    self->bufferPos = math_ALIGN_REMAINDER(self->bufferPos + size, (int32_t)x11Client_PAGE_SIZE);
     self->receivedSize -= size;
 }
 

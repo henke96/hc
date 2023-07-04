@@ -3,7 +3,6 @@
 #define poly1305_MAC_SIZE 16
 
 #define _poly1305_BLOCK_SIZE 16
-#define _poly1305_BLOCK_MASK 15
 #define _poly1305_BLOCK_SHIFT 4
 
 struct poly1305 {
@@ -95,9 +94,9 @@ static void poly1305_update(struct poly1305 *self, const uint8_t *in, int64_t si
     int64_t numBlocks = size >> _poly1305_BLOCK_SHIFT;
     if (numBlocks > 0) _poly1305_blocks(self, in, numBlocks, 0x10000000000);
 
-    self->bufferSize = size & _poly1305_BLOCK_MASK;
+    self->bufferSize = math_ALIGN_REMAINDER(size, _poly1305_BLOCK_SIZE);
     if (self->bufferSize > 0) {
-        in += size & ~(int64_t)_poly1305_BLOCK_MASK;
+        in += math_ALIGN_BACKWARD(size, _poly1305_BLOCK_SIZE);
         for (int64_t i = 0; i < self->bufferSize; ++i) self->buffer[i] = in[i];
     }
 }

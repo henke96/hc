@@ -3,7 +3,6 @@
 #define sha512_HASH_SIZE 64
 
 #define _sha512_BLOCK_SIZE 128
-#define _sha512_BLOCK_MASK 127
 #define _sha512_BLOCK_SHIFT 7
 
 struct sha512 {
@@ -112,9 +111,9 @@ static void sha512_update(struct sha512 *self, const uint8_t *in, int64_t size) 
         self->blockCounter += (uint64_t)numBlocks;
     }
 
-    self->bufferSize = size & _sha512_BLOCK_MASK;
+    self->bufferSize = math_ALIGN_REMAINDER(size, _sha512_BLOCK_SIZE);
     if (self->bufferSize > 0) {
-        in += size & ~(int64_t)_sha512_BLOCK_MASK;
+        in += math_ALIGN_BACKWARD(size, _sha512_BLOCK_SIZE);
         for (int64_t i = 0; i < self->bufferSize; ++i) self->buffer[i] = in[i];
     }
 }

@@ -31,7 +31,7 @@ static void paging_init(void) {
     bootloaderPage->pageTableL2[kernelPagePhysicalAddress >> paging_PAGE_SHIFT] = 0;
 
     // Map the frame buffer.
-    uint64_t frameBufferMapStart = bootloaderPage->frameBufferBase & paging_PAGE_MASK;
+    uint64_t frameBufferMapStart = math_ALIGN_BACKWARD(bootloaderPage->frameBufferBase, paging_PAGE_SIZE);
     uint64_t frameBufferSize = sizeof(uint32_t) * bootloaderPage->frameBufferWidth * bootloaderPage->frameBufferHeight;
     uint64_t frameBufferMapEnd = math_ALIGN_FORWARD(bootloaderPage->frameBufferBase + frameBufferSize, paging_PAGE_SIZE);
     uint64_t numPages = (frameBufferMapEnd - frameBufferMapStart) >> paging_PAGE_SHIFT;
