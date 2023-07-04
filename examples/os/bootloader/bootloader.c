@@ -12,7 +12,7 @@ static void printNum(struct efi_simpleTextOutputProtocol *consoleOut, int64_t nu
     char *numberStart = util_intToStr((char *)&string[util_UINT64_MAX_CHARS], number);
     int64_t stringLength = (char *)&string[util_INT64_MAX_CHARS] - numberStart;
     util_strToUtf16(&string[0], numberStart, stringLength);
-    string[stringLength] = L'\0';
+    string[stringLength] = u'\0';
     consoleOut->outputString(consoleOut, &string[0]);
 }
 
@@ -123,7 +123,7 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     systemTable->consoleOut->outputString(systemTable->consoleOut, u", any other key to keep current.");
     struct efi_inputKey key;
     readKey(systemTable, &key);
-    if (key.unicodeChar == L'a') {
+    if (key.unicodeChar == u'a') {
         if (graphics->setMode(graphics, (uint32_t)status) < 0) return 1;
     }
 

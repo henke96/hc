@@ -40,7 +40,7 @@ static int32_t utf8ToUtf16(char *utf8, int32_t utf8Length) {
             utf16Z, utf16Count
         ) != utf16Count
     ) return -1;
-    utf16Z[utf16ZCount - 1] = L'\0';
+    utf16Z[utf16ZCount - 1] = u'\0';
     return utf16ZCount;
 }
 
