@@ -76,9 +76,9 @@ void noreturn _start(void) {
     int32_t envUtf16Len = 2;
     int32_t envCount = 0;
     for (;; ++envUtf16Len) {
-        if (envUtf16[envUtf16Len - 2] == L'\0') {
+        if (envUtf16[envUtf16Len - 2] == u'\0') {
             ++envCount;
-            if (envUtf16[envUtf16Len - 1] == L'\0') break;
+            if (envUtf16[envUtf16Len - 1] == u'\0') break;
         }
     }
 
