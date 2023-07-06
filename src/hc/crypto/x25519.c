@@ -45,60 +45,57 @@ static void _x25519_monty(
 
 // Calculates nQ where Q is the x-coordinate of a point on the curve.
 //
-// resultx/resultz: the x coordinate of the resulting curve point (short form).
-// n: a little endian, 32-byte number.
-// q: a point of the curve (short form).
-static void _x25519_cmult(uint64_t *resultx, uint64_t *resultz, const uint8_t *n, const uint64_t *q) {
-    uint64_t a[5] = {0}, b[5] = {1}, c[5] = {1}, d[5] = {0};
+// outX/outZ: The x coordinate of the resulting curve point (short form).
+// n: A 32 byte number.
+// q: A point of the curve (short form).
+static void _x25519_mul(uint64_t *outX, uint64_t *outZ, const uint8_t *n, const uint64_t *q) {
+    uint64_t a[5], b[5] = {1}, c[5] = {1}, d[5] = {0};
+    hc_MEMCPY(&a[0], q, sizeof(uint64_t) * 5);
     uint64_t *nqpqx = &a[0], *nqpqz = &b[0], *nqx = &c[0], *nqz = &d[0];
+
     uint64_t e[5] = {0}, f[5] = {1}, g[5] = {0}, h[5] = {1};
     uint64_t *nqpqx2 = &e[0], *nqpqz2 = &f[0], *nqx2 = &g[0], *nqz2 = &h[0];
 
-    hc_MEMCPY(nqpqx, q, sizeof(uint64_t) * 5);
+    int32_t i = 256;
+    while (i) {
+        --i;
+        const uint64_t bit = (n[i >> 3] >> (i & 7)) & 1;
 
-    for (int32_t i = 0; i < 32; ++i) {
-        uint8_t byte = n[31 - i];
-        for (int32_t j = 0; j < 8; ++j) {
-            const uint64_t bit = byte >> 7;
+        curve25519_cSwap(nqx, nqpqx, bit);
+        curve25519_cSwap(nqz, nqpqz, bit);
+        _x25519_monty(
+            nqx2, nqz2,
+            nqpqx2, nqpqz2,
+            nqx, nqz,
+            nqpqx, nqpqz,
+            q
+        );
+        curve25519_cSwap(nqx2, nqpqx2, bit);
+        curve25519_cSwap(nqz2, nqpqz2, bit);
 
-            curve25519_cSwap(nqx, nqpqx, bit);
-            curve25519_cSwap(nqz, nqpqz, bit);
-            _x25519_monty(
-                nqx2, nqz2,
-                nqpqx2, nqpqz2,
-                nqx, nqz,
-                nqpqx, nqpqz,
-                q
-            );
-            curve25519_cSwap(nqx2, nqpqx2, bit);
-            curve25519_cSwap(nqz2, nqpqz2, bit);
-
-            uint64_t *t = nqx;
-            nqx = nqx2;
-            nqx2 = t;
-            t = nqz;
-            nqz = nqz2;
-            nqz2 = t;
-            t = nqpqx;
-            nqpqx = nqpqx2;
-            nqpqx2 = t;
-            t = nqpqz;
-            nqpqz = nqpqz2;
-            nqpqz2 = t;
-
-            byte <<= 1;
-        }
+        uint64_t *t = nqx;
+        nqx = nqx2;
+        nqx2 = t;
+        t = nqz;
+        nqz = nqz2;
+        nqz2 = t;
+        t = nqpqx;
+        nqpqx = nqpqx2;
+        nqpqx2 = t;
+        t = nqpqz;
+        nqpqz = nqpqz2;
+        nqpqz2 = t;
     }
 
-    hc_MEMCPY(resultx, nqx, sizeof(uint64_t) * 5);
-    hc_MEMCPY(resultz, nqz, sizeof(uint64_t) * 5);
+    hc_MEMCPY(outX, nqx, sizeof(uint64_t) * 5);
+    hc_MEMCPY(outZ, nqz, sizeof(uint64_t) * 5);
 }
 
 static const uint8_t x25519_ecdhBasepoint[32] = { 9 };
 
 // All arguments are 32 bytes.
 static void x25519(const uint8_t *secret, const uint8_t *public, uint8_t *out) {
-    uint64_t bp[5], x[5], z[5], zmone[5];
+    uint64_t bp[5], x[5], z[5];
     uint8_t e[32];
 
     hc_MEMCPY(&e[0], &secret[0], 32);
@@ -106,10 +103,10 @@ static void x25519(const uint8_t *secret, const uint8_t *public, uint8_t *out) {
     e[31] &= 127;
     e[31] |= 64;
 
-    curve25519_load(bp, public);
-    _x25519_cmult(x, z, e, bp);
-    curve25519_powTwo255m21(zmone, z);
-    curve25519_mul(z, x, zmone);
+    curve25519_load(&bp[0], public);
+    _x25519_mul(&x[0], &z[0], &e[0], &bp[0]);
+    curve25519_invert(&z[0], &z[0]);
+    curve25519_mul(&z[0], &x[0], &z[0]);
     curve25519_reduce(&z[0]);
-    curve25519_store(out, z);
+    curve25519_store(out, &z[0]);
 }

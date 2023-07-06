@@ -1,6 +1,6 @@
 // Public domain by Andrew M. <liquidsun@gmail.com> (ed25519-donna)
 
-// ed25519_modm: Arithmetic modulo the group order n = 2^252 + 27742317777372353535851937790883648493
+// ed25519_modm: Arithmetic modulo the group order m = 2^252 + 27742317777372353535851937790883648493
 // k = 32
 // b = 256
 // m = 2^252 + 27742317777372353535851937790883648493
@@ -716,7 +716,7 @@ static void ed25519_ge_pnielsAdd(struct ed25519_ge_pniels *r, const struct ed255
 
 static void ed25519_ge_pack(uint8_t *r, const struct ed25519_ge *p) {
     uint64_t tx[5], ty[5], zi[5];
-    curve25519_powTwo255m21(&zi[0], p->z);
+    curve25519_invert(&zi[0], p->z);
     curve25519_mul(&tx[0], p->x, &zi[0]);
     curve25519_mul(&ty[0], p->y, &zi[0]);
     curve25519_reduce(&ty[0]);
@@ -991,7 +991,7 @@ static void ed25519_x25519Basepoint(const uint8_t *secret, uint8_t *publicOut) {
     uint64_t yplusz[5], zminusy[5];
     curve25519_addNoReduce(&yplusz[0], p.y, p.z);
     curve25519_subNoReduce(&zminusy[0], p.z, p.y);
-    curve25519_powTwo255m21(&zminusy[0], &zminusy[0]);
+    curve25519_invert(&zminusy[0], &zminusy[0]);
     curve25519_mul(&yplusz[0], &yplusz[0], &zminusy[0]);
     curve25519_reduce(&yplusz[0]);
     curve25519_store(publicOut, &yplusz[0]);
