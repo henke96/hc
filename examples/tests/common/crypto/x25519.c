@@ -1,15 +1,12 @@
 static void _x25519_testIterations(int32_t iterations, const uint8_t *k, const uint8_t *u, const uint8_t *expected) {
-    uint8_t out[32];
-    uint8_t nextK[32];
-    uint8_t nextU[32];
-    hc_MEMCPY(&nextK[0], &k[0], 32);
-    hc_MEMCPY(&nextU[0], &u[0], 32);
-    for (int32_t i = 0; i < iterations; ++i) {
-        x25519(&nextK[0], &nextU[0], &out[0]);
-        hc_MEMCPY(&nextU[0], &nextK[0], 32);
-        hc_MEMCPY(&nextK[0], &out[0], 32);
+    uint8_t x[4][32];
+    hc_MEMCPY(&x[0], &u[0], 32);
+    hc_MEMCPY(&x[1], &k[0], 32);
+    int32_t i = 0;
+    for (; i < iterations; ++i) {
+        x25519(&x[(i + 1) & 3][0], &x[i & 3][0], &x[(i + 2) & 3][0]);
     }
-    CHECK(hc_MEMCMP(&out[0], &expected[0], 32), RES == 0);
+    CHECK(hc_MEMCMP(&x[(i + 1) & 3], &expected[0], 32), RES == 0);
 }
 
 static void _x25519_testBasepointMult(int32_t iterations, const uint8_t *scalar, const uint8_t *expected) {
