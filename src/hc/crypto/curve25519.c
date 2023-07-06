@@ -1,28 +1,48 @@
 // Shared code for x25519 and ed25519.
 // Public domain by Andrew M. <liquidsun@gmail.com> (curve25519-donna & ed25519-donna)
 
-// Load 32 bytes from `in` into element `out`.
-static void curve25519_load(uint64_t *out, const void *in) {
-    out[0] = mem_loadU64(in) & 0x7FFFFFFFFFFFF;
-    out[1] = (mem_loadU64(in + 6) >> 3) & 0x7FFFFFFFFFFFF;
-    out[2] = (mem_loadU64(in + 12) >> 6) & 0x7FFFFFFFFFFFF;
-    out[3] = (mem_loadU64(in + 19) >> 1) & 0x7FFFFFFFFFFFF;
-    out[4] = (mem_loadU64(in + 24) >> 12) & 0x7FFFFFFFFFFFF;
+static const uint64_t curve25519_zero[5] = {0};
+
+// Load 32 byte number from `in` into `a`.
+static void curve25519_load(uint64_t *a, const void *in) {
+    a[0] = mem_loadU64(in) & 0x7FFFFFFFFFFFF;
+    a[1] = (mem_loadU64(in + 6) >> 3) & 0x7FFFFFFFFFFFF;
+    a[2] = (mem_loadU64(in + 12) >> 6) & 0x7FFFFFFFFFFFF;
+    a[3] = (mem_loadU64(in + 19) >> 1) & 0x7FFFFFFFFFFFF;
+    a[4] = (mem_loadU64(in + 24) >> 12) & 0x7FFFFFFFFFFFF;
 }
 
-// Fully reduce `a`, and store it as 32 bytes into `out`.
+// Store `a` as 32 byte number in `out`.
 static void curve25519_store(void *out, uint64_t *a) {
-    a[1] += a[0] >> 51; a[0] &= 0x7FFFFFFFFFFFF;
-    a[2] += a[1] >> 51; a[1] &= 0x7FFFFFFFFFFFF;
-    a[3] += a[2] >> 51; a[2] &= 0x7FFFFFFFFFFFF;
-    a[4] += a[3] >> 51; a[3] &= 0x7FFFFFFFFFFFF;
-    a[0] += 19 * (a[4] >> 51); a[4] &= 0x7FFFFFFFFFFFF;
+    mem_storeU64(&out[0], a[0] | (a[1] << 51));
+    mem_storeU64(&out[8], (a[1] >> 13) | (a[2] << 38));
+    mem_storeU64(&out[16], (a[2] >> 26) | (a[3] << 25));
+    mem_storeU64(&out[24], (a[3] >> 39) | (a[4] << 12));
+}
 
-    a[1] += a[0] >> 51; a[0] &= 0x7FFFFFFFFFFFF;
-    a[2] += a[1] >> 51; a[1] &= 0x7FFFFFFFFFFFF;
-    a[3] += a[2] >> 51; a[2] &= 0x7FFFFFFFFFFFF;
-    a[4] += a[3] >> 51; a[3] &= 0x7FFFFFFFFFFFF;
-    a[0] += 19 * (a[4] >> 51); a[4] &= 0x7FFFFFFFFFFFF;
+// Fully reduce `a`.
+static void curve25519_reduce(uint64_t *a) {
+    a[1] += a[0] >> 51;
+    a[0] &= 0x7FFFFFFFFFFFF;
+    a[2] += a[1] >> 51;
+    a[1] &= 0x7FFFFFFFFFFFF;
+    a[3] += a[2] >> 51;
+    a[2] &= 0x7FFFFFFFFFFFF;
+    a[4] += a[3] >> 51;
+    a[3] &= 0x7FFFFFFFFFFFF;
+    a[0] += 19 * (a[4] >> 51);
+    a[4] &= 0x7FFFFFFFFFFFF;
+
+    a[1] += a[0] >> 51;
+    a[0] &= 0x7FFFFFFFFFFFF;
+    a[2] += a[1] >> 51;
+    a[1] &= 0x7FFFFFFFFFFFF;
+    a[3] += a[2] >> 51;
+    a[2] &= 0x7FFFFFFFFFFFF;
+    a[4] += a[3] >> 51;
+    a[3] &= 0x7FFFFFFFFFFFF;
+    a[0] += 19 * (a[4] >> 51);
+    a[4] &= 0x7FFFFFFFFFFFF;
 
     // Now a is between 0 and 2^255-1, properly carried.
     // Case 1: between 0 and 2^255-20.
@@ -30,11 +50,16 @@ static void curve25519_store(void *out, uint64_t *a) {
 
     a[0] += 19;
 
-    a[1] += a[0] >> 51; a[0] &= 0x7FFFFFFFFFFFF;
-    a[2] += a[1] >> 51; a[1] &= 0x7FFFFFFFFFFFF;
-    a[3] += a[2] >> 51; a[2] &= 0x7FFFFFFFFFFFF;
-    a[4] += a[3] >> 51; a[3] &= 0x7FFFFFFFFFFFF;
-    a[0] += 19 * (a[4] >> 51); a[4] &= 0x7FFFFFFFFFFFF;
+    a[1] += a[0] >> 51;
+    a[0] &= 0x7FFFFFFFFFFFF;
+    a[2] += a[1] >> 51;
+    a[1] &= 0x7FFFFFFFFFFFF;
+    a[3] += a[2] >> 51;
+    a[2] &= 0x7FFFFFFFFFFFF;
+    a[4] += a[3] >> 51;
+    a[3] &= 0x7FFFFFFFFFFFF;
+    a[0] += 19 * (a[4] >> 51);
+    a[4] &= 0x7FFFFFFFFFFFF;
 
     // Now between 19 and 2^255-1 in both cases, and offset by 19.
 
@@ -55,11 +80,6 @@ static void curve25519_store(void *out, uint64_t *a) {
     a[2] &= 0x7FFFFFFFFFFFF;
     a[3] &= 0x7FFFFFFFFFFFF;
     a[4] &= 0x7FFFFFFFFFFFF;
-
-    mem_storeU64(&out[0], a[0] | (a[1] << 51));
-    mem_storeU64(&out[8], (a[1] >> 13) | (a[2] << 38));
-    mem_storeU64(&out[16], (a[2] >> 26) | (a[3] << 25));
-    mem_storeU64(&out[24], (a[3] >> 39) | (a[4] << 12));
 }
 
 // Conditionally swap `a` and `b`, depending on if `shouldSwap` is 1 or 0.
@@ -116,36 +136,25 @@ static hc_INLINE void curve25519_subNoReduce(uint64_t *out, const uint64_t *a, c
     out[4] = a[4] + 0x0FFFFFFFFFFFFE - b[4];
 }
 
-static void curve25519_neg(uint64_t *out, const uint64_t *a) {
-    out[0] = 0x0FFFFFFFFFFFDA - a[0];
-    out[1] = 0x0FFFFFFFFFFFFE - a[1] + (out[0] >> 51);
-    out[0] &= 0x7FFFFFFFFFFFF;
-    out[2] = 0x0FFFFFFFFFFFFE - a[2] + (out[1] >> 51);
-    out[1] &= 0x7FFFFFFFFFFFF;
-    out[3] = 0x0FFFFFFFFFFFFE - a[3] + (out[2] >> 51);
-    out[2] &= 0x7FFFFFFFFFFFF;
-    out[4] = 0x0FFFFFFFFFFFFE - a[4] + (out[3] >> 51);
-    out[3] &= 0x7FFFFFFFFFFFF;
-    out[0] += (out[4] >> 51) * 19;
-    out[4] &= 0x7FFFFFFFFFFFF;
+static hc_INLINE void curve25519_subNoReduceFourP(uint64_t *out, const uint64_t *a, const uint64_t *b) {
+    out[0] = a[0] + 0x1FFFFFFFFFFFB4 - b[0];
+    out[1] = a[1] + 0x1FFFFFFFFFFFFC - b[1];
+    out[2] = a[2] + 0x1FFFFFFFFFFFFC - b[2];
+    out[3] = a[3] + 0x1FFFFFFFFFFFFC - b[3];
+    out[4] = a[4] + 0x1FFFFFFFFFFFFC - b[4];
 }
 
 static hc_INLINE void curve25519_mulScalar(uint64_t *output, const uint64_t *a, uint64_t scalar) {
     uint128_t x = (uint128_t)a[0] * scalar;
     output[0] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-
     x = (uint128_t)a[1] * scalar + (uint64_t)(x >> 51);
     output[1] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-
     x = (uint128_t)a[2] * scalar + (uint64_t)(x >> 51);
     output[2] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-
     x = (uint128_t)a[3] * scalar + (uint64_t)(x >> 51);
     output[3] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-
     x = (uint128_t)a[4] * scalar + (uint64_t)(x >> 51);
     output[4] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-
     output[0] += (x >> 51) * 19;
 }
 
@@ -193,8 +202,6 @@ static void curve25519_mul(uint64_t *out, const uint64_t *a, const uint64_t *b) 
     r0 += (uint64_t)(t[4] >> 51) * 19;
     r1 += (r0 >> 51);
     r0 = r0 & 0x7FFFFFFFFFFFF;
-    r2 += (r1 >> 51);
-    r1 = r1 & 0x7FFFFFFFFFFFF;
 
     out[0] = r0;
     out[1] = r1;
@@ -236,8 +243,6 @@ static void curve25519_squareN(uint64_t *out, const uint64_t *a, uint64_t n) {
         r0 += (uint64_t)(t[4] >> 51) * 19;
         r1 += (r0 >> 51);
         r0 = r0 & 0x7FFFFFFFFFFFF;
-        r2 += (r1 >> 51);
-        r1 = r1 & 0x7FFFFFFFFFFFF;
     } while (--n);
 
     out[0] = r0;
@@ -247,8 +252,8 @@ static void curve25519_squareN(uint64_t *out, const uint64_t *a, uint64_t n) {
     out[4] = r4;
 }
 
-// In:  b =   2^5 - 2^0
-// Out: b = 2^250 - 2^0
+// In:  b = z^(2^5 - 2^0)
+// Out: b = z^(2^250 - 2^0)
 static void _curve25519_powTwo5mtwo0Two250mtwo0(uint64_t *b) {
     uint64_t t0[5], c[5];
 
@@ -268,8 +273,8 @@ static void _curve25519_powTwo5mtwo0Two250mtwo0(uint64_t *b) {
     /* 2^250 - 2^0 */ curve25519_mul(b, t0, b);
 }
 
-// z^(p - 2) = z(2^255 - 21)
-static void curve25519_recip(uint64_t *out, const uint64_t *z) {
+// Calculate z^(p - 2) = z^(2^255 - 21)
+static void curve25519_powTwo255m21(uint64_t *out, const uint64_t *z) {
     uint64_t a[5], t0[5], b[5];
 
     /* 2 */ curve25519_squareN(a, z, 1);
@@ -283,7 +288,7 @@ static void curve25519_recip(uint64_t *out, const uint64_t *z) {
     /* 2^255 - 21 */ curve25519_mul(out, b, a);
 }
 
-// z^((p-5)/8) = z^(2^252 - 3)
+// Calculate z^((p-5)/8) = z^(2^252 - 3)
 static void curve25519_powTwo252m3(uint64_t *two252m3, const uint64_t *z) {
     uint64_t b[5], c[5], t0[5];
 

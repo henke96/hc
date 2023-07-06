@@ -1,17 +1,6 @@
 // Public domain by Adam Langley <agl@imperialviolet.org> (curve25519-donna)
 // Derived from public domain C code by Daniel J. Bernstein <djb@cr.yp.to>
 
-// Find the difference of two numbers: output = in - output
-// Assumes that out[i] < 2**52
-// On return, out[i] < 2**55
-static hc_INLINE void _x25519_differenceBackwards(uint64_t *out, const uint64_t *in) {
-    out[0] = in[0] + (uint64_t)0x3FFFFFFFFFFF68 - out[0];
-    out[1] = in[1] + (uint64_t)0x3FFFFFFFFFFFF8 - out[1];
-    out[2] = in[2] + (uint64_t)0x3FFFFFFFFFFFF8 - out[2];
-    out[3] = in[3] + (uint64_t)0x3FFFFFFFFFFFF8 - out[3];
-    out[4] = in[4] + (uint64_t)0x3FFFFFFFFFFFF8 - out[4];
-}
-
 // Input: Q, Q', Q-Q'
 // Output: 2Q, Q+Q'
 //
@@ -31,16 +20,16 @@ static void _x25519_monty(
 
     hc_MEMCPY(&origx[0], x, 5 * sizeof(uint64_t));
     curve25519_addNoReduce(x, x, z);
-    _x25519_differenceBackwards(z, &origx[0]); // Does x - z
+    curve25519_subNoReduce(&z[0], &origx[0], &z[0]);
 
     hc_MEMCPY(&origxprime[0], xprime, sizeof(uint64_t) * 5);
     curve25519_addNoReduce(xprime, xprime, zprime);
-    _x25519_differenceBackwards(zprime, &origxprime[0]);
+    curve25519_subNoReduce(&zprime[0], &origxprime[0], &zprime[0]);
     curve25519_mul(&xxprime[0], xprime, z);
     curve25519_mul(&zzprime[0], x, zprime);
     hc_MEMCPY(&origxprime[0], &xxprime[0], sizeof(uint64_t) * 5);
     curve25519_addNoReduce(&xxprime[0], &xxprime[0], &zzprime[0]);
-    _x25519_differenceBackwards(&zzprime[0], &origxprime[0]);
+    curve25519_subNoReduce(&zzprime[0], &origxprime[0], &zzprime[0]);
     curve25519_squareN(x3, &xxprime[0], 1);
     curve25519_squareN(&zzzprime[0], &zzprime[0], 1);
     curve25519_mul(z3, &zzzprime[0], qmqp);
@@ -48,7 +37,7 @@ static void _x25519_monty(
     curve25519_squareN(&xx[0], x, 1);
     curve25519_squareN(zz, z, 1);
     curve25519_mul(x2, &xx[0], zz);
-    _x25519_differenceBackwards(zz, &xx[0]); // Does zz = xx - zz
+    curve25519_subNoReduce(&zz[0], &xx[0], &zz[0]);
     curve25519_mulScalar(&zzz[0], zz, 121665);
     curve25519_addNoReduce(&zzz[0], &zzz[0], &xx[0]);
     curve25519_mul(z2, zz, &zzz[0]);
@@ -119,7 +108,8 @@ static void x25519(const uint8_t *secret, const uint8_t *public, uint8_t *out) {
 
     curve25519_load(bp, public);
     _x25519_cmult(x, z, e, bp);
-    curve25519_recip(zmone, z);
+    curve25519_powTwo255m21(zmone, z);
     curve25519_mul(z, x, zmone);
+    curve25519_reduce(&z[0]);
     curve25519_store(out, z);
 }
