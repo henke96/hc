@@ -58,7 +58,7 @@ void noreturn _start(void) {
     if (cmdLineSize <= 0) goto cleanup_cmdLine;
 
     int32_t argc = _start_parseCmdLine(cmdLine);
-    char **argv = HeapAlloc(heap, 0, sizeof(char *) * (uint64_t)argc + 1);
+    char **argv = HeapAlloc(heap, 0, sizeof(char *) * (uint64_t)(argc + 1));
     if (argv == NULL) goto cleanup_cmdLine;
 
     {
@@ -103,7 +103,7 @@ void noreturn _start(void) {
     );
     if (envSize <= 0) goto cleanup_env;
 
-    char **envp = HeapAlloc(heap, 0, sizeof(char *) * (uint64_t)envCount + 1);
+    char **envp = HeapAlloc(heap, 0, sizeof(char *) * (uint64_t)(envCount + 1));
     if (envp == NULL) goto cleanup_env;
 
     char *curr = env;
