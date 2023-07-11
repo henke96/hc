@@ -9,6 +9,12 @@
 #include "hc/linux/debug.c"
 #include "hc/linux/helpers/_start.c"
 
+static int64_t tests_currentNs(void) {
+    struct timespec timespec;
+    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &timespec), RES == 0);
+    return timespec.tv_sec * 1000000000 + timespec.tv_nsec;
+}
+
 #include "hc/crypto/sha512.c"
 #include "hc/crypto/sha256.c"
 #include "hc/crypto/sha1.c"
@@ -19,3 +25,9 @@
 #include "hc/crypto/poly1305.c"
 
 #include "../common/common.c"
+
+int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
+    common_parseArgs(argc, argv);
+    common_tests();
+    return 0;
+}

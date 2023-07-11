@@ -46,7 +46,7 @@ static void _chacha20_testOrig(
     }
 }
 
-static void chacha20_tests(hc_UNUSED uint64_t level) {
+static void chacha20_tests(void) {
     // Test vectors from RFC 8439.
     _chacha20_testIetf(
         1, 0x9000000, 0x4a000000,

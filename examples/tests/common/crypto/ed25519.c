@@ -17,7 +17,7 @@ static void _ed25519_test(
     CHECK(ed25519_verifySignature(message, messageSize, &public[0], &signature[0]), RES != 0);
 }
 
-static void ed25519_tests(hc_UNUSED uint64_t level) {
+static void ed25519_tests(void) {
     // Test vectors from RFC 8032.
     _ed25519_test(
         (const uint8_t *)hc_STR_COMMA_LEN(""),
@@ -45,7 +45,7 @@ static void ed25519_tests(hc_UNUSED uint64_t level) {
         (const uint8_t *)"\xdc\x2a\x44\x59\xe7\x36\x96\x33\xa5\x2b\x1b\xf2\x77\x83\x9a\x00\x20\x10\x09\xa3\xef\xbf\x3e\xcb\x69\xbe\xa2\x18\x6c\x26\xb5\x89\x09\x35\x1f\xc9\xac\x90\xb3\xec\xfd\xfb\xc7\xc6\x64\x31\xe0\x30\x3d\xca\x17\x9c\x13\x8a\xc1\x7a\xd9\xbe\xf1\x17\x73\x31\xa7\x04"
     );
     // Test vectors from http://ed25519.cr.yp.to/software.html.
-    if (level >= 1) {
+    if (tests_level >= 1) {
         int32_t offset = 0;
         for (int32_t caseN = 0; caseN < 1024; ++caseN) {
             uint8_t secret[32];
