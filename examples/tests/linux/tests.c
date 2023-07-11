@@ -10,7 +10,7 @@
 #include "hc/linux/helpers/_start.c"
 
 static int64_t tests_currentNs(void) {
-    struct timespec timespec;
+    struct timespec timespec = {0};
     debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &timespec), RES == 0);
     return timespec.tv_sec * 1000000000 + timespec.tv_nsec;
 }
