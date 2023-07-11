@@ -47,35 +47,21 @@ static void _sha512_blocks(uint64_t *state, const uint8_t *in, int64_t numBlocks
     uint64_t w[80];
     uint64_t r[88];
 
-    for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
-
     do {
-        for (int32_t i = 0; i < 16; ++i) w[i] = mem_loadU64BE(&in[8 * i]);
+        for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
+        for (int32_t i = 0; i < 16; ++i) w[i] = mem_loadU64BE(&in[i << 3]);
 
         for (int32_t i = 0;; ++i) {
-            uint64_t y = w[i];
-            uint64_t x = r[i];
-            x += y;
-            x += _sha512_round[i];
-            x += _sha512_SIGMA1_B(r[i + 3]);
-            x += _sha512_CH(r[i + 3], r[i + 2], r[i + 1]);
+            uint64_t x = r[i] + w[i] + _sha512_round[i] + _sha512_SIGMA1_B(r[i + 3]) + _sha512_CH(r[i + 3], r[i + 2], r[i + 1]);
             r[i + 4] += x;
-            x += _sha512_SIGMA0_B(r[i + 7]);
-            x += _sha512_MAJ(r[i + 7], r[i + 6], r[i + 5]);
-            r[i + 8] = x;
+            r[i + 8] = x + _sha512_SIGMA0_B(r[i + 7]) + _sha512_MAJ(r[i + 7], r[i + 6], r[i + 5]);
 
-            if (i < 64) {
-                y += w[i + 9];
-                y += _sha512_SIGMA1_A(w[i + 14]);
-                y += _sha512_SIGMA0_A(w[i + 1]);
-                w[i + 16] = y;
-            } else if (i == 79) break;
+            if (i < 64) w[i + 16] = w[i] + w[i + 9] + _sha512_SIGMA1_A(w[i + 14]) + _sha512_SIGMA0_A(w[i + 1]);
+            else if (i == 79) break;
         }
 
-        for (int32_t i = 0; i < 8; ++i) {
-            uint64_t x = r[87 - i] + state[i];
-            state[i] = r[7 - i] = x;
-        }
+        for (int32_t i = 0; i < 8; ++i) state[i] += r[87 - i];
+
         in += _sha512_BLOCK_SIZE;
     } while (--numBlocks);
 }
@@ -135,5 +121,5 @@ static void sha512_finish(struct sha512 *self, uint8_t *hash) {
     mem_storeU64BE(&self->buffer[112], numBits.u64[1]);
     mem_storeU64BE(&self->buffer[120], numBits.u64[0]);
     _sha512_blocks(&self->state[0], &self->buffer[0], 1);
-    for (int32_t i = 0; i < 8; ++i) mem_storeU64BE(&hash[i * 8], self->state[i]);
+    for (int32_t i = 0; i < 8; ++i) mem_storeU64BE(&hash[i << 3], self->state[i]);
 }

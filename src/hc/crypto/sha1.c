@@ -45,11 +45,11 @@ static void _sha1_blocks(uint32_t *state, const uint8_t *in, int64_t numBlocks) 
             r[i + 3] = hc_ROTL32(r[i + 3], 30);
         }
 
-        state[0] = r[84] + state[0];
-        state[1] = r[83] + state[1];
-        state[2] = r[82] + state[2];
-        state[3] = r[81] + state[3];
-        state[4] = r[80] + state[4];
+        state[0] += r[84];
+        state[1] += r[83];
+        state[2] += r[82];
+        state[3] += r[81];
+        state[4] += r[80];
 
         in += _sha1_BLOCK_SIZE;
     } while (--numBlocks);

@@ -20,7 +20,7 @@ struct sha256 {
 #define _sha256_SIGMA0_B(X) (hc_ROTR32(X, 2) ^ hc_ROTR32(X, 13) ^ hc_ROTR32(X, 22))
 #define _sha256_SIGMA1_B(X) (hc_ROTR32(X, 6) ^ hc_ROTR32(X, 11) ^ hc_ROTR32(X, 25))
 
-static const uint64_t _sha256_round[64] = {
+static const uint32_t _sha256_round[64] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
     0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3,
@@ -43,35 +43,21 @@ static void _sha256_blocks(uint32_t *state, const uint8_t *in, int64_t numBlocks
     uint32_t w[64];
     uint32_t r[72];
 
-    for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
-
     do {
-        for (int32_t i = 0; i < 16; ++i) w[i] = mem_loadU32BE(&in[4 * i]);
+        for (int32_t i = 0; i < 8; ++i) r[7 - i] = state[i];
+        for (int32_t i = 0; i < 16; ++i) w[i] = mem_loadU32BE(&in[i << 2]);
 
         for (int32_t i = 0;; ++i) {
-            uint32_t y = w[i];
-            uint32_t x = r[i];
-            x += y;
-            x += _sha256_round[i];
-            x += _sha256_SIGMA1_B(r[i + 3]);
-            x += _sha256_CH(r[i + 3], r[i + 2], r[i + 1]);
+            uint32_t x = r[i] + w[i] + _sha256_round[i] + _sha256_SIGMA1_B(r[i + 3]) + _sha256_CH(r[i + 3], r[i + 2], r[i + 1]);
             r[i + 4] += x;
-            x += _sha256_SIGMA0_B(r[i + 7]);
-            x += _sha256_MAJ(r[i + 7], r[i + 6], r[i + 5]);
-            r[i + 8] = x;
+            r[i + 8] = x + _sha256_SIGMA0_B(r[i + 7]) + _sha256_MAJ(r[i + 7], r[i + 6], r[i + 5]);
 
-            if (i < 48) {
-                y += w[i + 9];
-                y += _sha256_SIGMA1_A(w[i + 14]);
-                y += _sha256_SIGMA0_A(w[i + 1]);
-                w[i + 16] = y;
-            } else if (i == 63) break;
+            if (i < 48) w[i + 16] = w[i] + w[i + 9] + _sha256_SIGMA1_A(w[i + 14]) + _sha256_SIGMA0_A(w[i + 1]);
+            else if (i == 63) break;
         }
 
-        for (int32_t i = 0; i < 8; ++i) {
-            uint32_t x = r[71 - i] + state[i];
-            state[i] = r[7 - i] = x;
-        }
+        for (int32_t i = 0; i < 8; ++i) state[i] += r[71 - i];
+
         in += _sha256_BLOCK_SIZE;
     } while (--numBlocks);
 }
@@ -126,5 +112,5 @@ static void sha256_finish(struct sha256 *self, uint8_t *hash) {
     hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(56 - self->bufferSize));
     mem_storeU64BE(&self->buffer[56], numBits);
     _sha256_blocks(&self->state[0], &self->buffer[0], 1);
-    for (int32_t i = 0; i < 8; ++i) mem_storeU32BE(&hash[i * 4], self->state[i]);
+    for (int32_t i = 0; i < 8; ++i) mem_storeU32BE(&hash[i << 2], self->state[i]);
 }
