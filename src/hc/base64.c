@@ -1,4 +1,4 @@
-static char base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char base64_table[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 #define base64_ENCODE_SIZE(INPUT_SIZE) (((INPUT_SIZE + 2) / 3) * 4)
 

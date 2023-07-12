@@ -8,14 +8,6 @@
 #include "hc/windows/debug.c"
 #include "hc/windows/_start.c"
 
-static int64_t tests_timestampMult;
-
-static int64_t tests_currentNs(void) {
-    int64_t time;
-    debug_CHECK(QueryPerformanceCounter(&time), RES != 0);
-    return time * tests_timestampMult;
-}
-
 #include "hc/crypto/sha512.c"
 #include "hc/crypto/sha256.c"
 #include "hc/crypto/sha1.c"
@@ -24,6 +16,14 @@ static int64_t tests_currentNs(void) {
 #include "hc/crypto/ed25519.c"
 #include "hc/crypto/chacha20.c"
 #include "hc/crypto/poly1305.c"
+#include "hc/base64.c"
+
+static int64_t tests_timestampMult;
+static int64_t tests_currentNs(void) {
+    int64_t time;
+    debug_CHECK(QueryPerformanceCounter(&time), RES != 0);
+    return time * tests_timestampMult;
+}
 
 #include "../common/common.c"
 
