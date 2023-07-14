@@ -39,6 +39,8 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define FILE_ATTRIBUTE_VIRTUAL 0x00010000
 
 // winbase.h
+#define INFINITE ((uint32_t)-1)
+
 #define INVALID_HANDLE_VALUE ((void *)-1)
 #define INVALID_FILE_SIZE ((uint32_t)0xffffffff)
 #define INVALID_SET_FILE_POINTER ((uint32_t)-1)
@@ -65,6 +67,14 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define OPEN_EXISTING 3
 #define OPEN_ALWAYS 4
 #define TRUNCATE_EXISTING 5
+
+struct SECURITYATTRIBUTES {
+    uint32_t structSize;
+    int32_t __pad;
+    void *securityDescriptor;
+    int32_t inheritHandle;
+    int32_t __pad2;
+};
 
 // wingdi.h
 #define PFD_TYPE_RGBA 0
@@ -786,7 +796,7 @@ hc_DLLIMPORT void *GetCurrentProcess(void);
 
 hc_DLLIMPORT int32_t CloseHandle(void *handle);
 hc_DLLIMPORT void *GetStdHandle(uint32_t type);
-hc_DLLIMPORT void *CreateFileW(const uint16_t *fileName, uint32_t desiredAccess, uint32_t shareMode, void *securityAttributes, uint32_t creationDisposition, uint32_t flagsAndAttributes, void *templateFileHandle);
+hc_DLLIMPORT void *CreateFileW(const uint16_t *fileName, uint32_t desiredAccess, uint32_t shareMode, struct SECURITYATTRIBUTES *attributes, uint32_t creationDisposition, uint32_t flagsAndAttributes, void *templateFileHandle);
 hc_DLLIMPORT int32_t WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
 hc_DLLIMPORT int32_t ReadFile(void *fileHandle, void *buffer, uint32_t numberOfBytesToRead, uint32_t *numberOfBytesRead, void *overlapped);
 hc_DLLIMPORT int32_t GetFileSizeEx(void *fileHandle, int64_t *size);
@@ -804,6 +814,14 @@ hc_DLLIMPORT int32_t VirtualFree(void *address, uint64_t size, uint32_t freeType
 
 hc_DLLIMPORT int32_t MultiByteToWideChar(uint32_t codePage, uint32_t flags, const char *multiByteStr, int32_t multiByteSize, uint16_t *wideCharStr, int32_t wideCharCount);
 hc_DLLIMPORT int32_t WideCharToMultiByte(uint32_t codePage, uint32_t flags, const uint16_t *wideCharStr, int32_t wideCharCount, char *multiByteStr, int32_t multiByteSize, const uint16_t *defaultChar, int32_t *usedDefaultChar);
+
+hc_DLLIMPORT void *CreateThread(struct SECURITYATTRIBUTES *attributes, uint64_t stackSize, uint32_t (*func)(void *arg), void *arg, uint32_t flags, uint32_t *threadId);
+hc_DLLIMPORT uint32_t WaitForSingleObjectEx(void *handle, uint32_t timeoutMs, int32_t alertable);
+
+// synchronization.lib (api-ms-win-core-synch-*.dll)
+hc_DLLIMPORT int32_t WaitOnAddress(void *address, void *compareAddress, int64_t addressSize, uint32_t timeoutMs);
+hc_DLLIMPORT void WakeByAddressSingle(void *address);
+hc_DLLIMPORT void WakeByAddressAll(void *address);
 
 // user32.dll
 hc_DLLIMPORT int32_t MessageBoxW(void *windowHandle, const uint16_t *text, const uint16_t *caption, uint32_t type);

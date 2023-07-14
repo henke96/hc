@@ -8,6 +8,7 @@ build() {
     if test -n "$LINK_KERNEL32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/kernel32.def" "$prog_path/$ARCH/kernel32.lib"; fi
     if test -n "$LINK_USER32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/user32.def" "$prog_path/$ARCH/user32.lib"; fi
     if test -n "$LINK_GDI32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$prog_path/$ARCH/gdi32.lib"; fi
+    if test -n "$LINK_SYNCHRONIZATION"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/synchronization.def" "$prog_path/$ARCH/synchronization.lib"; fi
 
     eval "set -- $("$script_dir/../shellUtil/escape.sh" "-L$prog_path/$ARCH") $FLAGS $1"
 
@@ -36,6 +37,7 @@ release_flags="$common_flags -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
 if test -n "$LINK_KERNEL32"; then FLAGS="-l:kernel32.lib $FLAGS"; fi
 if test -n "$LINK_USER32"; then FLAGS="-l:user32.lib $FLAGS"; fi
 if test -n "$LINK_GDI32"; then FLAGS="-l:gdi32.lib $FLAGS"; fi
+if test -n "$LINK_SYNCHRONIZATION"; then FLAGS="-l:synchronization.lib $FLAGS"; fi
 
 if test -z "$NO_X86_64"; then export ARCH="x86_64"; build "$FLAGS_X86_64"; fi
 if test -z "$NO_AARCH64"; then export ARCH="aarch64"; build "$FLAGS_AARCH64"; fi

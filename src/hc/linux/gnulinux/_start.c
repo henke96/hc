@@ -1,4 +1,4 @@
-#define _start_FUNC "_startGnu"
+#define _start_FUNC _startGnu
 #include "hc/linux/helpers/_start.c"
 
 int32_t start(int32_t argc, char **argv, char **envp);

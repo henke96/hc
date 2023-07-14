@@ -9,21 +9,26 @@ if defined JAVA_HOME set "java_prefix=%JAVA_HOME%\bin\"
 set LINK_LIBDL=1 & set LINK_LIBLOG=1 & set LINK_LIBANDROID=1 & set LINK_LIBC=1
 set "FLAGS=-shared %FLAGS%"
 call "%root_dir%\tools\build\androidelf.bat" "%script_dir%" libopengl so
-if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+if not errorlevel 0 exit /b
+if errorlevel 1 exit /b
 
 if not defined NO_AARCH64 (
     set "ARCH=aarch64"
     call :prepare_apk "debug."
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
     call :prepare_apk ""
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
 )
 if not defined NO_X86_64 (
     set "ARCH=x86_64"
     call :prepare_apk "debug."
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
     call :prepare_apk ""
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
 )
 
 if not defined ANDROID_SDK (
@@ -32,9 +37,11 @@ if not defined ANDROID_SDK (
     echo.Set ANDROID_SDK to build apks
 ) else (
     call :build_apk "debug." "--debug-mode"
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
     call :build_apk "" ""
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
 
     if not defined KEYSTORE (
         rem keytool -genkeypair -keyalg RSA -validity 100000 -keystore my.keystore
@@ -42,9 +49,11 @@ if not defined ANDROID_SDK (
     ) else (
         if not defined KEYSTORE_PASS set "KEYSTORE_PASS=stdin"
         call :sign_apk "debug."
-        if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+        if not errorlevel 0 exit /b
+        if errorlevel 1 exit /b
         call :sign_apk ""
-        if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+        if not errorlevel 0 exit /b
+        if errorlevel 1 exit /b
     )
 )
 exit /b
@@ -56,7 +65,8 @@ if "%ARCH%" == "aarch64" set "android_arch=arm64-v8a"
 
 if not exist "%script_dir%\%~1dist\lib\%android_arch%" (
     mkdir "%script_dir%\%~1dist\lib\%android_arch%"
-    if not errorlevel 0 exit /b & if errorlevel 1 exit /b
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
 )
 copy /b /v /y "%script_dir%\%ARCH%\%~1libopengl.so" "%script_dir%\%~1dist\lib\%android_arch%\libopengl.so" >nul
 exit /b

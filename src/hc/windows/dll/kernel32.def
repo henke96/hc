@@ -30,3 +30,5 @@ SetCurrentDirectoryW
 GetSystemInfo
 GetEnvironmentStringsW
 FreeEnvironmentStringsW
+CreateThread
+WaitForSingleObjectEx
