@@ -82,6 +82,12 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
         if (ret < 0) return 3;
     }
 
+    // Wait for child to finish.
+    for (;;) {
+        if (hc_ATOMIC_LOAD(&childDone, hc_ATOMIC_ACQUIRE) == 0) break;
+        debug_CHECK(sys_futex(&childDone, FUTEX_WAIT, 1, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
+    }
+
     debug_printNum("parent test1 = ", test1, "\n");
     debug_printNum("parent test2 = ", test2, "\n");
     debug_printNum("parent test3 = ", test3, "\n");
@@ -94,12 +100,6 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     debug_printNum("parent &test4 = ", (int64_t)&test4, "\n");
     debug_printNum("parent &test5 = ", (int64_t)&test5, "\n");
     debug_printNum("parent &test6 = ", (int64_t)&test6, "\n");
-
-    // Wait for child to finish.
-    for (;;) {
-        if (hc_ATOMIC_LOAD(&childDone, hc_ATOMIC_ACQUIRE) == 0) break;
-        debug_CHECK(sys_futex(&childDone, FUTEX_WAIT, 1, NULL, NULL, 0), RES == 0 || RES == -EAGAIN);
-    }
 
     return 0;
 }

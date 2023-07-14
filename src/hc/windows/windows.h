@@ -773,6 +773,12 @@ struct SYSTEMINFO {
     uint16_t processorRevision;
 };
 
+// synchapi.h
+#define WAIT_ABANDONED 0x00000080
+#define WAIT_IO_COMPLETION 0x000000C0
+#define WAIT_TIMEOUT 0x00000102
+#define WAIT_FAILED 0xFFFFFFFF
+
 // kernel32.dll
 hc_DLLIMPORT uint16_t *GetEnvironmentStringsW(void);
 hc_DLLIMPORT int32_t FreeEnvironmentStringsW(uint16_t *strings);

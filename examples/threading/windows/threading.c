@@ -60,8 +60,8 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     debug_print("Parent done!\n");
     releaseLock();
 
-    WaitForSingleObjectEx(child1Handle, INFINITE, 0);
-    WaitForSingleObjectEx(child2Handle, INFINITE, 0);
+    debug_CHECK(WaitForSingleObjectEx(child1Handle, INFINITE, 0), RES == 0);
+    debug_CHECK(WaitForSingleObjectEx(child2Handle, INFINITE, 0), RES == 0);
     debug_printNum("Counter: ", counter, "\n");
     return 0;
 }

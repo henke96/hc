@@ -12,12 +12,7 @@ struct tls_imageTlsDirectory {
 
 typedef void (*tls_imageTlsCallback)(void *dllHandle, uint32_t reason, void *reserved);
 
-#pragma section(".CRT", read)
-#pragma comment(linker, "/merge:.CRT=.rdata")
-// To add a callback, use for example:
-// hc_SECTION(".CRT$XLB") tls_imageTlsCallback __xl_b = &callbackFunction;
-hc_SECTION(".CRT$XLA") tls_imageTlsCallback __xl_a = NULL;
-hc_SECTION(".CRT$XLZ") tls_imageTlsCallback __xl_z = NULL;
+tls_imageTlsCallback tls_callbacks[] = { NULL };
 
 hc_SECTION(".tls") uint64_t _tls_start;
 hc_SECTION(".tls$ZZZ") uint64_t _tls_end;
@@ -30,7 +25,7 @@ const struct tls_imageTlsDirectory _tls_used = {
     .startAddressOfRawData = (uint64_t)&_tls_start,
     .endAddressOfRawData = (uint64_t)&_tls_end,
     .addressOfIndex = (uint64_t)&_tls_index,
-    .addressOfCallBacks = (uint64_t)(&__xl_a + 1),
+    .addressOfCallBacks = (uint64_t)&tls_callbacks[0],
     .sizeOfZeroFill = 0,
     .characteristics = 0
 };
