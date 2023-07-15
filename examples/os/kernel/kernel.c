@@ -2,7 +2,7 @@
 #include "hc/efi.h"
 #include "hc/math.c"
 #include "hc/util.c"
-#include "hc/libc/musl.c"
+#include "hc/libc.c"
 #include "hc/x86_64/msr.c"
 #include "../common/paging.h"
 #include "../common/bootloaderPage.c"

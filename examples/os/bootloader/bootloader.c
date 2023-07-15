@@ -2,7 +2,7 @@
 #include "hc/efi.h"
 #include "hc/math.c"
 #include "hc/util.c"
-#include "hc/libc/small.c"
+#include "hc/libc.c"
 #include "../common/paging.h"
 #include "../common/bootloaderPage.c"
 #include "kernelBin.c"

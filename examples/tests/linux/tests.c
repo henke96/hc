@@ -3,7 +3,7 @@
 #include "hc/util.c"
 #include "hc/math.c"
 #include "hc/mem.c"
-#include "hc/libc/small.c"
+#include "hc/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"

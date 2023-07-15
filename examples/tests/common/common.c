@@ -12,6 +12,7 @@
 
 static uint64_t tests_level = 0;
 
+#include "memset.c"
 #include "base64.c"
 #include "crypto/sha.c"
 #include "crypto/x25519.c"
@@ -28,6 +29,7 @@ static void common_parseArgs(int32_t argc, char **argv) {
 }
 
 static void common_tests(void) {
+    TIME(memset_tests)
     TIME(base64_tests)
     TIME(sha_tests)
     TIME(x25519_tests)

@@ -1,5 +1,3 @@
-#if !hc_LIBC
-
 #ifndef _start_FUNC
     #define _start_FUNC start
 #endif
@@ -53,5 +51,4 @@ asm(
     "li a7, 94\n"
     "ecall\n"                     // Run exit_group with the return from start.
 );
-#endif
 #endif

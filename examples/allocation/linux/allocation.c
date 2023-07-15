@@ -2,7 +2,7 @@
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/debug.h"
-#include "hc/libc/small.c"
+#include "hc/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/util.c"
 #include "hc/linux/sys.c"

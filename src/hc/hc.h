@@ -44,6 +44,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 
 // Attributes
 #define hc_WEAK __attribute__((weak))
+#define hc_ALIAS(NAME) __attribute__((alias(NAME)))
 #define hc_FALLTHROUGH __attribute__((fallthrough))
 #define hc_NONULL __attribute__((nonnull))
 #define hc_UNUSED __attribute__((unused))

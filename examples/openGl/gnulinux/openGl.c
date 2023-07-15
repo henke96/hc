@@ -5,7 +5,7 @@
 #include "hc/elf.h"
 #include "hc/x11.h"
 #include "hc/debug.h"
-#include "hc/libc/musl.c"
+#include "hc/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/util.c"
 #include "hc/linux/sys.c"
