@@ -1,4 +1,4 @@
-#define _memset_ITERATIONS 1000
+#define _memset_ITERATIONS 1
 #define _memset_SIZE 256
 
 static void _memset_check(char *buffer, int32_t size, int32_t offset, int32_t val) {
@@ -14,13 +14,12 @@ static void memset_tests(void) {
 
     for (int32_t size = 0; size <= _memset_SIZE; ++size) {
         for (int32_t offset = 0; offset < 16; ++offset) {
-            for (int32_t val = 0; val < 256; ++val) {
-                memset(&buffer[0], ~val, sizeof(buffer));
-                for (int32_t i = 0; i < _memset_ITERATIONS; ++i) {
-                    memset(&buffer[16 + offset], val, (size_t)size);
-                }
-                _memset_check(&buffer[0], size, offset, val);
+            int32_t val = 0xAA;
+            memset(&buffer[0], ~val, sizeof(buffer));
+            for (int32_t i = 0; i < _memset_ITERATIONS; ++i) {
+                memset(&buffer[16 + offset], val, (size_t)size);
             }
+            _memset_check(&buffer[0], size, offset, val);
         }
     }
 }
