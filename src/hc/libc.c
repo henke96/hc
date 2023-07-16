@@ -23,7 +23,7 @@ void *memmove(void *dest, const void *src, size_t n) hc_NO_BUILTIN {
     uint64_t temp1, temp2;
     char *d = dest;
     const char *s = src;
-    if (n >= 16) {
+    if (n > 16) {
         if (d < s) {
             size_t iEnd = n & ~(size_t)15;
             size_t i = 0;
