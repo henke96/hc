@@ -79,7 +79,7 @@ static void sha256_update(struct sha256 *self, const uint8_t *in, int64_t size) 
     if (self->bufferSize > 0) {
         int64_t numToRead = _sha256_BLOCK_SIZE - self->bufferSize;
         if (numToRead > size) numToRead = size;
-        for (int64_t i = 0; i < numToRead; ++i) self->buffer[self->bufferSize + i] = in[i];
+        hc_MEMCPY(&self->buffer[self->bufferSize], &in[0], (size_t)numToRead);
         self->bufferSize += numToRead;
         if (self->bufferSize < _sha256_BLOCK_SIZE) return;
         _sha256_blocks(&self->state[0], &self->buffer[0], 1);
@@ -96,7 +96,7 @@ static void sha256_update(struct sha256 *self, const uint8_t *in, int64_t size) 
     self->bufferSize = math_ALIGN_REMAINDER(size, _sha256_BLOCK_SIZE);
     if (self->bufferSize > 0) {
         in += math_ALIGN_BACKWARD(size, _sha256_BLOCK_SIZE);
-        for (int64_t i = 0; i < self->bufferSize; ++i) self->buffer[i] = in[i];
+        hc_MEMCPY(&self->buffer[0], &in[0], (size_t)self->bufferSize);
     }
 }
 
