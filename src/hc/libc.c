@@ -5,6 +5,7 @@ void *memset(void *dest, int32_t c, size_t n) hc_NO_BUILTIN {
         hc_MEMCPY(dest + n, &expanded, 8);
         hc_MEMCPY(dest + n + 8, &expanded, 8);
     }
+    if (n == 0) return dest;
     if (n >= 8) {
         hc_MEMCPY(dest, &expanded, 8);
         hc_MEMCPY(dest + n - 8, &expanded, 8);
@@ -14,7 +15,7 @@ void *memset(void *dest, int32_t c, size_t n) hc_NO_BUILTIN {
     } else if (n >= 2) {
         hc_MEMCPY(dest, &expanded, 2);
         hc_MEMCPY(dest + n - 2, &expanded, 2);
-    } else if (n != 0) *(char *)dest = (char)expanded;
+    } else *(char *)dest = (char)expanded;
     return dest;
 }
 
