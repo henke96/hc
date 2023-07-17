@@ -73,32 +73,37 @@ static const uint32_t _aes_encTable[256] = {
     0xC3414182, 0xB0999929, 0x772D2D5A, 0x110F0F1E, 0xCBB0B07B, 0xFC5454A8, 0xD6BBBB6D, 0x3A16162C
 };
 
-static void aes_rounds(void *out, const void *message, const uint32_t *roundKeys, int32_t numRoundsX4) {
-    uint32_t y0, y1, y2, y3;
-
-    uint32_t x0 = mem_loadU32(message) ^ roundKeys[0];
-    uint32_t x1 = mem_loadU32(message + 4) ^ roundKeys[1];
-    uint32_t x2 = mem_loadU32(message + 8) ^ roundKeys[2];
-    uint32_t x3 = mem_loadU32(message + 12) ^ roundKeys[3];
+static void aes_rounds(void *out, const void *in, const uint32_t *roundKeys, int32_t numRoundsX4) {
+    uint32_t x0 = mem_loadU32(in) ^ roundKeys[0];
+    uint32_t x1 = mem_loadU32(in + 4) ^ roundKeys[1];
+    uint32_t x2 = mem_loadU32(in + 8) ^ roundKeys[2];
+    uint32_t x3 = mem_loadU32(in + 12) ^ roundKeys[3];
 
     for (int32_t i = 4; i < numRoundsX4; i += 4) {
-        y0 = _aes_encTable[x0 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x1 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x2 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x3 >> 24) & 0xFF], 8);
-        y1 = _aes_encTable[x1 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x2 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x3 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x0 >> 24) & 0xFF], 8);
-        y2 = _aes_encTable[x2 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x3 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x0 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x1 >> 24) & 0xFF], 8);
-        y3 = _aes_encTable[x3 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x0 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x1 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x2 >> 24) & 0xFF], 8);
+        uint32_t y0 = _aes_encTable[x0 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x1 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x2 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x3 >> 24) & 0xFF], 8);
+        uint32_t y1 = _aes_encTable[x1 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x2 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x3 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x0 >> 24) & 0xFF], 8);
+        uint32_t y2 = _aes_encTable[x2 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x3 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x0 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x1 >> 24) & 0xFF], 8);
+        uint32_t y3 = _aes_encTable[x3 & 0xFF] ^ hc_ROTR32(_aes_encTable[(x0 >> 8) & 0xFF], 24) ^ hc_ROTR32(_aes_encTable[(x1 >> 16) & 0xFF], 16) ^ hc_ROTR32(_aes_encTable[(x2 >> 24) & 0xFF], 8);
         x0 = y0 ^ roundKeys[i];
         x1 = y1 ^ roundKeys[i + 1];
         x2 = y2 ^ roundKeys[i + 2];
         x3 = y3 ^ roundKeys[i + 3];
     }
     // Last round.
-    y0 = roundKeys[numRoundsX4    ] ^ (uint32_t)aes_sboxTable[x0 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x1 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x2 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x3 >> 24) & 0xFF] << 24);
-    y1 = roundKeys[numRoundsX4 + 1] ^ (uint32_t)aes_sboxTable[x1 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x2 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x3 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x0 >> 24) & 0xFF] << 24);
-    y2 = roundKeys[numRoundsX4 + 2] ^ (uint32_t)aes_sboxTable[x2 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x3 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x0 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x1 >> 24) & 0xFF] << 24);
-    y3 = roundKeys[numRoundsX4 + 3] ^ (uint32_t)aes_sboxTable[x3 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x0 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x1 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x2 >> 24) & 0xFF] << 24);
-
-    mem_storeU32(out, y0);
-    mem_storeU32(out + 4, y1);
-    mem_storeU32(out + 8, y2);
-    mem_storeU32(out + 12, y3);
+    mem_storeU32(
+        out,
+        roundKeys[numRoundsX4    ] ^ (uint32_t)aes_sboxTable[x0 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x1 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x2 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x3 >> 24) & 0xFF] << 24)
+    );
+    mem_storeU32(
+        out + 4,
+        roundKeys[numRoundsX4 + 1] ^ (uint32_t)aes_sboxTable[x1 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x2 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x3 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x0 >> 24) & 0xFF] << 24)
+    );
+    mem_storeU32(
+        out + 8,
+        roundKeys[numRoundsX4 + 2] ^ (uint32_t)aes_sboxTable[x2 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x3 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x0 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x1 >> 24) & 0xFF] << 24)
+    );
+    mem_storeU32(
+        out + 12,
+        roundKeys[numRoundsX4 + 3] ^ (uint32_t)aes_sboxTable[x3 & 0xFF] ^ ((uint32_t)aes_sboxTable[(x0 >> 8) & 0xFF] << 8) ^ ((uint32_t)aes_sboxTable[(x1 >> 16) & 0xFF] << 16) ^ ((uint32_t)aes_sboxTable[(x2 >> 24) & 0xFF] << 24)
+    );
 }

@@ -3,7 +3,7 @@
 
 #define aes128_KEY_SIZE 16
 
-static void aes128_block(void *out, const void *message, const void *key) {
+static void aes128_block(void *out, const void *in, const void *key) {
     // Expand key.
     uint32_t roundKeys[44];
     uint32_t temp0 = mem_loadU32(key);
@@ -37,5 +37,5 @@ static void aes128_block(void *out, const void *message, const void *key) {
     }
 
     // Do rounds.
-    aes_rounds(out, message, &roundKeys[0], 40);
+    aes_rounds(out, in, &roundKeys[0], 40);
 }

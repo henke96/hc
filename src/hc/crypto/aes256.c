@@ -3,7 +3,7 @@
 
 #define aes256_KEY_SIZE 32
 
-static void aes256_block(void *out, const void *message, const void *key) {
+static void aes256_block(void *out, const void *in, const void *key) {
     // Expand key.
     uint32_t roundKeys[60];
     uint32_t temp0 = mem_loadU32(key);
@@ -59,5 +59,5 @@ static void aes256_block(void *out, const void *message, const void *key) {
     }
 
     // Do rounds.
-    aes_rounds(out, message, &roundKeys[0], 56);
+    aes_rounds(out, in, &roundKeys[0], 56);
 }
