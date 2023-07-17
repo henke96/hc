@@ -44,7 +44,7 @@ static void aes256_block(void *out, const void *message, const void *key) {
         if (i == 56) break;
 
         temp4 ^= (
-            ((uint32_t)aes_sboxTable[(temp3 >> 24) & 0xFF] << 24) ^
+            ((uint32_t)aes_sboxTable[temp3 >> 24] << 24) ^
             ((uint32_t)aes_sboxTable[(temp3 >> 16) & 0xFF] << 16) ^
             ((uint32_t)aes_sboxTable[(temp3 >> 8) & 0xFF] << 8) ^
             (uint32_t)aes_sboxTable[temp3 & 0xFF]
