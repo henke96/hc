@@ -31,7 +31,7 @@
 #define elf_DT_INIT 12
 #define elf_DT_FINI 13
 #define elf_DT_SONAME 14
-#define elf_DT_RPATH  15
+#define elf_DT_RPATH 15
 #define elf_DT_SYMBOLIC 16
 #define elf_DT_REL 17
 #define elf_DT_RELSZ 18

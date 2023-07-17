@@ -361,9 +361,9 @@ struct so_timestamping {
  * rx_filter: one of HWTSTAMP_FILTER_*
  *
  * %SIOCGHWTSTAMP and %SIOCSHWTSTAMP expect a &struct ifreq with a
- * ifr_data pointer to this structure.  For %SIOCSHWTSTAMP, if the
+ * ifr_data pointer to this structure. For %SIOCSHWTSTAMP, if the
  * driver or hardware does not support the requested rx_filter value,
- * the driver may use a more general filter mode.  In this case
+ * the driver may use a more general filter mode. In this case
  * rx_filter will indicate the actual mode on return.
  */
 struct hwtstamp_config {
@@ -543,8 +543,8 @@ struct sock_txtime {
 #define IP_PMTUDISC_OMIT 5
 
 #define IP_MULTICAST_IF 32
-#define IP_MULTICAST_TTL  33
-#define IP_MULTICAST_LOOP  34
+#define IP_MULTICAST_TTL 33
+#define IP_MULTICAST_LOOP 34
 #define IP_ADD_MEMBERSHIP 35
 #define IP_DROP_MEMBERSHIP 36
 #define IP_UNBLOCK_SOURCE 37
@@ -617,10 +617,10 @@ struct sockaddr_un {
 #endif
 
 #define AT_FDCWD -100 // Special value used to indicate openat should use the current working directory.
-#define AT_SYMLINK_NOFOLLOW 0x100 /* Do not follow symbolic links.  */
-#define AT_EACCESS 0x200 /* Test access permitted for effective IDs, not real IDs.  */
-#define AT_REMOVEDIR 0x200 /* Remove directory instead of unlinking file.  */
-#define AT_SYMLINK_FOLLOW 0x400 /* Follow symbolic links.  */
+#define AT_SYMLINK_NOFOLLOW 0x100 /* Do not follow symbolic links. */
+#define AT_EACCESS 0x200 /* Test access permitted for effective IDs, not real IDs. */
+#define AT_REMOVEDIR 0x200 /* Remove directory instead of unlinking file. */
+#define AT_SYMLINK_FOLLOW 0x400 /* Follow symbolic links. */
 #define AT_NO_AUTOMOUNT 0x800 /* Suppress terminal automount traversal */
 #define AT_EMPTY_PATH 0x1000 /* Allow empty relative pathname */
 #define AT_STATX_SYNC_TYPE 0x6000 /* Type of synchronisation required from statx() */
@@ -927,7 +927,7 @@ hc_ALIGNED(8)
 #define si_uid _sifields._kill._uid
 #define si_tid _sifields._timer._tid
 #define si_overrun _sifields._timer._overrun
-#define si_sys_private  _sifields._timer._sys_private
+#define si_sys_private _sifields._timer._sys_private
 #define si_status _sifields._sigchld._status
 #define si_utime _sifields._sigchld._utime
 #define si_stime _sifields._sigchld._stime
@@ -1791,7 +1791,7 @@ struct drm_event_crtc_sequence {
  *
  * Bitmask used to look for drm plane rotations.
  */
-#define DRM_MODE_ROTATE_MASK (DRM_MODE_ROTATE_0  | DRM_MODE_ROTATE_90  | DRM_MODE_ROTATE_180 | DRM_MODE_ROTATE_270)
+#define DRM_MODE_ROTATE_MASK (DRM_MODE_ROTATE_0 | DRM_MODE_ROTATE_90 | DRM_MODE_ROTATE_180 | DRM_MODE_ROTATE_270)
 
 /*
  * DRM_MODE_REFLECT_<axis>
@@ -2131,7 +2131,7 @@ struct drm_mode_get_connector {
 #define DRM_MODE_PROP_SIGNED_RANGE DRM_MODE_PROP_TYPE(2)
 
 /* the PROP_ATOMIC flag is used to hide properties from userspace that
- * is not aware of atomic properties.  This is mostly to work around
+ * is not aware of atomic properties. This is mostly to work around
  * older userspace (DDX drivers) that read/write each prop they find,
  * witout being aware that this could be triggering a lengthy modeset.
  */
@@ -2279,13 +2279,13 @@ struct drm_mode_fb_cmd2 {
      *   8 bit 2x2 subsampled colour difference samples.
      *
      * So it would consist of Y as offsets[0] and UV as
-     * offsets[1].  Note that offsets[0] will generally
+     * offsets[1]. Note that offsets[0] will generally
      * be 0 (but this is not required).
      *
      * To accommodate tiled, compressed, etc formats, a
-     * modifier can be specified.  The default value of zero
+     * modifier can be specified. The default value of zero
      * indicates "native" format as specified by the fourcc.
-     * Vendor specific modifier token.  Note that even though
+     * Vendor specific modifier token. Note that even though
      * it looks like we have a modifier per-plane, we in fact
      * do not. The modifier for each plane must be identical.
      * Thus all combinations of different data layouts for
@@ -2514,17 +2514,17 @@ struct hdr_output_metadata {
  * Request a page flip on the specified crtc.
  *
  * This ioctl will ask KMS to schedule a page flip for the specified
- * crtc.  Once any pending rendering targeting the specified fb (as of
+ * crtc. Once any pending rendering targeting the specified fb (as of
  * ioctl time) has completed, the crtc will be reprogrammed to display
- * that fb after the next vertical refresh.  The ioctl returns
+ * that fb after the next vertical refresh. The ioctl returns
  * immediately, but subsequent rendering to the current fb will block
- * in the execbuffer ioctl until the page flip happens.  If a page
+ * in the execbuffer ioctl until the page flip happens. If a page
  * flip is already pending as the ioctl is called, EBUSY will be
  * returned.
  *
  * Flag DRM_MODE_PAGE_FLIP_EVENT requests that drm sends back a vblank
  * event (see drm.h: struct drm_event_vblank) when the page flip is
- * done.  The user_data field passed in with this ioctl will be
+ * done. The user_data field passed in with this ioctl will be
  * returned as the user_data field in the vblank event struct.
  *
  * Flag DRM_MODE_PAGE_FLIP_ASYNC requests that the flip happen
@@ -2601,7 +2601,7 @@ struct drm_mode_destroy_dumb {
 
 // page-flip flags are valid, plus:
 #define DRM_MODE_ATOMIC_TEST_ONLY 0x0100
-#define DRM_MODE_ATOMIC_NONBLOCK  0x0200
+#define DRM_MODE_ATOMIC_NONBLOCK 0x0200
 #define DRM_MODE_ATOMIC_ALLOW_MODESET 0x0400
 
 #define DRM_MODE_ATOMIC_FLAGS (DRM_MODE_PAGE_FLIP_EVENT | DRM_MODE_PAGE_FLIP_ASYNC | DRM_MODE_ATOMIC_TEST_ONLY | \
@@ -2690,7 +2690,7 @@ struct drm_mode_create_blob {
  * Destroy a user-created blob property.
  *
  * User-space can release blobs as soon as they do not need to refer to them by
- * their blob object ID.  For instance, if you are using a MODE_ID blob in an
+ * their blob object ID. For instance, if you are using a MODE_ID blob in an
  * atomic commit and you will not make another commit re-using the same ID, you
  * can destroy the blob as soon as the commit has been issued, without waiting
  * for it to complete.
@@ -2840,17 +2840,17 @@ enum drm_connector_status {
 #define ARCH_SET_CPUID 0x1012
 
 // stat.h
-#define S_IFMT  00170000
+#define S_IFMT 00170000
 #define S_IFSOCK 0140000
-#define S_IFLNK  0120000
-#define S_IFREG  0100000
-#define S_IFBLK  0060000
-#define S_IFDIR  0040000
-#define S_IFCHR  0020000
-#define S_IFIFO  0010000
-#define S_ISUID  0004000
-#define S_ISGID  0002000
-#define S_ISVTX  0001000
+#define S_IFLNK 0120000
+#define S_IFREG 0100000
+#define S_IFBLK 0060000
+#define S_IFDIR 0040000
+#define S_IFCHR 0020000
+#define S_IFIFO 0010000
+#define S_ISUID 0004000
+#define S_ISGID 0002000
+#define S_ISVTX 0001000
 
 #define S_ISLNK(m) (((m) & S_IFMT) == S_IFLNK)
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
@@ -2976,7 +2976,7 @@ struct rusage {
 #define WSTOPPED WUNTRACED
 #define WEXITED 0x00000004
 #define WCONTINUED 0x00000008
-#define WNOWAIT 0x01000000 /* Don't reap, just poll status.  */
+#define WNOWAIT 0x01000000 /* Don't reap, just poll status. */
 
 #define __WNOTHREAD 0x20000000 /* Don't wait on children of other threads in this group */
 #define __WALL 0x40000000 /* Wait on all children, regardless of type */
@@ -3017,10 +3017,10 @@ struct nlmsghdr {
 };
 
 /* Flags values */
-#define NLM_F_REQUEST 0x01 /* It is request message.  */
+#define NLM_F_REQUEST 0x01 /* It is request message. */
 #define NLM_F_MULTI 0x02 /* Multipart message, terminated by NLMSG_DONE */
 #define NLM_F_ACK 0x04 /* Reply with ack, with zero or error code */
-#define NLM_F_ECHO 0x08 /* Echo this request  */
+#define NLM_F_ECHO 0x08 /* Echo this request */
 #define NLM_F_DUMP_INTR 0x10 /* Dump was inconsistent due to sequence change */
 #define NLM_F_DUMP_FILTERED 0x20 /* Dump was filtered as requested */
 
@@ -3782,10 +3782,10 @@ enum {
 #define ACPI_EVENT_MCAST_GROUP_NAME "acpi_mc_group"
 
 // mount.h
-#define MS_RDONLY  1 /* Mount read-only */
-#define MS_NOSUID  2 /* Ignore suid and sgid bits */
-#define MS_NODEV  4 /* Disallow access to device special files */
-#define MS_NOEXEC  8 /* Disallow program execution */
+#define MS_RDONLY 1 /* Mount read-only */
+#define MS_NOSUID 2 /* Ignore suid and sgid bits */
+#define MS_NODEV 4 /* Disallow access to device special files */
+#define MS_NOEXEC 8 /* Disallow program execution */
 #define MS_SYNCHRONOUS 16 /* Writes are synced at once */
 #define MS_REMOUNT 32 /* Alter flags of a mounted FS */
 #define MS_MANDLOCK 64 /* Allow mandatory locks on an FS */
@@ -3837,8 +3837,8 @@ struct linux_dirent64 {
 #define BLKFLSBUF _IO(0x12,97) /* flush buffer cache */
 #define BLKRASET _IO(0x12,98) /* set read ahead for block device */
 #define BLKRAGET _IO(0x12,99) /* get current read ahead setting */
-#define BLKFRASET  _IO(0x12,100) /* set filesystem (mm/filemap.c) read-ahead */
-#define BLKFRAGET  _IO(0x12,101) /* get filesystem (mm/filemap.c) read-ahead */
+#define BLKFRASET _IO(0x12,100) /* set filesystem (mm/filemap.c) read-ahead */
+#define BLKFRAGET _IO(0x12,101) /* get filesystem (mm/filemap.c) read-ahead */
 #define BLKSECTSET _IO(0x12,102) /* set max sectors per request (ll_rw_blk.c) */
 #define BLKSECTGET _IO(0x12,103) /* get max sectors per request (ll_rw_blk.c) */
 #define BLKSSZGET _IO(0x12,104) /* get block device sector size */
@@ -3871,7 +3871,7 @@ struct linux_dirent64 {
  * so we need to cover both possible versions on 32-bit.
  */
 /* Get stamp (timeval) */
-#define SIOCGSTAMP_NEW  _IOR(SOCK_IOC_TYPE, 0x06, long long[2])
+#define SIOCGSTAMP_NEW _IOR(SOCK_IOC_TYPE, 0x06, long long[2])
 /* Get stamp (timespec) */
 #define SIOCGSTAMPNS_NEW _IOR(SOCK_IOC_TYPE, 0x07, long long[2])
 
@@ -3904,8 +3904,8 @@ struct linux_dirent64 {
 #define SIOCGIFMTU 0x8921 /* get MTU size */
 #define SIOCSIFMTU 0x8922 /* set MTU size */
 #define SIOCSIFNAME 0x8923 /* set interface name */
-#define SIOCSIFHWADDR 0x8924 /* set hardware address  */
-#define SIOCGIFENCAP 0x8925 /* get/set encapsulations       */
+#define SIOCSIFHWADDR 0x8924 /* set hardware address */
+#define SIOCGIFENCAP 0x8925 /* get/set encapsulations */
 #define SIOCSIFENCAP 0x8926
 #define SIOCGIFHWADDR 0x8927 /* Get hardware address */
 #define SIOCGIFSLAVE 0x8929 /* Driver slaving support */
@@ -3921,10 +3921,10 @@ struct linux_dirent64 {
 #define SIOCGIFCOUNT 0x8938 /* get number of devices */
 
 #define SIOCGIFBR 0x8940 /* Bridging support */
-#define SIOCSIFBR 0x8941 /* Set bridging options  */
+#define SIOCSIFBR 0x8941 /* Set bridging options */
 
 #define SIOCGIFTXQLEN 0x8942 /* Get the tx queue length */
-#define SIOCSIFTXQLEN 0x8943 /* Set the tx queue length  */
+#define SIOCSIFTXQLEN 0x8943 /* Set the tx queue length */
 
 #define SIOCETHTOOL 0x8946 /* Ethtool interface */
 
@@ -3956,12 +3956,12 @@ struct linux_dirent64 {
 #define SIOCDELDLCI 0x8981 /* Delete DLCI device */
 
 #define SIOCGIFVLAN 0x8982 /* 802.1Q VLAN support */
-#define SIOCSIFVLAN 0x8983 /* Set 802.1Q VLAN options  */
+#define SIOCSIFVLAN 0x8983 /* Set 802.1Q VLAN options */
 
 /* bonding calls */
 #define SIOCBONDENSLAVE 0x8990 /* enslave a device to the bond */
 #define SIOCBONDRELEASE 0x8991 /* release a slave from the bond*/
-#define SIOCBONDSETHWADDR      0x8992 /* set the hw addr of the bond  */
+#define SIOCBONDSETHWADDR      0x8992 /* set the hw addr of the bond */
 #define SIOCBONDSLAVEINFOQUERY 0x8993   /* rtn info about slave state   */
 #define SIOCBONDINFOQUERY      0x8994 /* rtn info about bond state    */
 #define SIOCBONDCHANGEACTIVE   0x8995   /* update to a new active slave */
@@ -4017,13 +4017,13 @@ enum nf_dev_hooks {
 };
 
 enum {
-    NFPROTO_UNSPEC =  0,
-    NFPROTO_INET   =  1,
-    NFPROTO_IPV4   =  2,
-    NFPROTO_ARP    =  3,
-    NFPROTO_NETDEV =  5,
-    NFPROTO_BRIDGE =  7,
-    NFPROTO_IPV6   = 10,
+    NFPROTO_UNSPEC = 0,
+    NFPROTO_INET = 1,
+    NFPROTO_IPV4 = 2,
+    NFPROTO_ARP = 3,
+    NFPROTO_NETDEV = 5,
+    NFPROTO_BRIDGE = 7,
+    NFPROTO_IPV6 = 10,
     NFPROTO_DECNET = 12,
     NFPROTO_NUMPROTO,
 };
@@ -4117,7 +4117,7 @@ struct ipt_ip {
 #define IPT_INV_PROTO XT_INV_PROTO
 #define IPT_INV_MASK 0x7F /* All possible flag bits mask. */
 
-/* This structure defines each of the firewall rules.  Consists of 3
+/* This structure defines each of the firewall rules. Consists of 3
    parts which are 1) general IP header stuff 2) match specific
    stuff 3) the target to perform if the rule matches */
 struct ipt_entry {
@@ -4243,7 +4243,7 @@ struct sockaddr_ll {
 #define PACKET_HOST 0 /* To us */
 #define PACKET_BROADCAST 1 /* To all */
 #define PACKET_MULTICAST 2 /* To group */
-#define PACKET_OTHERHOST 3 /* To someone else  */
+#define PACKET_OTHERHOST 3 /* To someone else */
 #define PACKET_OUTGOING 4 /* Outgoing of any type */
 #define PACKET_LOOPBACK 5 /* MC/BRD frame looped back */
 #define PACKET_USER 6 /* To user space */
@@ -4298,7 +4298,7 @@ struct inotify_event {
 
 #define IN_ALL_EVENTS (IN_ACCESS | IN_MODIFY | IN_ATTRIB | IN_CLOSE_WRITE | IN_CLOSE_NOWRITE | IN_OPEN | IN_MOVED_FROM | IN_MOVED_TO | IN_DELETE | IN_CREATE | IN_DELETE_SELF | IN_MOVE_SELF)
 
-/* Flags for sys_inotify_init1.  */
+/* Flags for sys_inotify_init1. */
 #define IN_CLOEXEC O_CLOEXEC
 #define IN_NONBLOCK O_NONBLOCK
 
@@ -4506,7 +4506,7 @@ struct ksmbd_spnego_authen_response {
                                                  */
     uint16_t session_key_len; /* the length of the session key */
     uint16_t spnego_blob_len; /*
-                               * the length of  the GSS token which will be
+                               * the length of the GSS token which will be
                                * stored in SecurityBuffer of SMB2 SESSION
                                * SETUP response
                                */

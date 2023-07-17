@@ -17,6 +17,9 @@
 #include "hc/crypto/ed25519.c"
 #include "hc/crypto/chacha20.c"
 #include "hc/crypto/poly1305.c"
+#include "hc/crypto/aes.c"
+#include "hc/crypto/aes128.c"
+#include "hc/crypto/aes256.c"
 #include "hc/base64.c"
 
 static int64_t tests_currentNs(void) {

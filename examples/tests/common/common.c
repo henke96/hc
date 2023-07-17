@@ -20,6 +20,7 @@ static uint64_t tests_level = 0;
 #include "crypto/ed25519.c"
 #include "crypto/chacha20.c"
 #include "crypto/poly1305.c"
+#include "crypto/aes.c"
 
 static void common_parseArgs(int32_t argc, char **argv) {
     if (argc >= 2) {
@@ -38,6 +39,7 @@ static void common_tests(void) {
     TIME(ed25519_tests)
     TIME(chacha20_tests)
     TIME(poly1305_tests)
+    TIME(aes_tests)
 
     debug_print("All tests passed!\n");
 }
