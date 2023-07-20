@@ -147,18 +147,18 @@ static hc_INLINE void curve25519_subNoReduceFourP(uint64_t *out, const uint64_t 
     out[4] = a[4] + 0x1FFFFFFFFFFFFC - b[4];
 }
 
-static hc_INLINE void curve25519_mulScalar(uint64_t *output, const uint64_t *a, uint64_t scalar) {
-    uint128_t x = (uint128_t)a[0] * scalar;
-    output[0] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-    x = (uint128_t)a[1] * scalar + (uint64_t)(x >> 51);
-    output[1] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-    x = (uint128_t)a[2] * scalar + (uint64_t)(x >> 51);
-    output[2] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-    x = (uint128_t)a[3] * scalar + (uint64_t)(x >> 51);
-    output[3] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-    x = (uint128_t)a[4] * scalar + (uint64_t)(x >> 51);
-    output[4] = (uint64_t)x & 0x7FFFFFFFFFFFF;
-    output[0] += (x >> 51) * 19;
+static hc_INLINE void curve25519_mulScalar(uint64_t *out, const uint64_t *a, uint64_t scalar) {
+    uint128_t x = hc_MUL128_64x64(a[0], scalar);
+    out[0] = (uint64_t)x & 0x7FFFFFFFFFFFF;
+    x = hc_MUL128_64x64(a[1], scalar) + (uint64_t)(x >> 51);
+    out[1] = (uint64_t)x & 0x7FFFFFFFFFFFF;
+    x = hc_MUL128_64x64(a[2], scalar) + (uint64_t)(x >> 51);
+    out[2] = (uint64_t)x & 0x7FFFFFFFFFFFF;
+    x = hc_MUL128_64x64(a[3], scalar) + (uint64_t)(x >> 51);
+    out[3] = (uint64_t)x & 0x7FFFFFFFFFFFF;
+    x = hc_MUL128_64x64(a[4], scalar) + (uint64_t)(x >> 51);
+    out[4] = (uint64_t)x & 0x7FFFFFFFFFFFF;
+    out[0] += (uint64_t)(x >> 51) * 19;
 }
 
 static void curve25519_mul(uint64_t *out, const uint64_t *a, const uint64_t *b) {
@@ -175,11 +175,11 @@ static void curve25519_mul(uint64_t *out, const uint64_t *a, const uint64_t *b) 
     uint64_t s4 = a[4];
 
     uint128_t t[5] = {
-        (uint128_t)r0 * s0,
-        (uint128_t)r0 * s1 + (uint128_t)r1 * s0,
-        (uint128_t)r0 * s2 + (uint128_t)r2 * s0 + (uint128_t)r1 * s1,
-        (uint128_t)r0 * s3 + (uint128_t)r3 * s0 + (uint128_t)r1 * s2 + (uint128_t)r2 * s1,
-        (uint128_t)r0 * s4 + (uint128_t)r4 * s0 + (uint128_t)r3 * s1 + (uint128_t)r1 * s3 + (uint128_t)r2 * s2
+        hc_MUL128_64x64(r0, s0),
+        hc_MUL128_64x64(r0, s1) + hc_MUL128_64x64(r1, s0),
+        hc_MUL128_64x64(r0, s2) + hc_MUL128_64x64(r2, s0) + hc_MUL128_64x64(r1, s1),
+        hc_MUL128_64x64(r0, s3) + hc_MUL128_64x64(r3, s0) + hc_MUL128_64x64(r1, s2) + hc_MUL128_64x64(r2, s1),
+        hc_MUL128_64x64(r0, s4) + hc_MUL128_64x64(r4, s0) + hc_MUL128_64x64(r3, s1) + hc_MUL128_64x64(r1, s3) + hc_MUL128_64x64(r2, s2)
     };
 
     r4 *= 19;
@@ -187,10 +187,10 @@ static void curve25519_mul(uint64_t *out, const uint64_t *a, const uint64_t *b) 
     r2 *= 19;
     r3 *= 19;
 
-    t[0] += (uint128_t)r4 * s1 + (uint128_t)r1 * s4 + (uint128_t)r2 * s3 + (uint128_t)r3 * s2;
-    t[1] += (uint128_t)r4 * s2 + (uint128_t)r2 * s4 + (uint128_t)r3 * s3;
-    t[2] += (uint128_t)r4 * s3 + (uint128_t)r3 * s4;
-    t[3] += (uint128_t)r4 * s4;
+    t[0] += hc_MUL128_64x64(r4, s1) + hc_MUL128_64x64(r1, s4) + hc_MUL128_64x64(r2, s3) + hc_MUL128_64x64(r3, s2);
+    t[1] += hc_MUL128_64x64(r4, s2) + hc_MUL128_64x64(r2, s4) + hc_MUL128_64x64(r3, s3);
+    t[2] += hc_MUL128_64x64(r4, s3) + hc_MUL128_64x64(r3, s4);
+    t[3] += hc_MUL128_64x64(r4, s4);
 
     r0 = (uint64_t)t[0] & 0x7FFFFFFFFFFFF;
     t[1] += (uint64_t)(t[0] >> 51);
@@ -228,11 +228,11 @@ static void curve25519_squareN(uint64_t *out, const uint64_t *a, uint64_t n) {
         uint64_t d4 = d419 * 2;
 
         uint128_t t[5] = {
-            (uint128_t)r0 * r0 + (uint128_t)d4 * r1 + (uint128_t)d2 * r3,
-            (uint128_t)d0 * r1 + (uint128_t)d4 * r2 + (uint128_t)r3 * (r3 * 19),
-            (uint128_t)d0 * r2 + (uint128_t)r1 * r1 + (uint128_t)d4 * r3,
-            (uint128_t)d0 * r3 + (uint128_t)d1 * r2 + (uint128_t)r4 * d419,
-            (uint128_t)d0 * r4 + (uint128_t)d1 * r3 + (uint128_t)r2 * r2
+            hc_MUL128_64x64(r0, r0) + hc_MUL128_64x64(d4, r1) + hc_MUL128_64x64(d2, r3),
+            hc_MUL128_64x64(d0, r1) + hc_MUL128_64x64(d4, r2) + hc_MUL128_64x64(r3, (r3 * 19)),
+            hc_MUL128_64x64(d0, r2) + hc_MUL128_64x64(r1, r1) + hc_MUL128_64x64(d4, r3),
+            hc_MUL128_64x64(d0, r3) + hc_MUL128_64x64(d1, r2) + hc_MUL128_64x64(r4, d419),
+            hc_MUL128_64x64(d0, r4) + hc_MUL128_64x64(d1, r3) + hc_MUL128_64x64(r2, r2)
         };
         r0 = (uint64_t)t[0] & 0x7FFFFFFFFFFFF;
         t[1] += (uint64_t)(t[0] >> 51);

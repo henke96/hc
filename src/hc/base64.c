@@ -3,7 +3,7 @@ static const char base64_table[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop
 #define base64_ENCODE_SIZE(INPUT_SIZE) (((INPUT_SIZE + 2) / 3) * 4)
 
 // May be done in-place if the input is placed at the end of the buffer.
-static int64_t base64_encode(char *output, char *input, int64_t inputSize) {
+static ssize_t base64_encode(char *output, char *input, ssize_t inputSize) {
     char *end = &input[inputSize];
     char *outputPos = &output[0];
 
@@ -20,7 +20,7 @@ static int64_t base64_encode(char *output, char *input, int64_t inputSize) {
         outputPos += 4;
     }
 
-    int64_t remaining = (int64_t)(end - input);
+    ssize_t remaining = (ssize_t)(end - input);
     if (remaining > 0) {
         uint32_t input0 = input[0];
         outputPos[0] = base64_table[input0 >> 2];
@@ -35,5 +35,5 @@ static int64_t base64_encode(char *output, char *input, int64_t inputSize) {
         outputPos[3] = '=';
         outputPos += 4;
     }
-    return (int64_t)(outputPos - output);
+    return (ssize_t)(outputPos - output);
 }

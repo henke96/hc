@@ -3,7 +3,7 @@
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/debug.h"
-#include "hc/libc.c"
+#include "hc/compiler_rt/libc.c"
 #include "hc/windows/windows.h"
 #include "hc/windows/debug.c"
 #include "hc/windows/tls.c"

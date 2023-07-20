@@ -3,7 +3,7 @@
 #include "hc/util.c"
 #include "hc/base64.c"
 #include "hc/debug.h"
-#include "hc/libc.c"
+#include "hc/compiler_rt/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/util.c"

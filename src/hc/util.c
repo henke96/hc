@@ -1,5 +1,5 @@
 hc_UNUSED
-static int64_t util_cstrLen(const char *cstring) {
+static ssize_t util_cstrLen(const char *cstring) {
     const char *c = cstring;
     for (; *c != '\0'; ++c);
     return c - cstring;

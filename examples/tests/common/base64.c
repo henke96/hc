@@ -1,14 +1,14 @@
-static void _base64_test(const char *input, int64_t inputSize, const char *expected) {
+static void _base64_test(const char *input, ssize_t inputSize, const char *expected) {
     char buffer[64];
-    int64_t outputSize = base64_ENCODE_SIZE(inputSize);
-    CHECK(outputSize, (uint64_t)RES <= sizeof(buffer));
+    ssize_t outputSize = base64_ENCODE_SIZE(inputSize);
+    CHECK(outputSize, (size_t)RES <= sizeof(buffer));
 
     // Copy input into buffer to test inplace encoding.
     char *inputBuffer = &buffer[outputSize - inputSize];
-    hc_MEMCPY(inputBuffer, input, (uint64_t)inputSize);
+    hc_MEMCPY(inputBuffer, input, (size_t)inputSize);
 
     CHECK(base64_encode(&buffer[0], inputBuffer, inputSize), RES == outputSize);
-    CHECK(hc_MEMCMP(&buffer[0], expected, (uint64_t)outputSize), RES == 0);
+    CHECK(hc_MEMCMP(&buffer[0], expected, (size_t)outputSize), RES == 0);
 }
 
 static void base64_tests(void) {

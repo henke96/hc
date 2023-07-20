@@ -1,7 +1,7 @@
 #include "hc/hc.h"
 #include "hc/util.c"
 #include "hc/elf.h"
-#include "hc/libc.c"
+#include "hc/compiler_rt/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/util.c"
 #include "hc/linux/sys.c"

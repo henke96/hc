@@ -105,11 +105,11 @@ static void sha256_finish(struct sha256 *self, uint8_t *hash) {
 
     self->buffer[self->bufferSize++] = 0x80;
     if (self->bufferSize > 56) {
-        hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(64 - self->bufferSize));
+        hc_MEMSET(&self->buffer[self->bufferSize], 0, (size_t)(64 - self->bufferSize));
         _sha256_blocks(&self->state[0], &self->buffer[0], 1);
         self->bufferSize = 0;
     }
-    hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(56 - self->bufferSize));
+    hc_MEMSET(&self->buffer[self->bufferSize], 0, (size_t)(56 - self->bufferSize));
     mem_storeU64BE(&self->buffer[56], numBits);
     _sha256_blocks(&self->state[0], &self->buffer[0], 1);
     for (int32_t i = 0; i < 8; ++i) mem_storeU32BE(&hash[i << 2], self->state[i]);

@@ -1,3 +1,5 @@
+// TODO: riscv64 codegen looks terrible (avoids unaligned stores). Try `-Xclang -target-feature -Xclang +unaligned-scalar-mem` on real hw.
+
 void *memset(void *dest, int32_t c, size_t n) hc_NO_BUILTIN {
     uint64_t expanded = 0x0101010101010101 * (uint64_t)(c & 0xFF);
     while (n > 16) {

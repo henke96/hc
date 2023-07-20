@@ -61,39 +61,39 @@ static void ed25519_modm_barrettReduce(uint64_t *r, const uint64_t *q1, const ui
     // q1 = x >> 248 = 264 bits = 5 56 bit elements
     // q2 = mu * q1
     // q3 = (q2 / 256(32+1)) = q2 / (2^8)^(32+1) = q2 >> 264
-    uint128_t c = (uint128_t)ed25519_modm_mu[0] * q1[3] + (uint128_t)ed25519_modm_mu[3] * q1[0] + (uint128_t)ed25519_modm_mu[1] * q1[2] + (uint128_t)ed25519_modm_mu[2] * q1[1];
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_mu[0] * q1[4] + (uint128_t)ed25519_modm_mu[4] * q1[0] + (uint128_t)ed25519_modm_mu[3] * q1[1] + (uint128_t)ed25519_modm_mu[1] * q1[3] + (uint128_t)ed25519_modm_mu[2] * q1[2];
+    uint128_t c = hc_MUL128_64x64(ed25519_modm_mu[0], q1[3]) + hc_MUL128_64x64(ed25519_modm_mu[3], q1[0]) + hc_MUL128_64x64(ed25519_modm_mu[1], q1[2]) + hc_MUL128_64x64(ed25519_modm_mu[2], q1[1]);
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_mu[0], q1[4]) + hc_MUL128_64x64(ed25519_modm_mu[4], q1[0]) + hc_MUL128_64x64(ed25519_modm_mu[3], q1[1]) + hc_MUL128_64x64(ed25519_modm_mu[1], q1[3]) + hc_MUL128_64x64(ed25519_modm_mu[2], q1[2]);
     q3[0] = ((uint64_t)c >> 40) & 0xffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_mu[4] * q1[1] + (uint128_t)ed25519_modm_mu[1] * q1[4] + (uint128_t)ed25519_modm_mu[2] * q1[3] + (uint128_t)ed25519_modm_mu[3] * q1[2];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_mu[4], q1[1]) + hc_MUL128_64x64(ed25519_modm_mu[1], q1[4]) + hc_MUL128_64x64(ed25519_modm_mu[2], q1[3]) + hc_MUL128_64x64(ed25519_modm_mu[3], q1[2]);
     q3[0] |= ((uint64_t)c << 16) & 0xffffffffffffff;
     q3[1] = ((uint64_t)c >> 40) & 0xffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_mu[4] * q1[2] + (uint128_t)ed25519_modm_mu[2] * q1[4] + (uint128_t)ed25519_modm_mu[3] * q1[3];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_mu[4], q1[2]) + hc_MUL128_64x64(ed25519_modm_mu[2], q1[4]) + hc_MUL128_64x64(ed25519_modm_mu[3], q1[3]);
     q3[1] |= ((uint64_t)c << 16) & 0xffffffffffffff;
     q3[2] = ((uint64_t)c >> 40) & 0xffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_mu[4] * q1[3] + (uint128_t)ed25519_modm_mu[3] * q1[4];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_mu[4], q1[3]) + hc_MUL128_64x64(ed25519_modm_mu[3], q1[4]);
     q3[2] |= ((uint64_t)c << 16) & 0xffffffffffffff;
     q3[3] = ((uint64_t)c >> 40) & 0xffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_mu[4] * q1[4];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_mu[4], q1[4]);
     q3[3] |= ((uint64_t)c << 16) & 0xffffffffffffff;
     q3[4] = (uint64_t)(c >> 40);
 
-    c = (uint128_t)ed25519_modm_m[0] * q3[0];
+    c = hc_MUL128_64x64(ed25519_modm_m[0], q3[0]);
     r2[0] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_m[0] * q3[1] + (uint128_t)ed25519_modm_m[1] * q3[0];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_m[0], q3[1]) + hc_MUL128_64x64(ed25519_modm_m[1], q3[0]);
     r2[1] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_m[0] * q3[2] + (uint128_t)ed25519_modm_m[2] * q3[0] + (uint128_t)ed25519_modm_m[1] * q3[1];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_m[0], q3[2]) + hc_MUL128_64x64(ed25519_modm_m[2], q3[0]) + hc_MUL128_64x64(ed25519_modm_m[1], q3[1]);
     r2[2] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_m[0] * q3[3] + (uint128_t)ed25519_modm_m[3] * q3[0] + (uint128_t)ed25519_modm_m[1] * q3[2] + (uint128_t)ed25519_modm_m[2] * q3[1];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_m[0], q3[3]) + hc_MUL128_64x64(ed25519_modm_m[3], q3[0]) + hc_MUL128_64x64(ed25519_modm_m[1], q3[2]) + hc_MUL128_64x64(ed25519_modm_m[2], q3[1]);
     r2[3] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)ed25519_modm_m[0] * q3[4] + (uint128_t)ed25519_modm_m[4] * q3[0] + (uint128_t)ed25519_modm_m[3] * q3[1] + (uint128_t)ed25519_modm_m[1] * q3[3] + (uint128_t)ed25519_modm_m[2] * q3[2];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(ed25519_modm_m[0], q3[4]) + hc_MUL128_64x64(ed25519_modm_m[4], q3[0]) + hc_MUL128_64x64(ed25519_modm_m[3], q3[1]) + hc_MUL128_64x64(ed25519_modm_m[1], q3[3]) + hc_MUL128_64x64(ed25519_modm_m[2], q3[2]);
     r2[4] = (uint64_t)c & 0x0000ffffffffff;
 
     uint64_t pb = r2[0];
@@ -141,35 +141,35 @@ static void ed25519_modm_add(uint64_t *r, const uint64_t *x, const uint64_t *y) 
 static void ed25519_modm_mul(uint64_t *r, const uint64_t *x, const uint64_t *y) {
     uint64_t q1[5], r1[5];
 
-    uint128_t c = (uint128_t)x[0] * y[0];
+    uint128_t c = hc_MUL128_64x64(x[0], y[0]);
     r1[0] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[0] * y[1] + (uint128_t)x[1] * y[0];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[0], y[1]) + hc_MUL128_64x64(x[1], y[0]);
     r1[1] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[0] * y[2] + (uint128_t)x[2] * y[0] + (uint128_t)x[1] * y[1];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[0], y[2]) + hc_MUL128_64x64(x[2], y[0]) + hc_MUL128_64x64(x[1], y[1]);
     r1[2] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[0] * y[3] + (uint128_t)x[3] * y[0] + (uint128_t)x[1] * y[2] + (uint128_t)x[2] * y[1];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[0], y[3]) + hc_MUL128_64x64(x[3], y[0]) + hc_MUL128_64x64(x[1], y[2]) + hc_MUL128_64x64(x[2], y[1]);
     r1[3] = (uint64_t)c & 0xffffffffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[0] * y[4] + (uint128_t)x[4] * y[0] + (uint128_t)x[3] * y[1] + (uint128_t)x[1] * y[3] + (uint128_t)x[2] * y[2];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[0], y[4]) + hc_MUL128_64x64(x[4], y[0]) + hc_MUL128_64x64(x[3], y[1]) + hc_MUL128_64x64(x[1], y[3]) + hc_MUL128_64x64(x[2], y[2]);
     r1[4] = (uint64_t)c & 0x0000ffffffffff;
     q1[0] = ((uint64_t)c >> 24) & 0xffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[4] * y[1] + (uint128_t)x[1] * y[4] + (uint128_t)x[2] * y[3] + (uint128_t)x[3] * y[2];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[4], y[1]) + hc_MUL128_64x64(x[1], y[4]) + hc_MUL128_64x64(x[2], y[3]) + hc_MUL128_64x64(x[3], y[2]);
     q1[0] |= ((uint64_t)c << 32) & 0xffffffffffffff;
     q1[1] = ((uint64_t)c >> 24) & 0xffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[4] * y[2] + (uint128_t)x[2] * y[4] + (uint128_t)x[3] * y[3];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[4], y[2]) + hc_MUL128_64x64(x[2], y[4]) + hc_MUL128_64x64(x[3], y[3]);
     q1[1] |= ((uint64_t)c << 32) & 0xffffffffffffff;
     q1[2] = ((uint64_t)c >> 24) & 0xffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[4] * y[3] + (uint128_t)x[3] * y[4];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[4], y[3]) + hc_MUL128_64x64(x[3], y[4]);
     q1[2] |= ((uint64_t)c << 32) & 0xffffffffffffff;
     q1[3] = ((uint64_t)c >> 24) & 0xffffffff;
 
-    c = (uint64_t)(c >> 56) + (uint128_t)x[4] * y[4];
+    c = (uint64_t)(c >> 56) + hc_MUL128_64x64(x[4], y[4]);
     q1[3] |= ((uint64_t)c << 32) & 0xffffffffffffff;
     q1[4] = (uint64_t)(c >> 24);
 

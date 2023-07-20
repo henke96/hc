@@ -95,11 +95,11 @@ static void sha1_finish(struct sha1 *self, uint8_t *hash) {
 
     self->buffer[self->bufferSize++] = 0x80;
     if (self->bufferSize > 56) {
-        hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(64 - self->bufferSize));
+        hc_MEMSET(&self->buffer[self->bufferSize], 0, (size_t)(64 - self->bufferSize));
         _sha1_blocks(&self->state[0], &self->buffer[0], 1);
         self->bufferSize = 0;
     }
-    hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(56 - self->bufferSize));
+    hc_MEMSET(&self->buffer[self->bufferSize], 0, (size_t)(56 - self->bufferSize));
     mem_storeU64BE(&self->buffer[56], numBits);
     _sha1_blocks(&self->state[0], &self->buffer[0], 1);
     for (int32_t i = 0; i < 5; ++i) mem_storeU32BE(&hash[i << 2], self->state[i]);

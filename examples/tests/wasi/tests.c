@@ -4,10 +4,9 @@
 #include "hc/math.c"
 #include "hc/mem.c"
 #include "hc/compiler_rt/libc.c"
-#include "hc/linux/linux.h"
-#include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
-#include "hc/linux/helpers/_start.c"
+#include "hc/compiler_rt/mul128.c"
+#include "hc/wasm/wasi/wasi.h"
+#include "hc/wasm/wasi/debug.c"
 
 #include "hc/crypto/sha512.c"
 #include "hc/crypto/sha256.c"
@@ -23,15 +22,16 @@
 #include "hc/base64.c"
 
 static int64_t tests_currentNs(void) {
-    struct timespec timespec = {0};
-    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &timespec), RES == 0);
-    return timespec.tv_sec * 1000000000 + timespec.tv_nsec;
+    int64_t timestamp;
+    debug_CHECK(clock_time_get(CLOCK_MONOTONIC, 1, &timestamp), RES == 0);
+    return timestamp;
 }
 
 #include "../common/common.c"
 
-int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
-    common_parseArgs(argc, argv);
+void noreturn _start(void) {
+    char *argv[] = { "tests", "1", NULL }; // TODO
+    common_parseArgs(hc_ARRAY_LEN(argv) - 1, &argv[0]);
     common_tests();
-    return 0;
+    proc_exit(0);
 }

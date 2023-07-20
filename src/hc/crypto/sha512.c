@@ -126,11 +126,11 @@ static void sha512_finish(struct sha512 *self, uint8_t *hash) {
 
     self->buffer[self->bufferSize++] = 0x80;
     if (self->bufferSize > 112) {
-        hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(128 - self->bufferSize));
+        hc_MEMSET(&self->buffer[self->bufferSize], 0, (size_t)(128 - self->bufferSize));
         _sha512_blocks(&self->state[0], &self->buffer[0], 1);
         self->bufferSize = 0;
     }
-    hc_MEMSET(&self->buffer[self->bufferSize], 0, (uint64_t)(112 - self->bufferSize));
+    hc_MEMSET(&self->buffer[self->bufferSize], 0, (size_t)(112 - self->bufferSize));
     mem_storeU64BE(&self->buffer[112], numBits.u64[1]);
     mem_storeU64BE(&self->buffer[120], numBits.u64[0]);
     _sha512_blocks(&self->state[0], &self->buffer[0], 1);

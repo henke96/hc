@@ -35,9 +35,9 @@ static void _poly1305_blocks(struct poly1305 *self, const uint8_t *in, int64_t n
         h2 += ((t1 >> 24) & 0x3FFFFFFFFFF) | hibit;
 
         // h *= r
-        uint128_t d0 = (uint128_t)h0 * r0 + (uint128_t)h1 * s2 + (uint128_t)h2 * s1;
-        uint128_t d1 = (uint128_t)h0 * r1 + (uint128_t)h1 * r0 + (uint128_t)h2 * s2;
-        uint128_t d2 = (uint128_t)h0 * r2 + (uint128_t)h1 * r1 + (uint128_t)h2 * r0;
+        uint128_t d0 = hc_MUL128_64x64(h0, r0) + hc_MUL128_64x64(h1, s2) + hc_MUL128_64x64(h2, s1);
+        uint128_t d1 = hc_MUL128_64x64(h0, r1) + hc_MUL128_64x64(h1, r0) + hc_MUL128_64x64(h2, s2);
+        uint128_t d2 = hc_MUL128_64x64(h0, r2) + hc_MUL128_64x64(h1, r1) + hc_MUL128_64x64(h2, r0);
 
         // (partial) h %= p
         h0 = (uint64_t)d0 & 0xFFFFFFFFFFF;

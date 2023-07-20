@@ -72,6 +72,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 
 // Builtins
 #define hc_UNREACHABLE __builtin_unreachable()
+#define hc_TRAP __builtin_trap()
 #define hc_ASSUME __builtin_assume
 #define hc_ASSUME_ALIGNED __builtin_assume_aligned
 #define hc_ABS32 __builtin_abs
@@ -119,9 +120,14 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_ATOMIC_PAUSE
 #endif
 
-// TODO: wasm32 seems to need compiler_rt for these (https://github.com/llvm-mirror/compiler-rt/blob/master/lib/builtins/multi3.c)
 typedef __int128_t int128_t;
 typedef __uint128_t uint128_t;
+
+#if hc_WASM32
+    #define hc_MUL128_64x64(A, B) mul128_64x64((A), (B))
+#else
+    #define hc_MUL128_64x64(A, B) ((uint128_t)(A) * (B))
+#endif
 
 // Standard C
 #define NULL ((void *)0)

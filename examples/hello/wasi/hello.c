@@ -1,8 +1,9 @@
 #include "hc/hc.h"
-#include "hc/wasm/wasi.h"
+#include "hc/wasm/wasi/wasi.h"
 
 void noreturn _start(void) {
     struct ciovec iov = { hc_STR_COMMA_LEN("Hello!\n") };
-    uint32_t ret = fd_write(1, &iov, 1, &ret);
+    ssize_t written;
+    uint16_t ret = fd_write(1, &iov, 1, &written);
     proc_exit(!!ret);
 }
