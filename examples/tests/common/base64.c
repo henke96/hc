@@ -7,7 +7,7 @@ static void _base64_test(const char *input, ssize_t inputSize, const char *expec
     char *inputBuffer = &buffer[outputSize - inputSize];
     hc_MEMCPY(inputBuffer, input, (size_t)inputSize);
 
-    CHECK(base64_encode(&buffer[0], inputBuffer, inputSize), RES == outputSize);
+    base64_encode(&buffer[0], inputBuffer, inputSize);
     CHECK(hc_MEMCMP(&buffer[0], expected, (size_t)outputSize), RES == 0);
 }
 

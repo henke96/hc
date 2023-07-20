@@ -147,7 +147,7 @@ static hc_INLINE void curve25519_subNoReduceFourP(uint64_t *out, const uint64_t 
     out[4] = a[4] + 0x1FFFFFFFFFFFFC - b[4];
 }
 
-static hc_INLINE void curve25519_mulScalar(uint64_t *out, const uint64_t *a, uint64_t scalar) {
+static void curve25519_mulScalar(uint64_t *out, const uint64_t *a, uint64_t scalar) {
     uint128_t x = hc_MUL128_64x64(a[0], scalar);
     out[0] = (uint64_t)x & 0x7FFFFFFFFFFFF;
     x = hc_MUL128_64x64(a[1], scalar) + (uint64_t)(x >> 51);
