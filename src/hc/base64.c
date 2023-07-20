@@ -3,37 +3,34 @@ static const char base64_table[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop
 #define base64_ENCODE_SIZE(INPUT_SIZE) (((INPUT_SIZE + 2) / 3) * 4)
 
 // May be done in-place if the input is placed at the end of the buffer.
-static ssize_t base64_encode(char *output, char *input, ssize_t inputSize) {
-    char *end = &input[inputSize];
-    char *outputPos = &output[0];
+static void base64_encode(char *out, char *in, ssize_t inSize) {
+    char *end = &in[inSize];
 
-    while (end - input >= 3) {
-        uint32_t input0 = input[0];
-        uint32_t input1 = input[1];
-        uint32_t input2 = input[2];
-        outputPos[0] = base64_table[input0 >> 2];
-        outputPos[1] = base64_table[((input0 & 0x3) << 4) | (input1 >> 4)];
-        outputPos[2] = base64_table[((input1 & 0xF) << 2) | (input2 >> 6)];
-        outputPos[3] = base64_table[input2 & 0x3F];
+    while (end - in >= 3) {
+        uint32_t input0 = in[0];
+        uint32_t input1 = in[1];
+        uint32_t input2 = in[2];
+        out[0] = base64_table[input0 >> 2];
+        out[1] = base64_table[((input0 & 0x3) << 4) | (input1 >> 4)];
+        out[2] = base64_table[((input1 & 0xF) << 2) | (input2 >> 6)];
+        out[3] = base64_table[input2 & 0x3F];
 
-        input += 3;
-        outputPos += 4;
+        in += 3;
+        out += 4;
     }
 
-    ssize_t remaining = (ssize_t)(end - input);
+    ssize_t remaining = (ssize_t)(end - in);
     if (remaining > 0) {
-        uint32_t input0 = input[0];
-        outputPos[0] = base64_table[input0 >> 2];
+        uint32_t input0 = in[0];
+        out[0] = base64_table[input0 >> 2];
         if (remaining == 1) {
-            outputPos[1] = base64_table[(input0 & 0x3) << 4];
-            outputPos[2] = '=';
+            out[1] = base64_table[(input0 & 0x3) << 4];
+            out[2] = '=';
         } else { // remaining == 2
-            uint32_t input1 = input[1];
-            outputPos[1] = base64_table[((input0 & 0x3) << 4) | (input1 >> 4)];
-            outputPos[2] = base64_table[((input1 & 0xF) << 2)];
+            uint32_t input1 = in[1];
+            out[1] = base64_table[((input0 & 0x3) << 4) | (input1 >> 4)];
+            out[2] = base64_table[((input1 & 0xF) << 2)];
         }
-        outputPos[3] = '=';
-        outputPos += 4;
+        out[3] = '=';
     }
-    return (ssize_t)(outputPos - output);
 }
