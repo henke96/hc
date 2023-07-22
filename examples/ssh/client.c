@@ -8,7 +8,8 @@
 
 // Supported algorithms:
 #define _client_KEX_CURVE25519 "curve25519-sha256"
-#define _client_KEX_LIST _client_KEX_CURVE25519
+#define _client_KEX_CURVE25519_LIBSSH "curve25519-sha256@libssh.org"
+#define _client_KEX_LIST _client_KEX_CURVE25519 _client_KEX_CURVE25519_LIBSSH
 #define _client_HOST_KEY_ED25519 "ssh-ed25519"
 #define _client_HOST_KEY_LIST _client_HOST_KEY_ED25519
 #define _client_CIPHER_CHACHA20POLY1305 "chacha20-poly1305@openssh.com"
@@ -300,7 +301,10 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
     uint32_t kexListSize = mem_loadU32BE(serverInitCurr);
     serverInitCurr += 4; // Jump to kexList.
     if (serverInitCurr + kexListSize + 4 > serverInitEnd) return -3; // Check size includes hostKeyListSize.
-    if (!_client_nameListContains(serverInitCurr, kexListSize, hc_STR_COMMA_LEN(_client_KEX_CURVE25519))) return -4;
+    if (
+        !_client_nameListContains(serverInitCurr, kexListSize, hc_STR_COMMA_LEN(_client_KEX_CURVE25519)) &&
+        !_client_nameListContains(serverInitCurr, kexListSize, hc_STR_COMMA_LEN(_client_KEX_CURVE25519_LIBSSH))
+    ) return -4;
     serverInitCurr += kexListSize; // Jump to hostKeyListSize.
 
     uint32_t hostKeyListSize = mem_loadU32BE(serverInitCurr);
