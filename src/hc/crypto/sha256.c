@@ -39,7 +39,7 @@ static const uint32_t _sha256_round[64] = {
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-static void _sha256_blocks(uint32_t *state, const uint8_t *in, int64_t numBlocks) {
+static void _sha256_blocks(uint32_t *state, const void *in, int64_t numBlocks) {
     uint32_t w[64];
     uint32_t r[72];
 
@@ -75,11 +75,11 @@ static void sha256_init(struct sha256 *self) {
     self->bufferSize = 0;
 }
 
-static void sha256_update(struct sha256 *self, const uint8_t *in, int64_t size) {
+static void sha256_update(struct sha256 *self, const void *in, int64_t size) {
     if (self->bufferSize > 0) {
         int64_t numToRead = _sha256_BLOCK_SIZE - self->bufferSize;
         if (numToRead > size) numToRead = size;
-        hc_MEMCPY(&self->buffer[self->bufferSize], &in[0], (size_t)numToRead);
+        hc_MEMCPY(&self->buffer[self->bufferSize], in, (size_t)numToRead);
         self->bufferSize += numToRead;
         if (self->bufferSize < _sha256_BLOCK_SIZE) return;
         _sha256_blocks(&self->state[0], &self->buffer[0], 1);
@@ -96,11 +96,11 @@ static void sha256_update(struct sha256 *self, const uint8_t *in, int64_t size) 
     self->bufferSize = math_ALIGN_REMAINDER(size, _sha256_BLOCK_SIZE);
     if (self->bufferSize > 0) {
         in += math_ALIGN_BACKWARD(size, _sha256_BLOCK_SIZE);
-        hc_MEMCPY(&self->buffer[0], &in[0], (size_t)self->bufferSize);
+        hc_MEMCPY(&self->buffer[0], in, (size_t)self->bufferSize);
     }
 }
 
-static void sha256_finish(struct sha256 *self, uint8_t *hash) {
+static void sha256_finish(struct sha256 *self, void *hash) {
     uint64_t numBits = ((self->blockCounter << _sha256_BLOCK_SHIFT) + (uint64_t)self->bufferSize) << 3;
 
     self->buffer[self->bufferSize++] = 0x80;
@@ -112,5 +112,5 @@ static void sha256_finish(struct sha256 *self, uint8_t *hash) {
     hc_MEMSET(&self->buffer[self->bufferSize], 0, (size_t)(56 - self->bufferSize));
     mem_storeU64BE(&self->buffer[56], numBits);
     _sha256_blocks(&self->state[0], &self->buffer[0], 1);
-    for (int32_t i = 0; i < 8; ++i) mem_storeU32BE(&hash[i << 2], self->state[i]);
+    for (int32_t i = 0; i < 8; ++i) mem_storeU32BE(hash + (i << 2), self->state[i]);
 }

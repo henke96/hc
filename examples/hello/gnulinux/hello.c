@@ -1,10 +1,12 @@
 #include "hc/hc.h"
+#include "hc/debug.h"
 #include "hc/util.c"
 #include "hc/elf.h"
 #include "hc/compiler_rt/libc.c"
 #include "hc/linux/linux.h"
-#include "hc/linux/util.c"
 #include "hc/linux/sys.c"
+#include "hc/linux/debug.c"
+#include "hc/linux/util.c"
 #include "hc/linux/gnulinux/libc.so.6.h"
 #include "hc/linux/gnulinux/_start.c"
 

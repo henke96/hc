@@ -1,4 +1,15 @@
 hc_UNUSED
+static int32_t mem_compareConstantTime(const void *a, const void *b, int64_t size) hc_NO_BUILTIN {
+    int32_t x = 0;
+    const uint8_t *a8 = a;
+    const uint8_t *b8 = b;
+    for (int64_t i = 0; i < size; ++i) {
+        x |= a8[i] ^ b8[i];
+    }
+    return x;
+}
+
+hc_UNUSED
 static hc_INLINE uint16_t mem_loadU16(const void *in) {
     uint16_t x;
     hc_MEMCPY(&x, in, 2);

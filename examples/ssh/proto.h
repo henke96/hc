@@ -1,0 +1,10 @@
+#define proto_MSG_DISCONNECT 1
+#define proto_MSG_IGNORE 2
+#define proto_MSG_UNIMPLEMENTED 3
+#define proto_MSG_DEBUG 4
+#define proto_MSG_SERVICE_REQUEST 5
+#define proto_MSG_SERVICE_ACCEPT 6
+#define proto_MSG_KEXINIT 20
+#define proto_MSG_NEWKEYS 21
+#define proto_MSG_KEX_ECDH_INIT 30
+#define proto_MSG_KEX_ECDH_REPLY 31

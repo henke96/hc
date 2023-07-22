@@ -43,7 +43,7 @@ static const uint64_t _sha512_round[80] = {
     0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 };
 
-static void _sha512_blocks(uint64_t *state, const uint8_t *in, int64_t numBlocks) {
+static void _sha512_blocks(uint64_t *state, const void *in, int64_t numBlocks) {
     uint64_t w[80];
     uint64_t r[88];
 
@@ -66,6 +66,7 @@ static void _sha512_blocks(uint64_t *state, const uint8_t *in, int64_t numBlocks
     } while (--numBlocks);
 }
 
+hc_UNUSED
 static void sha512_init(struct sha512 *self) {
     self->state[0] = 0x6a09e667f3bcc908;
     self->state[1] = 0xbb67ae8584caa73b;
@@ -79,6 +80,7 @@ static void sha512_init(struct sha512 *self) {
     self->bufferSize = 0;
 }
 
+hc_UNUSED
 static void sha512_init384(struct sha512 *self) {
     self->state[0] = 0xcbbb9d5dc1059ed8;
     self->state[1] = 0x629a292a367cd507;
@@ -92,11 +94,11 @@ static void sha512_init384(struct sha512 *self) {
     self->bufferSize = 0;
 }
 
-static void sha512_update(struct sha512 *self, const uint8_t *in, int64_t size) {
+static void sha512_update(struct sha512 *self, const void *in, int64_t size) {
     if (self->bufferSize > 0) {
         int64_t numToRead = _sha512_BLOCK_SIZE - self->bufferSize;
         if (numToRead > size) numToRead = size;
-        hc_MEMCPY(&self->buffer[self->bufferSize], &in[0], (size_t)numToRead);
+        hc_MEMCPY(&self->buffer[self->bufferSize], in, (size_t)numToRead);
         self->bufferSize += numToRead;
         if (self->bufferSize < _sha512_BLOCK_SIZE) return;
         _sha512_blocks(&self->state[0], &self->buffer[0], 1);
@@ -113,11 +115,11 @@ static void sha512_update(struct sha512 *self, const uint8_t *in, int64_t size) 
     self->bufferSize = math_ALIGN_REMAINDER(size, _sha512_BLOCK_SIZE);
     if (self->bufferSize > 0) {
         in += math_ALIGN_BACKWARD(size, _sha512_BLOCK_SIZE);
-        hc_MEMCPY(&self->buffer[0], &in[0], (size_t)self->bufferSize);
+        hc_MEMCPY(&self->buffer[0], in, (size_t)self->bufferSize);
     }
 }
 
-static void sha512_finish(struct sha512 *self, uint8_t *hash) {
+static void sha512_finish(struct sha512 *self, void *hash) {
     union {
         uint64_t u64[2];
         uint128_t u128;
@@ -134,5 +136,5 @@ static void sha512_finish(struct sha512 *self, uint8_t *hash) {
     mem_storeU64BE(&self->buffer[112], numBits.u64[1]);
     mem_storeU64BE(&self->buffer[120], numBits.u64[0]);
     _sha512_blocks(&self->state[0], &self->buffer[0], 1);
-    for (int32_t i = 0; i < 8; ++i) mem_storeU64BE(&hash[i << 3], self->state[i]);
+    for (int32_t i = 0; i < 8; ++i) mem_storeU64BE(hash + (i << 3), self->state[i]);
 }

@@ -79,11 +79,11 @@ static void poly1305_init(struct poly1305 *self, const uint8_t *key) {
     hc_MEMCPY(&self->pad[1], &key[24], 8);
 }
 
-static void poly1305_update(struct poly1305 *self, const uint8_t *in, int64_t size) {
+static void poly1305_update(struct poly1305 *self, const void *in, int64_t size) {
     if (self->bufferSize > 0) {
         int64_t numToRead = _poly1305_BLOCK_SIZE - self->bufferSize;
         if (numToRead > size) numToRead = size;
-        for (int64_t i = 0; i < numToRead; ++i) self->buffer[self->bufferSize + i] = in[i];
+        hc_MEMCPY(&self->buffer[self->bufferSize], in, (size_t)numToRead);
         self->bufferSize += numToRead;
         if (self->bufferSize < _poly1305_BLOCK_SIZE) return;
         _poly1305_blocks(self, &self->buffer[0], 1, 0x10000000000);
@@ -97,15 +97,15 @@ static void poly1305_update(struct poly1305 *self, const uint8_t *in, int64_t si
     self->bufferSize = math_ALIGN_REMAINDER(size, _poly1305_BLOCK_SIZE);
     if (self->bufferSize > 0) {
         in += math_ALIGN_BACKWARD(size, _poly1305_BLOCK_SIZE);
-        for (int64_t i = 0; i < self->bufferSize; ++i) self->buffer[i] = in[i];
+        hc_MEMCPY(&self->buffer[0], in, (size_t)self->bufferSize);
     }
 }
 
-static void poly1305_finish(struct poly1305 *self, uint8_t *mac) {
+static void poly1305_finish(struct poly1305 *self, void *mac) {
     if (self->bufferSize > 0) {
         int64_t i = self->bufferSize;
         self->buffer[i++] = 1;
-        for (; i < _poly1305_BLOCK_SIZE; ++i) self->buffer[i] = 0;
+        hc_MEMSET(&self->buffer[i], 0, (size_t)(_poly1305_BLOCK_SIZE - i));
         _poly1305_blocks(self, &self->buffer[0], 1, 0);
     }
 
@@ -159,6 +159,6 @@ static void poly1305_finish(struct poly1305 *self, uint8_t *mac) {
     h0 = h0 | (h1 << 44);
     h1 = (h1 >> 20) | (h2 << 24);
 
-    mem_storeU64(&mac[0], h0);
-    mem_storeU64(&mac[8], h1);
+    mem_storeU64(mac, h0);
+    mem_storeU64(mac + 8, h1);
 }

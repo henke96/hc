@@ -1,22 +1,22 @@
-static void _x25519_testIterations(int32_t iterations, const uint8_t *k, const uint8_t *u, const uint8_t *expected) {
+static void _x25519_testIterations(int32_t iterations, const void *k, const void *u, const void *expected) {
     uint8_t x[4][32];
-    hc_MEMCPY(&x[0], &u[0], 32);
-    hc_MEMCPY(&x[1], &k[0], 32);
+    hc_MEMCPY(&x[0], u, 32);
+    hc_MEMCPY(&x[1], k, 32);
     int32_t i = 0;
     for (; i < iterations; ++i) {
-        x25519(&x[(i + 1) & 3][0], &x[i & 3][0], &x[(i + 2) & 3][0]);
+        x25519(&x[(i + 2) & 3][0], &x[(i + 1) & 3][0], &x[i & 3][0]);
     }
-    CHECK(hc_MEMCMP(&x[(i + 1) & 3], &expected[0], 32), RES == 0);
+    CHECK(hc_MEMCMP(&x[(i + 1) & 3], expected, 32), RES == 0);
 }
 
-static void _x25519_testBasepointMult(int32_t iterations, const uint8_t *scalar, const uint8_t *expected) {
+static void _x25519_testBasepointMult(int32_t iterations, const void *scalar, const void *expected) {
     uint8_t temp[64];
     hc_MEMCPY(&temp[0], scalar, 32);
 
     for (int32_t i = 0; i < iterations; ++i) {
         int32_t bit = i & 1;
         int32_t notBit = bit ^ 1;
-        x25519(&temp[bit << 5], &x25519_ecdhBasepoint[0], &temp[notBit << 5]);
+        x25519(&temp[notBit << 5], &temp[bit << 5], &x25519_ecdhBasepoint[0]);
     }
     CHECK(hc_MEMCMP(&temp[(iterations & 1) << 5], expected, 32), RES == 0);
 
@@ -25,30 +25,30 @@ static void _x25519_testBasepointMult(int32_t iterations, const uint8_t *scalar,
     for (int32_t i = 0; i < iterations; ++i) {
         int32_t bit = i & 1;
         int32_t notBit = bit ^ 1;
-        ed25519_x25519Basepoint(&temp[bit << 5], &temp[notBit << 5]);
+        ed25519_x25519Basepoint(&temp[notBit << 5], &temp[bit << 5]);
     }
     CHECK(hc_MEMCMP(&temp[(iterations & 1) << 5], expected, 32), RES == 0);
 }
 
-static void _x25519_testEcdh(const uint8_t *alicePriv, const uint8_t *bobPriv, const uint8_t *expectedShared) {
+static void _x25519_testEcdh(const void *alicePriv, const void *bobPriv, const void *expectedShared) {
     uint8_t alicePub[32];
     uint8_t bobPub[32];
-    x25519(&alicePriv[0], &x25519_ecdhBasepoint[0], &alicePub[0]);
-    x25519(&bobPriv[0], &x25519_ecdhBasepoint[0], &bobPub[0]);
+    x25519(&alicePub[0], alicePriv, &x25519_ecdhBasepoint[0]);
+    x25519(&bobPub[0], bobPriv, &x25519_ecdhBasepoint[0]);
 
     uint8_t aliceShared[32];
     uint8_t bobShared[32];
-    x25519(&alicePriv[0], &bobPub[0], &aliceShared[0]);
-    x25519(&bobPriv[0], &alicePub[0], &bobShared[0]);
+    x25519(&aliceShared[0], alicePriv, &bobPub[0]);
+    x25519(&bobShared[0], bobPriv, &alicePub[0]);
 
-    CHECK(hc_MEMCMP(&aliceShared[0], &expectedShared[0], 32), RES == 0);
-    CHECK(hc_MEMCMP(&bobShared[0], &expectedShared[0], 32), RES == 0);
+    CHECK(hc_MEMCMP(&aliceShared[0], expectedShared, 32), RES == 0);
+    CHECK(hc_MEMCMP(&bobShared[0], expectedShared, 32), RES == 0);
 
     // Test generating the public keys with ed25519.
     uint8_t alicePubEd[32];
     uint8_t bobPubEd[32];
-    ed25519_x25519Basepoint(&alicePriv[0], &alicePubEd[0]);
-    ed25519_x25519Basepoint(&bobPriv[0], &bobPubEd[0]);
+    ed25519_x25519Basepoint(&alicePubEd[0], alicePriv);
+    ed25519_x25519Basepoint(&bobPubEd[0], bobPriv);
     CHECK(hc_MEMCMP(&alicePubEd[0], &alicePub[0], 32), RES == 0);
     CHECK(hc_MEMCMP(&bobPubEd[0], &bobPub[0], 32), RES == 0);
 }

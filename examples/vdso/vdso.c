@@ -4,9 +4,9 @@
 #include "hc/debug.h"
 #include "hc/compiler_rt/libc.c"
 #include "hc/linux/linux.h"
-#include "hc/linux/util.c"
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
+#include "hc/linux/util.c"
 #include "hc/linux/vdso.c"
 #include "hc/linux/helpers/_start.c"
 

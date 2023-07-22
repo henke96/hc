@@ -57,11 +57,11 @@ static void _x25519_mul(uint64_t *outX, uint64_t *outZ, const uint8_t *n, const 
 static const uint8_t x25519_ecdhBasepoint[32] = { 9 };
 
 // All arguments are 32 bytes.
-static void x25519(const uint8_t *secret, const uint8_t *public, uint8_t *out) {
+static void x25519(void *out, const void *secret, const void *public) {
     uint64_t bp[5], x[5], z[5];
     uint8_t e[32];
 
-    hc_MEMCPY(&e[0], &secret[0], 32);
+    hc_MEMCPY(&e[0], secret, 32);
     e[0] &= 248;
     e[31] &= 127;
     e[31] |= 64;

@@ -6,11 +6,11 @@
 #include "hc/compiler_rt/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/util.c"
 #include "hc/linux/debug.c"
+#include "hc/linux/util.c"
 #include "hc/linux/heap.c"
 
-int64_t pageSize;
+int32_t pageSize;
 #define allocator_PAGE_SIZE pageSize
 #include "hc/allocator.c"
 #include "hc/linux/helpers/_start.c"

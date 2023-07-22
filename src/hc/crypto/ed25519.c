@@ -1,5 +1,7 @@
 // Public domain by Andrew M. <liquidsun@gmail.com> (ed25519-donna)
 
+#define ed25519_SIGNATURE_SIZE 64
+
 // ed25519_modm: Arithmetic modulo the group order m = 2^252 + 27742317777372353535851937790883648493
 // k = 32
 // b = 256
@@ -176,7 +178,7 @@ static void ed25519_modm_mul(uint64_t *r, const uint64_t *x, const uint64_t *y) 
     ed25519_modm_barrettReduce(r, q1, r1);
 }
 
-static void ed25519_modm_load(uint64_t *out, const uint8_t *in, bool size64) {
+static void ed25519_modm_load(uint64_t *out, const void *in, bool size64) {
     uint64_t x[8];
     hc_MEMCPY(&x[0], in, 32);
 
@@ -188,7 +190,7 @@ static void ed25519_modm_load(uint64_t *out, const uint8_t *in, bool size64) {
     out[4] = x[3] >> 32;
     if (!size64) return;
 
-    hc_MEMCPY(&x[4], &in[32], 32);
+    hc_MEMCPY(&x[4], in + 32, 32);
     out[4] |= (x[4] << 32) & 0x0000ffffffffff;
 
     // q1 = x >> 248 = 264 bits
@@ -202,11 +204,11 @@ static void ed25519_modm_load(uint64_t *out, const uint8_t *in, bool size64) {
     ed25519_modm_barrettReduce(out, &q1[0], out);
 }
 
-static void ed25519_modm_store(uint8_t *out, const uint64_t *in) {
-    mem_storeU64(&out[0], in[0] | (in[1] << 56));
-    mem_storeU64(&out[8], (in[1] >> 8) | (in[2] << 48));
-    mem_storeU64(&out[16], (in[2] >> 16) | (in[3] << 40));
-    mem_storeU64(&out[24], (in[3] >> 24) | (in[4] << 32));
+static void ed25519_modm_store(void *out, const uint64_t *in) {
+    mem_storeU64(out, in[0] | (in[1] << 56));
+    mem_storeU64(out + 8, (in[1] >> 8) | (in[2] << 48));
+    mem_storeU64(out + 16, (in[2] >> 16) | (in[3] << 40));
+    mem_storeU64(out + 24, (in[3] >> 24) | (in[4] << 32));
 }
 
 static void _ed25519_modm_window4(int8_t *r, const uint64_t *s) {
@@ -630,35 +632,35 @@ static void ed25519_ge_nielsAddP1p1(struct ed25519_ge_p1p1 *r, const struct ed25
     const uint64_t (*qb)[5] = (const uint64_t (*)[5])q;
     uint64_t (*rb)[5] = (uint64_t (*)[5])r;
     uint64_t a[5], b[5], c[5];
-    curve25519_subNoReduce(&a[0], p->y, p->x);
-    curve25519_addNoReduce(&b[0], p->y, p->x);
-    curve25519_mul(&a[0], &a[0], qb[signbit]); // ysubx for +, xaddy for -
-    curve25519_mul(r->x, &b[0], qb[signbit ^ 1]); // xaddy for +, ysubx for -
-    curve25519_addNoReduce(r->y, r->x, &a[0]);
-    curve25519_subNoReduce(r->x, r->x, &a[0]);
-    curve25519_mul(&c[0], p->t, q->t2d);
-    curve25519_add(r->t, p->z, p->z);
+    curve25519_subNoReduce(&a[0], &p->y[0], &p->x[0]);
+    curve25519_addNoReduce(&b[0], &p->y[0], &p->x[0]);
+    curve25519_mul(&a[0], &a[0], &qb[signbit][0]); // ysubx for +, xaddy for -
+    curve25519_mul(r->x, &b[0], &qb[signbit ^ 1][0]); // xaddy for +, ysubx for -
+    curve25519_addNoReduce(&r->y[0], &r->x[0], &a[0]);
+    curve25519_subNoReduce(&r->x[0], &r->x[0], &a[0]);
+    curve25519_mul(&c[0], &p->t[0], &q->t2d[0]);
+    curve25519_add(&r->t[0], &p->z[0], &p->z[0]);
     hc_MEMCPY(&r->z[0], &r->t[0], 5 * sizeof(uint64_t));
-    curve25519_addNoReduce(rb[2 + signbit], rb[2 + signbit], &c[0]); // z for +, t for -
-    curve25519_subNoReduce(rb[2 + (signbit ^ 1)], rb[2 + (signbit ^ 1)], &c[0]); // t for +, z for -
+    curve25519_addNoReduce(&rb[2 + signbit][0], &rb[2 + signbit][0], &c[0]); // z for +, t for -
+    curve25519_subNoReduce(&rb[2 + (signbit ^ 1)][0], &rb[2 + (signbit ^ 1)][0], &c[0]); // t for +, z for -
 }
 
 static void ed25519_ge_pnielsAddP1p1(struct ed25519_ge_p1p1 *r, const struct ed25519_ge *p, const struct ed25519_ge_pniels *q, uint8_t signbit) {
     const uint64_t (*qb)[5] = (const uint64_t (*)[5])q;
     uint64_t (*rb)[5] = (uint64_t (*)[5])r;
     uint64_t a[5], b[5], c[5];
-    curve25519_subNoReduce(&a[0], p->y, p->x);
-    curve25519_addNoReduce(&b[0], p->y, p->x);
-    curve25519_mul(&a[0], &a[0], qb[signbit]); // ysubx for +, xaddy for -
-    curve25519_mul(r->x, &b[0], qb[signbit ^ 1]); // xaddy for +, ysubx for -
-    curve25519_addNoReduce(r->y, r->x, &a[0]);
-    curve25519_subNoReduce(r->x, r->x, &a[0]);
-    curve25519_mul(&c[0], p->t, q->t2d);
-    curve25519_mul(r->t, p->z, q->z);
-    curve25519_add(r->t, r->t, r->t);
+    curve25519_subNoReduce(&a[0], &p->y[0], &p->x[0]);
+    curve25519_addNoReduce(&b[0], &p->y[0], &p->x[0]);
+    curve25519_mul(&a[0], &a[0], &qb[signbit][0]); // ysubx for +, xaddy for -
+    curve25519_mul(&r->x[0], &b[0], &qb[signbit ^ 1][0]); // xaddy for +, ysubx for -
+    curve25519_addNoReduce(&r->y[0], &r->x[0], &a[0]);
+    curve25519_subNoReduce(&r->x[0], &r->x[0], &a[0]);
+    curve25519_mul(&c[0], &p->t[0], &q->t2d[0]);
+    curve25519_mul(&r->t[0], &p->z[0], &q->z[0]);
+    curve25519_add(&r->t[0], &r->t[0], &r->t[0]);
     hc_MEMCPY(&r->z[0], &r->t[0], 5 * sizeof(uint64_t));
-    curve25519_addNoReduce(rb[2 + signbit], rb[2 + signbit], &c[0]); // z for +, t for -
-    curve25519_subNoReduce(rb[2 + (signbit ^ 1)], rb[2 + (signbit ^ 1)], &c[0]); // t for +, z for -
+    curve25519_addNoReduce(&rb[2 + signbit][0], &rb[2 + signbit][0], &c[0]); // z for +, t for -
+    curve25519_subNoReduce(&rb[2 + (signbit ^ 1)][0], &rb[2 + (signbit ^ 1)][0], &c[0]); // t for +, z for -
 }
 
 static void ed25519_ge_doublePartial(struct ed25519_ge *r, const struct ed25519_ge *p) {
@@ -675,46 +677,46 @@ static void ed25519_ge_double(struct ed25519_ge *r, const struct ed25519_ge *p) 
 
 static void ed25519_ge_nielsAdd(struct ed25519_ge *r, const struct ed25519_ge_niels *q) {
     uint64_t a[5], b[5], c[5], e[5], f[5], g[5], h[5];
-    curve25519_subNoReduce(&a[0], r->y, r->x);
-    curve25519_addNoReduce(&b[0], r->y, r->x);
-    curve25519_mul(&a[0], &a[0], q->ysubx);
-    curve25519_mul(&e[0], &b[0], q->xaddy);
+    curve25519_subNoReduce(&a[0], &r->y[0], &r->x[0]);
+    curve25519_addNoReduce(&b[0], &r->y[0], &r->x[0]);
+    curve25519_mul(&a[0], &a[0], &q->ysubx[0]);
+    curve25519_mul(&e[0], &b[0], &q->xaddy[0]);
     curve25519_addNoReduce(&h[0], &e[0], &a[0]);
     curve25519_subNoReduce(&e[0], &e[0], &a[0]);
-    curve25519_mul(&c[0], r->t, q->t2d);
-    curve25519_addNoReduce(&f[0], r->z, r->z);
+    curve25519_mul(&c[0], &r->t[0], &q->t2d[0]);
+    curve25519_addNoReduce(&f[0], &r->z[0], &r->z[0]);
     curve25519_addNoReduce(&g[0], &f[0], &c[0]);
     curve25519_subNoReduce(&f[0], &f[0], &c[0]);
-    curve25519_mul(r->x, &e[0], &f[0]);
-    curve25519_mul(r->y, &h[0], &g[0]);
-    curve25519_mul(r->z, &g[0], &f[0]);
-    curve25519_mul(r->t, &e[0], &h[0]);
+    curve25519_mul(&r->x[0], &e[0], &f[0]);
+    curve25519_mul(&r->y[0], &h[0], &g[0]);
+    curve25519_mul(&r->z[0], &g[0], &f[0]);
+    curve25519_mul(&r->t[0], &e[0], &h[0]);
 }
 
 static void ed25519_ge_pnielsAdd(struct ed25519_ge_pniels *r, const struct ed25519_ge *p, const struct ed25519_ge_pniels *q) {
     uint64_t a[5], b[5], c[5], x[5], y[5], z[5], t[5];
-    curve25519_subNoReduce(&a[0], p->y, p->x);
-    curve25519_addNoReduce(&b[0], p->y, p->x);
-    curve25519_mul(&a[0], &a[0], q->ysubx);
-    curve25519_mul(&x[0], &b[0], q->xaddy);
+    curve25519_subNoReduce(&a[0], &p->y[0], &p->x[0]);
+    curve25519_addNoReduce(&b[0], &p->y[0], &p->x[0]);
+    curve25519_mul(&a[0], &a[0], &q->ysubx[0]);
+    curve25519_mul(&x[0], &b[0], &q->xaddy[0]);
     curve25519_addNoReduce(&y[0], &x[0], &a[0]);
     curve25519_subNoReduce(&x[0], &x[0], &a[0]);
-    curve25519_mul(&c[0], p->t, q->t2d);
-    curve25519_mul(&t[0], p->z, q->z);
+    curve25519_mul(&c[0], &p->t[0], &q->t2d[0]);
+    curve25519_mul(&t[0], &p->z[0], &q->z[0]);
     curve25519_addNoReduce(&t[0], &t[0], &t[0]);
     curve25519_addNoReduce(&z[0], &t[0], &c[0]);
     curve25519_subNoReduce(&t[0], &t[0], &c[0]);
-    curve25519_mul(r->xaddy, &x[0], &t[0]);
-    curve25519_mul(r->ysubx, &y[0], &z[0]);
-    curve25519_mul(r->z, &z[0], &t[0]);
-    curve25519_mul(r->t2d, &x[0], &y[0]);
+    curve25519_mul(&r->xaddy[0], &x[0], &t[0]);
+    curve25519_mul(&r->ysubx[0], &y[0], &z[0]);
+    curve25519_mul(&r->z[0], &z[0], &t[0]);
+    curve25519_mul(&r->t2d[0], &x[0], &y[0]);
     hc_MEMCPY(&y[0], &r->ysubx[0], 5 * sizeof(uint64_t));
-    curve25519_subNoReduce(r->ysubx, r->ysubx, r->xaddy);
-    curve25519_addNoReduce(r->xaddy, r->xaddy, &y[0]);
-    curve25519_mul(r->t2d, r->t2d, &ed25519_ge_ec2d[0]);
+    curve25519_subNoReduce(&r->ysubx[0], &r->ysubx[0], &r->xaddy[0]);
+    curve25519_addNoReduce(&r->xaddy[0], &r->xaddy[0], &y[0]);
+    curve25519_mul(&r->t2d[0], &r->t2d[0], &ed25519_ge_ec2d[0]);
 }
 
-static void ed25519_ge_pack(uint8_t *r, const struct ed25519_ge *p) {
+static void ed25519_ge_pack(void *r, const struct ed25519_ge *p) {
     uint64_t tx[5], ty[5], zi[5];
     curve25519_invert(&zi[0], p->z);
     curve25519_mul(&tx[0], p->x, &zi[0]);
@@ -722,36 +724,36 @@ static void ed25519_ge_pack(uint8_t *r, const struct ed25519_ge *p) {
     curve25519_reduce(&ty[0]);
     curve25519_store(r, &ty[0]);
     curve25519_reduce(&tx[0]);
-    r[31] ^= ((tx[0] & 1) << 7);
+    *(uint8_t *)(r + 31) ^= ((tx[0] & 1) << 7);
 }
 
-static int32_t ed25519_ge_unpackNegativeVartime(struct ed25519_ge *r, const uint8_t *p) {
+static int32_t ed25519_ge_unpackNegativeVartime(struct ed25519_ge *r, const void *p) {
     static const uint64_t one[5] = {1};
-    uint8_t parity = p[31] >> 7;
+    uint8_t parity = *(const uint8_t *)(p + 31) >> 7;
     uint64_t t[5], num[5], den[5], d3[5];
-    curve25519_load(r->y, p);
+    curve25519_load(&r->y[0], p);
     hc_MEMCPY(&r->z[0], &one[0], sizeof(one));
-    curve25519_squareN(&num[0], r->y, 1); // x = y^2
+    curve25519_squareN(&num[0], &r->y[0], 1); // x = y^2
     curve25519_mul(&den[0], &num[0], &ed25519_ge_ecd[0]); // den = dy^2
-    curve25519_subNoReduce(&num[0], &num[0], r->z); // x = y^1 - 1
-    curve25519_addNoReduce(&den[0], &den[0], r->z); // den = dy^2 + 1
+    curve25519_subNoReduce(&num[0], &num[0], &r->z[0]); // x = y^1 - 1
+    curve25519_addNoReduce(&den[0], &den[0], &r->z[0]); // den = dy^2 + 1
 
     // Computation of sqrt(num/den):
     // 1. Computation of: num^((p-5)/8)*den^((7p-35)/8) = (num*den^7)^((p-5)/8)
     curve25519_squareN(&t[0], &den[0], 1);
     curve25519_mul(&d3[0], &t[0], &den[0]);
-    curve25519_squareN(r->x, &d3[0], 1);
-    curve25519_mul(r->x, r->x, &den[0]);
-    curve25519_mul(r->x, r->x, &num[0]);
-    curve25519_powTwo252m3(r->x, r->x);
+    curve25519_squareN(&r->x[0], &d3[0], 1);
+    curve25519_mul(&r->x[0], &r->x[0], &den[0]);
+    curve25519_mul(&r->x[0], &r->x[0], &num[0]);
+    curve25519_powTwo252m3(&r->x[0], &r->x[0]);
 
     // 2. Computation of: r->x = num * den^3 * (num*den^7)^((p-5)/8)
-    curve25519_mul(r->x, r->x, &d3[0]);
-    curve25519_mul(r->x, r->x, &num[0]);
+    curve25519_mul(&r->x[0], &r->x[0], &d3[0]);
+    curve25519_mul(&r->x[0], &r->x[0], &num[0]);
 
     // 3. Check if either of the roots works.
     uint64_t root[5];
-    curve25519_squareN(&t[0], r->x, 1);
+    curve25519_squareN(&t[0], &r->x[0], 1);
     curve25519_mul(&t[0], &t[0], &den[0]);
     curve25519_subNoReduceFourP(&root[0], &t[0], &num[0]);
     curve25519_reduce(&root[0]);
@@ -759,12 +761,12 @@ static int32_t ed25519_ge_unpackNegativeVartime(struct ed25519_ge *r, const uint
         curve25519_addNoReduce(&t[0], &t[0], &num[0]);
         curve25519_reduce(&t[0]);
         if (hc_MEMCMP(&t[0], &curve25519_zero[0], 5 * sizeof(uint64_t)) != 0) return 0;
-        curve25519_mul(r->x, r->x, &ed25519_ge_sqrtneg1[0]);
+        curve25519_mul(&r->x[0], &r->x[0], &ed25519_ge_sqrtneg1[0]);
     }
 
     curve25519_reduce(&r->x[0]);
     if ((r->x[0] & 1) == parity) curve25519_sub(&r->x[0], &curve25519_zero[0], &r->x[0]);
-    curve25519_mul(r->t, r->x, r->y);
+    curve25519_mul(&r->t[0], &r->x[0], &r->y[0]);
     return 1;
 }
 
@@ -838,15 +840,15 @@ static void _ed25519_ge_scalarmultBaseChooseNiels(struct ed25519_ge_niels *t, ui
     );
 
     // Expand into t.
-    curve25519_load(t->ysubx, &packed[0]);
-    curve25519_load(t->xaddy, &packed[4]);
-    curve25519_load(t->t2d, &packed[8]);
+    curve25519_load(&t->ysubx[0], &packed[0]);
+    curve25519_load(&t->xaddy[0], &packed[4]);
+    curve25519_load(&t->t2d[0], &packed[8]);
 
     // Adjust for sign.
     uint64_t neg[5];
-    curve25519_cSwap(t->ysubx, t->xaddy, sign);
+    curve25519_cSwap(&t->ysubx[0], &t->xaddy[0], sign);
     curve25519_sub(&neg[0], &curve25519_zero[0], &t->t2d[0]);
-    curve25519_cSwap(t->t2d, &neg[0], sign);
+    curve25519_cSwap(&t->t2d[0], &neg[0], sign);
 }
 
 // Computes [s]basepoint.
@@ -856,9 +858,9 @@ static void ed25519_ge_scalarmultBaseNiels(struct ed25519_ge *r, const uint64_t 
 
     struct ed25519_ge_niels t;
     _ed25519_ge_scalarmultBaseChooseNiels(&t, 0, b[1]);
-    curve25519_sub(r->x, t.xaddy, t.ysubx);
-    curve25519_add(r->y, t.xaddy, t.ysubx);
-    hc_MEMSET(r->z, 0, 5 * sizeof(uint64_t));
+    curve25519_sub(&r->x[0], &t.xaddy[0], &t.ysubx[0]);
+    curve25519_add(&r->y[0], &t.xaddy[0], &t.ysubx[0]);
+    hc_MEMSET(&r->z[0], 0, 5 * sizeof(uint64_t));
     r->z[0] = 2;
     hc_MEMCPY(&r->t[0], &t.t2d[0], 5 * sizeof(uint64_t));
     for (uint32_t i = 3; i < 64; i += 2) {
@@ -870,7 +872,7 @@ static void ed25519_ge_scalarmultBaseNiels(struct ed25519_ge *r, const uint64_t 
     ed25519_ge_doublePartial(r, r);
     ed25519_ge_double(r, r);
     _ed25519_ge_scalarmultBaseChooseNiels(&t, 0, b[0]);
-    curve25519_mul(t.t2d, t.t2d, &ed25519_ge_ecd[0]);
+    curve25519_mul(&t.t2d[0], &t.t2d[0], &ed25519_ge_ecd[0]);
     ed25519_ge_nielsAdd(r, &t);
     for (uint32_t i = 2; i < 64; i += 2) {
         _ed25519_ge_scalarmultBaseChooseNiels(&t, i >> 1, b[i]);
@@ -879,7 +881,7 @@ static void ed25519_ge_scalarmultBaseNiels(struct ed25519_ge *r, const uint64_t 
 }
 
 // Generates a (extSecret[0..31]) and aExt (extSecret[32..63]).
-static void _ed25519_extSecret(uint8_t *extSecret, const uint8_t *secret) {
+static void _ed25519_extSecret(uint8_t *extSecret, const void *secret) {
     struct sha512 sha512;
     sha512_init(&sha512);
     sha512_update(&sha512, secret, 32);
@@ -889,7 +891,7 @@ static void _ed25519_extSecret(uint8_t *extSecret, const uint8_t *secret) {
     extSecret[31] |= 64;
 }
 
-static void _ed25519_hram(uint8_t *hram, const uint8_t *signature, const uint8_t *public, const uint8_t *message, int64_t messageSize) {
+static void _ed25519_hram(uint8_t *hram, const void *signature, const void *public, const void *message, int64_t messageSize) {
     struct sha512 sha512;
     sha512_init(&sha512);
     sha512_update(&sha512, signature, 32);
@@ -898,7 +900,8 @@ static void _ed25519_hram(uint8_t *hram, const uint8_t *signature, const uint8_t
     sha512_finish(&sha512, hram);
 }
 
-static void ed25519_public(const uint8_t *secret, uint8_t *publicOut) {
+hc_UNUSED
+static void ed25519_public(void *publicOut, const void *secret) {
     uint64_t a[5];
     uint8_t extSecret[sha512_HASH_SIZE];
     _ed25519_extSecret(&extSecret[0], secret);
@@ -910,7 +913,8 @@ static void ed25519_public(const uint8_t *secret, uint8_t *publicOut) {
     ed25519_ge_pack(publicOut, &A);
 }
 
-static void ed25519_sign(const uint8_t *message, int64_t messageSize, const uint8_t *secret, const uint8_t *public, uint8_t *signatureOut) {
+hc_UNUSED
+static void ed25519_sign(void *signatureOut, const void *message, int64_t messageSize, const void *secret, const void *public) {
     uint8_t extSecret[sha512_HASH_SIZE];
     _ed25519_extSecret(&extSecret[0], secret);
 
@@ -922,41 +926,41 @@ static void ed25519_sign(const uint8_t *message, int64_t messageSize, const uint
     sha512_update(&sha512, &extSecret[32], 32);
     sha512_update(&sha512, message, messageSize);
     sha512_finish(&sha512, &hashr[0]);
-    ed25519_modm_load(r, &hashr[0], true);
+    ed25519_modm_load(&r[0], &hashr[0], true);
 
     // R = rB
     struct ed25519_ge R;
-    ed25519_ge_scalarmultBaseNiels(&R, r);
+    ed25519_ge_scalarmultBaseNiels(&R, &r[0]);
     ed25519_ge_pack(signatureOut, &R);
 
     // S = H(R,A,message)
     uint8_t hram[sha512_HASH_SIZE];
     uint64_t S[5];
     _ed25519_hram(&hram[0], signatureOut, public, message, messageSize);
-    ed25519_modm_load(S, &hram[0], true);
+    ed25519_modm_load(&S[0], &hram[0], true);
 
     // S = H(R,A,message)a
     uint64_t a[5];
     ed25519_modm_load(a, &extSecret[0], false);
-    ed25519_modm_mul(S, S, a);
+    ed25519_modm_mul(&S[0], &S[0], &a[0]);
 
     // S = (r + H(R,A,message)a)
-    ed25519_modm_add(S, S, r);
+    ed25519_modm_add(&S[0], &S[0], &r[0]);
 
     // S = (r + H(R,A,message)a) mod L
-    ed25519_modm_store(&signatureOut[32], S);
+    ed25519_modm_store(signatureOut + 32, &S[0]);
 }
 
 // Returns 0 if valid.
-static int32_t ed25519_verifySignature(const uint8_t *message, int64_t messageSize, const uint8_t *public, const uint8_t *signature) {
+hc_UNUSED static int32_t ed25519_verify(const void *message, int64_t messageSize, const void *public, const void *signature) {
     struct ed25519_ge A;
-    if ((signature[63] & 224) || !ed25519_ge_unpackNegativeVartime(&A, public)) return 1;
+    if ((*(const uint8_t *)(signature + 63) & 224) || !ed25519_ge_unpackNegativeVartime(&A, public)) return 1;
 
     // hram = H(R,A,message)
     uint64_t hram[5];
     uint8_t hash[sha512_HASH_SIZE];
     _ed25519_hram(&hash[0], signature, public, message, messageSize);
-    ed25519_modm_load(hram, &hash[0], true);
+    ed25519_modm_load(&hram[0], &hash[0], true);
 
     // S
     uint64_t S[5];
@@ -965,15 +969,15 @@ static int32_t ed25519_verifySignature(const uint8_t *message, int64_t messageSi
     // SB - H(R,A,message)A
     uint8_t checkR[32];
     struct ed25519_ge R;
-    ed25519_ge_doubleScalarmultVartime(&R, &A, hram, S);
-    ed25519_ge_pack(checkR, &R);
+    ed25519_ge_doubleScalarmultVartime(&R, &A, &hram[0], &S[0]);
+    ed25519_ge_pack(&checkR[0], &R);
 
     // Check that R = SB - H(R,A,message)A
-    return hc_MEMCMP(signature, checkR, 32);
+    return hc_MEMCMP(signature, &checkR[0], 32);
 }
 
 // X25519 basepoint scalar multiplication.
-static void ed25519_x25519Basepoint(const uint8_t *secret, uint8_t *publicOut) {
+hc_UNUSED static void ed25519_x25519Basepoint(void *publicOut, const void *secret) {
     // Load and clamp.
     uint64_t s[5];
     uint8_t ec[32];
@@ -981,16 +985,16 @@ static void ed25519_x25519Basepoint(const uint8_t *secret, uint8_t *publicOut) {
     ec[0] &= 248;
     ec[31] &= 127;
     ec[31] |= 64;
-    ed25519_modm_load(&s[0], ec, false);
+    ed25519_modm_load(&s[0], &ec[0], false);
 
     // scalar * basepoint
     struct ed25519_ge p;
-    ed25519_ge_scalarmultBaseNiels(&p, s);
+    ed25519_ge_scalarmultBaseNiels(&p, &s[0]);
 
     // u = (y + z) / (z - y)
     uint64_t yplusz[5], zminusy[5];
-    curve25519_addNoReduce(&yplusz[0], p.y, p.z);
-    curve25519_subNoReduce(&zminusy[0], p.z, p.y);
+    curve25519_addNoReduce(&yplusz[0], &p.y[0], &p.z[0]);
+    curve25519_subNoReduce(&zminusy[0], &p.z[0], &p.y[0]);
     curve25519_invert(&zminusy[0], &zminusy[0]);
     curve25519_mul(&yplusz[0], &yplusz[0], &zminusy[0]);
     curve25519_reduce(&yplusz[0]);

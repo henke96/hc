@@ -5,13 +5,15 @@ union chacha20 {
     uint32_t u32[16];
     uint64_t u64[8];
     struct {
-        uint8_t __pad[48];
+        uint64_t constant[2];
+        uint8_t key[32];
         uint32_t blockCounter;
         uint32_t nonceSender;
         uint64_t nonce;
     } ietf;
     struct {
-        uint8_t __pad[48];
+        uint64_t constant[2];
+        uint8_t key[32];
         uint64_t blockCounter;
         uint64_t nonce;
     } orig;
@@ -56,21 +58,24 @@ static void chacha20_block(const union chacha20 *self, union chacha20 *outStream
     outStream->u32[15] = local.u32[15] + self->u32[15];
 }
 
-hc_UNUSED
-static void chacha20_initIetf(union chacha20 *self, const uint8_t *key, uint32_t blockCounter, uint32_t nonceSender, uint64_t nonce) {
+static void chacha20_init(union chacha20 *self) {
     self->u64[0] = 0x3320646e61707865;
     self->u64[1] = 0x6b20657479622d32;
-    hc_MEMCPY(&self->u32[4], &key[0], chacha20_KEY_SIZE);
+}
+
+hc_UNUSED
+static void chacha20_initIetf(union chacha20 *self, const void *key, uint32_t blockCounter, uint32_t nonceSender, uint64_t nonce) {
+    chacha20_init(self);
+    hc_MEMCPY(&self->ietf.key[0], key, chacha20_KEY_SIZE);
     self->ietf.blockCounter = blockCounter;
     self->ietf.nonceSender = nonceSender;
     self->ietf.nonce = nonce;
 }
 
 hc_UNUSED
-static void chacha20_initOrig(union chacha20 *self, const uint8_t *key, uint64_t blockCounter, uint64_t nonce) {
-    self->u64[0] = 0x3320646e61707865;
-    self->u64[1] = 0x6b20657479622d32;
-    hc_MEMCPY(&self->u32[4], &key[0], chacha20_KEY_SIZE);
+static void chacha20_initOrig(union chacha20 *self, const void *key, uint64_t blockCounter, uint64_t nonce) {
+    chacha20_init(self);
+    hc_MEMCPY(&self->orig.key[0], key, chacha20_KEY_SIZE);
     self->orig.blockCounter = blockCounter;
     self->orig.nonce = nonce;
 }
