@@ -27,7 +27,6 @@ static struct client client;
 
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     pageSize = util_getPageSize(util_getAuxv(envp));
-    debug_ASSERT(pageSize <= 65536);
 
     // TODO: Parse arguments.
     struct sockaddr_in addr = {

@@ -22,7 +22,7 @@ hc_UNUSED
 static int32_t util_getPageSize(const uint64_t *auxv) {
     for (int32_t i = 0;; i += 2) {
         if (auxv[i] == AT_PAGESZ) {
-            debug_ASSERT(auxv[i + 1] > 0 && auxv[i + 1] <= 65536);
+            debug_ASSERT(auxv[i + 1] <= 65536);
             return (int32_t)auxv[i + 1];
         }
         debug_ASSERT(auxv[i] != AT_NULL);
