@@ -540,9 +540,6 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
         sha256_update(&self->tempHash, &exchangeHash[0], sizeof(exchangeHash));
         sha256_update(&self->tempHash, &self->ciphers[2 * i].orig.key, 32);
         sha256_finish(&self->tempHash, &self->ciphers[2 * i + 1].orig.key);
-
-        // The key length ciphers always use block counter of 0, so set it now.
-        self->ciphers[2 * i + 1].orig.blockCounter = 0;
     }
     return 0;
 }
@@ -550,6 +547,8 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
 static int32_t client_init(struct client *self, int32_t sockaddrFamily) {
     for (int32_t i = 0; i < (int32_t)hc_ARRAY_LEN(self->ciphers); ++i) {
         chacha20_init(&self->ciphers[i]);
+        // Skip setting nonce since it's always set before encryption/decryption.
+        self->ciphers[i].orig.blockCounter = 0;
     }
 
     // Create circular buffer.
