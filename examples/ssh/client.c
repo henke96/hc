@@ -9,7 +9,7 @@
 // Supported algorithms:
 #define _client_KEX_CURVE25519 "curve25519-sha256"
 #define _client_KEX_CURVE25519_LIBSSH "curve25519-sha256@libssh.org"
-#define _client_KEX_LIST _client_KEX_CURVE25519 _client_KEX_CURVE25519_LIBSSH
+#define _client_KEX_LIST _client_KEX_CURVE25519 "," _client_KEX_CURVE25519_LIBSSH
 #define _client_HOST_KEY_ED25519 "ssh-ed25519"
 #define _client_HOST_KEY_LIST _client_HOST_KEY_ED25519
 #define _client_CIPHER_CHACHA20POLY1305 "chacha20-poly1305@openssh.com"
