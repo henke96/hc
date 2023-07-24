@@ -112,10 +112,8 @@ static int32_t client_nextMessage(struct client *self, uint8_t **message) {
                 offset += i;
                 do {
                     i -= 4;
-                    uint32_t temp = mem_loadU32(bufferPos + i);
-                    temp ^= *(uint32_t *)hc_ASSUME_ALIGNED(&stream.u8[i], 4);
-                    mem_storeU32(bufferPos + i, temp);
-                } while (i != 0);
+                    *(uint32_t *)hc_ASSUME_ALIGNED(bufferPos + i, 4) ^= *(uint32_t *)hc_ASSUME_ALIGNED(&stream.u8[i], 4);
+                } while (i > 0);
                 if (offset == packetSize) break;
             }
             break;
@@ -196,7 +194,7 @@ int32_t client_sendMessage(struct client *self, void *message, int32_t messageSi
                     temp ^= mem_loadU32(streamPos + i);
                     mem_storeU32(messagePos + i, temp);
                 }
-                while (i != 0) {
+                while (i > 0) {
                     --i;
                     messagePos[i] ^= streamPos[i];
                 }
@@ -221,7 +219,7 @@ int32_t client_sendMessage(struct client *self, void *message, int32_t messageSi
                     temp ^= mem_loadU32(streamPos + i);
                     mem_storeU32(paddingPos + i, temp);
                 }
-                while (i != 0) {
+                while (i > 0) {
                     --i;
                     paddingPos[i] ^= streamPos[i];
                 }
@@ -285,8 +283,13 @@ static int32_t _client_doHello(struct client *self) {
                 if (pos < (int64_t)(sizeof("SSH-2.0-") - 1) || hc_MEMCMP(&self->buffer[0], "SSH-2.0-", sizeof("SSH-2.0-") - 1) != 0) return -4;
                 sha256_update(&self->partialExchangeHash, &(uint32_t) { hc_BSWAP32((uint32_t)pos) }, 4);
                 sha256_update(&self->partialExchangeHash, &self->buffer[0], pos);
-                self->bufferPos = pos + 2;
-                self->receivedSize -= self->bufferPos;
+
+                int32_t bufferPos = pos + 2;
+                self->receivedSize -= bufferPos;
+
+                // Align buffer position to 4 bytes.
+                self->bufferPos = math_ALIGN_FORWARD(bufferPos, 4);
+                if (self->bufferPos != bufferPos) hc_MEMMOVE(&self->buffer[self->bufferPos], &self->buffer[bufferPos], (size_t)self->receivedSize);
                 return 0;
             }
         }
