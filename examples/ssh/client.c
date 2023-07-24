@@ -90,10 +90,10 @@ static int32_t client_nextMessage(struct client *self, uint8_t **message) {
         }
         default: hc_UNREACHABLE;
     }
-    if (size > (uint32_t)self->bufferSize - 4 - (uint32_t)macSize) return -2;
+    if (size > (uint32_t)self->bufferSize - 4 - (uint32_t)macSize) return -1;
 
     int32_t packetSize = 4 + (int32_t)size;
-    if (packetSize & 0x3) return -1; // rfc4253, 6. ensures max(8,blocksize) alignment, but we only need 4.
+    if (packetSize & 0x3) return -2; // rfc4253, 6. ensures max(8,blocksize) alignment, but we only need 4.
     if (self->receivedSize < packetSize + macSize) return 0;
 
     switch (self->encryption) {
