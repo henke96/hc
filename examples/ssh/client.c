@@ -19,6 +19,16 @@
 
 enum _client_encryption { _client_encryption_NONE, _client_encryption_CHACHA20POLY1305 };
 
+struct client_messageHead {
+    uint32_t _size;
+    uint8_t _paddingSize;
+} hc_PACKED(1);
+
+struct client_messageTail {
+    uint8_t _padding[_client_MAX_PADDING];
+    uint8_t _mac[_client_MAX_MAC_SIZE];
+};
+
 struct client {
     uint8_t *buffer;
     int32_t bufferSize;
@@ -61,12 +71,12 @@ static int32_t client_nextMessage(struct client *self, uint8_t **message) {
 
     if (self->receivedSize < 16) return 0; // rfc4253, 6.
 
-    int64_t packetSize = 4;
+    uint32_t size;
     int32_t macSize;
     switch (self->encryption) {
         case _client_encryption_NONE: {
             macSize = 0;
-            packetSize += hc_BSWAP32(packet->size);
+            size = hc_BSWAP32(packet->size);
             break;
         }
         case _client_encryption_CHACHA20POLY1305: {
@@ -75,14 +85,15 @@ static int32_t client_nextMessage(struct client *self, uint8_t **message) {
             mem_storeU64BE(&self->ciphers[3].orig.nonce, self->receiveSequenceNumber);
             union chacha20 stream;
             chacha20_block(&self->ciphers[3], &stream);
-            packetSize += hc_BSWAP32(packet->size ^ stream.u32[0]);
+            size = hc_BSWAP32(packet->size ^ stream.u32[0]);
             break;
         }
         default: hc_UNREACHABLE;
     }
+    if (size > (uint32_t)self->bufferSize - 4 - (uint32_t)macSize) return -2;
 
+    int32_t packetSize = 4 + (int32_t)size;
     if (packetSize & 0x3) return -1; // rfc4253, 6. ensures max(8,blocksize) alignment, but we only need 4.
-    if (packetSize + macSize > self->bufferSize) return -2;
     if (self->receivedSize < packetSize + macSize) return 0;
 
     switch (self->encryption) {
@@ -99,21 +110,23 @@ static int32_t client_nextMessage(struct client *self, uint8_t **message) {
             poly1305_init(&poly1305, &stream.u8[0]);
             poly1305_update(&poly1305, packet, packetSize);
             poly1305_finish(&poly1305, &calculatedMac[0]);
-            if (mem_compareConstantTime(&calculatedMac[0], &self->buffer[self->bufferPos + (int32_t)packetSize], poly1305_MAC_SIZE) != 0) return -3;
+            if (mem_compareConstantTime(&calculatedMac[0], (uint8_t *)packet + packetSize, poly1305_MAC_SIZE) != 0) return -3;
 
             // Decrypt packet (except size).
-            for (int64_t offset = 4;;) {
+            for (int32_t offset = 4;;) {
                 ++self->ciphers[2].orig.blockCounter;
                 chacha20_block(&self->ciphers[2], &stream);
 
-                int64_t i = packetSize - offset;
-                if (i > (int64_t)sizeof(stream)) i = sizeof(stream);
-                uint8_t *bufferPos = &self->buffer[self->bufferPos + offset];
-                offset += i;
-                do {
-                    i -= 4;
+                int32_t iEnd;
+                int32_t remaining = packetSize - offset;
+                if (remaining < (int32_t)sizeof(stream)) iEnd = remaining;
+                else iEnd = (int32_t)sizeof(stream);
+
+                uint8_t *bufferPos = (uint8_t *)packet + offset;
+                offset += iEnd;
+                for (int32_t i = 0; i < iEnd; i += 4) {
                     *(uint32_t *)hc_ASSUME_ALIGNED(bufferPos + i, 4) ^= *(uint32_t *)hc_ASSUME_ALIGNED(&stream.u8[i], 4);
-                } while (i > 0);
+                }
                 if (offset == packetSize) break;
             }
             break;
@@ -121,15 +134,15 @@ static int32_t client_nextMessage(struct client *self, uint8_t **message) {
         default: hc_UNREACHABLE;
     }
 
-    int32_t payloadSize = (int32_t)packetSize - packet->paddingSize - 4 - 1;
-    if (payloadSize <= 0) return -4;
+    int32_t messageSize = packetSize - packet->paddingSize - 4 - 1;
+    if (messageSize <= 0) return -4;
 
     ++self->receiveSequenceNumber;
 
-    self->bufferPos = (self->bufferPos + (int32_t)packetSize + macSize) % self->bufferSize;
-    self->receivedSize -= (int32_t)packetSize + macSize;
+    self->bufferPos = (self->bufferPos + packetSize + macSize) % self->bufferSize;
+    self->receivedSize -= packetSize + macSize;
     *message = &packet->payload[0];
-    return payloadSize;
+    return messageSize;
 }
 
 static int32_t client_waitForMessage(struct client *self, uint8_t **message) {
@@ -145,89 +158,41 @@ static int32_t client_waitForMessage(struct client *self, uint8_t **message) {
     }
 }
 
-int32_t client_sendMessage(struct client *self, void *message, int32_t messageSize) {
+int32_t client_sendMessage(struct client *self, struct client_messageHead *packetHead, int32_t messageSize) {
     debug_ASSERT(messageSize > 0);
 
-    int64_t paddingSize = _client_PADDING_SIZE(messageSize); // TODO: Randomise?
-    struct header {
-        uint32_t size;
-        uint8_t paddingSize;
-    } hc_PACKED(1) header = {
-        .size = hc_BSWAP32(1 + (uint32_t)messageSize + (uint32_t)paddingSize),
-        .paddingSize = (uint8_t)paddingSize
-    };
-    uint8_t paddingAndMac[_client_MAX_PADDING + _client_MAX_MAC_SIZE];
-    hc_MEMSET(&paddingAndMac[0], 0, (size_t)paddingSize);
+    int32_t paddingSize = _client_PADDING_SIZE(messageSize);
+    int32_t packetSize = (int32_t)sizeof(*packetHead) + messageSize + paddingSize;
+    packetHead->_size = hc_BSWAP32((uint32_t)packetSize - 4);
+    packetHead->_paddingSize = (uint8_t)paddingSize;
 
-    int32_t paddingAndMacSize = (int32_t)paddingSize;
     switch (self->encryption) {
         case _client_encryption_NONE: break;
         case _client_encryption_CHACHA20POLY1305: {
-            paddingAndMacSize += poly1305_MAC_SIZE;
-
             // Encrypt size.
             mem_storeU64BE(&self->ciphers[1].orig.nonce, self->sendSequenceNumber);
             union chacha20 stream;
             chacha20_block(&self->ciphers[1], &stream);
-            header.size ^= stream.u32[0];
+            packetHead->_size ^= stream.u32[0];
 
             // Encrypt packet (except size).
             mem_storeU64BE(&self->ciphers[0].orig.nonce, self->sendSequenceNumber);
-            self->ciphers[0].orig.blockCounter = 1;
-            chacha20_block(&self->ciphers[0], &stream);
-            // Encrypt padding size.
-            header.paddingSize ^= stream.u8[0];
-
-            int64_t streamOffset = 1;
-            // Encrypt message.
-            for (int64_t offset = 0;;) {
-                int64_t i = messageSize - offset;
-                int64_t remainingStream = (int64_t)sizeof(stream) - streamOffset;
-                if (i > remainingStream) i = remainingStream;
-                uint8_t *messagePos = message + offset;
-                uint8_t *streamPos = &stream.u8[streamOffset];
-                offset += i;
-                streamOffset += i;
-                while (i >= 4) {
-                    i -= 4;
-                    uint32_t temp = mem_loadU32(messagePos + i);
-                    temp ^= mem_loadU32(streamPos + i);
-                    mem_storeU32(messagePos + i, temp);
-                }
-                while (i > 0) {
-                    --i;
-                    messagePos[i] ^= streamPos[i];
-                }
-                if (offset == messageSize) break;
-
+            self->ciphers[0].orig.blockCounter = 0;
+            for (int32_t offset = 4;;) {
                 ++self->ciphers[0].orig.blockCounter;
                 chacha20_block(&self->ciphers[0], &stream);
-                streamOffset = 0;
-            }
-            // Encrypt padding.
-            for (int64_t offset = 0;;) {
-                int64_t i = paddingSize - offset;
-                int64_t remainingStream = (int64_t)sizeof(stream) - streamOffset;
-                if (i > remainingStream) i = remainingStream;
-                uint8_t *paddingPos = &paddingAndMac[offset];
-                uint8_t *streamPos = &stream.u8[streamOffset];
-                offset += i;
-                // Don't bother updating streamOffset, since padding is last thing we encrypt.
-                while (i >= 4) {
-                    i -= 4;
-                    uint32_t temp = mem_loadU32(paddingPos + i);
-                    temp ^= mem_loadU32(streamPos + i);
-                    mem_storeU32(paddingPos + i, temp);
-                }
-                while (i > 0) {
-                    --i;
-                    paddingPos[i] ^= streamPos[i];
-                }
-                if (offset == paddingSize) break;
 
-                ++self->ciphers[0].orig.blockCounter;
-                chacha20_block(&self->ciphers[0], &stream);
-                streamOffset = 0;
+                int32_t iEnd;
+                int32_t remaining = packetSize - offset;
+                if (remaining < (int32_t)sizeof(stream)) iEnd = remaining;
+                else iEnd = (int32_t)sizeof(stream);
+
+                uint8_t *bufferPos = (uint8_t *)packetHead + offset;
+                offset += iEnd;
+                for (int32_t i = 0; i < iEnd; i += 4) {
+                    *(uint32_t *)hc_ASSUME_ALIGNED(bufferPos + i, 4) ^= *(uint32_t *)hc_ASSUME_ALIGNED(&stream.u8[i], 4);
+                }
+                if (offset == packetSize) break;
             }
 
             // Append MAC.
@@ -235,21 +200,15 @@ int32_t client_sendMessage(struct client *self, void *message, int32_t messageSi
             self->ciphers[0].orig.blockCounter = 0;
             chacha20_block(&self->ciphers[0], &stream);
             poly1305_init(&poly1305, &stream.u8[0]);
-            poly1305_update(&poly1305, &header, sizeof(header));
-            poly1305_update(&poly1305, message, messageSize);
-            poly1305_update(&poly1305, &paddingAndMac, paddingSize);
-            poly1305_finish(&poly1305, &paddingAndMac[paddingSize]);
+            poly1305_update(&poly1305, packetHead, packetSize);
+            poly1305_finish(&poly1305, (uint8_t *)packetHead + packetSize);
+            packetSize += poly1305_MAC_SIZE;
             break;
         }
     }
 
-    struct iovec_const iov[] = {
-        { .iov_base = &header, .iov_len = sizeof(header) },
-        { .iov_base = message, .iov_len = messageSize },
-        { .iov_base = &paddingAndMac[0], .iov_len = paddingAndMacSize },
-    };
-    int32_t numSent = (int32_t)sys_sendmsg(self->socketFd, &(struct msghdr_const) { .msg_iov = &iov[0], .msg_iovlen = hc_ARRAY_LEN(iov) }, MSG_NOSIGNAL);
-    if (numSent != (int32_t)sizeof(header) + messageSize + paddingAndMacSize) return -1;
+    int32_t numSent = (int32_t)sys_sendto(self->socketFd, packetHead, packetSize, MSG_NOSIGNAL, NULL, 0);
+    if (numSent != packetSize) return -1;
     ++self->sendSequenceNumber;
     return 0;
 }
@@ -307,63 +266,69 @@ static int32_t _client_sendKeyExchangeInit(struct client *self) {
     #define _client_LANGUAGE_LIST ""
     #define _client_LANGUAGE_LIST_SIZE (sizeof(_client_LANGUAGE_LIST) - 1)
     struct {
-        uint8_t opcode;
-        uint8_t cookie[16];
-        uint32_t kexListSize;
-        char kexList[_client_KEX_LIST_SIZE];
-        uint32_t hostKeyListSize;
-        char hostKeyList[_client_HOST_KEY_LIST_SIZE];
-        uint32_t clientCipherListSize;
-        char clientCipherList[_client_CIPHER_LIST_SIZE];
-        uint32_t serverCipherListSize;
-        char serverCipherList[_client_CIPHER_LIST_SIZE];
-        uint32_t clientMacListSize;
-        char clientMacList[_client_MAC_LIST_SIZE];
-        uint32_t serverMacListSize;
-        char serverMacList[_client_MAC_LIST_SIZE];
-        uint32_t clientCompressionListSize;
-        char clientCompressionList[_client_COMPRESSION_LIST_SIZE];
-        uint32_t serverCompressionListSize;
-        char serverCompressionList[_client_COMPRESSION_LIST_SIZE];
-        uint32_t clientLanguageListSize;
-        char clientLanguageList[_client_LANGUAGE_LIST_SIZE];
-        uint32_t serverLanguageListSize;
-        char serverLanguageList[_client_LANGUAGE_LIST_SIZE];
-        uint8_t firstKexPacketFollows;
-        uint32_t reserved;
-    } hc_PACKED(1) message = {
-        .opcode = proto_MSG_KEXINIT,
-        .kexListSize = hc_BSWAP32(_client_KEX_LIST_SIZE),
-        .kexList = _client_KEX_LIST,
-        .hostKeyListSize = hc_BSWAP32(_client_HOST_KEY_LIST_SIZE),
-        .hostKeyList = _client_HOST_KEY_LIST,
-        .clientCipherListSize = hc_BSWAP32(_client_CIPHER_LIST_SIZE),
-        .clientCipherList = _client_CIPHER_LIST,
-        .serverCipherListSize = hc_BSWAP32(_client_CIPHER_LIST_SIZE),
-        .serverCipherList = _client_CIPHER_LIST,
-        .clientMacListSize = hc_BSWAP32(_client_MAC_LIST_SIZE),
-        .clientMacList = _client_MAC_LIST,
-        .serverMacListSize = hc_BSWAP32(_client_MAC_LIST_SIZE),
-        .serverMacList = _client_MAC_LIST,
-        .clientCompressionListSize = hc_BSWAP32(_client_COMPRESSION_LIST_SIZE),
-        .clientCompressionList = _client_COMPRESSION_LIST,
-        .serverCompressionListSize = hc_BSWAP32(_client_COMPRESSION_LIST_SIZE),
-        .serverCompressionList = _client_COMPRESSION_LIST,
-        .clientLanguageListSize = hc_BSWAP32(_client_LANGUAGE_LIST_SIZE),
-        .clientLanguageList = _client_LANGUAGE_LIST,
-        .serverLanguageListSize = hc_BSWAP32(_client_LANGUAGE_LIST_SIZE),
-        .serverLanguageList = _client_LANGUAGE_LIST,
-        .firstKexPacketFollows = 0,
-        .reserved = 0
+        struct client_messageHead head;
+        struct {
+            uint8_t opcode;
+            uint8_t cookie[16];
+            uint32_t kexListSize;
+            char kexList[_client_KEX_LIST_SIZE];
+            uint32_t hostKeyListSize;
+            char hostKeyList[_client_HOST_KEY_LIST_SIZE];
+            uint32_t clientCipherListSize;
+            char clientCipherList[_client_CIPHER_LIST_SIZE];
+            uint32_t serverCipherListSize;
+            char serverCipherList[_client_CIPHER_LIST_SIZE];
+            uint32_t clientMacListSize;
+            char clientMacList[_client_MAC_LIST_SIZE];
+            uint32_t serverMacListSize;
+            char serverMacList[_client_MAC_LIST_SIZE];
+            uint32_t clientCompressionListSize;
+            char clientCompressionList[_client_COMPRESSION_LIST_SIZE];
+            uint32_t serverCompressionListSize;
+            char serverCompressionList[_client_COMPRESSION_LIST_SIZE];
+            uint32_t clientLanguageListSize;
+            char clientLanguageList[_client_LANGUAGE_LIST_SIZE];
+            uint32_t serverLanguageListSize;
+            char serverLanguageList[_client_LANGUAGE_LIST_SIZE];
+            uint8_t firstKexPacketFollows;
+            uint32_t reserved;
+        } hc_PACKED(1) message;
+        struct client_messageTail tail;
+    } keyExchangeInit = {
+        .message = {
+            .opcode = proto_MSG_KEXINIT,
+            .kexListSize = hc_BSWAP32(_client_KEX_LIST_SIZE),
+            .kexList = _client_KEX_LIST,
+            .hostKeyListSize = hc_BSWAP32(_client_HOST_KEY_LIST_SIZE),
+            .hostKeyList = _client_HOST_KEY_LIST,
+            .clientCipherListSize = hc_BSWAP32(_client_CIPHER_LIST_SIZE),
+            .clientCipherList = _client_CIPHER_LIST,
+            .serverCipherListSize = hc_BSWAP32(_client_CIPHER_LIST_SIZE),
+            .serverCipherList = _client_CIPHER_LIST,
+            .clientMacListSize = hc_BSWAP32(_client_MAC_LIST_SIZE),
+            .clientMacList = _client_MAC_LIST,
+            .serverMacListSize = hc_BSWAP32(_client_MAC_LIST_SIZE),
+            .serverMacList = _client_MAC_LIST,
+            .clientCompressionListSize = hc_BSWAP32(_client_COMPRESSION_LIST_SIZE),
+            .clientCompressionList = _client_COMPRESSION_LIST,
+            .serverCompressionListSize = hc_BSWAP32(_client_COMPRESSION_LIST_SIZE),
+            .serverCompressionList = _client_COMPRESSION_LIST,
+            .clientLanguageListSize = hc_BSWAP32(_client_LANGUAGE_LIST_SIZE),
+            .clientLanguageList = _client_LANGUAGE_LIST,
+            .serverLanguageListSize = hc_BSWAP32(_client_LANGUAGE_LIST_SIZE),
+            .serverLanguageList = _client_LANGUAGE_LIST,
+            .firstKexPacketFollows = 0,
+            .reserved = 0
+        }
     };
 
-    if (sys_getrandom(&message.cookie, sizeof(message.cookie), 0) < 0) return -1;
+    if (sys_getrandom(&keyExchangeInit.message.cookie, sizeof(keyExchangeInit.message.cookie), 0) < 0) return -1;
 
     self->tempHash = self->partialExchangeHash;
-    sha256_update(&self->tempHash, &(uint32_t) { hc_BSWAP32(sizeof(message)) }, 4);
-    sha256_update(&self->tempHash, &message, sizeof(message));
+    sha256_update(&self->tempHash, &(uint32_t) { hc_BSWAP32(sizeof(keyExchangeInit.message)) }, 4);
+    sha256_update(&self->tempHash, &keyExchangeInit.message, sizeof(keyExchangeInit.message));
 
-    int32_t status = client_sendMessage(self, &message, sizeof(message));
+    int32_t status = client_sendMessage(self, &keyExchangeInit.head, sizeof(keyExchangeInit.message));
     if (status < 0) return -2;
     return 0;
 }
@@ -440,20 +405,26 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
 
     // Send KEX_ECDH_INIT message.
     struct {
-        uint8_t opcode;
-        uint32_t publicKeySize;
-        uint8_t publicKey[32];
-    } hc_PACKED(1) ecdhInit = {
-        .opcode = proto_MSG_KEX_ECDH_INIT,
-        .publicKeySize = hc_BSWAP32(sizeof(ecdhInit.publicKey))
+        struct client_messageHead head;
+        struct {
+            uint8_t opcode;
+            uint32_t publicKeySize;
+            uint8_t publicKey[32];
+        } hc_PACKED(1) message;
+        struct client_messageTail tail;
+    } ecdhInit = {
+        .message = {
+            .opcode = proto_MSG_KEX_ECDH_INIT,
+            .publicKeySize = hc_BSWAP32(sizeof(ecdhInit.message.publicKey))
+        }
     };
     uint8_t publicKey[32];
     uint8_t secret[32];
     if (sys_getrandom(&secret[0], sizeof(secret), 0) < 0) return -12;
     x25519(&publicKey[0], &secret[0], &x25519_ecdhBasepoint[0]);
-    hc_MEMCPY(&ecdhInit.publicKey[0], &publicKey[0], sizeof(publicKey));
+    hc_MEMCPY(&ecdhInit.message.publicKey[0], &publicKey[0], sizeof(publicKey));
 
-    int32_t status = client_sendMessage(self, &ecdhInit, sizeof(ecdhInit));
+    int32_t status = client_sendMessage(self, &ecdhInit.head, sizeof(ecdhInit.message));
     if (status < 0) return -13;
 
     // Wait for server's KEX_ECDH_REPLY.
@@ -513,11 +484,17 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
 
     // Send NEWKEYS message.
     struct {
-        uint8_t opcode;
+        struct client_messageHead head;
+        struct {
+            uint8_t opcode;
+        } message;
+        struct client_messageTail tail;
     } newKeys = {
-        .opcode = proto_MSG_NEWKEYS
+        .message = {
+            .opcode = proto_MSG_NEWKEYS
+        }
     };
-    status = client_sendMessage(self, &newKeys, sizeof(newKeys));
+    status = client_sendMessage(self, &newKeys.head, sizeof(newKeys.message));
     if (status < 0) return -17;
 
     // Wait for server's NEWKEYS message.
