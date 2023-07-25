@@ -524,6 +524,76 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
     return 0;
 }
 
+static int32_t _client_doServiceRequest(struct client *self) {
+    #define _client_SERVICE_NAME "ssh-userauth"
+    struct {
+        struct client_messageHead head;
+        struct {
+            uint8_t opcode;
+            uint32_t serviceNameSize;
+            char serviceName[sizeof(_client_SERVICE_NAME) - 1];
+        } hc_PACKED(1) message;
+        struct client_messageTail tail;
+    } serviceRequest = {
+        .message = {
+            .opcode = proto_MSG_SERVICE_REQUEST,
+            .serviceNameSize = hc_BSWAP32(sizeof(_client_SERVICE_NAME) - 1),
+            .serviceName = _client_SERVICE_NAME
+        }
+    };
+    int32_t status = client_sendMessage(self, &serviceRequest.head, sizeof(serviceRequest.message));
+    if (status < 0) return -1;
+
+    struct {
+        uint8_t opcode;
+        uint32_t serviceNameSize;
+        char serviceName[sizeof(_client_SERVICE_NAME) - 1];
+    } hc_PACKED(1) *response;
+    int32_t responseSize = client_waitForMessage(self, (uint8_t **)&response);
+    if (responseSize != sizeof(*response)) return -2;
+
+    if (
+        response->opcode != proto_MSG_SERVICE_ACCEPT ||
+        response->serviceNameSize != hc_BSWAP32(sizeof(_client_SERVICE_NAME) - 1) ||
+        hc_MEMCMP(&response->serviceName[0], _client_SERVICE_NAME, sizeof(_client_SERVICE_NAME) - 1) != 0
+    ) return -3;
+    return 0;
+}
+
+static int32_t client_connect(struct client *self, void *sockaddr, int32_t sockaddrSize) {
+    self->bufferPos = 0;
+    self->receivedSize = 0;
+    self->receiveSequenceNumber = 0;
+    self->sendSequenceNumber = 0;
+    self->encryption = _client_encryption_NONE;
+
+    // Connect to server.
+    int32_t status = sys_connect(self->socketFd, sockaddr, sockaddrSize);
+    if (status < 0) return -1;
+
+    status = _client_doHello(self);
+    if (status < 0) return -2;
+
+    status = _client_sendKeyExchangeInit(self);
+    if (status < 0) return -3;
+
+    // Receive next message (should be a KEXINIT).
+    uint8_t *serverMessage;
+    int32_t serverMessageSize = client_waitForMessage(self, &serverMessage);
+    if (serverMessageSize <= 0) return -4;
+
+    // Perform key exchange.
+    status = _client_doKeyExchange(self, serverMessage, serverMessageSize);
+    if (status < 0) {
+        debug_printNum("Key exchange failed (", status, ")\n");
+        return -5;
+    }
+
+    status = _client_doServiceRequest(self);
+    if (status < 0) return -6;
+    return 0;
+}
+
 static int32_t client_init(struct client *self, int32_t sockaddrFamily) {
     for (int32_t i = 0; i < (int32_t)hc_ARRAY_LEN(self->ciphers); ++i) {
         chacha20_init(&self->ciphers[i]);
@@ -575,38 +645,6 @@ static int32_t client_init(struct client *self, int32_t sockaddrFamily) {
     cleanup_bufferMemFd:
     debug_CHECK(sys_close(self->bufferMemFd), RES == 0);
     return status;
-}
-
-static int32_t client_connect(struct client *self, void *sockaddr, int32_t sockaddrSize) {
-    self->bufferPos = 0;
-    self->receivedSize = 0;
-    self->receiveSequenceNumber = 0;
-    self->sendSequenceNumber = 0;
-    self->encryption = _client_encryption_NONE;
-
-    // Connect to server.
-    int32_t status = sys_connect(self->socketFd, sockaddr, sockaddrSize);
-    if (status < 0) return -1;
-
-    status = _client_doHello(self);
-    if (status < 0) return -2;
-
-    status = _client_sendKeyExchangeInit(self);
-    if (status < 0) return -3;
-
-    // Receive next message (should be a KEXINIT).
-    uint8_t *serverMessage;
-    int32_t serverMessageSize = client_waitForMessage(self, &serverMessage);
-    if (serverMessageSize <= 0) return -4;
-
-    // Perform key exchange.
-    status = _client_doKeyExchange(self, serverMessage, serverMessageSize);
-    if (status < 0) {
-        debug_printNum("Key exchange failed (", status, ")\n");
-        return -5;
-    }
-    // TODO: To be continued...
-    return 0;
 }
 
 static void client_deinit(struct client *self) {
