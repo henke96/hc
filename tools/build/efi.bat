@@ -9,8 +9,8 @@ set "prog_name=%~2"
 
 set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 set "common_flags=-Wl,-subsystem,efi_application"
-set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined"
-set "release_flags=%common_flags% -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
+set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -Dhc_DEBUG"
+set "release_flags=%common_flags% -fomit-frame-pointer -s -Os"
 
 if not defined NO_X86_64 (
     set "ARCH=x86_64" & call :build "%FLAGS_X86_64%"

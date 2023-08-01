@@ -7,8 +7,8 @@ prog_path="$1"
 prog_name="$2"
 
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-release_flags="-Ddebug_NDEBUG -fomit-frame-pointer -s -Os"
+debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g -Dhc_DEBUG"
+release_flags="-fomit-frame-pointer -s -Os"
 eval "set -- $FLAGS"
 
 if test -n "$ASSEMBLY"; then

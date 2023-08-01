@@ -11,8 +11,8 @@ set "prog_name=%~2"
 if "%~3" == "" ( set "ext=elf" ) else set "ext=%~3"
 
 set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-set "release_flags=-fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
+set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g -Dhc_DEBUG"
+set "release_flags=-fomit-frame-pointer -s -Os"
 
 if not defined NO_X86_64 (
     set "ARCH=x86_64" & call :build "%FLAGS_X86_64%"

@@ -1,13 +1,13 @@
 extern const uint8_t kernelBin[];
 extern uint32_t kernelBin_size;
 
-#ifdef debug_NDEBUG
+#ifdef hc_DEBUG
 asm(
     ".section .rdata\n"
     ".global kernelBin\n"
     ".align 8\n"
     "kernelBin:\n"
-    ".incbin \"kernel.bin\"\n"
+    ".incbin \"debug.kernel.bin\"\n"
     "kernelBin_end:\n"
     ".global kernelBin_size\n"
     ".align 4\n"
@@ -20,7 +20,7 @@ asm(
     ".global kernelBin\n"
     ".align 8\n"
     "kernelBin:\n"
-    ".incbin \"debug.kernel.bin\"\n"
+    ".incbin \"kernel.bin\"\n"
     "kernelBin_end:\n"
     ".global kernelBin_size\n"
     ".align 4\n"

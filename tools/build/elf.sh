@@ -30,8 +30,8 @@ prog_name="$2"
 ext="${3:-elf}"
 
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-release_flags="-fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
+debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g -Dhc_DEBUG"
+release_flags="-fomit-frame-pointer -s -Os"
 
 if test -z "$NO_X86_64"; then export ARCH="x86_64"; build "$FLAGS_X86_64"; fi
 if test -z "$NO_AARCH64"; then export ARCH="aarch64"; build "$FLAGS_AARCH64"; fi

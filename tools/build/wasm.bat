@@ -8,8 +8,8 @@ set "prog_path=%~1"
 set "prog_name=%~2"
 
 set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g"
-set "release_flags=-Ddebug_NDEBUG -fomit-frame-pointer -s -Os"
+set "debug_flags=-fsanitize-undefined-trap-on-error -fsanitize=undefined -g -Dhc_DEBUG"
+set "release_flags=-fomit-frame-pointer -s -Os"
 
 if defined ASSEMBLY (
     call "%root_dir%\cc_wasm.bat" %debug_flags% -S -o "%prog_path%\debug.%prog_name%.wasm.s" "%prog_path%\%prog_name%.c" %FLAGS%

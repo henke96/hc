@@ -31,8 +31,8 @@ ext="${3:-exe}"
 
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 common_flags="-Wl,-subsystem,windows"
-debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="
-release_flags="$common_flags -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
+debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb= -Dhc_DEBUG"
+release_flags="$common_flags -fomit-frame-pointer -s -Os"
 
 if test -n "$LINK_KERNEL32"; then FLAGS="-l:kernel32.lib $FLAGS"; fi
 if test -n "$LINK_USER32"; then FLAGS="-l:user32.lib $FLAGS"; fi

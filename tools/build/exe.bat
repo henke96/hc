@@ -10,8 +10,8 @@ if "%~3" == "" ( set "ext=exe" ) else set "ext=%~3"
 
 set "analyse_flags=--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 set "common_flags=-L^"%prog_path%^" -Wl,-subsystem,windows"
-set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb="
-set "release_flags=%common_flags% -fomit-frame-pointer -Ddebug_NDEBUG -s -Os"
+set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb= -Dhc_DEBUG"
+set "release_flags=%common_flags% -fomit-frame-pointer -s -Os"
 
 if defined LINK_KERNEL32 set "FLAGS=-l:kernel32.lib %FLAGS%"
 if defined LINK_USER32 set "FLAGS=-l:user32.lib %FLAGS%"
