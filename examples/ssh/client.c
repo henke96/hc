@@ -85,7 +85,7 @@ static int32_t client_peekMessage(struct client *self, uint8_t **message) {
 
     int32_t macSize = _client_macSize[self->encryption];
     if (self->nextSize == 0) {
-        if (self->receivedSize < 16) return 0; // rfc4253, 6.
+        if (self->receivedSize < (int32_t)sizeof(packet->size)) return 0;
         uint32_t size;
         switch (self->encryption) {
             case _client_encryption_NONE: {
