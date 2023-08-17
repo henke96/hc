@@ -2,6 +2,8 @@
     #error "Please define `client_PAGE_SIZE`"
 #endif
 
+#define _client_MAX_PACKET_SIZE 35000 /* rfc4253, 6.1. */
+
 #define _client_MAX_BLOCK_SIZE 64
 #define _client_MAX_MAC_SIZE 16
 #define _client_MIN_PADDING 4
@@ -47,6 +49,14 @@ struct client {
 
     int32_t socketFd;
     enum _client_encryption encryption;
+
+    int32_t nextSize; // Negated if already decrypted.
+    int32_t __pad;
+};
+
+static const int32_t _client_macSize[] = {
+    [_client_encryption_NONE] = 0,
+    [_client_encryption_CHACHA20POLY1305] = poly1305_MAC_SIZE
 };
 
 static int32_t client_receive(struct client *self) {
@@ -61,39 +71,42 @@ static int32_t client_receive(struct client *self) {
 }
 
 // Returns size of message, or 0 if no message is buffered.
-static int32_t client_nextMessage(struct client *self, uint8_t **message) {
+static int32_t client_peekMessage(struct client *self, uint8_t **message) {
     struct packet {
         uint32_t size;
         uint8_t paddingSize;
-        uint8_t payload[];
-    } hc_PACKED(1);
-    struct packet *packet = (struct packet *)&self->buffer[self->bufferPos];
+        uint8_t payload[3];
+    } *packet = (struct packet *)hc_ASSUME_ALIGNED(&self->buffer[self->bufferPos], 4);
 
-    if (self->receivedSize < 16) return 0; // rfc4253, 6.
-
-    uint32_t size;
-    int32_t macSize;
-    switch (self->encryption) {
-        case _client_encryption_NONE: {
-            macSize = 0;
-            size = hc_BSWAP32(packet->size);
-            break;
-        }
-        case _client_encryption_CHACHA20POLY1305: {
-            macSize = poly1305_MAC_SIZE;
-            // Decrypt size.
-            mem_storeU64BE(&self->ciphers[3].orig.nonce, self->receiveSequenceNumber);
-            union chacha20 stream;
-            chacha20_block(&self->ciphers[3], &stream);
-            size = hc_BSWAP32(packet->size ^ stream.u32[0]);
-            break;
-        }
-        default: hc_UNREACHABLE;
+    if (self->nextSize < 0) {
+        *message = &packet->payload[0];
+        return -self->nextSize - packet->paddingSize - (int32_t)sizeof(packet->paddingSize);
     }
-    if (size > (uint32_t)self->bufferSize - 4 - (uint32_t)macSize) return -1;
 
-    int32_t packetSize = 4 + (int32_t)size;
-    if (packetSize & 0x3) return -2; // rfc4253, 6. ensures max(8,blocksize) alignment, but we only need 4.
+    int32_t macSize = _client_macSize[self->encryption];
+    if (self->nextSize == 0) {
+        if (self->receivedSize < 16) return 0; // rfc4253, 6.
+        uint32_t size;
+        switch (self->encryption) {
+            case _client_encryption_NONE: {
+                size = hc_BSWAP32(packet->size);
+                break;
+            }
+            case _client_encryption_CHACHA20POLY1305: {
+                mem_storeU64BE(&self->ciphers[3].orig.nonce, self->receiveSequenceNumber);
+                union chacha20 stream;
+                chacha20_block(&self->ciphers[3], &stream);
+                size = hc_BSWAP32(packet->size ^ stream.u32[0]);
+                break;
+            }
+            default: hc_UNREACHABLE;
+        }
+        if (size > _client_MAX_PACKET_SIZE - (uint32_t)sizeof(packet->size) - (uint32_t)macSize) return -1;
+        if (size & 0x3) return -2; // rfc4253, 6. ensures max(8,blocksize) alignment, but we only need 4.
+        self->nextSize = (int32_t)size;
+    }
+
+    int32_t packetSize = (int32_t)sizeof(packet->size) + self->nextSize;
     if (self->receivedSize < packetSize + macSize) return 0;
 
     switch (self->encryption) {
@@ -134,14 +147,29 @@ static int32_t client_nextMessage(struct client *self, uint8_t **message) {
         default: hc_UNREACHABLE;
     }
 
-    int32_t messageSize = packetSize - packet->paddingSize - 4 - 1;
+    int32_t messageSize = self->nextSize - packet->paddingSize - (int32_t)sizeof(packet->paddingSize);
     if (messageSize <= 0) return -4;
 
     ++self->receiveSequenceNumber;
+    self->nextSize = -self->nextSize;
 
-    self->bufferPos = (self->bufferPos + packetSize + macSize) % self->bufferSize;
-    self->receivedSize -= packetSize + macSize;
     *message = &packet->payload[0];
+    return messageSize;
+}
+
+// Acknowledge peeked message, moving past it.
+static void client_ackMessage(struct client *self) {
+    debug_ASSERT(self->nextSize < 0);
+    int32_t totalSize = -self->nextSize + (int32_t)sizeof(uint32_t) + _client_macSize[self->encryption];
+    self->bufferPos = (self->bufferPos + totalSize) % self->bufferSize;
+    self->receivedSize -= totalSize;
+    self->nextSize = 0;
+}
+
+// Get the next message (peek and acknowledge combined).
+static int32_t client_nextMessage(struct client *self, uint8_t **message) {
+    int32_t messageSize = client_peekMessage(self, message);
+    if (messageSize > 0) client_ackMessage(self);
     return messageSize;
 }
 
@@ -229,10 +257,18 @@ static int32_t _client_doHello(struct client *self) {
     sha256_update(&self->partialExchangeHash, &hello, sizeof(hello) - 2);
 
     // Not implemented: The server may send other lines of data before the version string. rfc4253, 4.2.
+    int32_t received = 0;
     for (int32_t pos = 0;;) {
-        if (client_receive(self) <= 0) return -2;
+        int32_t numRead = (int32_t)sys_recvfrom(
+            self->socketFd,
+            &self->buffer[pos],
+            self->bufferSize - received,
+            0, NULL, NULL
+        );
+        if (numRead <= 0) return -2;
+        received += numRead;
 
-        int32_t end = self->receivedSize;
+        int32_t end = received;
         if (end > 255) end = 255; // rfc4253, 4.2.
 
         for (; pos + 1 < end; ++pos) {
@@ -244,7 +280,7 @@ static int32_t _client_doHello(struct client *self) {
                 sha256_update(&self->partialExchangeHash, &self->buffer[0], pos);
 
                 int32_t bufferPos = pos + 2;
-                self->receivedSize -= bufferPos;
+                self->receivedSize = received - bufferPos;
 
                 // Align buffer position to 4 bytes.
                 self->bufferPos = math_ALIGN_FORWARD(bufferPos, 4);
@@ -566,6 +602,7 @@ static int32_t client_connect(struct client *self, void *sockaddr, int32_t socka
     self->receiveSequenceNumber = 0;
     self->sendSequenceNumber = 0;
     self->encryption = _client_encryption_NONE;
+    self->nextSize = 0;
 
     // Connect to server.
     int32_t status = sys_connect(self->socketFd, sockaddr, sockaddrSize);
@@ -605,7 +642,7 @@ static int32_t client_init(struct client *self, int32_t sockaddrFamily) {
     self->bufferMemFd = sys_memfd_create("", MFD_CLOEXEC);
     if (self->bufferMemFd < 0) return -1;
 
-    self->bufferSize = math_ALIGN_FORWARD(35000, (int32_t)client_PAGE_SIZE); // rfc4253, 6.1.
+    self->bufferSize = math_ALIGN_FORWARD(_client_MAX_PACKET_SIZE, (int32_t)client_PAGE_SIZE);
     int32_t status = sys_ftruncate(self->bufferMemFd, self->bufferSize);
     if (status < 0) {
         status = -2;
