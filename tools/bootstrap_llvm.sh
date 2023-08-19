@@ -50,7 +50,7 @@ wget -nc -P "$temp_dir" "https://github.com/llvm/llvm-project/releases/download/
 tar x -C "$temp_dir" -k -J -f "$temp_dir/$pkg_name.tar.xz"
 cd "$temp_dir/$pkg_name"
 cmake -S llvm -B build -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS="clang;lld" -DLLVM_TARGETS_TO_BUILD="AArch64;RISCV;WebAssembly;X86" -DLLVM_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_LIBEDIT=OFF -DLLVM_ENABLE_LIBPFM=OFF -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_BINDINGS=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DCLANG_ENABLE_ARCMT=OFF -DCMAKE_INSTALL_PREFIX="$llvm_dir" -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF
-make -C build -j$numcpus install-clang install-lld install-llvm-objcopy
+make -C build -j$numcpus install
 
 echo "LLVM bootstrap successful!"
 echo "Set LLVM=\"$llvm_dir\" to use it."
