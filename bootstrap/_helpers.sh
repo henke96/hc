@@ -37,7 +37,7 @@ extract_and_enter() {
 
 verify_checksums() {
     set +e
-    sha2526sum -c "$1"
+    sha256sum -c "$1"
     if test $? -ne 0; then
         echo "Failed to verify checksums"
         echo "Please verify checksums in $(pwd)/$1 manually, then type OK to continue"
