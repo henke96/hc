@@ -5,8 +5,9 @@ fetch() {
         wget -nv -nc -O temp "$1$2" && mv temp "$2"
         if test $? -ne 0; then
             echo "Failed to download $1$2"
-            echo "Please fetch $(pwd)/$2 manually"
-            exit 1
+            echo "Please fetch $(pwd)/$2 manually, then type OK to continue"
+            read answer
+            test "$answer" = "OK" || exit 1
         fi
     fi
     set -e
@@ -26,8 +27,10 @@ extract_and_enter() {
         tar x -C temp -k "$decrypt_opt" -f "$1$2" && mv "temp/$1" "$1"
         if test $? -ne 0; then
             echo "Failed to extract $1$2"
-            echo "Please extract $(pwd)/$1 manually"
-            exit 1
+            echo "Please extract $(pwd)/$1 manually, then type OK to continue"
+            read answer
+            test "$answer" = "OK" || exit 1
+            rm -rf "temp/$1"
         fi
     fi
     set -e
