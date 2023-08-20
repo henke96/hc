@@ -1,23 +1,17 @@
-fetch() {
-    set +e
-    test -f "$2"
-    if test $? -ne 0; then
-        wget -O temp "$1$2" && mv temp "$2"
-        if test $? -ne 0; then
+fetch_file() {
+    if ! test -f "$2"; then
+        if ! { { wget -O temp "$1$2" || fetch -o temp "$1$2"; } && mv temp "$2"; }
+        then
             echo "Failed to download $1$2"
             echo "Please fetch $(pwd)/$2 manually, then type OK to continue"
             read answer
-            test "$answer" = "OK" || exit 1
+            test "$answer" = "OK"
         fi
     fi
-    set -e
 }
 
 extract_and_enter() {
-    set +e
-    test -d "$1"
-    if test $? -ne 0; then
-        set -e
+    if ! test -d "$1"; then
         mkdir temp
         cd temp
         if test "$2" = ".tar.gz"; then
@@ -32,18 +26,14 @@ extract_and_enter() {
         cd ..
         rmdir temp
     fi
-    set -e
     cd "$1"
 }
 
 verify_checksums() {
-    set +e
-    sha256sum -c "$1"
-    if test $? -ne 0; then
+    if ! sha256sum -c "$1"; then
         echo "Failed to verify checksums"
         echo "Please verify checksums in $(pwd)/$1 manually, then type OK to continue"
         read answer
-        test "$answer" = "OK" || exit 1
+        test "$answer" = "OK"
     fi
-    set -e
 }

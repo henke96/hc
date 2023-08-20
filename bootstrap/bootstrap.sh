@@ -22,11 +22,11 @@ pkg_ext_llvm=".tar.xz"
 
 cd "$script_dir"
 rm -rf temp
-fetch "https://ftp.gnu.org/gnu/make/" "$pkg_make$pkg_ext_make"
-fetch "https://github.com/tukaani-project/xz/releases/download/v5.4.3/" "$pkg_xz$pkg_ext_xz"
-fetch "https://github.com/Kitware/CMake/releases/download/v3.27.1/" "$pkg_cmake$pkg_ext_cmake"
-fetch "https://www.python.org/ftp/python/3.11.4/" "$pkg_python$pkg_ext_python"
-fetch "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/" "$pkg_llvm$pkg_ext_llvm"
+fetch_file "https://ftp.gnu.org/gnu/make/" "$pkg_make$pkg_ext_make"
+fetch_file "https://github.com/tukaani-project/xz/releases/download/v5.4.3/" "$pkg_xz$pkg_ext_xz"
+fetch_file "https://github.com/Kitware/CMake/releases/download/v3.27.1/" "$pkg_cmake$pkg_ext_cmake"
+fetch_file "https://www.python.org/ftp/python/3.11.4/" "$pkg_python$pkg_ext_python"
+fetch_file "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/" "$pkg_llvm$pkg_ext_llvm"
 
 echo '
 b1a6b0135fa11b94476e90f5b32c4c8fad480bf91cf22d0ded98ce22c5132004  cmake-3.27.1.tar.gz
