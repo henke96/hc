@@ -6,6 +6,7 @@ fetch_file() {
             echo "Please fetch $(pwd)/$2 manually, then type OK to continue"
             read answer
             test "$answer" = "OK"
+            rm -f temp
         fi
     fi
 }

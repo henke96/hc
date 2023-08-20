@@ -28,13 +28,11 @@ fetch_file "https://github.com/Kitware/CMake/releases/download/v3.27.1/" "$pkg_c
 fetch_file "https://www.python.org/ftp/python/3.11.4/" "$pkg_python$pkg_ext_python"
 fetch_file "https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/" "$pkg_llvm$pkg_ext_llvm"
 
-echo '
-b1a6b0135fa11b94476e90f5b32c4c8fad480bf91cf22d0ded98ce22c5132004  cmake-3.27.1.tar.gz
+echo 'b1a6b0135fa11b94476e90f5b32c4c8fad480bf91cf22d0ded98ce22c5132004  cmake-3.27.1.tar.gz
 581f4d4e872da74b3941c874215898a7d35802f03732bdccee1d4a7979105d18  make-4.4.tar.gz
 1c382e0bc2e4e0af58398a903dd62fff7e510171d2de47a1ebe06d1528e9b7e9  xz-5.4.3.tar.gz
 ce5e71081d17ce9e86d7cbcfa28c4b04b9300f8fb7e78422b1feb6bc52c3028e  llvm-project-16.0.6.src.tar.xz
-2f0e409df2ab57aa9fc4cbddfb976af44e4e55bf6f619eee6bc5c2297264a7f6  Python-3.11.4.tar.xz
-' > sha256.sum
+2f0e409df2ab57aa9fc4cbddfb976af44e4e55bf6f619eee6bc5c2297264a7f6  Python-3.11.4.tar.xz' > sha256.sum
 verify_checksums sha256.sum
 
 # Build GNU make.
