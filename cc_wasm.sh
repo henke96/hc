@@ -1,6 +1,6 @@
-#!/bin/sh
+#!/bin/sh --
 set -e
-script_dir="$(dirname "$0")"
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 if test -n "$LLVM"; then llvm_prefix="$LLVM/bin/"; fi
 

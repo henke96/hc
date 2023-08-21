@@ -1,10 +1,11 @@
-#!/bin/sh
+#!/bin/sh --
 set -e
-script_dir="$(dirname "$(realpath "$0")")"
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 root_dir="$script_dir/root"
 mkdir -p "$root_dir"
 
 LLVM_PROJECTS="${LLVM_PROJECTS:-clang;lld;lldb}"
+LLVM_TARGETS="${LLVM_TARGETS:-AArch64;RISCV;WebAssembly;X86}"
 NUM_CPUS="${NUM_CPUS:-1}"
 export PATH="$root_dir/bin:$PATH"
 . "$script_dir/_helpers.sh"
@@ -39,24 +40,24 @@ verify_checksums sha256.sum
 cd "$script_dir" && extract_and_enter "$pkg_make" "$pkg_ext_make"
 ./configure --prefix="$root_dir" --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix --without-guile --without-customs --without-dmalloc
 ./build.sh
-./make -j$NUM_CPUS install
+./make -j "$NUM_CPUS" install
 
 # Build XZ Utils.
 cd "$script_dir" && extract_and_enter "$pkg_xz" "$pkg_ext_xz"
 ./configure --prefix="$root_dir" --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix
-make -j$NUM_CPUS install
+make -j "$NUM_CPUS" install
 
 # Build CMake.
 cd "$script_dir" && extract_and_enter "$pkg_cmake" "$pkg_ext_cmake"
-./bootstrap --prefix="$root_dir" --no-debugger --parallel=$NUM_CPUS --generator="Unix Makefiles" -- -DCMAKE_USE_OPENSSL=OFF
-make -j$NUM_CPUS install
+./bootstrap --prefix="$root_dir" --no-debugger --parallel="$NUM_CPUS" --generator="Unix Makefiles" -- -DCMAKE_USE_OPENSSL=OFF
+make -j "$NUM_CPUS" install
 
 # Build Python3.
 cd "$script_dir" && extract_and_enter "$pkg_python" "$pkg_ext_python"
 ./configure --prefix="$root_dir" --without-ensurepip
-make -j$NUM_CPUS install
+make -j "$NUM_CPUS" install
 
 # Build LLVM.
 cd "$script_dir" && extract_and_enter "$pkg_llvm" "$pkg_ext_llvm"
-cmake -S llvm -B build -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS="$LLVM_PROJECTS" -DLLVM_TARGETS_TO_BUILD="AArch64;RISCV;WebAssembly;X86" -DLLVM_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_LIBEDIT=OFF -DLLVM_ENABLE_LIBPFM=OFF -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_BINDINGS=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DCLANG_ENABLE_ARCMT=OFF -DCMAKE_INSTALL_PREFIX="$root_dir" -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF
-make -C build -j$NUM_CPUS install
+cmake -S llvm -B build -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS="$LLVM_PROJECTS" -DLLVM_TARGETS_TO_BUILD="$LLVM_TARGETS" -DLLVM_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_LIBEDIT=OFF -DLLVM_ENABLE_LIBPFM=OFF -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_BINDINGS=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DCLANG_ENABLE_ARCMT=OFF -DCMAKE_INSTALL_PREFIX="$root_dir" -DCMAKE_BUILD_TYPE=Release -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF
+make -C build -j "$NUM_CPUS" install

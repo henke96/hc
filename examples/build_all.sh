@@ -1,5 +1,5 @@
-#!/bin/sh
+#!/bin/sh --
 set -e
-script_dir="$(dirname "$0")"
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 find "$script_dir" -name "build.sh" -type f -print -exec {} \;

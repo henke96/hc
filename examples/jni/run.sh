@@ -1,5 +1,6 @@
-#!/bin/sh
-script_dir="$(dirname "$0")"
+#!/bin/sh --
+set -e
+script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 ARCH="$(uname -m)"
 
