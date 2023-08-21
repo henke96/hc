@@ -31,9 +31,13 @@ extract_and_enter() {
 }
 
 verify_checksums() {
-    if ! sha256sum -c "$1"; then
+    if ! sha256sum -c - <<end
+$1
+end
+    then
         echo "Failed to verify checksums"
-        echo "Please verify checksums in $(pwd)/$1 manually, then type OK to continue"
+        echo "Please verify the following checksums manually, then type OK to continue"
+        echo "$1"
         read -r answer
         test "$answer" = "OK"
     fi
