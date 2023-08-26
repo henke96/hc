@@ -21,6 +21,7 @@ recipe_start() {
     # Clean up before build.
     rm -rf temp
     rm -rf "./$recipe_name"
+    rm -rf "./$recipe_name.src"
 
     # Fetch and verify source.
     if ! sha256sum -c - <<end
