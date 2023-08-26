@@ -5,7 +5,6 @@ script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 URL="https://ftp.gnu.org/gnu/make/make-4.4.tar.gz"
 SHA256="581f4d4e872da74b3941c874215898a7d35802f03732bdccee1d4a7979105d18"
-BUILD_DEPENDENCIES=""
 
 recipe_start
 ./configure --prefix="/path/that/doesnt/exist" --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix --without-guile --without-customs --without-dmalloc

@@ -5,7 +5,7 @@ script_dir="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 URL="https://www.python.org/ftp/python/3.11.4/Python-3.11.4.tar.xz"
 SHA256="2f0e409df2ab57aa9fc4cbddfb976af44e4e55bf6f619eee6bc5c2297264a7f6"
-BUILD_DEPENDENCIES="./make.sh ./xz.sh"
+DEPENDENCIES="./make.sh ./xz.sh"
 
 recipe_start
 ./configure --prefix="/path/that/doesnt/exist" --without-ensurepip
