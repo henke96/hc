@@ -12,22 +12,24 @@ fetch_file() {
 }
 
 extract_and_enter() {
-    if ! test -d "$1"; then
+    name="${1%.tar*}"
+    ext="${1##*.tar}"
+    if ! test -d "$name"; then
         mkdir temp
         cd temp
-        if test "$2" = ".tar.gz"; then
-            gzip -d -c "../$1$2" | tar xf - && mv "$1" "../$1"
-        elif test "$2" = ".tar.xz"; then
-            xz -d -c "../$1$2" | tar xf - && mv "$1" "../$1"
-        elif test "$2" = ".tar.bz2"; then
-            bzip2 -d -c "../$1$2" | tar xf - && mv "$1" "../$1"
+        if test "$ext" = ".gz"; then
+            gzip -d -c "../$1" | tar xf - && mv "$name" "../$name"
+        elif test "$ext" = ".xz"; then
+            xz -d -c "../$1" | tar xf - && mv "$name" "../$name"
+        elif test "$ext" = ".bz2"; then
+            bzip2 -d -c "../$1" | tar xf - && mv "$name" "../$name"
         else
-            tar xf "../$1$2" && mv "$1" "../$1"
+            tar xf "../$1" && mv "$name" "../$name"
         fi
         cd ..
         rmdir temp
     fi
-    cd "$1"
+    cd "$name"
 }
 
 verify_checksums() {
