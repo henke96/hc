@@ -2,9 +2,11 @@ NUM_CPUS="${NUM_CPUS:-1}"
 
 recipe_start() {
     cd -- "$(dirname -- "$0")"
-    URL_filename="${URL##*/}"
-    URL_name="${URL_filename%.tar*}"
-    URL_ext="${URL_filename##*.tar}"
+    url_filename="${URL##*/}"
+    url_name="${url_filename%.tar*}"
+    url_ext="${url_filename##*.tar}"
+    url_base="${URL%/*}"
+    if test -n "$MIRROR"; then url_base="$MIRROR"; fi
     script_name="$(basename -- "$0")"
     recipe_name="${script_name%.sh}"
 
@@ -18,7 +20,7 @@ recipe_start() {
 
     # Clean up before build.
     rm -rf "./$recipe_name"
-    rm -rf "./$URL_name"
+    rm -rf "./$url_name"
 
     # Add dependencies bin folders to PATH.
     for recipe in $DEPENDENCIES; do
@@ -27,32 +29,32 @@ recipe_start() {
 
     # Fetch and verify source.
     if ! sha256sum -c - <<end
-$SHA256  $URL_filename
+$SHA256  $url_filename
 end
     then
-        if ! { curl -O "$URL" || wget "$URL" || fetch "$URL" ; }
+        if ! { curl -LO "$url_base/$url_filename" || wget "$url_base/$url_filename" || fetch "$url_base/$url_filename" ; }
         then
-            rm -f "./$URL_filename"
-            echo "Failed to download $URL"
-            echo "Please fetch \"$(pwd)/$URL_filename\" manually, then press enter to continue"
+            rm -f "./$url_filename"
+            echo "Failed to download $url_base/$url_filename"
+            echo "Please fetch \"$(pwd)/$url_filename\" manually, then press enter to continue"
             read -r answer
         fi
         sha256sum -c - <<end
-$SHA256  $URL_filename
+$SHA256  $url_filename
 end
     fi
 
     # Extract and enter source directory.
-    if test "$URL_ext" = ".gz"; then
-        gzip -d -c "./$URL_filename" | tar xf -
-    elif test "$URL_ext" = ".xz"; then
-        xz -d -c "./$URL_filename" | tar xf -
-    elif test "$URL_ext" = ".bz2"; then
-        bzip2 -d -c "./$URL_filename" | tar xf -
+    if test "$url_ext" = ".gz"; then
+        gzip -d -c "./$url_filename" | tar xf -
+    elif test "$url_ext" = ".xz"; then
+        xz -d -c "./$url_filename" | tar xf -
+    elif test "$url_ext" = ".bz2"; then
+        bzip2 -d -c "./$url_filename" | tar xf -
     else
-        tar xf "./$URL_filename"
+        tar xf "./$url_filename"
     fi
-    cd "./$URL_name"
+    cd "./$url_name"
 }
 
 recipe_finish() {
@@ -65,5 +67,5 @@ recipe_finish() {
         sha256sum "$file" >> "$recipe_name/temp"
     done
     mv "$recipe_name/temp" "./$recipe_name/sha256"
-    rm -rf "./$URL_name"
+    rm -rf "./$url_name"
 }
