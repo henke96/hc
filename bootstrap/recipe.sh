@@ -14,20 +14,23 @@ recipe_start() {
     # Build dependencies.
     for recipe in $DEPENDENCIES; do
         "$recipe"
-        recipe_dir="$(cd -- "${recipe%.sh}" && pwd)"
-        export PATH="$recipe_dir/bin:$PATH"
     done
 
     # Clean up before build.
     rm -rf "./$recipe_name"
     rm -rf "./$URL_name"
 
+    # Add dependencies bin folders to PATH.
+    for recipe in $DEPENDENCIES; do
+        export PATH="$(cd -- "${recipe%.sh}" && pwd)/bin:$PATH"
+    done
+
     # Fetch and verify source.
     if ! sha256sum -c - <<end
 $SHA256  $URL_filename
 end
     then
-        if ! { wget "$URL" || fetch "$URL"; }
+        if ! { wget "$URL" || fetch "$URL" || curl -O "$URL"; }
         then
             rm -f "./$URL_filename"
             echo "Failed to download $URL"
