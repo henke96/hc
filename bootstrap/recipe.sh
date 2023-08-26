@@ -8,13 +8,13 @@ recipe_start() {
     script_name="$(basename -- "$0")"
     recipe_name="${script_name%.sh}"
 
-    # Check if recipe is already built.
-    sha256sum -c "./$recipe_name/sha256" && exit 0
-
-    # Build dependencies.
+    # Run dependencies recipes.
     for recipe in $DEPENDENCIES; do
         "$recipe"
     done
+
+    # Check if recipe is already built.
+    sha256sum -c "./$recipe_name/sha256" && exit 0
 
     # Clean up before build.
     rm -rf "./$recipe_name"
@@ -30,7 +30,7 @@ recipe_start() {
 $SHA256  $URL_filename
 end
     then
-        if ! { wget "$URL" || fetch "$URL" || curl -O "$URL"; }
+        if ! { curl -O "$URL" || wget "$URL" || fetch "$URL" ; }
         then
             rm -f "./$URL_filename"
             echo "Failed to download $URL"
@@ -59,7 +59,7 @@ recipe_finish() {
     cd ..
     sha256sum "./$script_name" > "$recipe_name/temp"
     for recipe in $DEPENDENCIES; do
-        cat "${recipe%.sh}/sha256" >> "$recipe_name/temp"
+        sha256sum "${recipe%.sh}/sha256" >> "$recipe_name/temp"
     done
     for file in $FILE_DEPENDENCIES; do
         sha256sum "$file" >> "$recipe_name/temp"
