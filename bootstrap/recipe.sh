@@ -55,6 +55,7 @@ end
         tar xf "./$url_filename"
     fi
     cd "./$url_name"
+    if test -n "$DEVELOPMENT"; then /bin/sh; fi
 }
 
 recipe_finish() {
@@ -67,5 +68,5 @@ recipe_finish() {
         sha256sum "$file" >> "$recipe_name/temp"
     done
     mv "$recipe_name/temp" "./$recipe_name/sha256"
-    rm -rf "./$url_name"
+    if test -z "$DEVELOPMENT"; then rm -rf "./$url_name"; fi
 }
