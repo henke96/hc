@@ -1234,3 +1234,8 @@ static hc_INLINE int32_t sys_ftruncate(int32_t fd, int64_t size) {
     sys_SYSCALL2(sys_NR_ftruncate, fd, size)
     return (int32_t)ret;
 }
+
+static hc_INLINE int32_t sys_mkdirat(int32_t fd, const char *pathname, uint16_t mode) {
+    sys_SYSCALL3(sys_NR_mkdirat, fd, pathname, mode)
+    return (int32_t)ret;
+}

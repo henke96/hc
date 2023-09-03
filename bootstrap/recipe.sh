@@ -1,18 +1,35 @@
-NUM_CPUS="${NUM_CPUS:-1}"
+recipe_init() {
+    DEPENDENCIES="$1"
+    NUM_CPUS="${NUM_CPUS:-1}"
+    SCRIPT_DIR="$(pwd)"
+    SCRIPT_NAME="$(basename -- "$0")"
+    RECIPE_NAME="${SCRIPT_NAME%.sh}"
 
-recipe_start() {
-    cd -- "$(dirname -- "$0")"
-    script_name="$(basename -- "$0")"
-    recipe_name="${script_name%.sh}"
+    if test -z "$BUILD_TIMESTAMP"; then
+        export BUILD_TIMESTAMP="$(date)"
+    fi
 
     # Run dependencies recipes.
     for recipe in $DEPENDENCIES; do
         "$recipe"
     done
 
+    if test "$DEVELOPMENT" = "$RECIPE_NAME"; then
+        rm -f "./$RECIPE_NAME/sha256-timestamp"
+    fi
+
     # Check if recipe is already built.
-    sha256sum -c "./$recipe_name/sha256" && exit 0
-    rm -rf "./$recipe_name"
+    if test -f "./$RECIPE_NAME/sha256-timestamp"; then
+        if test "$BUILD_TIMESTAMP" = "$(cat "./$RECIPE_NAME/sha256-timestamp")"; then exit 0; fi
+        if sha256sum -c "./$RECIPE_NAME/sha256"; then
+            echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/sha256-timestamp"
+            exit 0
+        fi
+    fi
+}
+
+recipe_start() {
+    rm -rf "./$RECIPE_NAME"
 
     # Add dependencies bin folders to PATH.
     for recipe in $DEPENDENCIES; do
@@ -35,7 +52,7 @@ end
             then
                 rm -f "./$url_filename"
                 echo "Failed to download $url_base/$url_filename"
-                echo "Please fetch \"$(pwd)/$url_filename\" manually, then press enter to continue"
+                echo "Please fetch \"$SCRIPT_DIR/$url_filename\" manually, then press enter to continue"
                 read -r answer
             fi
             sha256sum -c - <<end
@@ -60,19 +77,22 @@ end
         mkdir "$source_dir"
     fi
     cd "./$source_dir"
-    if test -n "$DEVELOPMENT"; then /bin/sh; fi
+    if test "$DEVELOPMENT" = "$RECIPE_NAME"; then
+        /bin/sh
+        exit 137
+    fi
 }
 
 recipe_finish() {
     cd ..
-    if test -z "$DEVELOPMENT"; then rm -rf "./$source_dir"; fi
+    rm -rf "./$source_dir"
 
-    sha256sum "./$script_name" > "$recipe_name/temp"
+    sha256sum "./$SCRIPT_NAME" > "$RECIPE_NAME/sha256"
     for recipe in $DEPENDENCIES; do
-        sha256sum "${recipe%.sh}/sha256" >> "$recipe_name/temp"
+        sha256sum "${recipe%.sh}/sha256" >> "$RECIPE_NAME/sha256"
     done
     for file in $FILE_DEPENDENCIES; do
-        sha256sum "$file" >> "$recipe_name/temp"
+        sha256sum "$file" >> "$RECIPE_NAME/sha256"
     done
-    mv "$recipe_name/temp" "./$recipe_name/sha256"
+    echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/sha256-timestamp"
 }
