@@ -4654,3 +4654,10 @@ enum KSMBD_TREE_CONN_STATUS {
 #define MFD_CLOEXEC 0x0001U
 #define MFD_ALLOW_SEALING 0x0002U
 #define MFD_HUGETLB 0x0004U
+
+// close_range.h
+/* Unshare the file descriptor table before closing file descriptors. */
+#define CLOSE_RANGE_UNSHARE (1U << 1)
+
+/* Set the FD_CLOEXEC bit instead of closing the file descriptor. */
+#define CLOSE_RANGE_CLOEXEC (1U << 2)

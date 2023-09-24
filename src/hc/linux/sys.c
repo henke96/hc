@@ -1239,3 +1239,13 @@ static hc_INLINE int32_t sys_mkdirat(int32_t fd, const char *pathname, uint16_t 
     sys_SYSCALL3(sys_NR_mkdirat, fd, pathname, mode)
     return (int32_t)ret;
 }
+
+static hc_INLINE int32_t sys_close_range(int32_t first, int32_t last, uint32_t flags) {
+    sys_SYSCALL3(sys_NR_close_range, first, last, flags)
+    return (int32_t)ret;
+}
+
+static hc_INLINE int32_t sys_pidfd_send_signal(int32_t pidfd, int32_t sig, struct siginfo *info, uint32_t flags) {
+    sys_SYSCALL4(sys_NR_pidfd_send_signal, pidfd, sig, info, flags)
+    return (int32_t)ret;
+}
