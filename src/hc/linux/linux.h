@@ -4661,3 +4661,17 @@ enum KSMBD_TREE_CONN_STATUS {
 
 /* Set the FD_CLOEXEC bit instead of closing the file descriptor. */
 #define CLOSE_RANGE_CLOEXEC (1U << 2)
+
+// filter.h
+struct sock_filter {
+    uint16_t code;
+    uint8_t jt;
+    uint8_t jf;
+    uint32_t k;
+};
+
+struct sock_fprog {
+    uint16_t len;
+    char __pad[6];
+    struct sock_filter *filter;
+};
