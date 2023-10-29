@@ -3,8 +3,7 @@ struct options {
     int32_t interfaceLen;
     uint16_t port;
     uint8_t bindAddress[4];
-    bool broadcast;
-    char __pad[5];
+    char __pad[6];
 };
 
 static int32_t options_init(struct options *self, int32_t argc, char **argv) {
@@ -13,7 +12,6 @@ static int32_t options_init(struct options *self, int32_t argc, char **argv) {
         .interfaceLen = 0,
         .port = 7777,
         .bindAddress = { 0, 0, 0, 0 },
-        .broadcast = false,
     };
 
     char prevOpt = '\0';
@@ -57,7 +55,6 @@ static int32_t options_init(struct options *self, int32_t argc, char **argv) {
                 if (arg[0] != '-') goto optsDone;
                 while (*++arg != '\0') {
                     switch (*arg) {
-                        case 'b': self->broadcast = true; break;
                         default: {
                             prevOpt = *arg;
                             if (arg[1] != '\0') goto optsDone;

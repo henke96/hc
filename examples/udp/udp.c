@@ -17,21 +17,20 @@ static char buffer[65536] hc_ALIGNED(16);
 int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     struct options options;
     if (options_init(&options, argc, argv) < 0) {
-        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("\nUsage: udp [-b] [-B ADDRESS] [-p PORT] [-i INTERFACE]\n"));
+        sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("\nUsage: udp [-B ADDRESS] [-p PORT] [-i INTERFACE]\n"));
         return 1;
     }
 
-    int32_t fd = sys_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    int32_t fd = sys_socket(AF_INET, SOCK_DGRAM, 0);
     if (fd < 0) return 1;
 
     int32_t one = 1;
     int32_t status = sys_setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
     if (status < 0) return 1;
 
-    if (options.broadcast) {
-        status = sys_setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &one, sizeof(one));
-        if (status < 0) return 1;
-    }
+    int32_t zero = 0;
+    status = sys_setsockopt(fd, IPPROTO_IP, IP_MULTICAST_ALL, &zero, sizeof(zero));
+    if (status < 0) return 1;
 
     if (options.interface != NULL) {
         status = sys_setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, options.interface, options.interfaceLen);
