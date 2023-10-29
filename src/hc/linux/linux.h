@@ -565,6 +565,12 @@ struct sock_txtime {
 #define MCAST_EXCLUDE 0
 #define MCAST_INCLUDE 1
 
+struct ip_mreqn {
+    uint8_t imr_multiaddr[4];
+    uint8_t imr_address[4];
+    int32_t imr_ifindex;
+};
+
 struct sockaddr_in {
     uint16_t sin_family;
     uint16_t sin_port;

@@ -1,6 +1,7 @@
 struct options {
+    char *multicastGroups;
     char *interface;
-    int32_t interfaceLen;
+    int32_t interfaceSize;
     uint16_t port;
     uint8_t bindAddress[4];
     char __pad[6];
@@ -8,9 +9,10 @@ struct options {
 
 static int32_t options_init(struct options *self, int32_t argc, char **argv) {
     *self = (struct options) {
+        .multicastGroups = NULL,
         .interface = NULL,
-        .interfaceLen = 0,
-        .port = 7777,
+        .interfaceSize = 0,
+        .port = 5001,
         .bindAddress = { 0, 0, 0, 0 },
     };
 
@@ -18,7 +20,11 @@ static int32_t options_init(struct options *self, int32_t argc, char **argv) {
     while (--argc > 0) {
         char *arg = *++argv;
         switch (prevOpt) {
-            case 'B': {
+            case 'm': {
+                self->multicastGroups = arg;
+                break;
+            }
+            case 'b': {
                 for (int32_t i = 0;;) {
                     uint64_t octet;
                     int32_t parsed = util_strToUint(arg, INT32_MAX, &octet);
@@ -42,9 +48,9 @@ static int32_t options_init(struct options *self, int32_t argc, char **argv) {
             }
             case 'i': {
                 int64_t ifLen = util_cstrLen(arg);
-                if (ifLen > INT32_MAX) goto optsDone;
+                if (ifLen > IFNAMSIZ - 1) goto optsDone;
                 self->interface = arg;
-                self->interfaceLen = (int32_t)ifLen;
+                self->interfaceSize = (int32_t)ifLen + 1;
                 break;
             }
             case '-': {
