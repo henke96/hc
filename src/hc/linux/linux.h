@@ -3864,7 +3864,7 @@ struct linux_dirent64 {
 #define BLKSECDISCARD _IO(0x12,125)
 #define BLKROTATIONAL _IO(0x12,126)
 #define BLKZEROOUT _IO(0x12,127)
-#define BLKGETDISKSEQ _IOR(0x12,128,__u64)
+#define BLKGETDISKSEQ _IOR(0x12,128,uint64_t)
 
 // sockios.h
 #define SIOCINQ FIONREAD
@@ -4327,9 +4327,10 @@ struct ksmbd_heartbeat {
  * Global config flags.
  */
 #define KSMBD_GLOBAL_FLAG_INVALID (0)
-#define KSMBD_GLOBAL_FLAG_SMB2_LEASES 0x1
-#define KSMBD_GLOBAL_FLAG_SMB2_ENCRYPTION 0x2
-#define KSMBD_GLOBAL_FLAG_SMB3_MULTICHANNEL 0x4
+#define KSMBD_GLOBAL_FLAG_SMB2_LEASES (1u << 0)
+#define KSMBD_GLOBAL_FLAG_SMB2_ENCRYPTION (1u << 1)
+#define KSMBD_GLOBAL_FLAG_SMB3_MULTICHANNEL (1u << 2)
+#define KSMBD_GLOBAL_FLAG_SMB2_ENCRYPTION_OFF (1u << 3)
 
 /*
  * IPC request for ksmbd server startup
@@ -4360,7 +4361,9 @@ struct ksmbd_startup_request {
                                  */
     uint32_t sub_auth[3]; /* Subauth value for Security ID */
     uint32_t smb2_max_credits; /* MAX credits */
-    uint32_t reserved[128]; /* Reserved room */
+    uint32_t smbd_max_io_size; /* smbd read write size */
+    uint32_t max_connections; /* Number of maximum simultaneous connections */
+    uint32_t reserved[126]; /* Reserved room */
     uint32_t ifc_list_sz; /* interfaces list size */
     char ____payload[];
 };
@@ -4419,7 +4422,8 @@ struct ksmbd_share_config_response {
     uint16_t force_directory_mode;
     uint16_t force_uid;
     uint16_t force_gid;
-    uint32_t reserved[128]; /* Reserved room */
+    char share_name[KSMBD_REQ_MAX_SHARE_NAME];
+    uint32_t reserved[112]; /* Reserved room */
     uint32_t veto_list_sz;
     char ____payload[];
 };
@@ -4575,65 +4579,68 @@ enum KSMBD_TREE_CONN_STATUS {
  * User config flags.
  */
 #define KSMBD_USER_FLAG_INVALID (0)
-#define KSMBD_USER_FLAG_OK 0x1
-#define KSMBD_USER_FLAG_BAD_PASSWORD 0x2
-#define KSMBD_USER_FLAG_BAD_UID 0x4
-#define KSMBD_USER_FLAG_BAD_USER 0x8
-#define KSMBD_USER_FLAG_GUEST_ACCOUNT 0x10
-#define KSMBD_USER_FLAG_DELAY_SESSION 0x20
+#define KSMBD_USER_FLAG_OK (1u << 0)
+#define KSMBD_USER_FLAG_BAD_PASSWORD (1u << 1)
+#define KSMBD_USER_FLAG_BAD_UID (1u << 2)
+#define KSMBD_USER_FLAG_BAD_USER (1u << 3)
+#define KSMBD_USER_FLAG_GUEST_ACCOUNT (1u << 4)
+#define KSMBD_USER_FLAG_DELAY_SESSION (1u << 5)
 
 /*
  * Share config flags.
  */
 #define KSMBD_SHARE_FLAG_INVALID (0)
-#define KSMBD_SHARE_FLAG_AVAILABLE 0x1
-#define KSMBD_SHARE_FLAG_BROWSEABLE 0x2
-#define KSMBD_SHARE_FLAG_WRITEABLE 0x4
-#define KSMBD_SHARE_FLAG_READONLY 0x8
-#define KSMBD_SHARE_FLAG_GUEST_OK 0x10
-#define KSMBD_SHARE_FLAG_GUEST_ONLY 0x20
-#define KSMBD_SHARE_FLAG_STORE_DOS_ATTRS 0x40
-#define KSMBD_SHARE_FLAG_OPLOCKS 0x80
-#define KSMBD_SHARE_FLAG_PIPE 0x100
-#define KSMBD_SHARE_FLAG_HIDE_DOT_FILES 0x200
-#define KSMBD_SHARE_FLAG_INHERIT_OWNER 0x400
-#define KSMBD_SHARE_FLAG_STREAMS 0x800
-#define KSMBD_SHARE_FLAG_FOLLOW_SYMLINKS 0x1000
-#define KSMBD_SHARE_FLAG_ACL_XATTR 0x2000
+#define KSMBD_SHARE_FLAG_AVAILABLE (1u << 0)
+#define KSMBD_SHARE_FLAG_BROWSEABLE (1u << 1)
+#define KSMBD_SHARE_FLAG_WRITEABLE (1u << 2)
+#define KSMBD_SHARE_FLAG_READONLY (1u << 3)
+#define KSMBD_SHARE_FLAG_GUEST_OK (1u << 4)
+#define KSMBD_SHARE_FLAG_GUEST_ONLY (1u << 5)
+#define KSMBD_SHARE_FLAG_STORE_DOS_ATTRS (1u << 6)
+#define KSMBD_SHARE_FLAG_OPLOCKS (1u << 7)
+#define KSMBD_SHARE_FLAG_PIPE (1u << 8)
+#define KSMBD_SHARE_FLAG_HIDE_DOT_FILES (1u << 9)
+#define KSMBD_SHARE_FLAG_INHERIT_OWNER (1u << 10)
+#define KSMBD_SHARE_FLAG_STREAMS (1u << 11)
+#define KSMBD_SHARE_FLAG_FOLLOW_SYMLINKS (1u << 12)
+#define KSMBD_SHARE_FLAG_ACL_XATTR (1u << 13)
+#define KSMBD_SHARE_FLAG_UPDATE (1u << 14)
+#define KSMBD_SHARE_FLAG_CROSSMNT (1u << 15)
 
 /*
  * Tree connect request flags.
  */
 #define KSMBD_TREE_CONN_FLAG_REQUEST_SMB1 (0)
-#define KSMBD_TREE_CONN_FLAG_REQUEST_IPV6 0x1
-#define KSMBD_TREE_CONN_FLAG_REQUEST_SMB2 0x2
+#define KSMBD_TREE_CONN_FLAG_REQUEST_IPV6 (1u << 0)
+#define KSMBD_TREE_CONN_FLAG_REQUEST_SMB2 (1u << 1)
 
 /*
  * Tree connect flags.
  */
-#define KSMBD_TREE_CONN_FLAG_GUEST_ACCOUNT 0x1
-#define KSMBD_TREE_CONN_FLAG_READ_ONLY 0x2
-#define KSMBD_TREE_CONN_FLAG_WRITABLE 0x4
-#define KSMBD_TREE_CONN_FLAG_ADMIN_ACCOUNT 0x8
+#define KSMBD_TREE_CONN_FLAG_GUEST_ACCOUNT (1u << 0)
+#define KSMBD_TREE_CONN_FLAG_READ_ONLY (1u << 1)
+#define KSMBD_TREE_CONN_FLAG_WRITABLE (1u << 2)
+#define KSMBD_TREE_CONN_FLAG_ADMIN_ACCOUNT (1u << 3)
+#define KSMBD_TREE_CONN_FLAG_UPDATE (1u << 4)
 
 /*
  * RPC over IPC.
  */
-#define KSMBD_RPC_METHOD_RETURN 0x1
-#define KSMBD_RPC_SRVSVC_METHOD_INVOKE 0x2
+#define KSMBD_RPC_METHOD_RETURN (1u << 0)
+#define KSMBD_RPC_SRVSVC_METHOD_INVOKE (1u << 1)
 #define KSMBD_RPC_SRVSVC_METHOD_RETURN (KSMBD_RPC_SRVSVC_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
-#define KSMBD_RPC_WKSSVC_METHOD_INVOKE 0x4
+#define KSMBD_RPC_WKSSVC_METHOD_INVOKE (1u << 2)
 #define KSMBD_RPC_WKSSVC_METHOD_RETURN (KSMBD_RPC_WKSSVC_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
-#define KSMBD_RPC_IOCTL_METHOD (0x8 | KSMBD_RPC_METHOD_RETURN)
-#define KSMBD_RPC_OPEN_METHOD 0x10
-#define KSMBD_RPC_WRITE_METHOD 0x20
-#define KSMBD_RPC_READ_METHOD (0x40 | KSMBD_RPC_METHOD_RETURN)
-#define KSMBD_RPC_CLOSE_METHOD 0x80
-#define KSMBD_RPC_RAP_METHOD (0x100 | KSMBD_RPC_METHOD_RETURN)
-#define KSMBD_RPC_RESTRICTED_CONTEXT 0x200
-#define KSMBD_RPC_SAMR_METHOD_INVOKE 0x400
+#define KSMBD_RPC_IOCTL_METHOD ((1u << 3) | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_OPEN_METHOD (1u << 4)
+#define KSMBD_RPC_WRITE_METHOD (1u << 5)
+#define KSMBD_RPC_READ_METHOD ((1u << 6) | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_CLOSE_METHOD (1u << 7)
+#define KSMBD_RPC_RAP_METHOD ((1u << 8) | KSMBD_RPC_METHOD_RETURN)
+#define KSMBD_RPC_RESTRICTED_CONTEXT (1u << 9)
+#define KSMBD_RPC_SAMR_METHOD_INVOKE (1u << 10)
 #define KSMBD_RPC_SAMR_METHOD_RETURN (KSMBD_RPC_SAMR_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
-#define KSMBD_RPC_LSARPC_METHOD_INVOKE 0x800
+#define KSMBD_RPC_LSARPC_METHOD_INVOKE (1u << 11)
 #define KSMBD_RPC_LSARPC_METHOD_RETURN (KSMBD_RPC_LSARPC_METHOD_INVOKE | KSMBD_RPC_METHOD_RETURN)
 
 /*
