@@ -5,7 +5,7 @@ cd -- "$(dirname -- "$0")"
 recipe_init "./make.sh"
 
 URL="https://github.com/tukaani-project/xz/releases/download/v5.4.3/xz-5.4.3.tar.gz"
-SHA256="1c382e0bc2e4e0af58398a903dd62fff7e510171d2de47a1ebe06d1528e9b7e9"
+SHA512="aff0fe166af6df4491a6f5df2372cab100b081452461a0e8c6fd65b72af3f250f16c64d9fb8fd309141e9b9ae4e41649f48687cc29e63dd82f27f2eab19b4023"
 
 recipe_start
 ./configure --prefix="$SCRIPT_DIR/$RECIPE_NAME" --disable-nls --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix

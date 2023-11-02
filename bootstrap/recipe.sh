@@ -21,12 +21,12 @@ recipe_init() {
 
     # Run dependencies recipes that have not already been built.
     for recipe in $DEPENDENCIES; do
-        if test "$BUILD_TIMESTAMP" != "$(cat "${recipe%.sh}/sha256-timestamp")"; then "$recipe"; fi
+        if test "$BUILD_TIMESTAMP" != "$(cat "${recipe%.sh}/sha512-timestamp")"; then "$recipe"; fi
     done
 
     # Check if the recipe needs to be rebuilt.
-    if sha256sum -c "./$RECIPE_NAME/sha256"; then
-        echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/sha256-timestamp"
+    if sha512sum -c "./$RECIPE_NAME/sha512"; then
+        echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/sha512-timestamp"
         exit
     fi
 
@@ -55,14 +55,14 @@ recipe_start() {
                 exit
                 ;;
                 2)
-                rm -f "./$RECIPE_NAME/sha256"
+                rm -f "./$RECIPE_NAME/sha512"
                 echo "Entering shell. Type \`exit\` when done with rebuild."
                 export DEPENDENCIES SCRIPT_NAME RECIPE_NAME NUM_CPUS SCRIPT_DIR
                 $SHELL
-                # Modify sha256 file, but keep the hash invalid.
-                sha256sum "./$RECIPE_NAME/development" > "./$RECIPE_NAME/temp.sha256"
+                # Modify sha512 file, but keep the hash invalid.
+                sha512sum "./$RECIPE_NAME/development" > "./$RECIPE_NAME/temp.sha512"
                 echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/development"
-                mv "./$RECIPE_NAME/temp.sha256" "./$RECIPE_NAME/sha256"
+                mv "./$RECIPE_NAME/temp.sha512" "./$RECIPE_NAME/sha512"
                 exit
                 ;;
             esac
@@ -77,8 +77,8 @@ recipe_start() {
         if test -n "$MIRROR"; then url_base="$MIRROR"; fi
 
         # Fetch and verify source.
-        if ! sha256sum -c - <<end
-$SHA256  $url_filename
+        if ! sha512sum -c - <<end
+$SHA512  $url_filename
 end
         then
             if ! { curl -LO "$url_base/$url_filename" || wget "$url_base/$url_filename" || fetch "$url_base/$url_filename"; }
@@ -88,8 +88,8 @@ end
                 echo "Please fetch \"$SCRIPT_DIR/$url_filename\" manually, then press enter to continue"
                 read -r answer
             fi
-            sha256sum -c - <<end
-$SHA256  $url_filename
+            sha512sum -c - <<end
+$SHA512  $url_filename
 end
         fi
 
@@ -117,13 +117,13 @@ recipe_finish() {
     cd ..
     rm -rf "./$SOURCE_DIR_NAME"
 
-    sha256sum "./$SCRIPT_NAME" > "./$RECIPE_NAME/temp.sha256"
+    sha512sum "./$SCRIPT_NAME" > "./$RECIPE_NAME/temp.sha512"
     for recipe in $DEPENDENCIES; do
-        sha256sum "${recipe%.sh}/sha256" >> "./$RECIPE_NAME/temp.sha256"
+        sha512sum "${recipe%.sh}/sha512" >> "./$RECIPE_NAME/temp.sha512"
     done
     for file in $FILE_DEPENDENCIES; do
-        sha256sum "$file" >> "./$RECIPE_NAME/temp.sha256"
+        sha512sum "$file" >> "./$RECIPE_NAME/temp.sha512"
     done
-    mv "./$RECIPE_NAME/temp.sha256" "./$RECIPE_NAME/sha256"
-    echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/sha256-timestamp"
+    mv "./$RECIPE_NAME/temp.sha512" "./$RECIPE_NAME/sha512"
+    echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/sha512-timestamp"
 }
