@@ -1,13 +1,9 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
-#include "hc/mem.c"
-#include "hc/math.c"
 #include "hc/util.c"
 #include "hc/compiler_rt/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
-#include "hc/linux/util.c"
 #include "hc/linux/helpers/_start.c"
 
 #include "options.c"
