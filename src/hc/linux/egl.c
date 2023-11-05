@@ -123,8 +123,6 @@ static int32_t egl_getError(struct egl *self) {
     return self->eglGetError();
 }
 
-// Returns platform index if successful.
-// Attempts `eglGetDisplay(egl_DEFAULT_DISPLAY)` as fallback, and returns `platformsLen` if that works.
 static int32_t egl_init(
     struct egl *self,
     const char *eglLibPath
@@ -132,7 +130,7 @@ static int32_t egl_init(
     self->dlHandle = dlopen(eglLibPath, RTLD_NOW);
     if (self->dlHandle == NULL) return -1;
 
-    dlerror(); // Reset the error.
+    dlerror(); // Reset errors.
     self->eglGetDisplay = dlsym(self->dlHandle, "eglGetDisplay");
     self->eglInitialize = dlsym(self->dlHandle, "eglInitialize");
     self->eglGetError = dlsym(self->dlHandle, "eglGetError");
@@ -157,6 +155,7 @@ static int32_t egl_init(
 
     // This is optional, so don't check for error.
     self->eglGetPlatformDisplay = dlsym(self->dlHandle, "eglGetPlatformDisplay");
+    dlerror(); // Reset errors.
     return 0;
 }
 
