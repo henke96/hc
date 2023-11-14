@@ -17,7 +17,7 @@ recipe_init() {
             exit
         fi
         # Run ourself with a clean environment.
-        exec env -i BUILD_TIMESTAMP="$BUILD_TIMESTAMP" NUM_CPUS="${NUM_CPUS:-1}" USER_SHELL="$SHELL" PATH="$PATH" SHELL=/bin/sh CC=cc CXX=c++ SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C "./$SCRIPT_NAME"
+        exec env -i BUILD_TIMESTAMP="$BUILD_TIMESTAMP" NUM_CPUS="${NUM_CPUS:-1}" USER_SHELL="$SHELL" PATH="$PATH" TERM=xterm SHELL=/bin/sh CC=cc CXX=c++ SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C "./$SCRIPT_NAME"
     fi
 
     # Run dependencies recipes that have not already been built.
