@@ -1,5 +1,4 @@
 recipe_init() {
-    DEPENDENCIES="$1"
     SCRIPT_NAME="$(basename -- "$0")"
     RECIPE_NAME="${SCRIPT_NAME%.sh}"
 
@@ -17,9 +16,12 @@ recipe_init() {
             echo "$RECIPE_NAME is no longer in development mode."
             exit
         fi
+        # Run ourself with a clean environment.
+        exec env -i BUILD_TIMESTAMP="$BUILD_TIMESTAMP" NUM_CPUS="${NUM_CPUS:-1}" USER_SHELL="$SHELL" PATH="$PATH" SHELL=/bin/sh CC=cc CXX=c++ SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C "./$SCRIPT_NAME"
     fi
 
     # Run dependencies recipes that have not already been built.
+    DEPENDENCIES="$1"
     for recipe in $DEPENDENCIES; do
         if test "$BUILD_TIMESTAMP" != "$(cat "${recipe%.sh}/sha512-timestamp")"; then "$recipe"; fi
     done
@@ -30,7 +32,6 @@ recipe_init() {
         exit
     fi
 
-    NUM_CPUS="${NUM_CPUS:-1}"
     SCRIPT_DIR="$(pwd)"
 }
 
@@ -40,8 +41,6 @@ recipe_start() {
         recipe_bin_path="$(cd -- "${recipe%.sh}" && pwd)/bin"
         if test -d "$recipe_bin_path"; then export PATH="$recipe_bin_path:$PATH"; fi
     done
-    # Assist with reproducible builds.
-    export SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C
 
     if test -f "./$RECIPE_NAME/development"; then
         while :; do
@@ -58,7 +57,7 @@ recipe_start() {
                 rm -f "./$RECIPE_NAME/sha512"
                 echo "Entering shell. Type \`exit\` when done with rebuild."
                 export DEPENDENCIES SCRIPT_NAME RECIPE_NAME NUM_CPUS SCRIPT_DIR
-                $SHELL
+                $USER_SHELL
                 # Modify sha512 file, but keep the hash invalid.
                 sha512sum "./$RECIPE_NAME/development" > "./$RECIPE_NAME/temp.sha512"
                 echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/development"
