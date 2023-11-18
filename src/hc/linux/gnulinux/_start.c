@@ -54,7 +54,3 @@ int32_t _startGnu(int32_t argc, char **argv, char **envp) {
     }
     return 1;
 }
-
-static int32_t atexit(void (*func)(void)) {
-    return __cxa_atexit((void *)func, NULL, NULL);
-}
