@@ -1,8 +1,8 @@
 #!/bin/sh --
-set -e
+set -ex
 cd -- "$(dirname -- "$0")"
 . ./recipe.sh
-recipe_init "./make.sh ./xz.sh ./cmake.sh ./python.sh"
+recipe_init "./make.sh ./xz.sh ./cmake.sh ./python.sh" ""
 
 URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/llvm-project-16.0.6.src.tar.xz"
 SHA512="89a67ebfbbc764cc456e8825ecfa90707741f8835b1b2adffae0b227ab1fe5ca9cce75b0efaffc9ca8431cae528dc54fd838867a56a2b645344d9e82d19ab1b7"

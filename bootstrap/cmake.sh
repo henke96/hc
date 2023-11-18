@@ -1,8 +1,8 @@
 #!/bin/sh --
-set -e
+set -ex
 cd -- "$(dirname -- "$0")"
 . ./recipe.sh
-recipe_init "./make.sh"
+recipe_init "./make.sh" ""
 
 URL="https://github.com/Kitware/CMake/releases/download/v3.27.1/cmake-3.27.1.tar.gz"
 SHA512="d8831105fed3772bcb821a2b184fe0ffbff15795a5b0a89f2ad1cb0372a40c8f22f2bab72c671a6d17464521b7337067df929a5c3ece99f84848cc3a2fe6716f"

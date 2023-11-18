@@ -17,12 +17,11 @@ recipe_init() {
             exit
         fi
         # Run ourself with a clean environment.
-        exec env -i BUILD_TIMESTAMP="$BUILD_TIMESTAMP" NUM_CPUS="${NUM_CPUS:-1}" USER_SHELL="$SHELL" PATH="$PATH" TERM=xterm SHELL=/bin/sh CC=cc CXX=c++ SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C "./$SCRIPT_NAME"
+        exec env -i BUILD_TIMESTAMP="$BUILD_TIMESTAMP" DOWNLOADS="${DOWNLOADS:-.}" NUM_CPUS="${NUM_CPUS:-1}" USER_SHELL="$SHELL" PATH="$PATH" TERM=xterm SHELL=/bin/sh CC=cc CXX=c++ SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C "./$SCRIPT_NAME"
     fi
 
     # Run dependencies recipes that have not already been built.
-    DEPENDENCIES="$1"
-    for recipe in $DEPENDENCIES; do
+    for recipe in $1 $2; do
         if test "$BUILD_TIMESTAMP" != "$(cat "${recipe%.sh}/sha512-timestamp")"; then "$recipe"; fi
     done
 
@@ -32,12 +31,13 @@ recipe_init() {
         exit
     fi
 
+    BIN_DEPENDENCIES="$1"
     SCRIPT_DIR="$(pwd)"
 }
 
 recipe_start() {
-    # Add dependencies bin dirs to PATH.
-    for recipe in $DEPENDENCIES; do
+    # Add requested bin dirs to PATH.
+    for recipe in $BIN_DEPENDENCIES; do
         recipe_bin_path="$(cd -- "${recipe%.sh}" && pwd)/bin"
         if test -d "$recipe_bin_path"; then export PATH="$recipe_bin_path:$PATH"; fi
     done
@@ -71,37 +71,30 @@ recipe_start() {
     if test -n "$URL"; then
         url_filename="${URL##*/}"
         url_ext="${url_filename##*.tar}"
-        url_base="${URL%/*}"
+        download_file="$DOWNLOADS/$url_filename"
         SOURCE_DIR_NAME="${url_filename%.tar*}"
-        if test -n "$MIRROR"; then url_base="$MIRROR"; fi
 
         # Fetch and verify source.
         if ! sha512sum -c - <<end
-$SHA512  $url_filename
+$SHA512  $download_file
 end
         then
-            if ! { curl -LO "$url_base/$url_filename" || wget "$url_base/$url_filename" || fetch "$url_base/$url_filename"; }
-            then
-                rm -f "./$url_filename"
-                echo "Failed to download $url_base/$url_filename"
-                echo "Please fetch \"$SCRIPT_DIR/$url_filename\" manually, then press enter to continue"
-                read -r answer
-            fi
+            wget -O "$download_file" "$URL" || fetch -o "$download_file" "$URL"
             sha512sum -c - <<end
-$SHA512  $url_filename
+$SHA512  $download_file
 end
         fi
 
         # Extract source tar.
         rm -rf "./$SOURCE_DIR_NAME"
         if test "$url_ext" = ".gz"; then
-            gzip -d -c "./$url_filename" | tar xf -
+            gzip -d -c "$download_file" | tar xf -
         elif test "$url_ext" = ".xz"; then
-            xz -d -c "./$url_filename" | tar xf -
+            xz -d -c "$download_file" | tar xf -
         elif test "$url_ext" = ".bz2"; then
-            bzip2 -d -c "./$url_filename" | tar xf -
+            bzip2 -d -c "$download_file" | tar xf -
         else
-            tar xf "./$url_filename"
+            tar xf "$download_file"
         fi
     else
         SOURCE_DIR_NAME="$RECIPE_NAME-temp"
