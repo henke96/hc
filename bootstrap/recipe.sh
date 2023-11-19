@@ -8,11 +8,13 @@ recipe_init() {
         if test -n "$START_DEV"; then
             rm -rf "./$RECIPE_NAME"
             mkdir "./$RECIPE_NAME"
+            set +x
             echo "$BUILD_TIMESTAMP" > "./$RECIPE_NAME/development"
             echo "$RECIPE_NAME is now in development mode."
             exit
         elif test -n "$STOP_DEV"; then
             rm -rf "./$RECIPE_NAME"
+            set +x
             echo "$RECIPE_NAME is no longer in development mode."
             exit
         fi
@@ -43,6 +45,7 @@ recipe_start() {
     done
 
     if test -f "./$RECIPE_NAME/development"; then
+        set +x
         while :; do
             echo "$RECIPE_NAME is in development mode."
             echo "1) Continue without rebuild"
@@ -69,46 +72,22 @@ recipe_start() {
     fi
 
     if test -n "$URL"; then
-        url_filename="${URL##*/}"
-        url_ext="${url_filename##*.tar}"
-        download_file="$DOWNLOADS/$url_filename"
-        SOURCE_DIR_NAME="${url_filename%.tar*}"
-
+        DOWNLOAD="$DOWNLOADS/${URL##*/}"
         # Fetch and verify source.
         if ! sha512sum -c - <<end
-$SHA512  $download_file
+$SHA512  $DOWNLOAD
 end
         then
-            wget -O "$download_file" "$URL" || fetch -o "$download_file" "$URL"
+            wget -O "$DOWNLOAD" "$URL" || fetch -o "$DOWNLOAD" "$URL"
             sha512sum -c - <<end
-$SHA512  $download_file
+$SHA512  $DOWNLOAD
 end
         fi
-
-        # Extract source tar.
-        rm -rf "./$SOURCE_DIR_NAME"
-        if test "$url_ext" = ".gz"; then
-            gzip -d -c "$download_file" | tar xf -
-        elif test "$url_ext" = ".xz"; then
-            xz -d -c "$download_file" | tar xf -
-        elif test "$url_ext" = ".bz2"; then
-            bzip2 -d -c "$download_file" | tar xf -
-        else
-            tar xf "$download_file"
-        fi
-    else
-        SOURCE_DIR_NAME="$RECIPE_NAME-temp"
-        rm -rf "./$SOURCE_DIR_NAME"
-        mkdir "./$SOURCE_DIR_NAME"
     fi
     rm -rf "./$RECIPE_NAME"
-    cd "./$SOURCE_DIR_NAME"
 }
 
 recipe_finish() {
-    cd ..
-    rm -rf "./$SOURCE_DIR_NAME"
-
     sha512sum "./$SCRIPT_NAME" > "./$RECIPE_NAME/temp.sha512"
     for recipe in $DEPENDENCIES; do
         sha512sum "${recipe%.sh}/sha512" >> "./$RECIPE_NAME/temp.sha512"
