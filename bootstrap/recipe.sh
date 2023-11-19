@@ -40,8 +40,7 @@ recipe_init() {
 recipe_start() {
     # Add requested bin dirs to PATH.
     for recipe in $BIN_DEPENDENCIES; do
-        recipe_bin_path="$(cd -- "${recipe%.sh}" && pwd)/bin"
-        if test -d "$recipe_bin_path"; then export PATH="$recipe_bin_path:$PATH"; fi
+        export PATH="$(cd -- "${recipe%.sh}" && pwd)/bin:$PATH"
     done
 
     if test -f "./$RECIPE_NAME/development"; then
@@ -59,7 +58,7 @@ recipe_start() {
                 2)
                 rm -f "./$RECIPE_NAME/sha512"
                 echo "Entering shell. Type \`exit\` when done with rebuild."
-                export DEPENDENCIES SCRIPT_NAME RECIPE_NAME NUM_CPUS SCRIPT_DIR
+                export BIN_DEPENDENCIES SCRIPT_NAME RECIPE_NAME SCRIPT_DIR
                 $USER_SHELL
                 # Modify sha512 file, but keep the hash invalid.
                 sha512sum "./$RECIPE_NAME/development" > "./$RECIPE_NAME/temp.sha512"
