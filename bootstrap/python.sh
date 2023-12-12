@@ -1,6 +1,6 @@
 #!/bin/sh --
-set -ex
-cd -- "$(dirname -- "$0")"
+set -eax
+cd -- "${0%/*}/"
 . ./recipe.sh
 recipe_init "./make.sh ./xz.sh" ""
 
