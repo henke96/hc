@@ -9,5 +9,7 @@ if errorlevel 1 exit /b
 
 if defined JAVA_HOME set "java_prefix=%JAVA_HOME%\bin\"
 
-"%java_prefix%javac" "%script_dir%\jni\Test.java"
-"%java_prefix%java" -cp "%script_dir%" -Djava.library.path="%script_dir%\windows\%ARCH%" jni/Test
+"%java_prefix%javac" -d "%root_dir%\..\hc-out\jni" "%script_dir%\jni\Test.java"
+if not errorlevel 0 exit /b
+if errorlevel 1 exit /b
+"%java_prefix%java" -cp "%root_dir%\..\hc-out\jni" -Djava.library.path="%root_dir%\..\hc-out\jni\windows\%ARCH%" jni/Test

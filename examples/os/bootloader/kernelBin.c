@@ -7,7 +7,7 @@ asm(
     ".global kernelBin\n"
     ".align 8\n"
     "kernelBin:\n"
-    ".incbin \"debug.kernel.bin\"\n"
+    ".incbin \"debug-kernel.bin\"\n"
     "kernelBin_end:\n"
     ".global kernelBin_size\n"
     ".align 4\n"

@@ -4,30 +4,33 @@ script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../.."
 
 build() {
-    mkdir -p "$prog_path/$ARCH"
-    if test -n "$LINK_KERNEL32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/kernel32.def" "$prog_path/$ARCH/kernel32.lib"; fi
-    if test -n "$LINK_USER32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/user32.def" "$prog_path/$ARCH/user32.lib"; fi
-    if test -n "$LINK_GDI32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$prog_path/$ARCH/gdi32.lib"; fi
-    if test -n "$LINK_SYNCHRONIZATION"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/synchronization.def" "$prog_path/$ARCH/synchronization.lib"; fi
+    out_dir="$root_dir/../hc-out/$out_path/$ARCH"
+    mkdir -p "$out_dir"
 
-    eval "set -- $("$script_dir/../shellUtil/escape.sh" "-L$prog_path/$ARCH") $FLAGS $1"
+    if test -n "$LINK_KERNEL32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/kernel32.def" "$out_dir/kernel32.lib"; fi
+    if test -n "$LINK_USER32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/user32.def" "$out_dir/user32.lib"; fi
+    if test -n "$LINK_GDI32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$out_dir/gdi32.lib"; fi
+    if test -n "$LINK_SYNCHRONIZATION"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/synchronization.def" "$out_dir/synchronization.lib"; fi
 
+    eval "set -- $("$script_dir/../shellUtil/escape.sh" "-L$out_dir") $FLAGS $1"
     if test -n "$ASSEMBLY"; then
-        "$root_dir/cc_pe.sh" $debug_flags -S -o "$prog_path/$ARCH/debug.$prog_name.$ext.s" "$prog_path/$prog_name.c" "$@"
-        "$root_dir/cc_pe.sh" $release_flags -S -o "$prog_path/$ARCH/$prog_name.$ext.s" "$prog_path/$prog_name.c" "$@"
+        "$root_dir/cc_pe.sh" $debug_flags -S -o "$out_dir/debug-$source_name$ext.s" "$source" "$@"
+        "$root_dir/cc_pe.sh" $release_flags -S -o "$out_dir/$source_name$ext.s" "$source" "$@"
     fi
-    "$root_dir/cc_pe.sh" $debug_flags -o "$prog_path/$ARCH/debug.$prog_name.$ext" "$prog_path/$prog_name.c" "$@"
-    "$root_dir/cc_pe.sh" $release_flags -o "$prog_path/$ARCH/$prog_name.$ext" "$prog_path/$prog_name.c" "$@"
+    "$root_dir/cc_pe.sh" $debug_flags -o "$out_dir/debug-$source_name$ext" "$source" "$@"
+    "$root_dir/cc_pe.sh" $release_flags -o "$out_dir/$source_name$ext" "$source" "$@"
 
     if test -z "$NO_ANALYSIS"; then
-        "$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
-        "$root_dir/cc_pe.sh" $release_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
+        "$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$source" "$@"
+        "$root_dir/cc_pe.sh" $release_flags $analyse_flags "$source" "$@"
     fi
 }
 
-prog_path="$1"
-prog_name="$2"
-ext="${3:-exe}"
+source="$1"
+source_name="${1##*/}"
+source_name="${source_name%.*}"
+out_path="$2"
+ext="$3"
 
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 common_flags="-Wl,-subsystem,windows"

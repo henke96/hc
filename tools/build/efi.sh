@@ -4,24 +4,28 @@ script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../.."
 
 build() {
-    mkdir -p "$prog_path/$ARCH"
-    eval "set -- $FLAGS $1"
+    out_dir="$root_dir/../hc-out/$out_path/$ARCH"
+    mkdir -p "$out_dir"
 
+    eval "set -- $FLAGS $1"
     if test -n "$ASSEMBLY"; then
-        "$root_dir/cc_pe.sh" $debug_flags -S -o "$prog_path/$ARCH/debug.$prog_name.efi.s" "$prog_path/$prog_name.c" "$@"
-        "$root_dir/cc_pe.sh" $release_flags -S -o "$prog_path/$ARCH/$prog_name.efi.s" "$prog_path/$prog_name.c" "$@"
+        "$root_dir/cc_pe.sh" $debug_flags -S -o "$out_dir/debug-$source_name.efi.s" "$source" "$@"
+        "$root_dir/cc_pe.sh" $release_flags -S -o "$out_dir/$source_name.efi.s" "$source" "$@"
     fi
-    "$root_dir/cc_pe.sh" $debug_flags -o "$prog_path/$ARCH/debug.$prog_name.efi" "$prog_path/$prog_name.c" "$@"
-    "$root_dir/cc_pe.sh" $release_flags -o "$prog_path/$ARCH/$prog_name.efi" "$prog_path/$prog_name.c" "$@"
+    "$root_dir/cc_pe.sh" $debug_flags -o "$out_dir/debug-$source_name.efi" "$source" "$@"
+    "$root_dir/cc_pe.sh" $release_flags -o "$out_dir/$source_name.efi" "$source" "$@"
 
     if test -z "$NO_ANALYSIS"; then
-        "$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
-        "$root_dir/cc_pe.sh" $release_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
+        "$root_dir/cc_pe.sh" $debug_flags $analyse_flags "$source" "$@"
+        "$root_dir/cc_pe.sh" $release_flags $analyse_flags "$source" "$@"
     fi
 }
 
-prog_path="$1"
-prog_name="$2"
+source="$1"
+source_name="${1##*/}"
+source_name="${source_name%.*}"
+out_path="$2"
+ext="$3"
 
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 common_flags="-Wl,-subsystem,efi_application"

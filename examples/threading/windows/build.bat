@@ -5,4 +5,4 @@ set "script_dir=%script_dir:~0,-1%"
 set "root_dir=%script_dir%\..\..\.."
 
 set LINK_KERNEL32=1 & set LINK_SYNCHRONIZATION=1
-call "%root_dir%\tools\build\exe.bat" "%script_dir%" threading
+call "%root_dir%\tools\build\exe.bat" "%script_dir%\threading.c" threading\windows .exe

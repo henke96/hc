@@ -17,8 +17,9 @@ static int32_t options_init(struct options *self, int32_t argc, char **argv) {
     };
 
     char prevOpt = '\0';
+    int32_t argI = 0;
     while (--argc > 0) {
-        char *arg = *++argv;
+        char *arg = argv[++argI];
         switch (prevOpt) {
             case 'm': {
                 self->multicastGroups = arg;

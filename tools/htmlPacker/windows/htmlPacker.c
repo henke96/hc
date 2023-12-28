@@ -15,7 +15,7 @@ static struct SYSTEMINFO systemInfo;
 
 #include "../common.c"
 
-void initialise(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+void initialise(hc_UNUSED char **envp) {
     GetSystemInfo(&systemInfo);
 }
 
@@ -66,13 +66,13 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
         FILE_ATTRIBUTE_NORMAL,
         NULL
     );
-    if (pathHandle == INVALID_HANDLE_VALUE) return -4;
+    if (pathHandle == INVALID_HANDLE_VALUE) return -2;
 
     int32_t status;
 
     int64_t contentLen;
     if (GetFileSizeEx(pathHandle, &contentLen) == 0) {
-        status = -5;
+        status = -3;
         goto cleanup_pathHandle;
     }
 
@@ -82,7 +82,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
 
     int64_t newBufferLen = bufferLen + (insertLen - replaceLen);
     if (allocator_resize(&alloc, newBufferLen) < 0) {
-        status = -6;
+        status = -4;
         goto cleanup_pathHandle;
     }
 
@@ -104,7 +104,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
 
         uint32_t read;
         if (ReadFile(pathHandle, &content[index], toRead, &read, NULL) == 0) {
-            status = -7;
+            status = -5;
             goto cleanup_pathHandle;
         }
         remaining -= read;
@@ -116,7 +116,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
         ReadFile(pathHandle, &eofTest, 1, &eofRead, NULL) == 0 ||
         eofRead != 0
     ) {
-        status = -8;
+        status = -6;
         goto cleanup_pathHandle;
     }
 

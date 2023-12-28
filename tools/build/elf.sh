@@ -4,30 +4,33 @@ script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../.."
 
 build() {
-    mkdir -p "$prog_path/$ARCH"
+    out_dir="$root_dir/../hc-out/$out_path/$ARCH"
+    mkdir -p "$out_dir"
 
-    eval "set -- $("$script_dir/../shellUtil/escape.sh" "-L$prog_path/$ARCH") $FLAGS $1"
+    eval "set -- $("$script_dir/../shellUtil/escape.sh" "-L$out_dir") $FLAGS $1"
     if test -n "$ASSEMBLY"; then
-        "$root_dir/cc_elf.sh" $debug_flags -S -o "$prog_path/$ARCH/debug.$prog_name.$ext.s" "$prog_path/$prog_name.c" "$@"
-        "$root_dir/cc_elf.sh" $release_flags -S -o "$prog_path/$ARCH/$prog_name.$ext.s" "$prog_path/$prog_name.c" "$@"
+        "$root_dir/cc_elf.sh" $debug_flags -S -o "$out_dir/debug-$source_name$ext.s" "$source" "$@"
+        "$root_dir/cc_elf.sh" $release_flags -S -o "$out_dir/$source_name$ext.s" "$source" "$@"
     fi
-    "$root_dir/cc_elf.sh" $debug_flags -o "$prog_path/$ARCH/debug.$prog_name.$ext" "$prog_path/$prog_name.c" "$@"
-    "$root_dir/cc_elf.sh" $release_flags -o "$prog_path/$ARCH/$prog_name.$ext" "$prog_path/$prog_name.c" "$@"
+    "$root_dir/cc_elf.sh" $debug_flags -o "$out_dir/debug-$source_name$ext" "$source" "$@"
+    "$root_dir/cc_elf.sh" $release_flags -o "$out_dir/$source_name$ext" "$source" "$@"
     if test -n "$STRIP_OPT"; then
-        "${llvm_prefix}llvm-objcopy" $STRIP_OPT "$prog_path/$ARCH/$prog_name.$ext"
+        "${llvm_prefix}llvm-objcopy" $STRIP_OPT "$out_dir/$source_name$ext"
     fi
 
     if test -z "$NO_ANALYSIS"; then
-        "$root_dir/cc_elf.sh" $debug_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
-        "$root_dir/cc_elf.sh" $release_flags $analyse_flags "$prog_path/$prog_name.c" "$@"
+        "$root_dir/cc_elf.sh" $debug_flags $analyse_flags "$source" "$@"
+        "$root_dir/cc_elf.sh" $release_flags $analyse_flags "$source" "$@"
     fi
 }
 
 if test -n "$LLVM"; then llvm_prefix="$LLVM/bin/"; fi
 
-prog_path="$1"
-prog_name="$2"
-ext="${3:-elf}"
+source="$1"
+source_name="${1##*/}"
+source_name="${source_name%.*}"
+out_path="$2"
+ext="$3"
 
 analyse_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 debug_flags="-fsanitize-undefined-trap-on-error -fsanitize=undefined -g -Dhc_DEBUG"

@@ -17,7 +17,7 @@ int32_t pageSize;
 
 #include "../common.c"
 
-static void initialise(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
+static void initialise(char **envp) {
     pageSize = util_getPageSize(util_getAuxv(envp));
 }
 

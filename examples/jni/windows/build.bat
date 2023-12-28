@@ -6,4 +6,4 @@ set "root_dir=%script_dir%\..\..\.."
 
 set LINK_KERNEL32=1
 set "FLAGS=-shared -fPIC %FLAGS%"
-call "%root_dir%\tools\build\exe.bat" "%script_dir%" test dll
+call "%root_dir%\tools\build\exe.bat" "%script_dir%\test.c" jni\windows .dll

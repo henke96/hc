@@ -5,4 +5,4 @@ set "script_dir=%script_dir:~0,-1%"
 set "root_dir=%script_dir%\..\..\.."
 
 set LINK_KERNEL32=1
-call "%root_dir%\tools\build\exe.bat" "%script_dir%" allocation
+call "%root_dir%\tools\build\exe.bat" "%script_dir%\allocation.c" allocation\windows .exe

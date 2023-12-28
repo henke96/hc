@@ -5,4 +5,4 @@ root_dir="$script_dir/../../.."
 
 export LINK_KERNEL32=1
 export FLAGS="-shared -fPIC $FLAGS"
-"$root_dir/tools/build/exe.sh" "$script_dir" test dll
+"$root_dir/tools/build/exe.sh" "$script_dir/test.c" jni/windows .dll

@@ -4,4 +4,4 @@ script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../../.."
 
 export LINK_KERNEL32=1 LINK_USER32=1 LINK_GDI32=1
-"$root_dir/tools/build/exe.sh" "$script_dir" openGl
+"$root_dir/tools/build/exe.sh" "$script_dir/openGl.c" openGl/windows .exe
