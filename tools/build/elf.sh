@@ -7,7 +7,7 @@ build() {
     out_dir="$root_dir/../hc-out/$out_path/$ARCH"
     mkdir -p "$out_dir"
 
-    eval "set -- $("$script_dir/../shellUtil/escape.sh" "-L$out_dir") $FLAGS $1"
+    eval "set -- $("$root_dir/tools/shell/escape.sh" "-L$out_dir") $FLAGS $1"
     if test -n "$ASSEMBLY"; then
         "$root_dir/cc_elf.sh" $debug_flags -S -o "$out_dir/debug-$source_name$ext.s" "$source" "$@"
         "$root_dir/cc_elf.sh" $release_flags -S -o "$out_dir/$source_name$ext.s" "$source" "$@"

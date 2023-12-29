@@ -1,19 +1,20 @@
 #!/bin/sh --
 set -eax
-cd -- "${0%/*}/"
-. ./recipe.sh
-recipe_init "./make.sh ./xz.sh ./cmake.sh ./python.sh" ""
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../tools/shell/recipe.sh"
+recipe_init "make.sh xz.sh python.sh cmake.sh"
 
 pkg="llvm-project-16.0.6.src"
 URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/$pkg.tar.xz"
 SHA512="89a67ebfbbc764cc456e8825ecfa90707741f8835b1b2adffae0b227ab1fe5ca9cce75b0efaffc9ca8431cae528dc54fd838867a56a2b645344d9e82d19ab1b7"
 
 recipe_start
+export PATH="$PWD/make.sh-out/bin:$PWD/xz.sh-out/bin:$PWD/python.sh-out/bin:$PWD/cmake.sh-out/bin:$PATH"
 rm -rf "./$pkg"; xz -d -c "$DOWNLOAD" | tar xf -; cd "./$pkg"
 
 cmake -S llvm -B build -G "Unix Makefiles" -Wno-dev \
 -DCMAKE_MAKE_PROGRAM=make -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
--DCMAKE_INSTALL_PREFIX="$SCRIPT_DIR/$RECIPE_NAME" \
+-DCMAKE_INSTALL_PREFIX="$RECIPE_OUT" \
 -DCMAKE_BUILD_TYPE=Release \
 -DLLVM_APPEND_VC_REV=OFF \
 -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_UTILS=OFF \

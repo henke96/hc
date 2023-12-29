@@ -12,7 +12,7 @@ if not exist "%out_dir%" (
     if errorlevel 1 exit /b
 )
 
-call "%root_dir%\tools\shellUtil\setnativearch.bat"
+call "%root_dir%\tools\shell\setnativearch.bat"
 if not errorlevel 0 exit /b
 if errorlevel 1 exit /b
 
