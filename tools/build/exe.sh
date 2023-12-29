@@ -2,6 +2,7 @@
 set -e
 script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../.."
+. "$root_dir/tools/shell/escape.sh"
 
 build() {
     out_dir="$root_dir/../hc-out/$out_path/$ARCH"
@@ -12,7 +13,7 @@ build() {
     if test -n "$LINK_GDI32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$out_dir/gdi32.lib"; fi
     if test -n "$LINK_SYNCHRONIZATION"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/synchronization.def" "$out_dir/synchronization.lib"; fi
 
-    eval "set -- $("$root_dir/tools/shell/escape.sh" "-L$out_dir") $FLAGS $1"
+    eval "set -- $(escape "-L$out_dir") $FLAGS $1"
     if test -n "$ASSEMBLY"; then
         "$root_dir/cc_pe.sh" $debug_flags -S -o "$out_dir/debug-$source_name$ext.s" "$source" "$@"
         "$root_dir/cc_pe.sh" $release_flags -S -o "$out_dir/$source_name$ext.s" "$source" "$@"
