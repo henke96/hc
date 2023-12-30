@@ -142,7 +142,7 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
 
     // Make sure the memory map will fit in the bootloader page.
     uint64_t memoryMapLength = memoryMapSize / descriptorSize;
-    if (memoryMapLength * sizeof(struct efi_memoryDescriptor) > paging_PAGE_SIZE - offsetof(struct bootloaderPage, memoryMap)) {
+    if (memoryMapLength * sizeof(struct efi_memoryDescriptor) > paging_PAGE_SIZE - sizeof(struct bootloaderPage)) {
         systemTable->consoleOut->outputString(systemTable->consoleOut, u"Memory map too big!\r\n");
         return 1;
     }
@@ -175,9 +175,10 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     bootloaderPage->frameBufferHeight = graphics->mode->info->verticalResolution;
     bootloaderPage->frameBufferBase = graphics->mode->frameBufferBase;
     bootloaderPage->memoryMapLength = memoryMapLength;
+    struct efi_memoryDescriptor *bootloaderPageMemoryMap = (void *)&bootloaderPage[1];
     for (uint64_t i = 0; i < memoryMapLength; ++i) {
         struct efi_memoryDescriptor *descriptor = (void *)&memoryMap[descriptorSize * i];
-        bootloaderPage->memoryMap[i] = *descriptor;
+        bootloaderPageMemoryMap[i] = *descriptor;
     }
     // Create page tables.
     bootloaderPage->pageTableL4 = (uint64_t)&bootloaderPage->pageTableL3 | 0b11;

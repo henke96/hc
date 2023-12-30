@@ -643,7 +643,7 @@ struct RAWKEYBOARD {
 struct RAWHID {
     uint32_t sizeHid;
     uint32_t count;
-    uint8_t rawData[];
+    // uint8_t rawData[];
 };
 
 struct RAWINPUT {

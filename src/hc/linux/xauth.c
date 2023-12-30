@@ -28,7 +28,7 @@ static int32_t xauth_init(struct xauth *self, const char *xAuthorityFile) {
         status = -2;
         goto cleanup_fd;
     }
-    self->fileSize = (int64_t)statx.stx_size;
+    self->fileSize = statx.stx_size;
 
     if (self->fileSize < 1) {
         status = -3;

@@ -46,7 +46,7 @@ static int32_t init(char *file) {
         0,
         NULL,
         OPEN_EXISTING,
-        FILE_ATTRIBUTE_NORMAL,
+        FILE_ATTRIBUTE_READONLY,
         NULL
     );
     debug_CHECK(HeapFree(heap, 0, utf16), RES != 0);
@@ -59,10 +59,10 @@ static void deinit(void) {
     debug_CHECK(CloseHandle(fileHandle), RES != 0);
 }
 
-static int64_t readIntoBuffer(void) {
+static int32_t readIntoBuffer(void) {
     uint32_t read;
     if (ReadFile(fileHandle, &buffer[0], sizeof(buffer), &read, NULL) == 0) return -1;
-    return read;
+    return (int32_t)read;
 }
 
 static int32_t printBuffer(int32_t size) {

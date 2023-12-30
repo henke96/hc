@@ -1,11 +1,10 @@
 static int32_t window_x11_setup(uint32_t visualId) {
     window.x11.windowId = x11Client_nextId(&window.x11.client);
-    uint64_t rootsOffset = (
-        math_ALIGN_FORWARD(window.x11.client.setupResponse->vendorLength, 4) +
-        sizeof(struct x11_format) * window.x11.client.setupResponse->numPixmapFormats
-    );
-    struct x11_screen *screen = (void *)&window.x11.client.setupResponse->data[rootsOffset]; // Use screen 0.
-    window.x11.rootWindowId = screen->windowId;
+
+    char *vendor = (void *)&window.x11.client.setupResponse[1];
+    struct x11_format *pixmapFormats = (void *)&vendor[math_ALIGN_FORWARD(window.x11.client.setupResponse->vendorLength, 4)];
+    struct x11_screen *roots = (void *)&pixmapFormats[window.x11.client.setupResponse->numPixmapFormats];
+    window.x11.rootWindowId = roots[0].windowId; // Use screen 0.
 
     struct requests {
         struct x11_createWindow createWindow;
@@ -530,14 +529,16 @@ static int32_t window_x11_run(void) {
                             struct x11_xinputRawEvent *rawEvent = (void *)generic;
                             if (rawEvent->extension != window.x11.xinputMajorOpcode || rawEvent->eventType != x11_XINPUT_RAW_MOTION) break;
 
+                            uint32_t *valuators = (void *)&rawEvent[1];
                             int32_t valuatorBits = 0;
                             for (int32_t i = 0; i < rawEvent->numValuators; ++i) {
-                                valuatorBits += hc_POPCOUNT32(rawEvent->data[i]);
+                                valuatorBits += hc_POPCOUNT32(valuators[i]);
                             }
-                            struct x11_xinputFP3232 *valuatorsRaw = (void *)&rawEvent->data[rawEvent->numValuators + 2 * valuatorBits];
+                            struct x11_xinputFP3232 *axisValues = (void *)&valuators[rawEvent->numValuators];
+                            struct x11_xinputFP3232 *axisValuesRaw = &axisValues[valuatorBits];
 
-                            int64_t deltaX = (int64_t)((uint64_t)valuatorsRaw[0].integer << 32) | valuatorsRaw[0].fraction;
-                            int64_t deltaY = (int64_t)((uint64_t)valuatorsRaw[1].integer << 32) | valuatorsRaw[1].fraction;
+                            int64_t deltaX = (int64_t)((uint64_t)axisValuesRaw[0].integer << 32) | axisValuesRaw[0].fraction;
+                            int64_t deltaY = (int64_t)((uint64_t)axisValuesRaw[1].integer << 32) | axisValuesRaw[1].fraction;
                             game_onMouseMove(deltaX, deltaY, eventTimestamp);
                             break;
                         }

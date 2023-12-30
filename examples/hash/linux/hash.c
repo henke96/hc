@@ -26,8 +26,8 @@ static void deinit(void) {
     debug_CHECK(sys_close(fileFd), RES == 0);
 }
 
-static int64_t readIntoBuffer(void) {
-    return sys_read(fileFd, &buffer[0], sizeof(buffer));
+static int32_t readIntoBuffer(void) {
+    return (int32_t)sys_read(fileFd, &buffer[0], sizeof(buffer));
 }
 
 static int32_t printBuffer(int32_t size) {

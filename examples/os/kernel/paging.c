@@ -13,17 +13,18 @@ static void paging_init(void) {
     msr_wrmsr(msr_PAT, pat);
 
     struct bootloaderPage *bootloaderPage = (void *)paging_BOOTLOADER_PAGE_ADDRESS;
+    struct efi_memoryDescriptor *memoryMap = (void *)&bootloaderPage[1];
     // Use same logic as bootloader to get same physical addresses.
     uint64_t bootloaderPagePhysicalAddress = (uint64_t)bootloaderPage_getFreePageAddress(
-        &bootloaderPage->memoryMap,
-        bootloaderPage->memoryMapLength * sizeof(bootloaderPage->memoryMap[0]),
-        sizeof(bootloaderPage->memoryMap[0]),
+        memoryMap,
+        bootloaderPage->memoryMapLength * sizeof(memoryMap[0]),
+        sizeof(memoryMap[0]),
         0
     );
     uint64_t kernelPagePhysicalAddress = (uint64_t)bootloaderPage_getFreePageAddress(
-        &bootloaderPage->memoryMap,
-        bootloaderPage->memoryMapLength * sizeof(bootloaderPage->memoryMap[0]),
-        sizeof(bootloaderPage->memoryMap[0]),
+        memoryMap,
+        bootloaderPage->memoryMapLength * sizeof(memoryMap[0]),
+        sizeof(memoryMap[0]),
         bootloaderPagePhysicalAddress + paging_PAGE_SIZE
     );
 

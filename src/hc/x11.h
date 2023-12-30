@@ -69,7 +69,7 @@ struct x11_depth {
     uint8_t __pad;
     uint16_t numVisualTypes;
     uint8_t __pad2[4];
-    struct x11_visualType visualTypes[];
+    // struct x11_visualType visualTypes[numVisualTypes];
 };
 
 struct x11_screen {
@@ -89,7 +89,7 @@ struct x11_screen {
     uint8_t saveUnders;
     uint8_t rootDepth;
     uint8_t numAllowedDepths;
-    struct x11_depth allowedDepths[];
+    // struct x11_depth allowedDepths[numAllowedDepths];
 };
 
 // Protocol setup.
@@ -104,10 +104,10 @@ struct x11_setupRequest {
     uint16_t authProtocolNameLength;
     uint16_t authProtocolDataLength;
     uint8_t __pad2[2];
-    uint8_t data[]; // char authProtocolName[authProtocolNameLength];
-                    // __pad3[math_PAD_BYTES(authProtocolNameLength, 4)];
-                    // uint8_t authProtocolData[authProtocolDataLength];
-                    // __pad4[math_PAD_BYTES(authProtocolDataLength, 4)];
+    // char authProtocolName[authProtocolNameLength];
+    // __pad3[math_PAD_BYTES(authProtocolNameLength, 4)];
+    // uint8_t authProtocolData[authProtocolDataLength];
+    // __pad4[math_PAD_BYTES(authProtocolDataLength, 4)];
 };
 
 #define x11_setupResponse_FAILED 0
@@ -119,8 +119,7 @@ struct x11_setupResponse_header {
     uint16_t protocolMajorVersion; // Not for authenticate.
     uint16_t protocolMinorVersion; // Not for authenticate.
     uint16_t length;
-    uint8_t data[]; // struct x11_setupResponse for success,
-                    // reason string for failed and authenticate.
+    // struct x11_setupResponse for success, reason string for failed and authenticate.
 };
 
 struct x11_setupResponse {
@@ -139,10 +138,10 @@ struct x11_setupResponse {
     uint8_t minKeycode;
     uint8_t maxKeycode;
     uint8_t __pad2[4];
-    uint8_t data[]; // char vendor[vendorLength];
-                    // uint8_t __pad[math_PAD_BYTES(vendorLength, 4)];
-                    // struct x11_format pixmapFormats[numPixmapFormats];
-                    // struct x11_screen roots[numRoots]; (x11_screen is variable length!)
+    // char vendor[vendorLength];
+    // uint8_t __pad[math_PAD_BYTES(vendorLength, 4)];
+    // struct x11_format pixmapFormats[numPixmapFormats];
+    // struct x11_screen roots[numRoots]; (x11_screen is variable length!)
 };
 
 // Protocol events.
@@ -309,7 +308,7 @@ struct x11_genericEvent {
     uint16_t sequenceNumber;
     uint32_t length;
     uint16_t eventType;
-    uint8_t data[];
+    // uint8_t data[];
 };
 
 // Protocol requests and responses.
@@ -317,7 +316,7 @@ struct x11_genericResponse {
     uint8_t type;
     uint8_t extra;
     uint16_t sequenceNumber;
-    uint8_t data[];
+    // uint8_t data[];
 };
 
 #define x11_createWindow_OPCODE 1
@@ -351,7 +350,7 @@ struct x11_createWindow {
     uint16_t class;
     uint32_t visualId;
     uint32_t valueMask;
-    uint32_t values[];
+    // uint32_t values[];
 };
 
 #define x11_getWindowAttributes_OPCODE 3
@@ -399,8 +398,8 @@ struct x11_internAtom {
     uint16_t length;
     uint16_t nameLength;
     uint16_t __pad;
-    uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad2[math_PAD_BYTES(nameLength, 4)];
+    // char name[nameLength];
+    // uint8_t __pad2[math_PAD_BYTES(nameLength, 4)];
 };
 
 struct x11_internAtomResponse {
@@ -426,8 +425,8 @@ struct x11_changeProperty {
     uint8_t format; // 8, 16 or 32 bits.
     uint8_t __pad[3];
     uint32_t dataLength; // In `format` units.
-    uint8_t data[]; // format_t data[dataLength];
-                    // uint8_t __pad2[math_PAD_BYTES(sizeof(format_t) * dataLength, 4)];
+    // format_t data[dataLength];
+    // uint8_t __pad2[math_PAD_BYTES(sizeof(format_t) * dataLength, 4)];
 };
 
 #define x11_sendEvent_OPCODE 25
@@ -473,8 +472,8 @@ struct x11_queryExtension {
     uint16_t length;
     uint16_t nameLength;
     uint16_t __pad2;
-    uint8_t data[]; // char name[nameLength];
-                    // uint8_t __pad3[math_PAD_BYTES(nameLength, 4)];
+    // char name[nameLength];
+    // uint8_t __pad3[math_PAD_BYTES(nameLength, 4)];
 };
 
 struct x11_queryExtensionResponse {
@@ -505,7 +504,7 @@ struct x11_getKeyboardMappingResponse {
     uint16_t sequenceNumber;
     uint32_t length;
     uint8_t __pad[24];
-    uint32_t keysyms[];
+    // uint32_t keysyms[];
 };
 
 #define x11_getModifierMapping_OPCODE 119
@@ -521,7 +520,7 @@ struct x11_getModifierMappingResponse {
     uint16_t sequenceNumber;
     uint32_t length;
     uint8_t __pad[24];
-    uint8_t keycodes[];
+    // uint8_t keycodes[];
 };
 
 // Motif WM Hints.
@@ -612,7 +611,7 @@ struct x11_xinputSelectEvents {
     uint32_t windowId;
     uint16_t numMasks;
     uint16_t __pad;
-    struct x11_xinputEventMask masks[];
+    // struct x11_xinputEventMask masks[numMasks];
 };
 
 struct x11_xinputRawEvent {
@@ -629,9 +628,9 @@ struct x11_xinputRawEvent {
     uint16_t numValuators;
     uint32_t flags;
     uint32_t __pad;
-    uint32_t data[]; // uint32_t valuators[numValuators];
-                     // struct x11_xinputFP3232 axisValues[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
-                     // struct x11_xinputFP3232 axisValuesRaw[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
+    // uint32_t valuators[numValuators];
+    // struct x11_xinputFP3232 axisValues[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
+    // struct x11_xinputFP3232 axisValuesRaw[hc_POPCOUNT32(valuators[0]) + ... + hc_POPCOUNT32(valuators[numValuators - 1])];
 };
 
 // XFixes extension.

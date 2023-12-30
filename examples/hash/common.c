@@ -1,6 +1,6 @@
 static int32_t init(char *file);
 static void deinit(void);
-static int64_t readIntoBuffer(void);
+static int32_t readIntoBuffer(void);
 static int32_t printBuffer(int32_t size);
 
 static char buffer[65536] hc_ALIGNED(16);
@@ -44,7 +44,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
 
     int32_t status = 4;
     for (;;) {
-        int64_t numRead = readIntoBuffer();
+        int32_t numRead = readIntoBuffer();
         if (numRead <= 0) {
             if (numRead < 0) goto cleanup;
             break;

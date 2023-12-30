@@ -33,7 +33,7 @@ int32_t _startGnu(int32_t argc, char **argv, char **envp) {
     struct statx statx;
     statx.stx_size = 0;
     if (sys_statx(fd, "", AT_EMPTY_PATH, STATX_SIZE, &statx) < 0) return 1;
-    struct elf_header *elfHeader = sys_mmap(NULL, (int64_t)statx.stx_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    struct elf_header *elfHeader = sys_mmap(NULL, statx.stx_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if ((int64_t)elfHeader < 0) return 1;
 
     // Find the interpreter program header.

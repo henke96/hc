@@ -8,7 +8,7 @@ struct bootloaderPage {
     uint32_t frameBufferHeight;
     uint64_t frameBufferBase;
     uint64_t memoryMapLength;
-    struct efi_memoryDescriptor memoryMap[];
+    // struct efi_memoryDescriptor memoryMap[];
 };
 
 // Get the physical address of the first free 2 MiB page at or after `startPageAddress`.

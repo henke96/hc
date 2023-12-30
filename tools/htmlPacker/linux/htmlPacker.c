@@ -44,7 +44,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
         status = -3;
         goto cleanup_pathFd;
     }
-    int64_t contentLen = (int64_t)contentStat.stx_size;
+    int64_t contentLen = contentStat.stx_size;
 
     // Resize buffer.
     int64_t insertLen = contentLen;

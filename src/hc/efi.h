@@ -207,7 +207,7 @@ struct efi_devicePathProtocol {
     uint8_t type;
     uint8_t subType;
     uint8_t length[2];
-    uint8_t data[];
+    // uint8_t data[];
 };
 
 struct efi_devicePathProtocol_mediaDevicePath {

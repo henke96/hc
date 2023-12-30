@@ -175,5 +175,5 @@ struct elf_symbol {
 struct elf_hashTable {
     uint32_t numBuckets;
     uint32_t numChains;
-    uint32_t data[]; // `numBuckets + numChains` entries (in that order).
+    // uint32_t data[]; // `numBuckets + numChains` entries (in that order).
 };
