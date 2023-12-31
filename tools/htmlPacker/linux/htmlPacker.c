@@ -27,8 +27,8 @@ static int32_t changeDir(char *path) {
 
 static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *path, int32_t pathLen, bool asBase64) {
     // Add null terminator to path.
-    char *pathZ = &alloc.mem[bufferLen];
-    if (allocator_resize(&alloc, bufferLen + (int64_t)pathLen + 1) < 0) return -1;
+    char *pathZ = &alloc.mem[alloc.size];
+    if (allocator_resize(&alloc, alloc.size + (int64_t)pathLen + 1) < 0) return -1;
     hc_MEMCPY(pathZ, path, (uint64_t)pathLen);
     pathZ[pathLen] = '\0';
 

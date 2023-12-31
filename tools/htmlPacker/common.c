@@ -82,8 +82,8 @@ int32_t start(int32_t argc, char **argv, char **envp) {
 
     int64_t outNameLen = util_cstrLen(argv[3]);
     int64_t outNameHtmlLen = outNameLen + (int64_t)sizeof(".html");
-    char *outNameHtml = &alloc.mem[bufferLen];
-    if (allocator_resize(&alloc, bufferLen + outNameHtmlLen) < 0) {
+    char *outNameHtml = &alloc.mem[alloc.size];
+    if (allocator_resize(&alloc, alloc.size + outNameHtmlLen) < 0) {
         status = 1;
         goto cleanup_alloc;
     }

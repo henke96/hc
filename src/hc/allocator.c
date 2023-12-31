@@ -18,20 +18,20 @@ static int32_t allocator_init(struct allocator *self, int64_t reserveSize) {
 
 static void allocator_deinit(struct allocator *self, int64_t reserveSize) {
     reserveSize = math_ALIGN_FORWARD(reserveSize, (int64_t)allocator_PAGE_SIZE);
-    debug_ASSERT(self->size <= reserveSize);
     heap_unreserve(self->mem, reserveSize);
 }
 
 static int32_t allocator_resize(struct allocator *self, int64_t newSize) {
-    newSize = math_ALIGN_FORWARD(newSize, (int64_t)allocator_PAGE_SIZE);
+    int64_t commitSize = math_ALIGN_FORWARD(self->size, (int64_t)allocator_PAGE_SIZE);
+    int64_t newCommitSize = math_ALIGN_FORWARD(newSize, (int64_t)allocator_PAGE_SIZE);
 
-    int64_t diff = newSize - self->size;
+    int64_t diff = newCommitSize - commitSize;
     if (diff == 0) return 0;
 
     if (diff < 0) {
-        heap_decommit(self->mem + newSize, -diff);
+        heap_decommit(self->mem + newCommitSize, -diff);
     } else {
-        int32_t status = heap_commit(self->mem + self->size, diff);
+        int32_t status = heap_commit(self->mem + commitSize, diff);
         if (status < 0) return -1;
     }
     self->size = newSize;
