@@ -2,8 +2,13 @@ recipe_init() {
     SCRIPT_NAME="${0##*/}"
 
     if test -z "$hc_TIMESTAMP"; then
-        DOWNLOADS="$(cd -- "${DOWNLOADS:-.}" && pwd)"
-        cd -- "${OUT:-.}"
+        if test -z "$OUT"; then
+            set +x
+            echo 'Please set environment variable `OUT` to the output directory.'
+            exit 1
+        fi
+        DOWNLOADS="$(cd -- "${DOWNLOADS:-"$OUT"}" && pwd)"
+        cd -- "$OUT"
         if test -n "$START_DEV"; then
             rm -rf "./$SCRIPT_NAME-out"
             echo "$(date)" > "./$SCRIPT_NAME-development"
