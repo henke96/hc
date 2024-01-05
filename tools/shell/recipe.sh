@@ -1,4 +1,4 @@
-recipe_init() {
+recipe_start() {
     SCRIPT_NAME="${0##*/}"
 
     if test -z "$hc_TIMESTAMP"; then
@@ -27,8 +27,7 @@ recipe_init() {
     fi
 
     # Run dependencies recipes that have not already been built.
-    hc_DEPS="$1"
-    for hc_dep in $hc_DEPS; do
+    for hc_dep in $DEPENDENCIES; do
         if test "$hc_TIMESTAMP" != "$(cat "./${hc_dep##*/}-out/sha512-timestamp")"; then "$SCRIPT_DIR/$hc_dep"; fi
     done
 
@@ -40,12 +39,10 @@ recipe_init() {
         echo "Already built $RECIPE_OUT"
         exit
     fi
-}
 
-recipe_start() {
+    # Download and verify source.
     if test -n "$URL"; then
         DOWNLOAD="$hc_DOWNLOADS/${URL##*/}"
-        # Fetch and verify source.
         if ! sha512sum -c - <<end
 $SHA512  $DOWNLOAD
 end
@@ -58,6 +55,7 @@ end
     fi
     set +a
 
+    # Handle development mode.
     if test -f "./$SCRIPT_NAME-development"; then
         set +x
         while :; do
@@ -94,7 +92,7 @@ end
 
 recipe_finish() {
     sha512sum "$0" > "$RECIPE_OUT/temp.sha512"
-    for hc_dep in $hc_DEPS; do
+    for hc_dep in $DEPENDENCIES; do
         sha512sum "$PWD/${hc_dep##*/}-out/sha512" >> "$RECIPE_OUT/temp.sha512"
     done
     for hc_dep in $FILE_DEPENDENCIES; do

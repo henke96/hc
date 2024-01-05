@@ -2,9 +2,10 @@
 set -eax
 SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
 . "$SCRIPT_DIR/../tools/shell/recipe.sh"
-recipe_init "make xz python cmake"
 
 pkg="llvm-project-16.0.6.src"
+DEPENDENCIES="make xz python cmake"
+FILE_DEPENDENCIES=""
 URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/$pkg.tar.xz"
 SHA512="89a67ebfbbc764cc456e8825ecfa90707741f8835b1b2adffae0b227ab1fe5ca9cce75b0efaffc9ca8431cae528dc54fd838867a56a2b645344d9e82d19ab1b7"
 
