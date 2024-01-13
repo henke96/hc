@@ -30,7 +30,7 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
     }
 
     // Set up a `sa_sigaction` handler for SIGQUIT.
-    // Test with something like `kill -SIGQUIT $(pidof signalHandler.elf)`.
+    // Test with something like `kill -SIGQUIT $(pidof signalHandler)`.
     {
         struct sigaction action = {
             .sa_sigaction = sigaction,
