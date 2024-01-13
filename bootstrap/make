@@ -1,21 +1,20 @@
 #!/bin/sh --
-set -eax
+set -ex
 SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
 . "$SCRIPT_DIR/../tools/shell/recipe.sh"
 
 pkg="make-4.4"
-DEPENDENCIES=""
-FILE_DEPENDENCIES=""
-URL="https://ftp.gnu.org/gnu/make/$pkg.tar.gz"
-SHA512="4be73f494295dcfa10034531b0d920cfdb5438bc20625f863f5c878549c140e1e67195162580c53060c3c11c67a2c739c09051f02cdd283e5aa9ebcd68975a1f"
+url="https://ftp.gnu.org/gnu/make/$pkg.tar.gz"
+sha512="4be73f494295dcfa10034531b0d920cfdb5438bc20625f863f5c878549c140e1e67195162580c53060c3c11c67a2c739c09051f02cdd283e5aa9ebcd68975a1f"
 
 recipe_start
-rm -rf "./$pkg"; gzip -d -c "$DOWNLOAD" | tar xf -; cd "./$pkg"
+gzip -d -c "$(recipe_download "$url" "$sha512")" | tar xf -
+cd "./$pkg"
 
-./configure --prefix="$RECIPE_OUT" --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix --without-guile --without-customs --without-dmalloc
+./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix --without-guile --without-customs --without-dmalloc --disable-nls
 ./build.sh
-mkdir -p "$RECIPE_OUT/bin"
-mv ./make "$RECIPE_OUT/bin/"
+mkdir "$OUT/$SCRIPT_NAME/bin"
+mv ./make "$OUT/$SCRIPT_NAME/bin/"
 
-cd ..; rm -rf "./$pkg"
+rm -rf "$PWD"
 recipe_finish

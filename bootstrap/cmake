@@ -1,20 +1,21 @@
 #!/bin/sh --
-set -eax
+set -ex
 SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
 . "$SCRIPT_DIR/../tools/shell/recipe.sh"
 
 pkg="cmake-3.27.1"
+url="https://github.com/Kitware/CMake/releases/download/v3.27.1/$pkg.tar.gz"
+sha512="d8831105fed3772bcb821a2b184fe0ffbff15795a5b0a89f2ad1cb0372a40c8f22f2bab72c671a6d17464521b7337067df929a5c3ece99f84848cc3a2fe6716f"
+
 DEPENDENCIES="make"
-FILE_DEPENDENCIES=""
-URL="https://github.com/Kitware/CMake/releases/download/v3.27.1/$pkg.tar.gz"
-SHA512="d8831105fed3772bcb821a2b184fe0ffbff15795a5b0a89f2ad1cb0372a40c8f22f2bab72c671a6d17464521b7337067df929a5c3ece99f84848cc3a2fe6716f"
 
 recipe_start
-export PATH="$PWD/make-out/bin:$PATH"
-rm -rf "./$pkg"; gzip -d -c "$DOWNLOAD" | tar xf -; cd "./$pkg"
+export PATH="$OUT/make/bin:$PATH"
+gzip -d -c "$(recipe_download "$url" "$sha512")" | tar xf -
+cd "./$pkg"
 
-./bootstrap --prefix="$RECIPE_OUT" --no-debugger --parallel="$NUM_CPUS" --generator="Unix Makefiles" -- -DCMAKE_USE_OPENSSL=OFF
+./bootstrap --prefix="$OUT/$SCRIPT_NAME" --no-debugger --parallel="$NUM_CPUS" --generator="Unix Makefiles" -- -DCMAKE_USE_OPENSSL=OFF
 make -j "$NUM_CPUS" install
 
-cd ..; rm -rf "./$pkg"
+rm -rf "$PWD"
 recipe_finish

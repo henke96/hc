@@ -1,21 +1,22 @@
 #!/bin/sh --
-set -eax
+set -ex
 SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
 . "$SCRIPT_DIR/../tools/shell/recipe.sh"
 
 pkg="llvm-project-16.0.6.src"
+url="https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/$pkg.tar.xz"
+sha512="89a67ebfbbc764cc456e8825ecfa90707741f8835b1b2adffae0b227ab1fe5ca9cce75b0efaffc9ca8431cae528dc54fd838867a56a2b645344d9e82d19ab1b7"
+
 DEPENDENCIES="make xz python cmake"
-FILE_DEPENDENCIES=""
-URL="https://github.com/llvm/llvm-project/releases/download/llvmorg-16.0.6/$pkg.tar.xz"
-SHA512="89a67ebfbbc764cc456e8825ecfa90707741f8835b1b2adffae0b227ab1fe5ca9cce75b0efaffc9ca8431cae528dc54fd838867a56a2b645344d9e82d19ab1b7"
 
 recipe_start
-export PATH="$PWD/make-out/bin:$PWD/xz-out/bin:$PWD/python-out/bin:$PWD/cmake-out/bin:$PATH"
-rm -rf "./$pkg"; xz -d -c "$DOWNLOAD" | tar xf -; cd "./$pkg"
+export PATH="$OUT/make/bin:$OUT/xz/bin:$OUT/python/bin:$OUT/cmake/bin:$PATH"
+rm -rf "./$pkg"; xz -d -c "$(recipe_download "$url" "$sha512")" | tar xf -
+cd "./$pkg"
 
 cmake -S llvm -B build -G "Unix Makefiles" -Wno-dev \
 -DCMAKE_MAKE_PROGRAM=make -DCMAKE_C_COMPILER="$CC" -DCMAKE_CXX_COMPILER="$CXX" \
--DCMAKE_INSTALL_PREFIX="$RECIPE_OUT" \
+-DCMAKE_INSTALL_PREFIX="$OUT/$SCRIPT_NAME" \
 -DCMAKE_BUILD_TYPE=Release \
 -DLLVM_APPEND_VC_REV=OFF \
 -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_UTILS=OFF \
@@ -26,5 +27,5 @@ cmake -S llvm -B build -G "Unix Makefiles" -Wno-dev \
 
 make -C build -j "$NUM_CPUS" install
 
-cd ..; rm -rf "./$pkg"
+rm -rf "$PWD"
 recipe_finish
