@@ -2,7 +2,7 @@
 
 void *memset(void *dest, int32_t c, size_t n) hc_NO_BUILTIN {
     uint64_t expanded = 0x0101010101010101 * (uint64_t)(c & 0xFF);
-    while (n > 16) {
+    while (n >= 16) {
         n -= 16;
         hc_MEMCPY(dest + n, &expanded, 8);
         hc_MEMCPY(dest + n + 8, &expanded, 8);
@@ -25,7 +25,7 @@ void *memmove(void *dest, const void *src, size_t n) hc_NO_BUILTIN {
     uint64_t temp1, temp2;
     char *d = dest;
     const char *s = src;
-    if (n > 16) {
+    if (n >= 16) {
         if (d < s) {
             size_t iEnd = n & ~(size_t)15;
             size_t i = 0;
@@ -46,7 +46,7 @@ void *memmove(void *dest, const void *src, size_t n) hc_NO_BUILTIN {
                 hc_MEMCPY(&temp2, s + n + 8, 8);
                 hc_MEMCPY(d + n, &temp1, 8);
                 hc_MEMCPY(d + n + 8, &temp2, 8);
-            } while (n > 16);
+            } while (n >= 16);
         }
     }
     if (n == 0) return dest;
