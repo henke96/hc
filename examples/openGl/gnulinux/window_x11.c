@@ -10,29 +10,29 @@ static int32_t window_x11_setup(uint32_t visualId) {
         struct x11_createWindow createWindow;
         uint32_t createWindowValues[1];
         struct x11_queryExtension queryXfixes;
-        char queryXfixesName[sizeof(x11_XFIXES_NAME) - 1];
-        uint8_t queryXfixesPad[math_PAD_BYTES(sizeof(x11_XFIXES_NAME) - 1, 4)];
+        char queryXfixesName[hc_STR_LEN(x11_XFIXES_NAME)];
+        uint8_t queryXfixesPad[math_PAD_BYTES(hc_STR_LEN(x11_XFIXES_NAME), 4)];
         struct x11_queryExtension queryXinput;
-        char queryXinputName[sizeof(x11_XINPUT_NAME) - 1];
-        uint8_t queryXinputPad[math_PAD_BYTES(sizeof(x11_XINPUT_NAME) - 1, 4)];
+        char queryXinputName[hc_STR_LEN(x11_XINPUT_NAME)];
+        uint8_t queryXinputPad[math_PAD_BYTES(hc_STR_LEN(x11_XINPUT_NAME), 4)];
         struct x11_internAtom wmProtocolsAtom;
-        char wmProtocolsAtomName[sizeof("WM_PROTOCOLS") - 1];
-        uint8_t wmProtocolsAtomPad[math_PAD_BYTES(sizeof("WM_PROTOCOLS") - 1, 4)];
+        char wmProtocolsAtomName[hc_STR_LEN("WM_PROTOCOLS")];
+        uint8_t wmProtocolsAtomPad[math_PAD_BYTES(hc_STR_LEN("WM_PROTOCOLS"), 4)];
         struct x11_internAtom wmDeleteWindowAtom;
-        char wmDeleteWindowAtomName[sizeof("WM_DELETE_WINDOW") - 1];
-        uint8_t wmDeleteWindowAtomPad[math_PAD_BYTES(sizeof("WM_DELETE_WINDOW") - 1, 4)];
+        char wmDeleteWindowAtomName[hc_STR_LEN("WM_DELETE_WINDOW")];
+        uint8_t wmDeleteWindowAtomPad[math_PAD_BYTES(hc_STR_LEN("WM_DELETE_WINDOW"), 4)];
         struct x11_internAtom wmStateAtom;
-        char wmStateAtomName[sizeof("_NET_WM_STATE") - 1];
-        uint8_t wmStateAtomPad[math_PAD_BYTES(sizeof("_NET_WM_STATE") - 1, 4)];
+        char wmStateAtomName[hc_STR_LEN("_NET_WM_STATE")];
+        uint8_t wmStateAtomPad[math_PAD_BYTES(hc_STR_LEN("_NET_WM_STATE"), 4)];
         struct x11_internAtom wmStateFullscreenAtom;
-        char wmStateFullscreenAtomName[sizeof("_NET_WM_STATE_FULLSCREEN") - 1];
-        uint8_t wmStateFullscreenAtomPad[math_PAD_BYTES(sizeof("_NET_WM_STATE_FULLSCREEN") - 1, 4)];
+        char wmStateFullscreenAtomName[hc_STR_LEN("_NET_WM_STATE_FULLSCREEN")];
+        uint8_t wmStateFullscreenAtomPad[math_PAD_BYTES(hc_STR_LEN("_NET_WM_STATE_FULLSCREEN"), 4)];
         struct x11_internAtom wmBypassCompositorAtom;
-        char wmBypassCompositorAtomName[sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1];
-        uint8_t wmBypassCompositorAtomPad[math_PAD_BYTES(sizeof("_NET_WM_BYPASS_COMPOSITOR") - 1, 4)];
+        char wmBypassCompositorAtomName[hc_STR_LEN("_NET_WM_BYPASS_COMPOSITOR")];
+        uint8_t wmBypassCompositorAtomPad[math_PAD_BYTES(hc_STR_LEN("_NET_WM_BYPASS_COMPOSITOR"), 4)];
         struct x11_internAtom motifWmHintsAtom;
-        char motifWmHintsAtomName[sizeof("_MOTIF_WM_HINTS") - 1];
-        uint8_t motifWmHintsAtomPad[math_PAD_BYTES(sizeof("_MOTIF_WM_HINTS") - 1, 4)];
+        char motifWmHintsAtomName[hc_STR_LEN("_MOTIF_WM_HINTS")];
+        uint8_t motifWmHintsAtomPad[math_PAD_BYTES(hc_STR_LEN("_MOTIF_WM_HINTS"), 4)];
         struct x11_getKeyboardMapping getKeyboardMapping;
         struct x11_getModifierMapping getModifierMapping;
     };
@@ -266,7 +266,7 @@ static int32_t window_x11_init(void **eglWindow, char **envp) {
     char *xDisplay = util_getEnv(envp, "DISPLAY");
     if (xDisplay != NULL && xDisplay[0] == ':') {
         ++xDisplay; // Skip colon.
-        int64_t prefixLen = sizeof("/tmp/.X11-unix/X") - 1;
+        int64_t prefixLen = hc_STR_LEN("/tmp/.X11-unix/X");
         int64_t maxNum = (int64_t)sizeof(serverAddr.sun_path) - prefixLen - 1; // Reserve space for prefix and null terminator.
 
         int64_t i = 0;

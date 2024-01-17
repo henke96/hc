@@ -142,6 +142,5 @@ static int32_t readIntoBuffer(void) {
 }
 
 static int32_t write(int32_t size) {
-    if (sys_write(outFd, &buffer[0], size) != size) return -1;
-    return 0;
+    return util_writeAll(outFd, &buffer[0], size);
 }

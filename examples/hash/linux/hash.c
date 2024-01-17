@@ -6,6 +6,7 @@
 #include "hc/compiler_rt/libc.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
+#include "hc/linux/util.c"
 #include "hc/linux/debug.c"
 #include "hc/linux/helpers/_start.c"
 
@@ -31,6 +32,5 @@ static int32_t readIntoBuffer(void) {
 }
 
 static int32_t printBuffer(int32_t size) {
-    if (sys_write(STDOUT_FILENO, &buffer[0], size) != size) return -1;
-    return 0;
+    return util_writeAll(STDOUT_FILENO, &buffer[0], size);
 }

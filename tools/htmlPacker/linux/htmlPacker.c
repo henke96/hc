@@ -66,17 +66,11 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *p
 
     // Read content into buffer.
     char *content = &alloc.mem[replaceIndex + insertLen - contentLen];
-    int64_t remaining = contentLen;
-    while (remaining > 0) {
-        int64_t index = contentLen - remaining;
-        int64_t numRead = sys_read(pathFd, &content[index], remaining);
-        if (numRead < 0) {
-            if (numRead == -EINTR) continue;
-            status = -5;
-            goto cleanup_pathFd;
-        }
-        remaining -= numRead;
+    if (util_readAll(pathFd, content, contentLen) < 0) {
+        status = -5;
+        goto cleanup_pathFd;
     }
+
     // Verify we are at end of file.
     char eofTest;
     if (sys_read(pathFd, &eofTest, 1) != 0) {
@@ -97,21 +91,7 @@ static int32_t writeToFile(char *path, char *content, int64_t contentLen) {
     int32_t fd = sys_openat(AT_FDCWD, path, O_WRONLY | O_CREAT | O_TRUNC, 0664);
     if (fd < 0) return -1;
 
-    int32_t status;
-    int64_t remaining = contentLen;
-    while (remaining > 0) {
-        int64_t index = contentLen - remaining;
-        int64_t written = sys_write(fd, &content[index], remaining);
-        if (written < 0) {
-            if (written == -EINTR) continue;
-            status = -2;
-            goto cleanup_fd;
-        }
-        remaining -= written;
-    }
-
-    status = 0;
-    cleanup_fd:
+    int32_t status = util_writeAll(fd, content, contentLen);
     debug_CHECK(sys_close(fd), RES == 0);
     return status;
 }

@@ -28,7 +28,7 @@ static noreturn void debug_fail(int64_t res, const char *expression, const char 
 
 hc_UNUSED
 static void debug_print(const char *str) {
-    sys_write(STDOUT_FILENO, &str[0], util_cstrLen(str));
+    sys_write(STDOUT_FILENO, str, util_cstrLen(str));
 }
 
 hc_UNUSED

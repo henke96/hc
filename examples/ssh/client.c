@@ -245,9 +245,9 @@ static int32_t _client_doHello(struct client *self) {
     #define _client_HELLO_IDENTIFICATION "SSH-2.0-hc"
     static const struct {
         uint32_t identificationSize;
-        char identificationLine[(sizeof(_client_HELLO_IDENTIFICATION) - 1) + 2];
+        char identificationLine[hc_STR_LEN(_client_HELLO_IDENTIFICATION) + 2];
     } hello = {
-        .identificationSize = hc_BSWAP32(sizeof(_client_HELLO_IDENTIFICATION) - 1),
+        .identificationSize = hc_BSWAP32(hc_STR_LEN(_client_HELLO_IDENTIFICATION)),
         .identificationLine = _client_HELLO_IDENTIFICATION "\r\n"
     };
     int64_t numSent = sys_sendto(self->socketFd, &hello.identificationLine, sizeof(hello.identificationLine), MSG_NOSIGNAL, NULL, 0);
@@ -275,7 +275,7 @@ static int32_t _client_doHello(struct client *self) {
             if (self->buffer[pos] == '\r') {
                 if (self->buffer[pos + 1] != '\n') return -3;
 
-                if (pos < (int64_t)(sizeof("SSH-2.0-") - 1) || hc_MEMCMP(&self->buffer[0], "SSH-2.0-", sizeof("SSH-2.0-") - 1) != 0) return -4;
+                if (pos < (int64_t)hc_STR_LEN("SSH-2.0-") || hc_MEMCMP(&self->buffer[0], "SSH-2.0-", hc_STR_LEN("SSH-2.0-")) != 0) return -4;
                 sha256_update(&self->partialExchangeHash, &(uint32_t) { hc_BSWAP32((uint32_t)pos) }, 4);
                 sha256_update(&self->partialExchangeHash, &self->buffer[0], pos);
 
@@ -292,40 +292,34 @@ static int32_t _client_doHello(struct client *self) {
 }
 
 static int32_t _client_sendKeyExchangeInit(struct client *self) {
-    #define _client_KEX_LIST_SIZE (sizeof(_client_KEX_LIST) - 1)
-    #define _client_HOST_KEY_LIST_SIZE (sizeof(_client_HOST_KEY_LIST) - 1)
-    #define _client_CIPHER_LIST_SIZE (sizeof(_client_CIPHER_LIST) - 1)
     #define _client_MAC_LIST ""
-    #define _client_MAC_LIST_SIZE (sizeof(_client_MAC_LIST) - 1)
     #define _client_COMPRESSION_LIST "none"
-    #define _client_COMPRESSION_LIST_SIZE (sizeof(_client_COMPRESSION_LIST) - 1)
     #define _client_LANGUAGE_LIST ""
-    #define _client_LANGUAGE_LIST_SIZE (sizeof(_client_LANGUAGE_LIST) - 1)
     struct {
         struct client_messageHead head;
         struct {
             uint8_t opcode;
             uint8_t cookie[16];
             uint32_t kexListSize;
-            char kexList[_client_KEX_LIST_SIZE];
+            char kexList[hc_STR_LEN(_client_KEX_LIST)];
             uint32_t hostKeyListSize;
-            char hostKeyList[_client_HOST_KEY_LIST_SIZE];
+            char hostKeyList[hc_STR_LEN(_client_HOST_KEY_LIST)];
             uint32_t clientCipherListSize;
-            char clientCipherList[_client_CIPHER_LIST_SIZE];
+            char clientCipherList[hc_STR_LEN(_client_CIPHER_LIST)];
             uint32_t serverCipherListSize;
-            char serverCipherList[_client_CIPHER_LIST_SIZE];
+            char serverCipherList[hc_STR_LEN(_client_CIPHER_LIST)];
             uint32_t clientMacListSize;
-            char clientMacList[_client_MAC_LIST_SIZE];
+            char clientMacList[hc_STR_LEN(_client_MAC_LIST)];
             uint32_t serverMacListSize;
-            char serverMacList[_client_MAC_LIST_SIZE];
+            char serverMacList[hc_STR_LEN(_client_MAC_LIST)];
             uint32_t clientCompressionListSize;
-            char clientCompressionList[_client_COMPRESSION_LIST_SIZE];
+            char clientCompressionList[hc_STR_LEN(_client_COMPRESSION_LIST)];
             uint32_t serverCompressionListSize;
-            char serverCompressionList[_client_COMPRESSION_LIST_SIZE];
+            char serverCompressionList[hc_STR_LEN(_client_COMPRESSION_LIST)];
             uint32_t clientLanguageListSize;
-            char clientLanguageList[_client_LANGUAGE_LIST_SIZE];
+            char clientLanguageList[hc_STR_LEN(_client_LANGUAGE_LIST)];
             uint32_t serverLanguageListSize;
-            char serverLanguageList[_client_LANGUAGE_LIST_SIZE];
+            char serverLanguageList[hc_STR_LEN(_client_LANGUAGE_LIST)];
             uint8_t firstKexPacketFollows;
             uint32_t reserved;
         } hc_PACKED(1) message;
@@ -333,25 +327,25 @@ static int32_t _client_sendKeyExchangeInit(struct client *self) {
     } keyExchangeInit = {
         .message = {
             .opcode = proto_MSG_KEXINIT,
-            .kexListSize = hc_BSWAP32(_client_KEX_LIST_SIZE),
+            .kexListSize = hc_BSWAP32(hc_STR_LEN(_client_KEX_LIST)),
             .kexList = _client_KEX_LIST,
-            .hostKeyListSize = hc_BSWAP32(_client_HOST_KEY_LIST_SIZE),
+            .hostKeyListSize = hc_BSWAP32(hc_STR_LEN(_client_HOST_KEY_LIST)),
             .hostKeyList = _client_HOST_KEY_LIST,
-            .clientCipherListSize = hc_BSWAP32(_client_CIPHER_LIST_SIZE),
+            .clientCipherListSize = hc_BSWAP32(hc_STR_LEN(_client_CIPHER_LIST)),
             .clientCipherList = _client_CIPHER_LIST,
-            .serverCipherListSize = hc_BSWAP32(_client_CIPHER_LIST_SIZE),
+            .serverCipherListSize = hc_BSWAP32(hc_STR_LEN(_client_CIPHER_LIST)),
             .serverCipherList = _client_CIPHER_LIST,
-            .clientMacListSize = hc_BSWAP32(_client_MAC_LIST_SIZE),
+            .clientMacListSize = hc_BSWAP32(hc_STR_LEN(_client_MAC_LIST)),
             .clientMacList = _client_MAC_LIST,
-            .serverMacListSize = hc_BSWAP32(_client_MAC_LIST_SIZE),
+            .serverMacListSize = hc_BSWAP32(hc_STR_LEN(_client_MAC_LIST)),
             .serverMacList = _client_MAC_LIST,
-            .clientCompressionListSize = hc_BSWAP32(_client_COMPRESSION_LIST_SIZE),
+            .clientCompressionListSize = hc_BSWAP32(hc_STR_LEN(_client_COMPRESSION_LIST)),
             .clientCompressionList = _client_COMPRESSION_LIST,
-            .serverCompressionListSize = hc_BSWAP32(_client_COMPRESSION_LIST_SIZE),
+            .serverCompressionListSize = hc_BSWAP32(hc_STR_LEN(_client_COMPRESSION_LIST)),
             .serverCompressionList = _client_COMPRESSION_LIST,
-            .clientLanguageListSize = hc_BSWAP32(_client_LANGUAGE_LIST_SIZE),
+            .clientLanguageListSize = hc_BSWAP32(hc_STR_LEN(_client_LANGUAGE_LIST)),
             .clientLanguageList = _client_LANGUAGE_LIST,
-            .serverLanguageListSize = hc_BSWAP32(_client_LANGUAGE_LIST_SIZE),
+            .serverLanguageListSize = hc_BSWAP32(hc_STR_LEN(_client_LANGUAGE_LIST)),
             .serverLanguageList = _client_LANGUAGE_LIST,
             .firstKexPacketFollows = 0,
             .reserved = 0
@@ -469,7 +463,7 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
         uint32_t hostKeySize;
         struct {
             uint32_t keyTypeSize;
-            uint8_t keyType[sizeof(_client_HOST_KEY_ED25519) - 1];
+            uint8_t keyType[hc_STR_LEN(_client_HOST_KEY_ED25519)];
             uint32_t publicKeySize;
             uint8_t publicKey[32];
         } hc_PACKED(1) hostKey;
@@ -478,7 +472,7 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
         uint32_t fullSignatureSize;
         struct {
             uint32_t signatureTypeSize;
-            uint8_t signatureType[sizeof(_client_HOST_KEY_ED25519) - 1];
+            uint8_t signatureType[hc_STR_LEN(_client_HOST_KEY_ED25519)];
             uint32_t signatureSize;
             uint8_t signature[ed25519_SIGNATURE_SIZE];
         } hc_PACKED(1) fullSignature;
@@ -567,13 +561,13 @@ static int32_t _client_doServiceRequest(struct client *self) {
         struct {
             uint8_t opcode;
             uint32_t serviceNameSize;
-            char serviceName[sizeof(_client_SERVICE_NAME) - 1];
+            char serviceName[hc_STR_LEN(_client_SERVICE_NAME)];
         } hc_PACKED(1) message;
         struct client_messageTail tail;
     } serviceRequest = {
         .message = {
             .opcode = proto_MSG_SERVICE_REQUEST,
-            .serviceNameSize = hc_BSWAP32(sizeof(_client_SERVICE_NAME) - 1),
+            .serviceNameSize = hc_BSWAP32(hc_STR_LEN(_client_SERVICE_NAME)),
             .serviceName = _client_SERVICE_NAME
         }
     };
@@ -583,15 +577,15 @@ static int32_t _client_doServiceRequest(struct client *self) {
     struct {
         uint8_t opcode;
         uint32_t serviceNameSize;
-        char serviceName[sizeof(_client_SERVICE_NAME) - 1];
+        char serviceName[hc_STR_LEN(_client_SERVICE_NAME)];
     } hc_PACKED(1) *response;
     int32_t responseSize = client_waitForMessage(self, (uint8_t **)&response);
     if (responseSize != sizeof(*response)) return -2;
 
     if (
         response->opcode != proto_MSG_SERVICE_ACCEPT ||
-        response->serviceNameSize != hc_BSWAP32(sizeof(_client_SERVICE_NAME) - 1) ||
-        hc_MEMCMP(&response->serviceName[0], _client_SERVICE_NAME, sizeof(_client_SERVICE_NAME) - 1) != 0
+        response->serviceNameSize != hc_BSWAP32(hc_STR_LEN(_client_SERVICE_NAME)) ||
+        hc_MEMCMP(&response->serviceName[0], _client_SERVICE_NAME, hc_STR_LEN(_client_SERVICE_NAME)) != 0
     ) return -3;
     return 0;
 }

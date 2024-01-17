@@ -144,13 +144,12 @@ static int32_t writeToFile(char *path, char *content, int64_t contentLen) {
     );
     if (pathHandle == INVALID_HANDLE_VALUE) return -4;
 
-    int32_t status;
-    if (util_writeAll(pathHandle, content, contentLen) < 0) {
+    int32_t status = util_writeAll(pathHandle, content, contentLen);
+    if (status < 0) {
         status = -5;
         goto cleanup_pathHandle;
     }
 
-    status = 0;
     cleanup_pathHandle:
     debug_CHECK(CloseHandle(pathHandle), RES != 0);
     return status;
