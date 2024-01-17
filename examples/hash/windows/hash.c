@@ -5,6 +5,7 @@
 #include "hc/mem.c"
 #include "hc/compiler_rt/libc.c"
 #include "hc/windows/windows.h"
+#include "hc/windows/util.c"
 #include "hc/windows/debug.c"
 #include "hc/windows/_start.c"
 
@@ -66,12 +67,6 @@ static int32_t readIntoBuffer(void) {
 }
 
 static int32_t printBuffer(int32_t size) {
-    void *stdOutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    uint32_t written;
-    if (
-        WriteFile(stdOutHandle, &buffer[0], (uint32_t)size, &written, NULL) == 0 ||
-        written != (uint32_t)size
-    ) return -1;
-
-    return 0;
+    void *stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    return util_writeAll(stdoutHandle, &buffer[0], size);
 }

@@ -3,6 +3,7 @@
 #include "hc/debug.h"
 #include "hc/windows/windows.h"
 #include "hc/util.c"
+#include "hc/windows/util.c"
 #include "hc/windows/debug.c"
 
 #include "../common.c"

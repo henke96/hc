@@ -145,18 +145,9 @@ static int32_t writeToFile(char *path, char *content, int64_t contentLen) {
     if (pathHandle == INVALID_HANDLE_VALUE) return -4;
 
     int32_t status;
-    int64_t remaining = contentLen;
-    while (remaining > 0) {
-        int64_t index = contentLen - remaining;
-        uint32_t toWrite = UINT32_MAX;
-        if (remaining < UINT32_MAX) toWrite = (uint32_t)remaining;
-
-        uint32_t written;
-        if (WriteFile(pathHandle, &content[index], toWrite, &written, NULL) == 0) {
-            status = -5;
-            goto cleanup_pathHandle;
-        }
-        remaining -= written;
+    if (util_writeAll(pathHandle, content, contentLen) < 0) {
+        status = -5;
+        goto cleanup_pathHandle;
     }
 
     status = 0;

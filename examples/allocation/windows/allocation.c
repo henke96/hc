@@ -4,6 +4,7 @@
 #include "hc/debug.h"
 #include "hc/compiler_rt/libc.c"
 #include "hc/windows/windows.h"
+#include "hc/windows/util.c"
 #include "hc/windows/debug.c"
 #include "hc/windows/heap.c"
 
