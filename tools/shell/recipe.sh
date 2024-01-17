@@ -55,7 +55,7 @@ recipe_download() {
     cd "$hc_DOWNLOADS"
     hc_filename="${1##*/}"
     if ! sha512sum -c - >&2 <<end
-$2 $hc_filename
+$2  $hc_filename
 end
     then
         wget -O "$hc_filename" "$1" >&2 || fetch -o "$hc_filename" "$1" >&2
