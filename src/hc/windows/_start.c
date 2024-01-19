@@ -4,20 +4,24 @@ static int32_t _start_parseCmdLine(char *cmdLine) {
     int32_t argc = 1;
     char *dst = cmdLine;
 
-    bool inQuote = false;
+    char currentQuote = '\0';
     for (char *cur = cmdLine; *cur != '\0'; ++cur) {
-        if (*cur == ' ') {
-            if (!inQuote) {
+        if (currentQuote == *cur) {
+            currentQuote = '\0';
+            continue;
+        }
+
+        if (currentQuote == '\0') {
+            switch (*cur) {
+                case ' ':
                 ++argc;
                 *dst++ = '\0';
                 for (; cur[1] == ' '; ++cur);
                 continue;
-            }
-        } else if (*cur == '"') {
-            if (cur[1] == '"') {
-                ++cur;
-            } else {
-                inQuote = !inQuote;
+
+                case '"':
+                case '\'':
+                currentQuote = *cur;
                 continue;
             }
         }
