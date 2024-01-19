@@ -6,7 +6,7 @@ static int32_t _start_parseCmdLine(char *cmdLine) {
 
     char currentQuote = '\0';
     for (char *cur = cmdLine; *cur != '\0'; ++cur) {
-        if (currentQuote == *cur) {
+        if (*cur == currentQuote) {
             currentQuote = '\0';
             continue;
         }
@@ -27,6 +27,7 @@ static int32_t _start_parseCmdLine(char *cmdLine) {
         }
         *dst++ = *cur;
     }
+    if (currentQuote != '\0') return 0;
     *dst = '\0';
     return argc;
 }
@@ -62,6 +63,8 @@ void noreturn _start(void) {
     if (cmdLineSize <= 0) goto cleanup_cmdLine;
 
     int32_t argc = _start_parseCmdLine(cmdLine);
+    if (argc <= 0) goto cleanup_cmdLine;
+
     char **argv = HeapAlloc(heap, 0, sizeof(char *) * (uint64_t)(argc + 1));
     if (argv == NULL) goto cleanup_cmdLine;
 
