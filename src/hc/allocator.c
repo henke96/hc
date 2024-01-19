@@ -26,7 +26,7 @@ static int32_t allocator_resize(struct allocator *self, int64_t newSize) {
     int64_t newCommitSize = math_ALIGN_FORWARD(newSize, (int64_t)allocator_PAGE_SIZE);
 
     int64_t diff = newCommitSize - commitSize;
-    if (diff == 0) return 0;
+    if (diff == 0) goto out;
 
     if (diff < 0) {
         heap_decommit(self->mem + newCommitSize, -diff);
@@ -34,6 +34,7 @@ static int32_t allocator_resize(struct allocator *self, int64_t newSize) {
         int32_t status = heap_commit(self->mem + commitSize, diff);
         if (status < 0) return -1;
     }
+    out:
     self->size = newSize;
     return 0;
 }
