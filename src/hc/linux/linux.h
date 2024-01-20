@@ -3821,8 +3821,8 @@ struct linux_dirent64 {
     int64_t d_off; /* 64-bit offset to next structure */
     uint16_t d_reclen; /* Size of this dirent */
     uint8_t d_type; /* File type */
-    // char d_name[]; /* Filename (null-terminated) */
-} hc_PACKED(1);
+    char d_name[5]; /* Filename (null-terminated) */
+};
 
 // fs.h
 #define SEEK_SET 0 /* seek relative to beginning of file */
