@@ -41,7 +41,7 @@ static int32_t add(char *name) {
 
     struct state {
         struct state *prev;
-        struct linux_dirent64 *initial;
+        char **names;
         int32_t rootFd;
         int32_t __pad;
     };
@@ -50,80 +50,99 @@ static int32_t add(char *name) {
     struct state *state = &alloc.mem[0];
     char *prefix = (void *)&state[1];
     int32_t prefixLen = 0;
-    struct linux_dirent64 *initial = (void *)&prefix[PATH_MAX];
-    int64_t allocSize = math_ALIGN_FORWARD((void *)&initial->d_name[nameSize] - &alloc.mem[0], 8);
+    char **initialNames = (void *)&prefix[PATH_MAX];
+    int64_t allocSize = (void *)&initialNames[1] - &alloc.mem[0];
+    debug_ASSERT((allocSize & 7) == 0);
     if (allocator_resize(&alloc, allocSize) < 0) return -2;
 
-    initial->d_reclen = (uint16_t)(&alloc.mem[allocSize] - (void *)initial);
-    hc_MEMCPY(&initial->d_name[0], name, (uint16_t)nameSize);
+    initialNames[0] = name;
 
     state->prev = NULL;
-    state->initial = initial;
+    state->names = initialNames;
     state->rootFd = AT_FDCWD;
 
     for (;;) {
-        name = (char *)&state->initial->d_name[0];
-        state->initial = (void *)state->initial + state->initial->d_reclen;
+        name = state->names[0];
+        ++state->names;
 
-        // Open and write current name, unless it's `.` or `..`.
-        if (name[0] != '.' || (name[1] != '\0' && (name[1] != '.' || name[2] != '\0'))) {
-            currentFd = sys_openat(state->rootFd, name, O_RDONLY, 0);
-            if (currentFd < 0) return -3;
+        // Open and write current name.
+        currentFd = sys_openat(state->rootFd, name, O_RDONLY, 0);
+        if (currentFd < 0) return -3;
 
-            int32_t status = -1;
-            int32_t nameLen = (int32_t)util_cstrLen(name);
-            struct statx statx;
-            statx.stx_mode = 0; // Make static analysis happy.
-            if (sys_statx(currentFd, "", AT_EMPTY_PATH, STATX_TYPE | STATX_SIZE, &statx) < 0) goto cleanup_currentFd;
+        int32_t status = -1;
+        int32_t nameLen = (int32_t)util_cstrLen(name);
+        struct statx statx;
+        statx.stx_mode = 0; // Make static analysis happy.
+        if (sys_statx(currentFd, "", AT_EMPTY_PATH, STATX_TYPE | STATX_SIZE, &statx) < 0) goto cleanup_currentFd;
 
-            if (statx.stx_mode & S_IFDIR) statx.stx_size = -1;
-            if ((statx.stx_mode & (S_IFDIR | S_IFREG)) == 0) goto cleanup_currentFd;
+        if (statx.stx_mode & S_IFDIR) statx.stx_size = -1;
+        if ((statx.stx_mode & (S_IFDIR | S_IFREG)) == 0) goto cleanup_currentFd;
 
-            status = writeRecord(
-                name, nameLen,
-                prefix, prefixLen,
-                statx.stx_size
-            );
-            cleanup_currentFd:
-            if (status < 0) {
-                debug_printNum("Failed to write record (", status, ")\n");
-                debug_CHECK(sys_close(currentFd), RES == 0);
-                return -4;
-            }
-
-            // Push new state if directory.
-            if (statx.stx_size < 0) {
-                struct state *prevState = state;
-                state = &alloc.mem[allocSize];
-                allocSize += sizeof(*state);
-
-                // Read directory entries.
-                for (;;) {
-                    debug_ASSERT((allocSize & 7) == 0);
-                    if (allocator_resize(&alloc, allocSize + 8192) < 0) return -6;
-
-                    int64_t numRead = sys_getdents64(currentFd, &alloc.mem[allocSize], alloc.size - allocSize);
-                    if (numRead <= 0) {
-                        if (numRead == 0) break;
-                        return -7;
-                    }
-                    allocSize += numRead;
-                }
-
-                // Initialise new state.
-                state->prev = prevState;
-                state->initial = (void *)&state[1];
-                state->rootFd = currentFd;
-
-                // Update prefix.
-                if (prefixLen > 0) prefix[prefixLen++] = '/';
-                hc_MEMCPY(&prefix[prefixLen], name, (uint64_t)nameLen);
-                prefixLen += nameLen;
-            } else debug_CHECK(sys_close(currentFd), RES == 0);
+        status = writeRecord(
+            name, nameLen,
+            prefix, prefixLen,
+            statx.stx_size
+        );
+        cleanup_currentFd:
+        if (status < 0) {
+            debug_printNum("Failed to write record (", status, ")\n");
+            debug_CHECK(sys_close(currentFd), RES == 0);
+            return -4;
         }
 
+        // Push new state if directory.
+        if (statx.stx_size < 0) {
+            struct state *prevState = state;
+            state = &alloc.mem[allocSize];
+            allocSize += sizeof(*state);
+
+            // Read directory entries.
+            for (;;) {
+                debug_ASSERT((allocSize & 7) == 0);
+                if (allocator_resize(&alloc, allocSize + 8192) < 0) return -6;
+
+                int64_t numRead = sys_getdents64(currentFd, &alloc.mem[allocSize], alloc.size - allocSize);
+                if (numRead <= 0) {
+                    if (numRead == 0) break;
+                    return -7;
+                }
+                allocSize += numRead;
+            }
+
+            // Initialise new state.
+            state->prev = prevState;
+            state->names = &alloc.mem[allocSize];
+            state->rootFd = currentFd;
+
+            // Build list of names.
+            for (
+                struct linux_dirent64 *current = (void *)&state[1];
+                current != (void *)state->names;
+                current = (void *)current + current->d_reclen
+            ) {
+                // Skip `.` and `..`.
+                if (
+                    current->d_name[0] == '.' && (
+                        current->d_name[1] == '\0' || (
+                            current->d_name[1] == '.' && current->d_name[2] == '\0'
+                        )
+                    )
+                ) continue;
+                allocSize += (int64_t)sizeof(state->names[0]);
+                if (allocator_resize(&alloc, allocSize) < 0) return -7;
+                *((char **)&alloc.mem[allocSize] - 1) = &current->d_name[0];
+            }
+            int64_t namesLength = (&alloc.mem[allocSize] - (void *)state->names) / (int64_t)sizeof(state->names[0]);
+            sortNames(state->names, namesLength);
+
+            // Update prefix.
+            if (prefixLen > 0) prefix[prefixLen++] = '/';
+            hc_MEMCPY(&prefix[prefixLen], name, (uint64_t)nameLen);
+            prefixLen += nameLen;
+        } else debug_CHECK(sys_close(currentFd), RES == 0);
+
         // Handle running out of entries.
-        while (state->initial == &alloc.mem[allocSize]) {
+        while (state->names == &alloc.mem[allocSize]) {
             if (state->prev == NULL) return 0;
 
             debug_CHECK(sys_close(state->rootFd), RES == 0);

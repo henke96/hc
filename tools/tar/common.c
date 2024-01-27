@@ -76,6 +76,17 @@ static int32_t writeRecord(char *name, int32_t nameLen, char *prefix, int32_t pr
     return 0;
 }
 
+static void sortNames(char **names, int64_t length) {
+    for (int64_t i = 1; i < length; ++i) {
+        int64_t j = i;
+        do {
+            char *prevName = names[j - 1];
+            if (util_cstrCmp(prevName, names[j]) <= 0) break;
+            names[j - 1] = names[j];
+            names[j] = prevName;
+        } while (--j > 0);
+    }
+}
 
 int32_t start(int32_t argc, char **argv, char **envp) {
     if (argc < 2) return 1;
