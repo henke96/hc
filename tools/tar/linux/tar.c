@@ -37,35 +37,33 @@ static void deinit(void) {
 
 static int32_t add(char *name) {
     int64_t nameSize = util_cstrLen(name) + 1;
-    if (nameSize > INT16_MAX) return -1;
+    if (nameSize > NAME_MAX + 1) return -1;
 
-    #define STATE_SIZE 4096
     struct state {
-        struct linux_dirent64 *current;
-        struct linux_dirent64 *end;
+        struct state *prev;
+        struct linux_dirent64 *initial;
         int32_t rootFd;
         int32_t __pad;
     };
 
     // Prepare initial iteration.
-    if (allocator_resize(&alloc, STATE_SIZE) < 0) return -2;
-
     struct state *state = &alloc.mem[0];
-    struct linux_dirent64 *initial = (void *)&state[1];
+    char *prefix = (void *)&state[1];
+    int32_t prefixLen = 0;
+    struct linux_dirent64 *initial = (void *)&prefix[PATH_MAX];
+    int64_t allocSize = math_ALIGN_FORWARD((void *)&initial->d_name[nameSize] - &alloc.mem[0], 8);
+    if (allocator_resize(&alloc, allocSize) < 0) return -2;
 
-    initial->d_reclen = sizeof(*initial) + (uint16_t)nameSize;
-    hc_MEMCPY(&initial[1], name, (uint16_t)nameSize);
+    initial->d_reclen = (uint16_t)(&alloc.mem[allocSize] - (void *)initial);
+    hc_MEMCPY(&initial->d_name[0], name, (uint16_t)nameSize);
 
-    state->current = initial;
-    state->end = (void *)initial + initial->d_reclen;
+    state->prev = NULL;
+    state->initial = initial;
     state->rootFd = AT_FDCWD;
 
-    char *prefix = (void *)state->end;
-    int32_t prefixLen = 0;
-
     for (;;) {
-        name = (char *)&state->current[1];
-        state->current = (void *)state->current + state->current->d_reclen;
+        name = (char *)&state->initial->d_name[0];
+        state->initial = (void *)state->initial + state->initial->d_reclen;
 
         // Open and write current name, unless it's `.` or `..`.
         if (name[0] != '.' || (name[1] != '\0' && (name[1] != '.' || name[2] != '\0'))) {
@@ -95,43 +93,49 @@ static int32_t add(char *name) {
 
             // Push new state if directory.
             if (statx.stx_size < 0) {
-                state = &alloc.mem[alloc.size];
-                if (allocator_resize(&alloc, alloc.size + STATE_SIZE) < 0) return -5;
+                struct state *prevState = state;
+                state = &alloc.mem[allocSize];
+                allocSize += sizeof(*state);
 
-                state->current = NULL;
-                state->end = NULL;
+                // Read directory entries.
+                for (;;) {
+                    debug_ASSERT((allocSize & 7) == 0);
+                    if (allocator_resize(&alloc, allocSize + 8192) < 0) return -6;
+
+                    int64_t numRead = sys_getdents64(currentFd, &alloc.mem[allocSize], alloc.size - allocSize);
+                    if (numRead <= 0) {
+                        if (numRead == 0) break;
+                        return -7;
+                    }
+                    allocSize += numRead;
+                }
+
+                // Initialise new state.
+                state->prev = prevState;
+                state->initial = (void *)&state[1];
                 state->rootFd = currentFd;
 
                 // Update prefix.
                 if (prefixLen > 0) prefix[prefixLen++] = '/';
                 hc_MEMCPY(&prefix[prefixLen], name, (uint64_t)nameLen);
-                prefixLen += nameLen; // `writeRecord` makes sure `nameLen` is max 100.
+                prefixLen += nameLen;
             } else debug_CHECK(sys_close(currentFd), RES == 0);
         }
 
-        // Handle running out of cached entries.
-        while (state->current == state->end) {
-            if (alloc.size == STATE_SIZE) return 0; // Done with root state.
+        // Handle running out of entries.
+        while (state->initial == &alloc.mem[allocSize]) {
+            if (state->prev == NULL) return 0;
 
-            state->current = (void *)&state[1];
-            int64_t numRead = sys_getdents64(state->rootFd, state->current, STATE_SIZE - sizeof(*state));
-            if (numRead <= 0) {
-                debug_CHECK(sys_close(state->rootFd), RES == 0);
-                if (numRead < 0) return -6;
+            debug_CHECK(sys_close(state->rootFd), RES == 0);
 
-                // We read the last entry, pop state.
-                allocator_resize(&alloc, alloc.size - STATE_SIZE);
-                state = &alloc.mem[alloc.size - STATE_SIZE];
+            // Pop state, but skip freeing memory.
+            allocSize = (void *)state - &alloc.mem[0];
+            state = state->prev;
 
-                // Update prefix.
-                while (prefixLen > 0) {
-                    --prefixLen;
-                    if (prefix[prefixLen] == '/') break;
-                }
-            } else {
-                // We managed to read more entries, continue.
-                state->end = (void *)state->current + numRead;
-                break;
+            // Update prefix.
+            while (prefixLen > 0) {
+                --prefixLen;
+                if (prefix[prefixLen] == '/') break;
             }
         }
     }

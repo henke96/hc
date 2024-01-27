@@ -139,6 +139,10 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define ERFKILL 132 // Operation not possible due to RF-kill
 #define EHWPOISON 133 // Memory page has hardware error
 
+// limits.h
+#define NAME_MAX 255 /* # chars in a file name */
+#define PATH_MAX 4096 /* # chars in a path name including nul */
+
 // net.h
 #define SOCK_STREAM 1
 #define SOCK_DGRAM 2
