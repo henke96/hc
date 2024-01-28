@@ -1,6 +1,6 @@
 static void _sha_test(
     const void *input,
-    int64_t inputSize,
+    ssize_t inputSize,
     int64_t repetitions,
     const void *sha1Expected,
     const void *sha256Expected,

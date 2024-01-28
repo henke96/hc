@@ -891,7 +891,7 @@ static void _ed25519_extSecret(uint8_t *extSecret, const void *secret) {
     extSecret[31] |= 64;
 }
 
-static void _ed25519_hram(uint8_t *hram, const void *signature, const void *public, const void *message, int64_t messageSize) {
+static void _ed25519_hram(uint8_t *hram, const void *signature, const void *public, const void *message, ssize_t messageSize) {
     struct sha512 sha512;
     sha512_init(&sha512);
     sha512_update(&sha512, signature, 32);
@@ -914,7 +914,7 @@ static void ed25519_public(void *publicOut, const void *secret) {
 }
 
 hc_UNUSED
-static void ed25519_sign(void *signatureOut, const void *message, int64_t messageSize, const void *secret, const void *public) {
+static void ed25519_sign(void *signatureOut, const void *message, ssize_t messageSize, const void *secret, const void *public) {
     uint8_t extSecret[sha512_HASH_SIZE];
     _ed25519_extSecret(&extSecret[0], secret);
 
@@ -952,7 +952,7 @@ static void ed25519_sign(void *signatureOut, const void *message, int64_t messag
 }
 
 // Returns 0 if valid.
-hc_UNUSED static int32_t ed25519_verify(const void *message, int64_t messageSize, const void *public, const void *signature) {
+hc_UNUSED static int32_t ed25519_verify(const void *message, ssize_t messageSize, const void *public, const void *signature) {
     struct ed25519_ge A;
     if ((*(const uint8_t *)(signature + 63) & 224) || !ed25519_ge_unpackNegativeVartime(&A, public)) return 1;
 

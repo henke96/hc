@@ -2,7 +2,7 @@
 
 static void _ed25519_test(
     const void *message,
-    int64_t messageSize,
+    ssize_t messageSize,
     const void *secret,
     const void *expected
 ) {

@@ -9,7 +9,8 @@ struct sha256 {
     uint32_t state[8];
     uint64_t blockCounter;
     uint8_t buffer[_sha256_BLOCK_SIZE];
-    int64_t bufferSize;
+    ssize_t bufferSize;
+    hc_ILP32_PAD(__pad)
 };
 
 #define _sha256_SIGMA0_A(X) (hc_ROTR32(X, 7) ^ hc_ROTR32(X, 18) ^ ((X) >> 3))
@@ -39,7 +40,7 @@ static const uint32_t _sha256_round[64] = {
     0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
 };
 
-static void _sha256_blocks(uint32_t *state, const void *in, int64_t numBlocks) {
+static void _sha256_blocks(uint32_t *state, const void *in, ssize_t numBlocks) {
     uint32_t w[64];
     uint32_t r[72];
 
@@ -75,9 +76,9 @@ static void sha256_init(struct sha256 *self) {
     self->bufferSize = 0;
 }
 
-static void sha256_update(struct sha256 *self, const void *in, int64_t size) {
+static void sha256_update(struct sha256 *self, const void *in, ssize_t size) {
     if (self->bufferSize > 0) {
-        int64_t numToRead = _sha256_BLOCK_SIZE - self->bufferSize;
+        ssize_t numToRead = _sha256_BLOCK_SIZE - self->bufferSize;
         if (numToRead > size) numToRead = size;
         hc_MEMCPY(&self->buffer[self->bufferSize], in, (size_t)numToRead);
         self->bufferSize += numToRead;
@@ -87,7 +88,7 @@ static void sha256_update(struct sha256 *self, const void *in, int64_t size) {
         in += numToRead;
         size -= numToRead;
     }
-    int64_t numBlocks = size >> _sha256_BLOCK_SHIFT;
+    ssize_t numBlocks = size >> _sha256_BLOCK_SHIFT;
     if (numBlocks > 0) {
         _sha256_blocks(&self->state[0], in, numBlocks);
         self->blockCounter += (uint64_t)numBlocks;

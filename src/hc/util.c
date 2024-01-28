@@ -16,8 +16,8 @@ static int32_t util_cstrCmp(const char *left, const char *right) {
 }
 
 hc_UNUSED
-static void util_strToUtf16(uint16_t *dest, char *src, int64_t length) {
-    for (int64_t i = 0; i < length; ++i) *dest++ = (uint16_t)*src++;
+static void util_strToUtf16(uint16_t *dest, char *src, ssize_t size) {
+    for (ssize_t i = 0; i < size; ++i) *dest++ = (uint16_t)*src++;
 }
 
 #define util_INT32_MAX_CHARS 11

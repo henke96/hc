@@ -31,9 +31,11 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #if defined(__ILP32__)
     #define hc_ILP32 1
     #define hc_ILP32_PAD(NAME) int32_t NAME;
+    #define hc_LP64_PAD(NAME)
 #else
     #define hc_ILP32 0
     #define hc_ILP32_PAD(NAME)
+    #define hc_LP64_PAD(NAME) int32_t NAME;
 #endif
 
 // Preprocessor helpers.

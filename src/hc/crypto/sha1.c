@@ -6,12 +6,12 @@
 struct sha1 {
     uint64_t blockCounter;
     uint8_t buffer[_sha1_BLOCK_SIZE];
-    int64_t bufferSize;
+    ssize_t bufferSize;
     uint32_t state[5];
-    uint32_t __pad;
+    hc_LP64_PAD(__pad)
 };
 
-static void _sha1_blocks(uint32_t *state, const void *in, int64_t numBlocks) {
+static void _sha1_blocks(uint32_t *state, const void *in, ssize_t numBlocks) {
     uint32_t w[80];
     uint32_t r[85];
 
@@ -62,9 +62,9 @@ static void sha1_init(struct sha1 *self) {
     self->bufferSize = 0;
 }
 
-static void sha1_update(struct sha1 *self, const void *in, int64_t size) {
+static void sha1_update(struct sha1 *self, const void *in, ssize_t size) {
     if (self->bufferSize > 0) {
-        int64_t numToRead = _sha1_BLOCK_SIZE - self->bufferSize;
+        ssize_t numToRead = _sha1_BLOCK_SIZE - self->bufferSize;
         if (numToRead > size) numToRead = size;
         hc_MEMCPY(&self->buffer[self->bufferSize], in, (size_t)numToRead);
         self->bufferSize += numToRead;
@@ -74,7 +74,7 @@ static void sha1_update(struct sha1 *self, const void *in, int64_t size) {
         in += numToRead;
         size -= numToRead;
     }
-    int64_t numBlocks = size >> _sha1_BLOCK_SHIFT;
+    ssize_t numBlocks = size >> _sha1_BLOCK_SHIFT;
     if (numBlocks > 0) {
         _sha1_blocks(&self->state[0], in, numBlocks);
         self->blockCounter += (uint64_t)numBlocks;

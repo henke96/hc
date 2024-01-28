@@ -9,7 +9,8 @@ struct sha512 {
     uint64_t state[8];
     uint64_t blockCounter;
     uint8_t buffer[_sha512_BLOCK_SIZE];
-    int64_t bufferSize;
+    ssize_t bufferSize;
+    hc_ILP32_PAD(__pad)
 };
 
 #define _sha512_SIGMA0_A(X) (hc_ROTR64(X, 1) ^ hc_ROTR64(X, 8) ^ ((X) >> 7))
@@ -43,7 +44,7 @@ static const uint64_t _sha512_round[80] = {
     0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 };
 
-static void _sha512_blocks(uint64_t *state, const void *in, int64_t numBlocks) {
+static void _sha512_blocks(uint64_t *state, const void *in, ssize_t numBlocks) {
     uint64_t w[80];
     uint64_t r[88];
 
@@ -94,9 +95,9 @@ static void sha512_init384(struct sha512 *self) {
     self->bufferSize = 0;
 }
 
-static void sha512_update(struct sha512 *self, const void *in, int64_t size) {
+static void sha512_update(struct sha512 *self, const void *in, ssize_t size) {
     if (self->bufferSize > 0) {
-        int64_t numToRead = _sha512_BLOCK_SIZE - self->bufferSize;
+        ssize_t numToRead = _sha512_BLOCK_SIZE - self->bufferSize;
         if (numToRead > size) numToRead = size;
         hc_MEMCPY(&self->buffer[self->bufferSize], in, (size_t)numToRead);
         self->bufferSize += numToRead;
@@ -106,7 +107,7 @@ static void sha512_update(struct sha512 *self, const void *in, int64_t size) {
         in += numToRead;
         size -= numToRead;
     }
-    int64_t numBlocks = size >> _sha512_BLOCK_SHIFT;
+    ssize_t numBlocks = size >> _sha512_BLOCK_SHIFT;
     if (numBlocks > 0) {
         _sha512_blocks(&self->state[0], in, numBlocks);
         self->blockCounter += (uint64_t)numBlocks;

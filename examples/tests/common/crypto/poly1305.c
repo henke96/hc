@@ -1,4 +1,4 @@
-static void _poly1305_test(const void *input, int64_t inputSize, const void *key, const void *expected) {
+static void _poly1305_test(const void *input, ssize_t inputSize, const void *key, const void *expected) {
     uint8_t mac[poly1305_MAC_SIZE];
     struct poly1305 poly1305;
 
