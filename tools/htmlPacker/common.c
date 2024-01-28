@@ -45,11 +45,10 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
     return 0;
 }
 
-#define common_ALLOC_RESERVE_SIZE ((int64_t)1 << 32)
 int32_t start(int32_t argc, char **argv, char **envp) {
     if (argc != 4) return 1;
     initialise(envp);
-    if (allocator_init(&alloc, common_ALLOC_RESERVE_SIZE) < 0) return 1;
+    if (allocator_init(&alloc, (int64_t)1 << 32) < 0) return 1;
 
     int32_t status = replaceWithFile(0, 0, argv[1], (int32_t)util_cstrLen(argv[1]), false);
     if (status < 0) return 1;
@@ -98,6 +97,6 @@ int32_t start(int32_t argc, char **argv, char **envp) {
 
     status = 0;
     cleanup_alloc:
-    allocator_deinit(&alloc, common_ALLOC_RESERVE_SIZE);
+    allocator_deinit(&alloc);
     return status;
 }
