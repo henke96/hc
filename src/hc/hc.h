@@ -93,7 +93,6 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_ROTR64 __builtin_rotateright64
 #define hc_MEMCPY __builtin_memcpy
 #define hc_MEMMOVE __builtin_memmove
-#define hc_MEMCMP __builtin_memcmp
 #define hc_MEMSET __builtin_memset
 #define hc_WASM_MEMORY_SIZE __builtin_wasm_memory_size(0)
 #define hc_WASM_MEMORY_GROW(DELTA) __builtin_wasm_memory_grow(0, DELTA)

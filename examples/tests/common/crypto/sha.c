@@ -12,26 +12,26 @@ static void _sha_test(
     sha1_init(&sha1);
     for (int64_t i = 0; i < repetitions; ++i) sha1_update(&sha1, input, inputSize);
     sha1_finish(&sha1, &sha1Hash[0]);
-    CHECK(hc_MEMCMP(&sha1Hash[0], sha1Expected, sha1_HASH_SIZE), RES == 0);
+    CHECK(mem_compare(&sha1Hash[0], sha1Expected, sha1_HASH_SIZE), RES == 0);
 
     uint8_t sha256Hash[sha256_HASH_SIZE];
     struct sha256 sha256;
     sha256_init(&sha256);
     for (int64_t i = 0; i < repetitions; ++i) sha256_update(&sha256, input, inputSize);
     sha256_finish(&sha256, &sha256Hash[0]);
-    CHECK(hc_MEMCMP(&sha256Hash[0], sha256Expected, sha256_HASH_SIZE), RES == 0);
+    CHECK(mem_compare(&sha256Hash[0], sha256Expected, sha256_HASH_SIZE), RES == 0);
 
     uint8_t sha512Hash[sha512_HASH_SIZE];
     struct sha512 sha512;
     sha512_init(&sha512);
     for (int64_t i = 0; i < repetitions; ++i) sha512_update(&sha512, input, inputSize);
     sha512_finish(&sha512, &sha512Hash[0]);
-    CHECK(hc_MEMCMP(&sha512Hash[0], sha512Expected, sha512_HASH_SIZE), RES == 0);
+    CHECK(mem_compare(&sha512Hash[0], sha512Expected, sha512_HASH_SIZE), RES == 0);
 
     sha512_init384(&sha512);
     for (int64_t i = 0; i < repetitions; ++i) sha512_update(&sha512, input, inputSize);
     sha512_finish(&sha512, &sha512Hash[0]);
-    CHECK(hc_MEMCMP(&sha512Hash[0], sha384Expected, 48), RES == 0);
+    CHECK(mem_compare(&sha512Hash[0], sha384Expected, 48), RES == 0);
 }
 
 static void sha_tests(void) {

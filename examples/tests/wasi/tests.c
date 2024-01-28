@@ -3,8 +3,7 @@
 #include "hc/util.c"
 #include "hc/math.c"
 #include "hc/mem.c"
-#include "hc/compiler_rt/libc.c"
-#include "hc/compiler_rt/mul128.c"
+#include "hc/compilerRt/mul128.c"
 #include "hc/wasm/wasi/wasi.h"
 #include "hc/wasm/wasi/debug.c"
 

@@ -2,7 +2,7 @@
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/debug.h"
-#include "hc/compiler_rt/libc.c"
+#include "hc/compilerRt/mem.c"
 #include "hc/freebsd/freebsd.h"
 #include "hc/freebsd/libc.so.7.h"
 #include "hc/freebsd/_start.c"

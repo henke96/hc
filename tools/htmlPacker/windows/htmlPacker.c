@@ -3,7 +3,7 @@
 #include "hc/util.c"
 #include "hc/base64.c"
 #include "hc/debug.h"
-#include "hc/compiler_rt/libc.c"
+#include "hc/compilerRt/mem.c"
 #include "hc/windows/windows.h"
 #include "hc/windows/util.c"
 #include "hc/windows/debug.c"

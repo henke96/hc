@@ -275,7 +275,7 @@ static int32_t _client_doHello(struct client *self) {
             if (self->buffer[pos] == '\r') {
                 if (self->buffer[pos + 1] != '\n') return -3;
 
-                if (pos < (int64_t)hc_STR_LEN("SSH-2.0-") || hc_MEMCMP(&self->buffer[0], "SSH-2.0-", hc_STR_LEN("SSH-2.0-")) != 0) return -4;
+                if (pos < (int64_t)hc_STR_LEN("SSH-2.0-") || mem_compare(&self->buffer[0], "SSH-2.0-", hc_STR_LEN("SSH-2.0-")) != 0) return -4;
                 sha256_update(&self->partialExchangeHash, &(uint32_t) { hc_BSWAP32((uint32_t)pos) }, 4);
                 sha256_update(&self->partialExchangeHash, &self->buffer[0], pos);
 
@@ -366,7 +366,7 @@ static int32_t _client_sendKeyExchangeInit(struct client *self) {
 static bool _client_nameListContains(void *nameList, uint32_t nameListSize, void *string, uint32_t stringSize) {
     for (uint32_t i = 0;;) {
         if ((nameListSize - i) < stringSize) return false;
-        if (hc_MEMCMP(nameList + i, string, stringSize) == 0) return true;
+        if (mem_compare(nameList + i, string, stringSize) == 0) return true;
         for (; i < nameListSize; ++i) {
             if (*(char *)(nameList + i) == ',') {
                 ++i;
@@ -483,12 +483,12 @@ static int32_t _client_doKeyExchange(struct client *self, void *serverInit, int3
         ecdhReply->opcode != proto_MSG_KEX_ECDH_REPLY ||
         ecdhReply->hostKeySize != hc_BSWAP32(sizeof(ecdhReply->hostKey)) ||
         ecdhReply->hostKey.keyTypeSize != hc_BSWAP32(sizeof(ecdhReply->hostKey.keyType)) ||
-        hc_MEMCMP(ecdhReply->hostKey.keyType, _client_HOST_KEY_ED25519, sizeof(ecdhReply->hostKey.keyType)) != 0 ||
+        mem_compare(ecdhReply->hostKey.keyType, _client_HOST_KEY_ED25519, sizeof(ecdhReply->hostKey.keyType)) != 0 ||
         ecdhReply->hostKey.publicKeySize != hc_BSWAP32(32) ||
         ecdhReply->publicKeySize != hc_BSWAP32(32) ||
         ecdhReply->fullSignatureSize != hc_BSWAP32(sizeof(ecdhReply->fullSignature)) ||
         ecdhReply->fullSignature.signatureTypeSize != hc_BSWAP32(sizeof(ecdhReply->fullSignature.signatureType)) ||
-        hc_MEMCMP(ecdhReply->fullSignature.signatureType, _client_HOST_KEY_ED25519, sizeof(ecdhReply->fullSignature.signatureType)) != 0 ||
+        mem_compare(ecdhReply->fullSignature.signatureType, _client_HOST_KEY_ED25519, sizeof(ecdhReply->fullSignature.signatureType)) != 0 ||
         ecdhReply->fullSignature.signatureSize != hc_BSWAP32(sizeof(ecdhReply->fullSignature.signature))
     ) return -15;
 
@@ -585,7 +585,7 @@ static int32_t _client_doServiceRequest(struct client *self) {
     if (
         response->opcode != proto_MSG_SERVICE_ACCEPT ||
         response->serviceNameSize != hc_BSWAP32(hc_STR_LEN(_client_SERVICE_NAME)) ||
-        hc_MEMCMP(&response->serviceName[0], _client_SERVICE_NAME, hc_STR_LEN(_client_SERVICE_NAME)) != 0
+        mem_compare(&response->serviceName[0], _client_SERVICE_NAME, hc_STR_LEN(_client_SERVICE_NAME)) != 0
     ) return -3;
     return 0;
 }

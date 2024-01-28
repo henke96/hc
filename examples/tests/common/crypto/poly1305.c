@@ -5,14 +5,14 @@ static void _poly1305_test(const void *input, int64_t inputSize, const void *key
     poly1305_init(&poly1305, key);
     poly1305_update(&poly1305, input, inputSize);
     poly1305_finish(&poly1305, &mac[0]);
-    CHECK(hc_MEMCMP(&mac[0], &expected[0], poly1305_MAC_SIZE), RES == 0);
+    CHECK(mem_compare(&mac[0], &expected[0], poly1305_MAC_SIZE), RES == 0);
 
     // Again but incremental.
     poly1305_init(&poly1305, key);
     poly1305_update(&poly1305, input, 1);
     poly1305_update(&poly1305, input + 1, inputSize - 1);
     poly1305_finish(&poly1305, &mac[0]);
-    CHECK(hc_MEMCMP(&mac[0], expected, poly1305_MAC_SIZE), RES == 0);
+    CHECK(mem_compare(&mac[0], expected, poly1305_MAC_SIZE), RES == 0);
 }
 
 static void poly1305_tests(void) {

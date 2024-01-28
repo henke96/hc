@@ -10,7 +10,7 @@ static void _ed25519_test(
     ed25519_public(&public[0], secret);
     uint8_t signature[ed25519_SIGNATURE_SIZE];
     ed25519_sign(&signature[0], message, messageSize, secret, &public[0]);
-    CHECK(hc_MEMCMP(&signature[0], expected, ed25519_SIGNATURE_SIZE), RES == 0);
+    CHECK(mem_compare(&signature[0], expected, ed25519_SIGNATURE_SIZE), RES == 0);
 
     CHECK(ed25519_verify(message, messageSize, &public[0], &signature[0]), RES == 0);
     ++signature[0];

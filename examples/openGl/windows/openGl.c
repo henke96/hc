@@ -2,7 +2,7 @@
 #include "hc/util.c"
 #include "hc/gl.h"
 #include "hc/debug.h"
-#include "hc/compiler_rt/libc.c"
+#include "hc/compilerRt/mem.c"
 #include "hc/windows/wgl.h"
 #include "hc/windows/windows.h"
 #include "hc/windows/util.c"

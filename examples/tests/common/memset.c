@@ -15,9 +15,9 @@ static void memset_tests(void) {
     for (int32_t size = 0; size <= _memset_SIZE; ++size) {
         for (int32_t offset = 0; offset < 16; ++offset) {
             int32_t val = 0xAA;
-            memset(&buffer[0], ~val, sizeof(buffer));
+            hc_MEMSET(&buffer[0], ~val, sizeof(buffer));
             for (int32_t i = 0; i < _memset_ITERATIONS; ++i) {
-                memset(&buffer[16 + offset], val, (size_t)size);
+                hc_MEMSET(&buffer[16 + offset], val, (size_t)size);
             }
             _memset_check(&buffer[0], size, offset, val);
         }

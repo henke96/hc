@@ -7,10 +7,10 @@ static void _aes_testEcb64(
 ) {
     uint8_t out[64];
     for (int32_t i = 0; i < 64; i += 16) aes128_block(&out[i], &message[i], key128);
-    CHECK(hc_MEMCMP(&out[0], expected128, 64), RES == 0);
+    CHECK(mem_compare(&out[0], expected128, 64), RES == 0);
 
     for (int32_t i = 0; i < 64; i += 16) aes256_block(&out[i], &message[i], key256);
-    CHECK(hc_MEMCMP(&out[0], expected256, 64), RES == 0);
+    CHECK(mem_compare(&out[0], expected256, 64), RES == 0);
 }
 
 static void aes_tests(void) {

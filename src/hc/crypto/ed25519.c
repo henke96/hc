@@ -757,10 +757,10 @@ static int32_t ed25519_ge_unpackNegativeVartime(struct ed25519_ge *r, const void
     curve25519_mul(&t[0], &t[0], &den[0]);
     curve25519_subNoReduceFourP(&root[0], &t[0], &num[0]);
     curve25519_reduce(&root[0]);
-    if (hc_MEMCMP(&root[0], &curve25519_zero[0], 5 * sizeof(uint64_t)) != 0) {
+    if (mem_compare(&root[0], &curve25519_zero[0], 5 * sizeof(uint64_t)) != 0) {
         curve25519_addNoReduce(&t[0], &t[0], &num[0]);
         curve25519_reduce(&t[0]);
-        if (hc_MEMCMP(&t[0], &curve25519_zero[0], 5 * sizeof(uint64_t)) != 0) return 0;
+        if (mem_compare(&t[0], &curve25519_zero[0], 5 * sizeof(uint64_t)) != 0) return 0;
         curve25519_mul(&r->x[0], &r->x[0], &ed25519_ge_sqrtneg1[0]);
     }
 
@@ -973,7 +973,7 @@ hc_UNUSED static int32_t ed25519_verify(const void *message, int64_t messageSize
     ed25519_ge_pack(&checkR[0], &R);
 
     // Check that R = SB - H(R,A,message)A
-    return hc_MEMCMP(signature, &checkR[0], 32);
+    return mem_compare(signature, &checkR[0], 32);
 }
 
 // X25519 basepoint scalar multiplication.

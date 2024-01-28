@@ -1,10 +1,24 @@
 hc_UNUSED
-static int32_t mem_compareConstantTime(const void *a, const void *b, int64_t size) hc_NO_BUILTIN {
+int32_t mem_compare(const void *left, const void *right, size_t size) {
+    const char *l = left;
+    const char *r = right;
+    for (;;) {
+        if (size == 0) return 0;
+        int32_t diff = *l - *r;
+        if (diff != 0) return diff;
+        ++l;
+        ++r;
+        --size;
+    }
+}
+
+hc_UNUSED
+static int32_t mem_compareConstantTime(const void *left, const void *right, size_t size) hc_NO_BUILTIN {
     int32_t x = 0;
-    const uint8_t *a8 = a;
-    const uint8_t *b8 = b;
-    for (int64_t i = 0; i < size; ++i) {
-        x |= a8[i] ^ b8[i];
+    const char *l = left;
+    const char *r = right;
+    for (size_t i = 0; i < size; ++i) {
+        x |= l[i] ^ r[i];
     }
     return x;
 }

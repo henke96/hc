@@ -14,7 +14,7 @@ static void memmove_tests(void) {
         for (int32_t offset = -15; offset < 16; ++offset) {
             for (uint32_t i = 0; i < sizeof(buffer); ++i) buffer[i] = i & 0xFF;
 
-            memmove(&buffer[32 + offset], &buffer[32], (size_t)size);
+            hc_MEMMOVE(&buffer[32 + offset], &buffer[32], (size_t)size);
             _memmove_check(&buffer[0], size, offset);
         }
     }

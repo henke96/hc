@@ -6,7 +6,7 @@ static void _x25519_testIterations(int32_t iterations, const void *k, const void
     for (; i < iterations; ++i) {
         x25519(&x[(i + 2) & 3][0], &x[(i + 1) & 3][0], &x[i & 3][0]);
     }
-    CHECK(hc_MEMCMP(&x[(i + 1) & 3], expected, 32), RES == 0);
+    CHECK(mem_compare(&x[(i + 1) & 3], expected, 32), RES == 0);
 }
 
 static void _x25519_testBasepointMult(int32_t iterations, const void *scalar, const void *expected) {
@@ -18,7 +18,7 @@ static void _x25519_testBasepointMult(int32_t iterations, const void *scalar, co
         int32_t notBit = bit ^ 1;
         x25519(&temp[notBit << 5], &temp[bit << 5], &x25519_ecdhBasepoint[0]);
     }
-    CHECK(hc_MEMCMP(&temp[(iterations & 1) << 5], expected, 32), RES == 0);
+    CHECK(mem_compare(&temp[(iterations & 1) << 5], expected, 32), RES == 0);
 
     // Same thing with ed25519.
     hc_MEMCPY(&temp[0], scalar, 32);
@@ -27,7 +27,7 @@ static void _x25519_testBasepointMult(int32_t iterations, const void *scalar, co
         int32_t notBit = bit ^ 1;
         ed25519_x25519Basepoint(&temp[notBit << 5], &temp[bit << 5]);
     }
-    CHECK(hc_MEMCMP(&temp[(iterations & 1) << 5], expected, 32), RES == 0);
+    CHECK(mem_compare(&temp[(iterations & 1) << 5], expected, 32), RES == 0);
 }
 
 static void _x25519_testEcdh(const void *alicePriv, const void *bobPriv, const void *expectedShared) {
@@ -41,16 +41,16 @@ static void _x25519_testEcdh(const void *alicePriv, const void *bobPriv, const v
     x25519(&aliceShared[0], alicePriv, &bobPub[0]);
     x25519(&bobShared[0], bobPriv, &alicePub[0]);
 
-    CHECK(hc_MEMCMP(&aliceShared[0], expectedShared, 32), RES == 0);
-    CHECK(hc_MEMCMP(&bobShared[0], expectedShared, 32), RES == 0);
+    CHECK(mem_compare(&aliceShared[0], expectedShared, 32), RES == 0);
+    CHECK(mem_compare(&bobShared[0], expectedShared, 32), RES == 0);
 
     // Test generating the public keys with ed25519.
     uint8_t alicePubEd[32];
     uint8_t bobPubEd[32];
     ed25519_x25519Basepoint(&alicePubEd[0], alicePriv);
     ed25519_x25519Basepoint(&bobPubEd[0], bobPriv);
-    CHECK(hc_MEMCMP(&alicePubEd[0], &alicePub[0], 32), RES == 0);
-    CHECK(hc_MEMCMP(&bobPubEd[0], &bobPub[0], 32), RES == 0);
+    CHECK(mem_compare(&alicePubEd[0], &alicePub[0], 32), RES == 0);
+    CHECK(mem_compare(&bobPubEd[0], &bobPub[0], 32), RES == 0);
 }
 
 static void x25519_tests(void) {
