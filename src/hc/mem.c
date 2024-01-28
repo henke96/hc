@@ -1,5 +1,5 @@
 hc_UNUSED
-int32_t mem_compare(const void *left, const void *right, size_t size) {
+static int32_t mem_compare(const void *left, const void *right, size_t size) {
     const char *l = left;
     const char *r = right;
     for (;;) {
