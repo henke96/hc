@@ -49,12 +49,12 @@ static int32_t util_readAll(int32_t fd, void *buffer, int64_t size) {
     int64_t remaining = size;
     while (remaining > 0) {
         int64_t offset = size - remaining;
-        int64_t read = sys_read(fd, buffer + offset, remaining);
-        if (read <= 0) {
-            if (read == -EINTR) continue;
+        int64_t numRead = sys_read(fd, buffer + offset, remaining);
+        if (numRead <= 0) {
+            if (numRead == -EINTR) continue;
             return -1;
         }
-        remaining -= read;
+        remaining -= numRead;
     }
     return 0;
 }

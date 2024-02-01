@@ -9,7 +9,6 @@
 #include "hc/windows/debug.c"
 #include "hc/windows/heap.c"
 #include "hc/windows/_start.c"
-
 static struct SYSTEMINFO systemInfo;
 #define allocator_PAGE_SIZE systemInfo.pageSize
 #include "hc/allocator.c"

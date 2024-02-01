@@ -1,7 +1,7 @@
 static int32_t init(char **envp, char *outFile);
 static void deinit(void);
 static int32_t readIntoBuffer(void);
-static int32_t write(int32_t size);
+static int32_t writeBuffer(int32_t size);
 static int32_t add(char *name);
 
 static char buffer[65536] hc_ALIGNED(16);
@@ -55,7 +55,7 @@ static int32_t writeRecord(char *name, int32_t nameLen, char *prefix, int32_t pr
     }
 
     // Write header.
-    if (write(END) < 0) return -2;
+    if (writeBuffer(END) < 0) return -2;
     if (fileSize == 0) return 0;
 
     // Write file content.
@@ -67,12 +67,12 @@ static int32_t writeRecord(char *name, int32_t nameLen, char *prefix, int32_t pr
             if (totalWritten != fileSize) return -4;
             break;
         }
-        if (write(numRead) < 0) return -5;
+        if (writeBuffer(numRead) < 0) return -5;
         totalWritten += numRead;
     }
     int32_t numPadBytes = math_PAD_BYTES(totalWritten, 512);
     hc_MEMSET(&buffer[0], 0, (uint64_t)numPadBytes);
-    if (write(numPadBytes) < 0) return -6;
+    if (writeBuffer(numPadBytes) < 0) return -6;
     return 0;
 }
 
@@ -103,7 +103,7 @@ int32_t start(int32_t argc, char **argv, char **envp) {
         }
     }
     hc_MEMSET(&buffer[0], 0, 2 * END);
-    status = (write(2 * END) < 0);
+    status = (writeBuffer(2 * END) < 0);
     cleanup:
     deinit();
     return status;

@@ -19,20 +19,18 @@ static int32_t outFd;
 static int32_t currentFd;
 static struct allocator alloc;
 
-#define ALLOC_RESERVE_SIZE ((int64_t)1 << 32)
-
 static int32_t init(char **envp, char *outFile) {
     pageSize = util_getPageSize(util_getAuxv(envp));
 
     outFd = sys_openat(AT_FDCWD, outFile, O_WRONLY | O_CREAT | O_TRUNC, 0664);
     if (outFd < 0) return -1;
 
-    return allocator_init(&alloc, ALLOC_RESERVE_SIZE);
+    return allocator_init(&alloc, (int64_t)1 << 32);
 }
 
 static void deinit(void) {
     debug_CHECK(sys_close(outFd), RES == 0);
-    allocator_deinit(&alloc, ALLOC_RESERVE_SIZE);
+    allocator_deinit(&alloc);
 }
 
 static int32_t add(char *name) {
@@ -75,8 +73,8 @@ static int32_t add(char *name) {
         statx.stx_mode = 0; // Make static analysis happy.
         if (sys_statx(currentFd, "", AT_EMPTY_PATH, STATX_TYPE | STATX_SIZE, &statx) < 0) goto cleanup_currentFd;
 
-        if (statx.stx_mode & S_IFDIR) statx.stx_size = -1;
-        if ((statx.stx_mode & (S_IFDIR | S_IFREG)) == 0) goto cleanup_currentFd;
+        if (S_ISDIR(statx.stx_mode)) statx.stx_size = -1;
+        else if (!S_ISREG(statx.stx_mode)) goto cleanup_currentFd;
 
         status = writeRecord(
             name, nameLen,
@@ -164,6 +162,6 @@ static int32_t readIntoBuffer(void) {
     return (int32_t)sys_read(currentFd, &buffer[0], sizeof(buffer));
 }
 
-static int32_t write(int32_t size) {
+static int32_t writeBuffer(int32_t size) {
     return util_writeAll(outFd, &buffer[0], size);
 }
