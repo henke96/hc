@@ -22,7 +22,7 @@ static struct allocator alloc;
 static int32_t init(char **envp, char *outFile) {
     pageSize = util_getPageSize(util_getAuxv(envp));
 
-    outFd = sys_openat(AT_FDCWD, outFile, O_WRONLY | O_CREAT | O_TRUNC, 0664);
+    outFd = sys_openat(AT_FDCWD, outFile, O_WRONLY | O_CREAT | O_EXCL | O_TRUNC, 0664);
     if (outFd < 0) return -1;
 
     return allocator_init(&alloc, (int64_t)1 << 32);

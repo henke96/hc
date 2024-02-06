@@ -14,8 +14,8 @@ static struct SYSTEMINFO systemInfo;
 
 #include "../common.c"
 
-void *outHandle;
-void *currentHandle;
+static void *outHandle;
+static void *currentHandle;
 static struct allocator alloc;
 
 static int32_t init(hc_UNUSED char **envp, char *outFile) {
