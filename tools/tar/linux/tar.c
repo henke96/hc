@@ -34,9 +34,6 @@ static void deinit(void) {
 }
 
 static int32_t add(char *name) {
-    int64_t nameSize = util_cstrLen(name) + 1;
-    if (nameSize > NAME_MAX + 1) return -1;
-
     struct state {
         struct state *prev;
         char **names;
@@ -51,7 +48,7 @@ static int32_t add(char *name) {
     char **initialNames = (void *)&prefix[PATH_MAX];
     int64_t allocSize = (void *)&initialNames[1] - &alloc.mem[0];
     debug_ASSERT((allocSize & 7) == 0);
-    if (allocator_resize(&alloc, allocSize) < 0) return -2;
+    if (allocator_resize(&alloc, allocSize) < 0) return -1;
 
     initialNames[0] = name;
 
@@ -65,7 +62,7 @@ static int32_t add(char *name) {
 
         // Open and write current name.
         currentFd = sys_openat(state->rootFd, name, O_RDONLY, 0);
-        if (currentFd < 0) return -3;
+        if (currentFd < 0) return -2;
 
         int32_t status = -1;
         int32_t nameLen = (int32_t)util_cstrLen(name);
@@ -85,7 +82,7 @@ static int32_t add(char *name) {
         if (status < 0) {
             debug_printNum("Failed to write record (", status, ")\n");
             debug_CHECK(sys_close(currentFd), RES == 0);
-            return -4;
+            return -3;
         }
 
         // Push new state if directory.
@@ -93,16 +90,17 @@ static int32_t add(char *name) {
             struct state *prevState = state;
             state = &alloc.mem[allocSize];
             allocSize += sizeof(*state);
+            // No need to resize allocator here since we do it unconditionally below.
 
             // Read directory entries.
             for (;;) {
                 debug_ASSERT((allocSize & 7) == 0);
-                if (allocator_resize(&alloc, allocSize + 8192) < 0) return -6;
+                if (allocator_resize(&alloc, allocSize + 8192) < 0) return -4;
 
                 int64_t numRead = sys_getdents64(currentFd, &alloc.mem[allocSize], alloc.size - allocSize);
                 if (numRead <= 0) {
                     if (numRead == 0) break;
-                    return -7;
+                    return -5;
                 }
                 allocSize += numRead;
             }
@@ -127,7 +125,7 @@ static int32_t add(char *name) {
                     )
                 ) continue;
                 allocSize += (int64_t)sizeof(state->names[0]);
-                if (allocator_resize(&alloc, allocSize) < 0) return -7;
+                if (allocator_resize(&alloc, allocSize) < 0) return -6;
                 *((char **)&alloc.mem[allocSize] - 1) = &current->d_name[0];
             }
             int64_t namesLength = (&alloc.mem[allocSize] - (void *)state->names) / (int64_t)sizeof(state->names[0]);

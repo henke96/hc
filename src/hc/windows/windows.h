@@ -22,6 +22,25 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define GENERIC_EXECUTE 0x20000000
 #define GENERIC_ALL 0x10000000
 
+#define FILE_READ_DATA 0x1
+#define FILE_LIST_DIRECTORY 0x1
+#define FILE_WRITE_DATA 0x2
+#define FILE_ADD_FILE 0x2
+#define FILE_APPEND_DATA 0x4
+#define FILE_ADD_SUBDIRECTORY 0x4
+#define FILE_CREATE_PIPE_INSTANCE 0x4
+#define FILE_READ_EA 0x8
+#define FILE_WRITE_EA 0x10
+#define FILE_EXECUTE 0x20
+#define FILE_TRAVERSE 0x20
+#define FILE_DELETE_CHILD 0x40
+#define FILE_READ_ATTRIBUTES 0x80
+#define FILE_WRITE_ATTRIBUTES 0x100
+
+#define FILE_SHARE_READ 0x1
+#define FILE_SHARE_WRITE 0x2
+#define FILE_SHARE_DELETE 0x4
+
 #define FILE_ATTRIBUTE_READONLY 0x00000001
 #define FILE_ATTRIBUTE_HIDDEN 0x00000002
 #define FILE_ATTRIBUTE_SYSTEM 0x00000004
@@ -37,6 +56,15 @@ static_assert(!hc_ILP32, "Pointers not 64 bit");
 #define FILE_ATTRIBUTE_NOT_CONTENT_INDEXED 0x00002000
 #define FILE_ATTRIBUTE_ENCRYPTED 0x00004000
 #define FILE_ATTRIBUTE_VIRTUAL 0x00010000
+
+// minwindef.h
+#define MAX_PATH 260
+
+// minwinbase.h
+struct FILETIME {
+    uint32_t lowDateTime;
+    uint32_t highDateTime;
+};
 
 // winbase.h
 #define INFINITE ((uint32_t)-1)
@@ -779,6 +807,102 @@ struct SYSTEMINFO {
 #define WAIT_TIMEOUT 0x00000102
 #define WAIT_FAILED 0xFFFFFFFF
 
+// fileapi.h
+struct BY_HANDLE_FILE_INFORMATION {
+    uint32_t fileAttributes;
+    struct FILETIME creationTime;
+    struct FILETIME lastAccessTime;
+    struct FILETIME lastWriteTime;
+    uint32_t volumeSerialNumber;
+    uint32_t fileSizeHigh;
+    uint32_t fileSizeLow;
+    uint32_t numberOfLinks;
+    uint32_t fileIndexHigh;
+    uint32_t fileIndexLow;
+};
+
+// NT internals
+#define NT_SUCCESS(STATUS) ((int32_t)STATUS >= 0)
+#define STATUS_NO_MORE_FILES ((int32_t)0x80000006)
+
+#define DELETE 0x010000
+#define READ_CONTROL 0x020000
+#define WRITE_DAC 0x040000
+#define WRITE_OWNER 0x080000
+#define SYNCHRONIZE 0x100000
+
+#define FILE_SUPERSEDE 0
+#define FILE_OPEN 1
+#define FILE_CREATE 2
+#define FILE_OPEN_IF 3
+#define FILE_OVERWRITE 4
+#define FILE_OVERWRITE_IF 5
+
+#define FILE_DIRECTORY_FILE 0x1
+#define FILE_WRITE_THROUGH 0x2
+#define FILE_SEQUENTIAL_ONLY 0x4
+#define FILE_NO_INTERMEDIATE_BUFFERING 0x8
+#define FILE_SYNCHRONOUS_IO_ALERT 0x10
+#define FILE_SYNCHRONOUS_IO_NONALERT 0x20
+#define FILE_NON_DIRECTORY_FILE 0x40
+#define FILE_CREATE_TREE_CONNECTION 0x80
+#define FILE_COMPLETE_IF_OPLOCKED 0x100
+#define FILE_NO_EA_KNOWLEDGE 0x200
+#define FILE_OPEN_REMOTE_INSTANCE 0x400
+#define FILE_RANDOM_ACCESS 0x800
+#define FILE_DELETE_ON_CLOSE 0x1000
+#define FILE_OPEN_BY_FILE_ID 0x2000
+#define FILE_OPEN_FOR_BACKUP_INTENT 0x4000
+#define FILE_NO_COMPRESSION 0x8000
+#define FILE_OPEN_REQUIRING_OPLOCK 0x10000
+#define FILE_DISALLOW_EXCLUSIVE 0x20000
+#define FILE_SESSION_AWARE 0x40000
+#define FILE_RESERVE_OPFILTER 0x100000
+#define FILE_OPEN_REPARSE_POINT 0x200000
+#define FILE_OPEN_NO_RECALL 0x400000
+#define FILE_OPEN_FOR_FREE_SPACE_QUERY 0x800000
+
+struct UNICODE_STRING {
+    uint16_t length;
+    uint16_t maximumLength;
+    int32_t __pad;
+    uint16_t *buffer;
+};
+
+struct OBJECT_ATTRIBUTES {
+    uint32_t length;
+    int32_t __pad;
+    void *rootDirectory;
+    struct UNICODE_STRING *objectName;
+    uint32_t attributes;
+    int32_t __pad2;
+    void *securityDescriptor;
+    void *securityQualityOfService;
+};
+
+struct IO_STATUS_BLOCK {
+    union {
+        int32_t status;
+        void *pointer;
+    };
+    uint64_t information;
+};
+
+enum FILE_INFORMATION_CLASS {
+    FileNamesInformation = 12,
+};
+
+struct FILE_NAMES_INFORMATION {
+  uint32_t nextEntryOffset;
+  uint32_t fileIndex;
+  uint32_t fileNameLength;
+  // uint16_t fileName[];
+};
+
+// ntdll.dll
+hc_DLLIMPORT int32_t NtCreateFile(void **fileHandle, uint32_t desiredAccess, struct OBJECT_ATTRIBUTES *objectAttributes, struct IO_STATUS_BLOCK *ioStatusBlock, int64_t *allocationSize, uint32_t fileAttributes, uint32_t shareAccess, uint32_t createDisposition, uint32_t createOptions, void *eaBuffer, uint32_t eaLength);
+hc_DLLIMPORT int32_t NtQueryDirectoryFile(void *fileHandle, void *event, void *apcRoutine, void *apcContext, struct IO_STATUS_BLOCK *ioStatusBlock, void *fileInformation, uint32_t length, enum FILE_INFORMATION_CLASS fileInformationClass, int32_t returnSingleEntry, uint16_t *fileName, int32_t restartScan);
+
 // kernel32.dll
 hc_DLLIMPORT uint16_t *GetEnvironmentStringsW(void);
 hc_DLLIMPORT int32_t FreeEnvironmentStringsW(uint16_t *strings);
@@ -806,7 +930,9 @@ hc_DLLIMPORT void *CreateFileW(const uint16_t *fileName, uint32_t desiredAccess,
 hc_DLLIMPORT int32_t WriteFile(void *fileHandle, const void *buffer, uint32_t numberOfBytesToWrite, uint32_t *numberOfBytesWritten, void *overlapped);
 hc_DLLIMPORT int32_t ReadFile(void *fileHandle, void *buffer, uint32_t numberOfBytesToRead, uint32_t *numberOfBytesRead, void *overlapped);
 hc_DLLIMPORT int32_t GetFileSizeEx(void *fileHandle, int64_t *size);
+hc_DLLIMPORT int32_t GetFileInformationByHandle(void *fileHandle, struct BY_HANDLE_FILE_INFORMATION *fileInformation);
 hc_DLLIMPORT int32_t SetCurrentDirectoryW(const uint16_t *path);
+hc_DLLIMPORT int32_t GetCurrentDirectoryW(uint32_t bufferLength, uint16_t *buffer);
 
 hc_DLLIMPORT void *LoadLibraryW(const uint16_t *libFileName);
 hc_DLLIMPORT int32_t FreeLibrary(void *dlHandle);
@@ -824,7 +950,7 @@ hc_DLLIMPORT int32_t WideCharToMultiByte(uint32_t codePage, uint32_t flags, cons
 hc_DLLIMPORT void *CreateThread(struct SECURITYATTRIBUTES *attributes, uint64_t stackSize, uint32_t (*func)(void *arg), void *arg, uint32_t flags, uint32_t *threadId);
 hc_DLLIMPORT uint32_t WaitForSingleObjectEx(void *handle, uint32_t timeoutMs, int32_t alertable);
 
-// synchronization.lib (api-ms-win-core-synch-*.dll)
+// synchronization.lib (api-ms-win-core-synch-l1-2-0.dll)
 hc_DLLIMPORT int32_t WaitOnAddress(void *address, void *compareAddress, int64_t addressSize, uint32_t timeoutMs);
 hc_DLLIMPORT void WakeByAddressSingle(void *address);
 hc_DLLIMPORT void WakeByAddressAll(void *address);

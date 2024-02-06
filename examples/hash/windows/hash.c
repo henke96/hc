@@ -44,10 +44,10 @@ static int32_t init(char *file) {
     fileHandle = CreateFileW(
         utf16,
         GENERIC_READ,
-        0,
+        FILE_SHARE_READ,
         NULL,
         OPEN_EXISTING,
-        FILE_ATTRIBUTE_READONLY,
+        0,
         NULL
     );
     debug_CHECK(HeapFree(heap, 0, utf16), RES != 0);

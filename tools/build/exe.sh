@@ -8,6 +8,7 @@ build() {
     out_dir="$root_dir/../hc-out/$out_path/$ARCH"
     mkdir -p "$out_dir"
 
+    if test -n "$LINK_NTDLL"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/ntdll.def" "$out_dir/ntdll.lib"; fi
     if test -n "$LINK_KERNEL32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/kernel32.def" "$out_dir/kernel32.lib"; fi
     if test -n "$LINK_USER32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/user32.def" "$out_dir/user32.lib"; fi
     if test -n "$LINK_GDI32"; then "$root_dir/tools/genLib/gen_lib.sh" "$root_dir/src/hc/windows/dll/gdi32.def" "$out_dir/gdi32.lib"; fi
@@ -38,6 +39,7 @@ common_flags="-Wl,-subsystem,windows"
 debug_flags="$common_flags -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb= -Dhc_DEBUG"
 release_flags="$common_flags -fomit-frame-pointer -s -Os"
 
+if test -n "$LINK_NTDLL"; then FLAGS="-l:ntdll.lib $FLAGS"; fi
 if test -n "$LINK_KERNEL32"; then FLAGS="-l:kernel32.lib $FLAGS"; fi
 if test -n "$LINK_USER32"; then FLAGS="-l:user32.lib $FLAGS"; fi
 if test -n "$LINK_GDI32"; then FLAGS="-l:gdi32.lib $FLAGS"; fi

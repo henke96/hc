@@ -1,3 +1,5 @@
+#define util_MAX_UTF8_PER_UTF16 3
+
 hc_UNUSED
 static int32_t util_writeAll(void *fileHandle, const void *buffer, int64_t size) {
     int64_t remaining = size;

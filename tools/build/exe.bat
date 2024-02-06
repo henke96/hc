@@ -14,6 +14,11 @@ if not exist "%out_dir%" (
     if errorlevel 1 exit /b
 )
 
+if defined LINK_NTDLL (
+    call "%root_dir%\tools\genLib\gen_lib.bat" "%root_dir%\src\hc\windows\dll\ntdll.def" "%out_dir%\ntdll.lib"
+    if not errorlevel 0 exit /b
+    if errorlevel 1 exit /b
+)
 if defined LINK_KERNEL32 (
     call "%root_dir%\tools\genLib\gen_lib.bat" "%root_dir%\src\hc\windows\dll\kernel32.def" "%out_dir%\kernel32.lib"
     if not errorlevel 0 exit /b
@@ -72,6 +77,7 @@ set "common_flags=-Wl,-subsystem,windows"
 set "debug_flags=%common_flags% -fsanitize-undefined-trap-on-error -fsanitize=undefined -g3 -gcodeview -Wl,--pdb= -Dhc_DEBUG"
 set "release_flags=%common_flags% -fomit-frame-pointer -s -Os"
 
+if defined LINK_NTDLL set "FLAGS=-l:ntdll.lib %FLAGS%"
 if defined LINK_KERNEL32 set "FLAGS=-l:kernel32.lib %FLAGS%"
 if defined LINK_USER32 set "FLAGS=-l:user32.lib %FLAGS%"
 if defined LINK_GDI32 set "FLAGS=-l:gdi32.lib %FLAGS%"
