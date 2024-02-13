@@ -1,0 +1,26 @@
+FBSD_1.0 {
+    errno;
+    printf;
+    abort;
+    mmap;
+    munmap;
+    mprotect;
+    read;
+    write;
+    close;
+    chdir;
+};
+
+FBSD_1.2 {
+    openat;
+};
+
+FBSD_1.5 {
+    getdents;
+    fstatat;
+    elf_aux_info;
+};
+
+FBSD_1.7 {
+    __libc_start1;
+};

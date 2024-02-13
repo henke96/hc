@@ -15,7 +15,7 @@ if not exist "%out_dir%" (
 )
 
 if defined LINK_LIBC (
-    call "%root_dir%\tools\genLib\gen_so.bat" "%root_dir%\src\hc\freebsd\libc.so.7.c" "%out_dir%\libc.so.7"
+    call "%root_dir%\tools\genLib\gen_so.bat" "%root_dir%\src\hc\freebsd\libc.so.7.c" "%out_dir%\libc.so.7" "%root_dir%\src\hc\freebsd\libc.so.7.map"
     if not errorlevel 0 exit /b
     if errorlevel 1 exit /b
 )

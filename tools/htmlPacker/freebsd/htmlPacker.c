@@ -8,11 +8,10 @@
 #include "hc/freebsd/libc.so.7.h"
 #include "hc/freebsd/debug.c"
 #include "hc/freebsd/heap.c"
-
+#include "hc/freebsd/_start.c"
 static int32_t pageSize;
 #define allocator_PAGE_SIZE pageSize
 #include "hc/allocator.c"
-#include "hc/freebsd/_start.c"
 
 #include "../common.c"
 

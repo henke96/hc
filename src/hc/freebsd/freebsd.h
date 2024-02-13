@@ -203,3 +203,27 @@ struct stat {
     uint64_t st_gen;
     uint64_t __pad3[10];
 };
+
+#define S_ISDIR(M) (((M) & 0170000) == 0040000)
+#define S_ISCHR(M) (((M) & 0170000) == 0020000)
+#define S_ISBLK(M) (((M) & 0170000) == 0060000)
+#define S_ISREG(M) (((M) & 0170000) == 0100000)
+#define S_ISFIFO(M) (((M) & 0170000) == 0010000)
+#define S_ISLNK(M) (((M) & 0170000) == 0120000)
+#define S_ISSOCK(M) (((M) & 0170000) == 0140000)
+
+// dirent.h
+struct dirent {
+    uint64_t d_fileno;
+    int64_t d_off;
+    uint16_t d_reclen;
+    uint8_t d_type;
+    uint8_t __pad;
+    uint16_t d_namlen;
+    uint16_t __pad2;
+    // char d_name[];
+};
+
+// syslimits.h
+#define NAME_MAX 255
+#define PATH_MAX 1024

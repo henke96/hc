@@ -14,3 +14,4 @@ hc_ELF_EXPORT void write(void) {}
 hc_ELF_EXPORT void close(void) {}
 hc_ELF_EXPORT void chdir(void) {}
 hc_ELF_EXPORT void elf_aux_info(void) {}
+hc_ELF_EXPORT void getdents(void) {}

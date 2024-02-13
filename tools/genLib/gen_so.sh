@@ -5,5 +5,6 @@ root_dir="$script_dir/../.."
 
 input="$1"
 output="$2"
+if test -n "$3"; then version_script_arg="-Wl,--version-script=$3"; fi
 
-"$root_dir/cc_elf.sh" -shared -o "$output" "$input"
+"$root_dir/cc_elf.sh" -shared $version_script_arg -o "$output" "$input"

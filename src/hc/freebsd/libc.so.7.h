@@ -13,3 +13,4 @@ int64_t write(int32_t fd, const void *buffer, int64_t size);
 int32_t close(int32_t fd);
 int32_t chdir(const char *path);
 int32_t elf_aux_info(int32_t aux, void *buffer, int32_t size);
+int64_t getdents(int32_t fd, void *buffer, int64_t size);

@@ -7,7 +7,7 @@ build() {
     out_dir="$root_dir/../hc-out/$out_path/$ARCH"
     mkdir -p "$out_dir"
 
-    if test -n "$LINK_LIBC"; then "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/freebsd/libc.so.7.c" "$out_dir/libc.so.7"; fi
+    if test -n "$LINK_LIBC"; then "$root_dir/tools/genLib/gen_so.sh" "$root_dir/src/hc/freebsd/libc.so.7.c" "$out_dir/libc.so.7" "$root_dir/src/hc/freebsd/libc.so.7.map"; fi
 }
 
 out_path="$2"
