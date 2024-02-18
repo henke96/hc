@@ -19,6 +19,6 @@ if test -z "$NO_X86_64"; then export ARCH="x86_64"; build; fi
 if test -z "$NO_AARCH64"; then export ARCH="aarch64"; build; fi
 if test -z "$NO_RISCV64"; then export ARCH="riscv64"; build; fi
 
-export FLAGS="-fPIC -Wl,-dynamic-linker=/libexec/ld-elf.so.1 -Wl,--export-dynamic $FLAGS"
+export FLAGS="-Wl,-dynamic-linker=/libexec/ld-elf.so.1 $FLAGS"
 export STRIP_OPT="${STRIP_OPT:---strip-sections}"
 "$script_dir/elf.sh" "$@"

@@ -8,4 +8,4 @@ set "input=%~1"
 set "output=%~2"
 if not "%~3" == "" set "version_script_arg=-Wl,--version-script=%~3"
 
-"%root_dir%\cc_elf.bat" -shared %version_script_arg% -o "%output%" "%input%"
+"%root_dir%\cc_elf.bat" -shared -fPIC %version_script_arg% -o "%output%" "%input%"

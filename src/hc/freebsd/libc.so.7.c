@@ -1,7 +1,12 @@
 #include "hc/hc.h"
 hc_ELF_EXPORT int32_t errno;
 
-hc_ELF_EXPORT void __libc_start1(void) {}
+extern char **environ;
+extern char *__progname;
+hc_ELF_EXPORT void __libc_start1(void) {
+    environ = NULL;
+    __progname = NULL;
+}
 hc_ELF_EXPORT void printf(void) {}
 hc_ELF_EXPORT void abort(void) {}
 hc_ELF_EXPORT void mmap(void) {}
