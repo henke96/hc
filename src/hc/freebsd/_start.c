@@ -1,7 +1,7 @@
 int32_t start(int32_t argc, char **argv, char **envp);
 
-hc_ELF_EXPORT char **environ;
-hc_ELF_EXPORT char *__progname = "";
+hc_EXPORT char **environ;
+hc_EXPORT char *__progname = "";
 
 #if hc_X86_64
 void _start(char **args, void (*cleanup)(void)) {

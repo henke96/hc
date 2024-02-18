@@ -9,7 +9,7 @@
 #include "hc/windows/debug.c"
 #include "hc/windows/wgl.c"
 
-#define game_EXPORT(NAME) static
+#define game_EXPORT static
 #define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) wgl_getProcAddress(LOADER_PTR, FUNC)
 #include "../shared/gl.c"
 #include "../shaders.c"
@@ -21,8 +21,8 @@
 #include "window.c"
 
 // Use dedicated GPU.
-hc_DLLEXPORT uint32_t NvOptimusEnablement = 0x00000001;
-hc_DLLEXPORT uint32_t AmdPowerXpressRequestHighPerformance = 0x00000001;
+hc_EXPORT uint32_t NvOptimusEnablement = 0x00000001;
+hc_EXPORT uint32_t AmdPowerXpressRequestHighPerformance = 0x00000001;
 
 void noreturn _start(void) {
     AttachConsole(ATTACH_PARENT_PROCESS);

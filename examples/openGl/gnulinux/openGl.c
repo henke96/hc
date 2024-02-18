@@ -22,7 +22,7 @@ static int32_t openGl_pageSize;
 #include "hc/linux/drmKms.c"
 #include "hc/linux/gnulinux/_start.c"
 
-#define game_EXPORT(NAME) static
+#define game_EXPORT static
 #define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)
 #include "../shared/gl.c"
 #include "../shaders.c"

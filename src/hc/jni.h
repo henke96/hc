@@ -1,9 +1,3 @@
-#if hc_PE
-    #define jni_EXPORT hc_DLLEXPORT
-#else
-    #define jni_EXPORT hc_ELF_EXPORT
-#endif
-
 union jni_value {
     uint8_t z;
     int8_t b;

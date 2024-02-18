@@ -21,12 +21,6 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #error "Unsupported architecture"
 #endif
 
-#if defined(_WIN32)
-    #define hc_PE 1
-#elif defined(__linux__)
-    #define hc_ELF 1
-#endif
-
 // Are size_t, int, long and pointer types 32 bit?
 #if defined(__ILP32__)
     #define hc_ILP32 1
@@ -67,11 +61,13 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_SYSV_ABI
 #endif
 
+#if defined(_WIN32)
+    #define hc_EXPORT __attribute__((dllexport))
+#else
+    #define hc_EXPORT __attribute__((visibility("default")))
+#endif
 #define hc_DLLIMPORT __attribute__((dllimport))
-#define hc_DLLEXPORT __attribute__((dllexport))
-#define hc_ELF_EXPORT __attribute__((visibility("default")))
 #define hc_WASM_IMPORT(MODULE, NAME) __attribute__((import_module(MODULE), import_name(NAME)))
-#define hc_WASM_EXPORT(NAME) __attribute__((export_name(NAME)))
 
 // Builtins
 #define hc_UNREACHABLE __builtin_unreachable()

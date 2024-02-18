@@ -19,7 +19,7 @@
 // TODO: Implement input
 hc_UNUSED static void game_onKeyDown(int32_t key, uint64_t timestamp);
 hc_UNUSED static void game_onKeyUp(int32_t key, uint64_t timestamp);
-#define game_EXPORT(NAME) static
+#define game_EXPORT static
 #define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)
 #include "../shared/gl.c"
 #include "../shaders.c"
@@ -239,7 +239,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
     }
 }
 
-hc_ELF_EXPORT
+hc_EXPORT
 void ANativeActivity_onCreate(struct ANativeActivity *activity, hc_UNUSED void *savedState, hc_UNUSED uint64_t savedStateSize) {
     struct nativeGlue_appInfo appInfo = {
         .appThreadFunc = appThread,

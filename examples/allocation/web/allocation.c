@@ -9,8 +9,7 @@
 
 #include "../test.c"
 
-hc_WASM_EXPORT("start")
-void start(void) {
+hc_EXPORT void start(void) {
     int32_t status = test();
     debug_printNum("Status: ", status, "\n");
 }

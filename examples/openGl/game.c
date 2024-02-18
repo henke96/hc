@@ -1,5 +1,5 @@
 #if !defined(game_EXPORT)
-    #error "`#define game_EXPORT(NAME)` before including"
+    #error "`#define game_EXPORT` before including"
 #endif
 static struct {
     uint64_t prevFpsCountTime;
@@ -10,8 +10,7 @@ static struct {
     int32_t __pad;
 } game;
 
-game_EXPORT("game_draw")
-int32_t game_draw(uint64_t timestamp) {
+game_EXPORT int32_t game_draw(uint64_t timestamp) {
     game.triangleYaw = (game.triangleYaw + 1) & 4095;
 
     float matrix[16];
@@ -36,8 +35,7 @@ int32_t game_draw(uint64_t timestamp) {
     return 0;
 }
 
-game_EXPORT("game_onResize")
-void game_onResize(int32_t width, int32_t height) {
+game_EXPORT void game_onResize(int32_t width, int32_t height) {
     gl_viewport(0, 0, width, height);
 
     float projectionMatrix[16];
@@ -45,28 +43,24 @@ void game_onResize(int32_t width, int32_t height) {
     gl_uniformMatrix4fv(shaders_mainProjectionMatrixLoc, 1, gl_FALSE, &projectionMatrix[0]);
 }
 
-game_EXPORT("game_onMouseMove")
-void game_onMouseMove(int64_t deltaX, int64_t deltaY, hc_UNUSED uint64_t timestamp) {
+game_EXPORT void game_onMouseMove(int64_t deltaX, int64_t deltaY, hc_UNUSED uint64_t timestamp) {
     game.cameraYaw = (game.cameraYaw - (uint32_t)(deltaX >> 32)) & 4095;
     game.cameraPitch -= (deltaY >> 32);
     if (game.cameraPitch > 1024) game.cameraPitch = 1024;
     else if (game.cameraPitch < -1024) game.cameraPitch = -1024;
 }
 
-game_EXPORT("game_onKeyDown")
-void game_onKeyDown(int32_t key, uint64_t timestamp) {
+game_EXPORT void game_onKeyDown(int32_t key, uint64_t timestamp) {
     debug_printNum("Key down: ", key, "\n");
     debug_printNum("At: ", (int64_t)timestamp, "\n");
 }
 
-game_EXPORT("game_onKeyUp")
-void game_onKeyUp(int32_t key, uint64_t timestamp) {
+game_EXPORT void game_onKeyUp(int32_t key, uint64_t timestamp) {
     debug_printNum("Key up: ", key, "\n");
     debug_printNum("At: ", (int64_t)timestamp, "\n");
 }
 
-game_EXPORT("game_init")
-int32_t game_init(int32_t width, int32_t height, uint64_t timestamp) {
+game_EXPORT int32_t game_init(int32_t width, int32_t height, uint64_t timestamp) {
     game.cameraYaw = 0;
     game.cameraPitch = 0;
     game.triangleYaw = 0;
@@ -100,8 +94,7 @@ int32_t game_init(int32_t width, int32_t height, uint64_t timestamp) {
     return status;
 }
 
-game_EXPORT("game_deinit")
-void game_deinit(void) {
+game_EXPORT void game_deinit(void) {
     vertexArrays_deinit();
     shaders_deinit();
 }

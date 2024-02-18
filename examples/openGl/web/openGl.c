@@ -2,7 +2,7 @@
 #include "hc/gl.h"
 #include "hc/debug.h"
 
-#define game_EXPORT(NAME) hc_WASM_EXPORT(NAME)
+#define game_EXPORT hc_EXPORT
 #include "debug.c"
 #include "gl.h"
 #include "../shaders.c"
