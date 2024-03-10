@@ -15,7 +15,7 @@ static int32_t pageSize;
 
 #include "../common.c"
 
-static void initialise(hc_UNUSED char **envp) {
+static void initPageSize(hc_UNUSED char **envp) {
     debug_CHECK(elf_aux_info(AT_PAGESZ, &pageSize, sizeof(pageSize)), RES == 0);
 }
 

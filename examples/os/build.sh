@@ -4,19 +4,21 @@ script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../.."
 . $root_dir/tools/shell/escape.sh
 
-if test -n "$LLVM"; then llvm_prefix="$LLVM/bin/"; fi
-
-export NO_AARCH64=1 NO_RISCV64=1
-
 # Kernel
-export FLAGS="$(escape "-Wl,-T$script_dir/kernel/kernel.ld") -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
-"$root_dir/tools/build/elf.sh" "$script_dir/kernel/kernel.c" os/kernel .elf
+export ARCH=x86_64
+export ABI=linux
+export FLAGS="-Os -s -Wl,-T,$(escape "$script_dir/kernel/kernel.ld") -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
+export FLAGS_RELEASE=
+export FLAGS_DEBUG=
+"$root_dir/tools/builder.sh" "$script_dir/kernel/kernel.elf.c"
 
-out_base_dir="$root_dir/../hc-out/os"
-
-"${llvm_prefix}llvm-objcopy" -O binary "$out_base_dir/kernel/x86_64/kernel.elf" "$out_base_dir/kernel/x86_64/kernel.bin"
-"${llvm_prefix}llvm-objcopy" -O binary "$out_base_dir/kernel/x86_64/debug-kernel.elf" "$out_base_dir/kernel/x86_64/debug-kernel.bin"
+"$root_dir/objcopy.sh" -O binary "$OUT/x86_64-linux_kernel.elf" "$OUT/kernel.bin"
+"$root_dir/objcopy.sh" -O binary "$OUT/debug_x86_64-linux_kernel.elf" "$OUT/debug_kernel.bin"
 
 # Bootloader (with kernel binary embedded)
-export FLAGS="" FLAGS_X86_64="$(escape "-I$out_base_dir/kernel/x86_64")"
-"$root_dir/tools/build/efi.sh" "$script_dir/bootloader/bootloader.c" os .efi
+export ARCH=x86_64
+export ABI=windows-gnu
+export FLAGS="-Os -s -I $(escape "$OUT") -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wl,-subsystem,efi_application "
+export FLAGS_RELEASE=
+export FLAGS_DEBUG=
+"$root_dir/tools/builder.sh" "$script_dir/bootloader/bootloader.efi.c"

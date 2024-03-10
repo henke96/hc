@@ -1,15 +1,17 @@
-static void initialise(char **envp);
-static int32_t changeDir(char *path);
-static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceLen, char *path, int32_t pathLen, bool asBase64);
-static int32_t writeToFile(char *path, char *content, int64_t contentLen);
+static void initPageSize(char **envp);
+static int32_t init(char **includePaths);
+static void deinit(void);
+static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *path, int32_t pathLen, bool asBase64);
+static int32_t writeToFile(char *path, char *content, int64_t contentSize);
 
 static struct allocator alloc;
-static int64_t bufferLen = 0;
+static char *buffer;
+static int64_t bufferSize = 0;
 
-static int64_t findPattern(int64_t bufferStartI, char *pattern, int64_t patternLen) {
-    for (int64_t bufferI = bufferStartI; bufferI < bufferLen - patternLen; ++bufferI) {
-        for (int64_t patternI = 0; patternI < patternLen; ++patternI) {
-            if (((char *)alloc.mem)[bufferI + patternI] != pattern[patternI]) goto noMatch;
+static int64_t findPattern(int64_t bufferStartI, char *pattern, int64_t patternSize) {
+    for (int64_t bufferI = bufferStartI; bufferI < bufferSize - patternSize; ++bufferI) {
+        for (int64_t patternI = 0; patternI < patternSize; ++patternI) {
+            if (buffer[bufferI + patternI] != pattern[patternI]) goto noMatch;
         }
         return bufferI;
         noMatch:;
@@ -34,7 +36,7 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
     int32_t status = replaceWithFile(
         startPatternI,
         endPatternI + endPatternLen - startPatternI,
-        &alloc.mem[nameI],
+        &buffer[nameI],
         (int32_t)nameLen,
         asBase64
     );
@@ -46,15 +48,23 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
 }
 
 int32_t start(int32_t argc, char **argv, char **envp) {
-    if (argc != 4) return 1;
-    initialise(envp);
+    if (argc < 3) return 1;
+    initPageSize(envp);
     if (allocator_init(&alloc, (int64_t)1 << 32) < 0) return 1;
 
-    int32_t status = replaceWithFile(0, 0, argv[1], (int32_t)util_cstrLen(argv[1]), false);
-    if (status < 0) return 1;
+    int32_t status;
+    status = init(&argv[3]);
+    if (status < 0) {
+        debug_printNum("Failed to initialise (", status, ")\n");
+        goto cleanup_alloc;
+    }
 
-    status = changeDir(argv[2]);
-    if (status < 0) return 1;
+    status = replaceWithFile(0, 0, argv[2], (int32_t)util_cstrLen(argv[2]), false);
+    if (status < 0) {
+        debug_printNum("Failed to read input (", status, ")\n");
+        status = 1;
+        goto cleanup_init;
+    }
 
     int32_t complete = 0;
     while (!complete) {
@@ -62,40 +72,31 @@ int32_t start(int32_t argc, char **argv, char **envp) {
         status = handleInclude("<!--INCLUDE(", ")-->", false);
         if (status < 0) {
             status = 1;
-            goto cleanup_alloc;
+            goto cleanup_init;
         }
         complete &= status;
         status = handleInclude("/*INCLUDE(", ")*/", false);
         if (status < 0) {
             status = 1;
-            goto cleanup_alloc;
+            goto cleanup_init;
         }
         complete &= status;
         status = handleInclude("/*INCLUDE_BASE64(", ")*/", true);
         if (status < 0) {
             status = 1;
-            goto cleanup_alloc;
+            goto cleanup_init;
         }
         complete &= status;
     }
 
-    int64_t outNameLen = util_cstrLen(argv[3]);
-    int64_t outNameHtmlLen = outNameLen + (int64_t)sizeof(".html");
-    char *outNameHtml = &alloc.mem[alloc.size];
-    if (allocator_resize(&alloc, alloc.size + outNameHtmlLen) < 0) {
+    status = writeToFile(argv[1], buffer, bufferSize);
+    if (status != 0) {
+        debug_printNum("Failed to write output (", status, ")\n");
         status = 1;
-        goto cleanup_alloc;
-    }
-    hc_MEMCPY(&outNameHtml[0], argv[3], (uint64_t)outNameLen);
-    hc_MEMCPY(&outNameHtml[outNameLen], hc_STR_COMMA_LEN(".html\0"));
-    status = writeToFile(outNameHtml, &alloc.mem[0], bufferLen);
-    if (status < 0) {
-        debug_printNum("Error: Failed to write html output (", status, ")\n");
-        status = 1;
-        goto cleanup_alloc;
     }
 
-    status = 0;
+    cleanup_init:
+    deinit();
     cleanup_alloc:
     allocator_deinit(&alloc);
     return status;

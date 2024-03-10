@@ -15,7 +15,7 @@ static struct SYSTEMINFO systemInfo;
 
 #include "../common.c"
 
-void initialise(hc_UNUSED char **envp) {
+static void initPageSize(hc_UNUSED char **envp) {
     GetSystemInfo(&systemInfo);
 }
 

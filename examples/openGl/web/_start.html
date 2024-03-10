@@ -108,7 +108,7 @@
                         }
                     }
                 };
-                let wasmBase64 = "/*INCLUDE_BASE64(openGl.wasm)*/";
+                let wasmBase64 = "/*INCLUDE_BASE64(wasm32-unknown_openGl.wasm)*/";
                 let wasmBuffer = Uint8Array.from(atob(wasmBase64), c => c.charCodeAt(0)).buffer;
                 WebAssembly.instantiate(wasmBuffer, importObject).then(
                     object => {
