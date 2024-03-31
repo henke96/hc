@@ -27,7 +27,7 @@ struct efi_memoryDescriptor {
 };
 
 // Most stuff isn't relevant if pointers are 32 bit.
-#if !hc_ILP32
+#if !hc_PTR32
 
 // Error codes.
 #define efi_BUFFER_TOO_SMALL (int64_t)(0x8000000000000000ull + 5)

@@ -8,7 +8,7 @@ struct sha1 {
     uint8_t buffer[_sha1_BLOCK_SIZE];
     ssize_t bufferSize;
     uint32_t state[5];
-    hc_LP64_PAD(__pad)
+    hc_PTR64_PAD(__pad)
 };
 
 static void _sha1_blocks(uint32_t *state, const void *in, ssize_t numBlocks) {

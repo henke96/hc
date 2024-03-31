@@ -10,7 +10,7 @@ struct sha256 {
     uint64_t blockCounter;
     uint8_t buffer[_sha256_BLOCK_SIZE];
     ssize_t bufferSize;
-    hc_ILP32_PAD(__pad)
+    hc_PTR32_PAD(__pad)
 };
 
 #define _sha256_SIGMA0_A(X) (hc_ROTR32(X, 7) ^ hc_ROTR32(X, 18) ^ ((X) >> 3))

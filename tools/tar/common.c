@@ -22,7 +22,7 @@ static int32_t add(char *name, char *root);
 
 static char octalTable[8] = "01234567";
 static char buffer[65536] hc_ALIGNED(16);
-static char prefix[MAX_PREFIX_LEN];
+static char prefix[MAX_PREFIX_LEN + hc_STR_LEN("/") + MAX_NAME_LEN];
 static int32_t prefixLen = 0;
 
 static bool isDot(char *name) {

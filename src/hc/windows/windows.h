@@ -1,6 +1,6 @@
 // https://learn.microsoft.com/en-us/windows/win32/winprog/windows-data-types
 
-static_assert(!hc_ILP32, "Pointers not 64 bit");
+static_assert(!hc_PTR32, "Pointers not 64 bit");
 
 // winnls.h
 #define CP_UTF8 65001

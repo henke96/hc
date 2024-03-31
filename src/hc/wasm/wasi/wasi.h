@@ -1,4 +1,4 @@
-static_assert(hc_ILP32, "Pointers not 32 bit");
+static_assert(hc_PTR32, "Pointers not 32 bit");
 
 #define CLOCK_MONOTONIC 1
 

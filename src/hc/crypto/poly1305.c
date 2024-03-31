@@ -10,7 +10,7 @@ struct poly1305 {
     uint64_t h[3];
     uint64_t pad[2];
     ssize_t bufferSize;
-    hc_ILP32_PAD(__pad)
+    hc_PTR32_PAD(__pad)
     uint8_t buffer[_poly1305_BLOCK_SIZE];
 };
 

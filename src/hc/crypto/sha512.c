@@ -10,7 +10,7 @@ struct sha512 {
     uint64_t blockCounter;
     uint8_t buffer[_sha512_BLOCK_SIZE];
     ssize_t bufferSize;
-    hc_ILP32_PAD(__pad)
+    hc_PTR32_PAD(__pad)
 };
 
 #define _sha512_SIGMA0_A(X) (hc_ROTR64(X, 1) ^ hc_ROTR64(X, 8) ^ ((X) >> 7))
