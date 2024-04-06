@@ -10,7 +10,7 @@ if test "$ARCH" = wasm32; then
 elif test "$ABI" = windows-gnu; then
     extra_flags="-Wl,--no-insert-timestamp,--entry=_start -Xlinker --stack=0x100000,0x20000"
 else
-    extra_flags="-Wl,-dynamic-linker=,--build-id=none,-znognustack,-znorelro"
+    extra_flags="-Wl,-dynamic-linker=,--build-id=none,--hash-style=gnu,-znognustack,-znorelro,-znow"
 fi
 
 if test "$ARCH" = aarch64; then
