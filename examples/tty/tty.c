@@ -40,7 +40,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         if (status < 0) return 1;
 
         // Open tty.
-        ttyFd = sys_openat(-1, &ttyPath, O_RDWR, 0);
+        ttyFd = sys_openat(-1, &ttyPath[0], O_RDWR, 0);
         if (ttyFd < 0) {
             sys_write(STDOUT_FILENO, hc_STR_COMMA_LEN("Failed to open tty\n"));
             return 1;

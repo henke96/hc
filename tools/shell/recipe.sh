@@ -1,6 +1,5 @@
 recipe_start() {
     SCRIPT_NAME="${0##*/}"
-
     if test -z "$hc_TIMESTAMP"; then
         if test -z "$OUT"; then
             set +x
@@ -11,14 +10,14 @@ recipe_start() {
         test "$OUT" != "$SCRIPT_DIR"
         DOWNLOADS="$(cd -- "${DOWNLOADS:-"$OUT"}" && pwd)"
         # Run ourself with a clean environment.
-        exec env -i hc_TIMESTAMP="$(date)" hc_DOWNLOADS="$DOWNLOADS" OUT="$OUT" NUM_CPUS="${NUM_CPUS:-1}" CC="${CC:-cc}" CXX="${CXX:-c++}" PATH="$PATH" TERM=xterm SHELL=/bin/sh SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C "$SCRIPT_DIR/$SCRIPT_NAME"
+        exec env -i hc_TIMESTAMP="$(date)" hc_DOWNLOADS="$DOWNLOADS" OUT="$OUT" NUM_CPUS="${NUM_CPUS:-1}" CC="${CC:-cc}" CXX="${CXX:-c++}" PATH="$PATH" TERM=xterm SOURCE_DATE_EPOCH=0 TZ=UTC0 LC_ALL=C sh "$SCRIPT_DIR/$SCRIPT_NAME"
     fi
     cd "$SCRIPT_DIR"
     hc_outdir="$OUT/$SCRIPT_NAME"
 
     # Build dependencies if needed.
     for hc_dep in $DEPENDENCIES; do
-        if test "$hc_TIMESTAMP" != "$(cat "$OUT/${hc_dep##*/}/sha512-timestamp")"; then "./$hc_dep"; fi
+        if test "$hc_TIMESTAMP" != "$(cat "$OUT/${hc_dep##*/}/sha512-timestamp")"; then sh "./$hc_dep"; fi
     done
 
     # Check if the recipe needs to be rebuilt.
