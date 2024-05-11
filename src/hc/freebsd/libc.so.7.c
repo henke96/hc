@@ -20,3 +20,4 @@ hc_EXPORT void close(void) {}
 hc_EXPORT void chdir(void) {}
 hc_EXPORT void elf_aux_info(void) {}
 hc_EXPORT void getdents(void) {}
+hc_EXPORT void clock_gettime(void) {}

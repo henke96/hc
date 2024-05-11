@@ -1,5 +1,5 @@
 // Returns pid, or negative error code.
-int32_t sys_clone_func(uint32_t flags, void *stackHigh, int32_t *parent_tid, uint64_t tls, int32_t *child_tid, hc_NONULL void (*childfunc)(void *), void *childarg);
+int32_t sys_clone_func(uint32_t flags, void *stackHigh, int32_t *parent_tid, uint64_t tls, int32_t *child_tid, void (*childfunc)(void *), void *childarg);
 #if hc_X86_64
 asm(
     ".section .text\n"

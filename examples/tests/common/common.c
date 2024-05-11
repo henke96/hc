@@ -1,3 +1,16 @@
+#include "hc/crypto/sha512.c"
+#include "hc/crypto/sha256.c"
+#include "hc/crypto/sha1.c"
+#include "hc/crypto/curve25519.c"
+#include "hc/crypto/x25519.c"
+#include "hc/crypto/ed25519.c"
+#include "hc/crypto/chacha20.c"
+#include "hc/crypto/poly1305.c"
+#include "hc/crypto/aes.c"
+#include "hc/crypto/aes128.c"
+#include "hc/crypto/aes256.c"
+#include "hc/base64.c"
+
 #define CHECK(EXPR, COND) do { typeof(EXPR) RES = (EXPR); if (!(COND)) debug_fail((int64_t)RES, #EXPR, __FILE_NAME__, __LINE__); } while (0)
 
 #define TIME(FN) { \

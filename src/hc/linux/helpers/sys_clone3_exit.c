@@ -1,6 +1,6 @@
 // Doesn't return in parent if successful, else returns negative error code. Returns 0 in child.
 // Safe to use with CLONE_VM.
-int32_t sys_clone3_exit(hc_NONULL struct clone_args *args, uint64_t size);
+int32_t sys_clone3_exit(struct clone_args *args, uint64_t size);
 #if hc_X86_64
 asm(
     ".section .text\n"

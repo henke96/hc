@@ -9,6 +9,7 @@ FBSD_1.0 {
     write;
     close;
     chdir;
+    clock_gettime;
 };
 
 FBSD_1.2 {

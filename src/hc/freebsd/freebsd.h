@@ -227,3 +227,6 @@ struct dirent {
 // syslimits.h
 #define NAME_MAX 255
 #define PATH_MAX 1024
+
+// _clock_id.h
+#define CLOCK_MONOTONIC 4

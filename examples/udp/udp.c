@@ -37,7 +37,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     struct options options;
     if (options_init(&options, argc, argv) < 0) {
         sys_write(
-            STDOUT_FILENO,
+            1,
             hc_STR_COMMA_LEN(
                 "\nUsage: udp [-b ADDRESS] [-p PORT] [-i INTERFACE] [-m GROUPS]\n"
             )

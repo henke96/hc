@@ -129,7 +129,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
                 { error, header.extra },
                 { hc_STR_COMMA_LEN("\n") }
             };
-            sys_writev(STDERR_FILENO, &print[0], hc_ARRAY_LEN(print));
+            sys_writev(2, &print[0], hc_ARRAY_LEN(print));
         }
         status = -11;
         goto cleanup_setupResponse;

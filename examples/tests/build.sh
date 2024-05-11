@@ -12,6 +12,12 @@ build() {
     "$root_dir/tools/builder.sh" "$script_dir/linux/tests.c"
     "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_tests"
 
+    export ABI=freebsd14
+    export FLAGS="-Wl,-dynamic-linker=/libexec/ld-elf.so.1 -L $(escape "$OUT") -l:libc.so.7"
+    "$root_dir/cc.sh" -fPIC -shared -Wl,--version-script="$root_dir/src/hc/freebsd/libc.so.7.map" -o "$OUT/libc.so.7" "$root_dir/src/hc/freebsd/libc.so.7.c"
+    "$root_dir/tools/builder.sh" "$script_dir/freebsd/tests.c"
+    "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_tests"
+
     if test "$ARCH" != "riscv64"; then
         export ABI=windows-gnu
         export FLAGS="-Wl,-subsystem,console -L $(escape "$OUT") -l:kernel32.lib"

@@ -4,14 +4,14 @@
 #include "hc/math.c"
 #include "hc/mem.c"
 #include "hc/compilerRt/mem.c"
-#include "hc/linux/linux.h"
-#include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
-#include "hc/linux/helpers/_start.c"
+#include "hc/freebsd/freebsd.h"
+#include "hc/freebsd/libc.so.7.h"
+#include "hc/freebsd/_start.c"
+#include "hc/freebsd/debug.c"
 
 static int64_t tests_currentNs(void) {
     struct timespec timespec = {0};
-    debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &timespec), RES == 0);
+    debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &timespec), RES == 0);
     return timespec.tv_sec * 1000000000 + timespec.tv_nsec;
 }
 

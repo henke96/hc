@@ -22,13 +22,13 @@ static noreturn void debug_fail(int64_t res, const char *expression, const char 
         { hc_STR_COMMA_LEN(" = ") },
         { resStr, (int64_t)(&resBuffer[hc_ARRAY_LEN(resBuffer)] - resStr) }
     };
-    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
+    sys_writev(1, &print[0], hc_ARRAY_LEN(print));
     debug_abort();
 }
 
 hc_UNUSED
 static void debug_print(const char *str) {
-    sys_write(STDOUT_FILENO, str, util_cstrLen(str));
+    sys_write(1, str, util_cstrLen(str));
 }
 
 hc_UNUSED
@@ -41,5 +41,5 @@ static void debug_printNum(const char *pre, int64_t num, const char *post) {
         { numStr, (int64_t)(&buffer[hc_ARRAY_LEN(buffer)] - numStr) },
         { post, util_cstrLen(post) }
     };
-    sys_writev(STDOUT_FILENO, &print[0], hc_ARRAY_LEN(print));
+    sys_writev(1, &print[0], hc_ARRAY_LEN(print));
 }
