@@ -33,7 +33,7 @@ static int32_t openGl_pageSize;
 #include "../mat.c"
 #include "../game.c"
 #include "input.c"
-#include "window.c"
+#include "../ix/window.c"
 
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     openGl_pageSize = (int32_t)getauxval(AT_PAGESZ);

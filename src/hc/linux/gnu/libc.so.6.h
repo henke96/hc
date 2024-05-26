@@ -28,3 +28,4 @@ int32_t openat(int32_t fd, const char *path, uint32_t flags, ...);
 int32_t fstatat(int32_t fd, const char *path, struct stat *stat, uint32_t flags);
 int32_t ioctl(int32_t fd, uint64_t request, ...);
 int64_t read(int32_t fd, void *buffer, int64_t size);
+int32_t ppoll(struct pollfd *fds, int64_t nfds, const struct timespec *timeout, const int64_t *sigmask);

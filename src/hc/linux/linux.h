@@ -667,6 +667,20 @@ struct itimerspec {
 #define TFD_CLOEXEC 02000000
 #define TFD_NONBLOCK 00004000
 
+// poll.h
+#define POLLIN 0x0001
+#define POLLPRI 0x0002
+#define POLLOUT 0x0004
+#define POLLERR 0x0008
+#define POLLHUP 0x0010
+#define POLLNVAL 0x0020
+
+struct pollfd {
+    int32_t fd;
+    uint16_t events;
+    uint16_t revents;
+};
+
 // eventpoll.h
 #define EPOLL_CLOEXEC 02000000
 #define EPOLL_NONBLOCK 00004000

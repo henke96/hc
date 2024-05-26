@@ -20,6 +20,20 @@ static void util_strToUtf16(uint16_t *dest, char *src, ssize_t size) {
     for (ssize_t i = 0; i < size; ++i) *dest++ = (uint16_t)*src++;
 }
 
+hc_UNUSED
+static char *util_getEnv(char **envp, const char *name) {
+    for (; *envp != NULL; ++envp) {
+        char *env = *envp;
+        for (const char *c = name; *c != '\0'; ++c) {
+            if (*env == '\0' || *env != *c) goto noMatch;
+            ++env;
+        }
+        if (*env == '=') return env + 1;
+        noMatch:;
+    }
+    return NULL;
+}
+
 #define util_INT32_MAX_CHARS 11
 #define util_UINT32_MAX_CHARS 10
 #define util_INT64_MAX_CHARS 20

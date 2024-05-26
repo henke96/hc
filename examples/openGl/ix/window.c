@@ -31,12 +31,11 @@ struct window_gbm {
 
 struct window {
     struct egl egl;
-    int32_t epollFd;
     enum window_platform platform;
     uint16_t width;
     uint16_t height;
     bool pointerGrabbed;
-    char __pad[3];
+    char __pad[7];
     union {
         struct window_x11 x11;
         struct window_gbm gbm;
@@ -73,13 +72,10 @@ static int32_t window_init(char **envp) {
     window.width = 640;
     window.height = 480;
 
-    window.epollFd = sys_epoll_create1(0);
-    if (window.epollFd < 0) return -1;
-
     int32_t status = egl_init(&window.egl, "libEGL.so.1");
     if (status < 0) {
         debug_printNum("Failed to initalise EGL (", status, ")\n");
-        goto cleanup_epollFd;
+        return -1;
     }
 
     void *eglWindow;
@@ -95,7 +91,7 @@ static int32_t window_init(char **envp) {
             { hc_STR_COMMA_LEN("\n") },
         };
         if (status < 0) print[0] = (struct iovec_const) { hc_STR_COMMA_LEN("Failed using platform ") };
-        sys_writev(1, &print[0], hc_ARRAY_LEN(print));
+        writev(1, &print[0], hc_ARRAY_LEN(print));
         if (status == 0) {
             window.platform = platform;
             goto initialisedPlatform;
@@ -146,8 +142,6 @@ static int32_t window_init(char **envp) {
     }
     cleanup_egl:
     egl_deinit(&window.egl);
-    cleanup_epollFd:
-    debug_CHECK(sys_close(window.epollFd), RES == 0);
     return -1;
 }
 
@@ -168,5 +162,4 @@ static void window_deinit(void) {
         default: hc_UNREACHABLE;
     }
     egl_deinit(&window.egl);
-    debug_CHECK(sys_close(window.epollFd), RES == 0);
 }

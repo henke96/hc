@@ -196,14 +196,14 @@ static int32_t window_x11_setup(uint32_t visualId) {
                 }
                 case window_GETKEYBOARDMAPPING_SEQ: {
                     window.x11.keyboardMapSize = hc_ABS32(msgSize);
-                    window.x11.keyboardMap = sys_mmap(NULL, window.x11.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+                    window.x11.keyboardMap = mmap(NULL, window.x11.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
                     if ((int64_t)window.x11.keyboardMap < 0) return -8;
 
                     // Handle big response.
                     if (msgSize < 0) {
                         int32_t totalRead = window.x11.client.receivedSize;
                         while (totalRead < window.x11.keyboardMapSize) {
-                            int32_t read = (int32_t)sys_recvfrom(
+                            int32_t read = (int32_t)recvfrom(
                                 window.x11.client.socketFd,
                                 (char *)window.x11.keyboardMap + totalRead,
                                 window.x11.keyboardMapSize - totalRead,
@@ -299,18 +299,9 @@ static int32_t window_x11_init(void **eglWindow, char **envp) {
         goto cleanup_x11Client;
     }
 
-    struct epoll_event x11SocketEvent = {
-        .events = EPOLLIN,
-        .data.ptr = &window.x11.client.socketFd
-    };
-    if (sys_epoll_ctl(window.epollFd, EPOLL_CTL_ADD, window.x11.client.socketFd, &x11SocketEvent) < 0) {
-        goto cleanup_x11Setup;
-    }
     *eglWindow = (void *)(size_t)window.x11.windowId;
     return 0;
 
-    cleanup_x11Setup:
-    debug_CHECK(sys_munmap(window.x11.keyboardMap, window.x11.keyboardMapSize), RES == 0);
     cleanup_x11Client:
     x11Client_deinit(&window.x11.client);
     cleanup_eglContext:
@@ -485,22 +476,26 @@ static int32_t window_x11_run(void) {
     if (x11Client_sendRequests(&window.x11.client, &setupRequests, sizeof(setupRequests), 5) < 0) return -1;
 
     // Main loop.
+    #define pollfds_X11CLIENT 0
+    struct pollfd pollfds[] = {
+        [pollfds_X11CLIENT] = {
+            .fd = window.x11.client.socketFd,
+            .events = POLLIN
+        }
+    };
     for (;;) {
         // Process all inputs.
         for (;;) {
-            struct epoll_event event;
-            event.data.ptr = NULL;
-            int32_t status = sys_epoll_pwait(window.epollFd, &event, 1, 0, NULL);
+            struct timespec timeout = {0};
+            int32_t status = ppoll(&pollfds[0], hc_ARRAY_LEN(pollfds), &timeout, NULL);
             if (status < 0) return -1;
             if (status == 0) break;
-            if (event.data.ptr == NULL) return -1; // Should never happen..
 
             struct timespec eventTimespec;
             debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &eventTimespec), RES == 0);
             uint64_t eventTimestamp = (uint64_t)eventTimespec.tv_sec * 1000000000 + (uint64_t)eventTimespec.tv_nsec;
 
-            int32_t eventFd = *((int32_t *)event.data.ptr);
-            if (eventFd == window.x11.client.socketFd) {
+            if (pollfds[pollfds_X11CLIENT].revents) {
                 int32_t numRead = x11Client_receive(&window.x11.client);
                 if (numRead == 0) return 0;
                 if (numRead <= 0) return -2;
@@ -586,7 +581,7 @@ static int32_t window_x11_run(void) {
 }
 
 static void window_x11_deinit(void) {
-    debug_CHECK(sys_munmap(window.x11.keyboardMap, window.x11.keyboardMapSize), RES == 0);
+    debug_CHECK(munmap(window.x11.keyboardMap, window.x11.keyboardMapSize), RES == 0);
     x11Client_deinit(&window.x11.client);
     egl_destroyContext(&window.egl);
 }
