@@ -1,6 +1,12 @@
 #define window_DEFAULT_WIDTH 640
 #define window_DEFAULT_HEIGHT 480
 
+static int32_t window_codeToKey[0x80] = {
+    [0x10] = 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+    [0x1E] = 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+    [0X2C] = 'Z', 'X', 'C', 'V', 'B', 'N', 'M',
+};
+
 extern void *__ImageBase;
 
 struct window {
@@ -153,7 +159,7 @@ static int64_t window_proc(
             } else if (input.header.type == RIM_TYPEKEYBOARD) {
                 if ((input.data.keyboard.flags & RI_KEY_E1) != 0 || input.data.keyboard.makeCode > 0x7F) return 0; // Ignore weirdness.
 
-                int32_t key = input_codeToKey[input.data.keyboard.makeCode];
+                int32_t key = window_codeToKey[input.data.keyboard.makeCode];
                 if (!(input.data.keyboard.flags & RI_KEY_BREAK)) {
                     // Key down.
                     if (key != 0) game_onKeyDown(key, window.eventTimestamp);

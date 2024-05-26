@@ -15,3 +15,17 @@ int32_t chdir(const char *path);
 int32_t elf_aux_info(int32_t aux, void *buffer, int32_t size);
 int64_t getdents(int32_t fd, void *buffer, int64_t size);
 int32_t clock_gettime(int32_t clock, struct timespec *time);
+int32_t ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout, const void *sigmask); // TODO sigmask
+int32_t memfd_create(const char *name, uint32_t flags);
+int32_t ftruncate(int32_t fd, int64_t size);
+int32_t socket(int32_t family, int32_t type, int32_t protocol);
+int32_t connect(int32_t fd, const void *addr, int32_t addrlen);
+int64_t sendmsg(int32_t fd, const struct msghdr_const *msg, uint32_t flags);
+int64_t recvfrom(int32_t fd, void *buf, int64_t size, uint32_t flags, void *addr, int32_t *addrlen);
+int64_t writev(int32_t fd, const struct iovec_const *iov, int32_t iovlen);
+int64_t sendto(int32_t fd, const void *buf, int64_t size, uint32_t flags, const void *addr, int32_t addrlen);
+void *dlopen(const char *path, int32_t mode);
+char *dlerror(void);
+void *dlsym(void *handle, const char *symbol);
+int32_t dlclose(void *handle);
+int32_t ioctl(int32_t fd, uint64_t request, ...);

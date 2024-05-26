@@ -1,3 +1,7 @@
+#define RTLD_LAZY 0x1
+#define RTLD_NOW 0x2
+#define RTLD_GLOBAL 0x100
+
 struct ARect {
     int32_t left;
     int32_t top;

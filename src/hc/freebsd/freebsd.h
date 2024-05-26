@@ -99,6 +99,115 @@
 #define EOWNERDEAD 96
 #define EINTEGRITY 97
 
+// poll.h
+typedef int32_t nfds_t;
+
+struct pollfd {
+    int32_t fd;
+    uint16_t events;
+    uint16_t revents;
+};
+
+#define POLLIN 0x0001
+#define POLLPRI 0x0002
+#define POLLOUT 0x0004
+#define POLLRDNORM 0x0040
+#define POLLWRNORM POLLOUT
+#define POLLRDBAND 0x0080
+#define POLLWRBAND 0x0100
+#define POLLRDHUP 0x4000
+#define POLLERR 0x0008
+#define POLLHUP 0x0010
+#define POLLNVAL 0x0020
+
+// socket.h
+#define SOCK_STREAM 1
+#define SOCK_DGRAM 2
+#define SOCK_RAW 3
+
+#define AF_UNSPEC 0
+#define AF_UNIX 1
+#define AF_INET 2
+#define AF_INET6 28
+
+struct iovec {
+    void *iov_base;
+    int64_t iov_len;
+};
+
+struct iovec_const {
+    const void *iov_base;
+    int64_t iov_len;
+};
+
+struct msghdr {
+    void *msg_name;
+    int32_t msg_namelen;
+    int32_t __pad;
+    struct iovec *msg_iov;
+    int32_t msg_iovlen;
+    int32_t __pad2;
+    void *msg_control;
+    int32_t msg_controllen;
+    uint32_t msg_flags;
+};
+
+struct msghdr_const {
+    void *msg_name;
+    int32_t msg_namelen;
+    int32_t __pad;
+    struct iovec_const *msg_iov;
+    int32_t msg_iovlen;
+    int32_t __pad2;
+    void *msg_control;
+    int32_t msg_controllen;
+    uint32_t msg_flags;
+};
+
+#define MSG_OOB 0x00000001
+#define MSG_PEEK 0x00000002
+#define MSG_DONTROUTE 0x00000004
+#define MSG_EOR 0x00000008
+#define MSG_TRUNC 0x00000010
+#define MSG_CTRUNC 0x00000020
+#define MSG_WAITALL 0x00000040
+#define MSG_NOSIGNAL 0x00020000
+
+// dlfcn.h
+#define RTLD_LAZY 1
+#define RTLD_NOW 2
+#define RTLD_GLOBAL 0x100
+
+// ioccom.h
+#define IOCPARM_SHIFT 13
+#define IOCPARM_MASK ((1 << IOCPARM_SHIFT) - 1)
+#define IOCPARM_LEN(x) (((x) >> 16) & IOCPARM_MASK)
+#define IOCBASECMD(x) ((x) & ~(IOCPARM_MASK << 16))
+#define IOCGROUP(x) (((x) >> 8) & 0xff)
+
+#define IOCPARM_MAX (1 << IOCPARM_SHIFT)
+
+#define IOC_VOID 0x20000000UL
+#define IOC_OUT 0x40000000UL
+#define IOC_IN 0x80000000UL
+#define IOC_INOUT (IOC_IN | IOC_OUT)
+#define IOC_DIRMASK (IOC_VOID | IOC_OUT | IOC_IN)
+
+#define _IOC(inout, group, num, len) ((uint64_t)((inout) | (((len) & IOCPARM_MASK) << 16) | ((group) << 8) | (num)))
+#define _IO(g, n) _IOC(IOC_VOID, (g), (n), 0)
+#define _IOR(g, n, t) _IOC(IOC_OUT, (g), (n), sizeof(t))
+#define _IOW(g, n, t) _IOC(IOC_IN, (g), (n), sizeof(t))
+#define _IOWR(g, n, t) _IOC(IOC_INOUT, (g), (n), sizeof(t))
+
+// un.h
+#define SUNPATHLEN 104
+
+struct sockaddr_un {
+    uint8_t sun_len;
+    uint8_t sun_family;
+    char sun_path[SUNPATHLEN];
+};
+
 // fcntl.h
 #define FREAD 0x1
 #define FWRITE 0x2
@@ -174,6 +283,10 @@
 #define MAP_NOCORE 0x20000
 #define MAP_PREFAULT_READ 0x40000
 #define MAP_32BIT 0x80000
+
+#define MFD_CLOEXEC 0x1
+#define MFD_ALLOW_SEALING 0x2
+#define MFD_HUGETLB 0x4
 
 // _timespec.h
 struct timespec {

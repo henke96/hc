@@ -1,3 +1,9 @@
+static int32_t window_x11_codeToKey[0x80] = {
+    [0x18] = 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
+    [0x26] = 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
+    [0X34] = 'Z', 'X', 'C', 'V', 'B', 'N', 'M',
+};
+
 static int32_t window_x11_setup(uint32_t visualId) {
     window.x11.windowId = x11Client_nextId(&window.x11.client);
 
@@ -196,7 +202,7 @@ static int32_t window_x11_setup(uint32_t visualId) {
                 }
                 case window_GETKEYBOARDMAPPING_SEQ: {
                     window.x11.keyboardMapSize = hc_ABS32(msgSize);
-                    window.x11.keyboardMap = mmap(NULL, window.x11.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+                    window.x11.keyboardMap = mmap(NULL, window.x11.keyboardMapSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
                     if ((int64_t)window.x11.keyboardMap < 0) return -8;
 
                     // Handle big response.
@@ -257,8 +263,9 @@ static int32_t window_x11_init(void **eglWindow, char **envp) {
     uint32_t eglVisualId = (uint32_t)status;
 
     // Initialise x11.
-    struct sockaddr_un serverAddr;
-    serverAddr.sun_family = AF_UNIX;
+    struct sockaddr_un serverAddr = {
+        .sun_family = AF_UNIX
+    };
     const static char address[] = "/tmp/.X11-unix/X0";
     hc_MEMCPY(&serverAddr.sun_path[0], &address[0], sizeof(address));
 
@@ -283,10 +290,10 @@ static int32_t window_x11_init(void **eglWindow, char **envp) {
     struct xauth_entry entry = {0};
     if (xAuthorityFile != NULL && xauth_init(&xauth, xAuthorityFile) == 0) {
         xauth_nextEntry(&xauth, &entry);
-        status = x11Client_init(&window.x11.client, &serverAddr, sizeof(serverAddr), &entry);
+        status = x11Client_init(&window.x11.client, AF_UNIX, &serverAddr, sizeof(serverAddr), &entry);
         xauth_deinit(&xauth);
     } else {
-        status = x11Client_init(&window.x11.client, &serverAddr, sizeof(serverAddr), &entry);
+        status = x11Client_init(&window.x11.client, AF_UNIX, &serverAddr, sizeof(serverAddr), &entry);
     }
     if (status < 0) {
         debug_printNum("Failed to initialise x11Client (", status, ")\n");
@@ -476,9 +483,9 @@ static int32_t window_x11_run(void) {
     if (x11Client_sendRequests(&window.x11.client, &setupRequests, sizeof(setupRequests), 5) < 0) return -1;
 
     // Main loop.
-    #define pollfds_X11CLIENT 0
+    #define window_FD_X11CLIENT 0
     struct pollfd pollfds[] = {
-        [pollfds_X11CLIENT] = {
+        [window_FD_X11CLIENT] = {
             .fd = window.x11.client.socketFd,
             .events = POLLIN
         }
@@ -495,7 +502,7 @@ static int32_t window_x11_run(void) {
             debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &eventTimespec), RES == 0);
             uint64_t eventTimestamp = (uint64_t)eventTimespec.tv_sec * 1000000000 + (uint64_t)eventTimespec.tv_nsec;
 
-            if (pollfds[pollfds_X11CLIENT].revents) {
+            if (pollfds[window_FD_X11CLIENT].revents) {
                 int32_t numRead = x11Client_receive(&window.x11.client);
                 if (numRead == 0) return 0;
                 if (numRead <= 0) return -2;
@@ -551,7 +558,7 @@ static int32_t window_x11_run(void) {
                             struct x11_keyPress *message = (void *)generic; // Press/release structs are identical.
                             if (message->detail > 0x7F) break;
 
-                            int32_t key = input_codeToKey[message->detail];
+                            int32_t key = window_x11_codeToKey[message->detail];
                             if (type == x11_keyPress_TYPE) {
                                 if (key != 0) game_onKeyDown(key, eventTimestamp);
                                 else if (message->detail == 0x09) { // Escape.

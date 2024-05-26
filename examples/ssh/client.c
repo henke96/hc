@@ -643,7 +643,7 @@ static int32_t client_init(struct client *self, int32_t sockaddrFamily) {
         goto cleanup_bufferMemFd;
     }
 
-    self->buffer = sys_mmap(NULL, 2 * self->bufferSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    self->buffer = sys_mmap(NULL, 2 * self->bufferSize, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if ((int64_t)self->buffer < 0) {
         status = -3;
         goto cleanup_bufferMemFd;

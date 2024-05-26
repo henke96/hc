@@ -17,7 +17,7 @@ struct x11Client {
     uint8_t __pad[6];
 };
 
-static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t sockaddrSize, struct xauth_entry *authEntry) {
+static int32_t x11Client_init(struct x11Client *self, int32_t sockaddrFamily, void *sockaddr, int32_t sockaddrSize, struct xauth_entry *authEntry) {
     self->sequenceNumber = 1;
     self->nextId = 0;
     self->bufferPos = 0;
@@ -33,7 +33,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
         goto cleanup_bufferMemFd;
     }
 
-    self->buffer = mmap(NULL, 2 * (int64_t)x11Client_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    self->buffer = mmap(NULL, 2 * (int64_t)x11Client_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if ((int64_t)self->buffer < 0) {
         status = -3;
         goto cleanup_bufferMemFd;
@@ -55,7 +55,6 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     }
 
     // Connect to server.
-    uint16_t sockaddrFamily = *(uint16_t *)sockaddr;
     self->socketFd = socket(sockaddrFamily, SOCK_STREAM, 0);
     if (self->socketFd < 0) {
         status = -5;
@@ -102,7 +101,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
 
     // Allocate space for payload of response.
     self->setupResponseSize = (int32_t)header.length * 4;
-    self->setupResponse = mmap(NULL, self->setupResponseSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    self->setupResponse = mmap(NULL, self->setupResponseSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if ((int64_t)self->setupResponse < 0) {
         status = -9;
         goto cleanup_socket;

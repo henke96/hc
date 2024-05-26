@@ -10,16 +10,36 @@ FBSD_1.0 {
     close;
     chdir;
     clock_gettime;
+    ftruncate;
+    socket;
+    connect;
+    sendmsg;
+    recvfrom;
+    writev;
+    sendto;
+    dlopen;
+    dlerror;
+    dlsym;
+    dlclose;
+    ioctl;
 };
 
 FBSD_1.2 {
     openat;
 };
 
+FBSD_1.4 {
+    ppoll;
+};
+
 FBSD_1.5 {
     getdents;
     fstatat;
     elf_aux_info;
+};
+
+FBSD_1.6 {
+    memfd_create;
 };
 
 FBSD_1.7 {

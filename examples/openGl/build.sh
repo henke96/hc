@@ -16,6 +16,14 @@ build() {
     "$root_dir/tools/builder.sh" "$script_dir/gnulinux/openGl.c"
     "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_openGl"
 
+    export ABI=freebsd14
+    export FLAGS="-Wl,-dynamic-linker=/libexec/ld-elf.so.1 -L $(escape "$OUT") -l:libc.so.7"
+    export FLAGS_RELEASE="-Os"
+    export FLAGS_DEBUG="-g"
+    "$root_dir/cc.sh" -fPIC -shared -Wl,--version-script="$root_dir/src/hc/freebsd/libc.so.7.map" -o "$OUT/libc.so.7" "$root_dir/src/hc/freebsd/libc.so.7.c"
+    "$root_dir/tools/builder.sh" "$script_dir/freebsd/openGl.c"
+    "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_openGl"
+
     if test "$ARCH" != "riscv64"; then
         export ABI=windows-gnu
         export FLAGS="-Wl,-subsystem,console -L $(escape "$OUT") -l:kernel32.lib -l:user32.lib -l:gdi32.lib"

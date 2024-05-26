@@ -8,6 +8,7 @@
 #include "hc/linux/util.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/linux/helpers/sys_clone3_exit.c"
+#include "hc/ix/drm.h"
 
 #define ix_ERRNO(RET) (-RET)
 #define openat sys_openat
@@ -16,7 +17,6 @@
 #define read sys_read
 #define close sys_close
 #include "hc/ix/drm.c"
-
 
 #include "graphics.c"
 

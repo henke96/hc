@@ -17,7 +17,6 @@
 #include "../trig.c"
 #include "../mat.c"
 #include "../game.c"
-#include "input.c"
 #include "window.c"
 
 // Use dedicated GPU.
