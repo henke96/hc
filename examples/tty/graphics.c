@@ -1,7 +1,7 @@
 struct graphics {
     int64_t frameBufferSize;
     uint32_t *frameBuffer;
-    struct drmKms drmKms;
+    struct drm drm;
     struct drm_mode_fb_cmd frameBufferInfo;
     uint32_t red;
     uint32_t green;
@@ -13,30 +13,30 @@ static int32_t graphics_init(struct graphics *self) {
     self->green = 0;
     self->blue = 0;
 
-    int32_t status = drmKms_init(&self->drmKms, "/dev/dri/card0");
+    int32_t status = drm_init(&self->drm, "/dev/dri/card0");
     if (status < 0) {
         debug_printNum("Failed to initialise DRM/KMS (", status, ")\n");
         return -1;
     }
 
-    int32_t modeIndex = drmKms_bestModeIndex(&self->drmKms);
+    int32_t modeIndex = drm_bestModeIndex(&self->drm);
     struct iovec_const print[] = {
         { hc_STR_COMMA_LEN("Selected mode \"") },
-        { self->drmKms.modeInfos[modeIndex].name, DRM_DISPLAY_MODE_LEN }
+        { self->drm.modeInfos[modeIndex].name, DRM_DISPLAY_MODE_LEN }
     };
     sys_writev(1, &print[0], hc_ARRAY_LEN(print));
-    debug_printNum("\" at ", self->drmKms.modeInfos[modeIndex].vrefresh, " Hz.\n");
+    debug_printNum("\" at ", self->drm.modeInfos[modeIndex].vrefresh, " Hz.\n");
 
     // Setup frame buffer using the selected mode.
     struct drm_mode_create_dumb dumbBuffer = {
-        .width = self->drmKms.modeInfos[modeIndex].hdisplay,
-        .height = self->drmKms.modeInfos[modeIndex].vdisplay,
+        .width = self->drm.modeInfos[modeIndex].hdisplay,
+        .height = self->drm.modeInfos[modeIndex].vdisplay,
         .bpp = 32
     };
-    status = drmKms_createDumbBuffer(&self->drmKms, &dumbBuffer);
+    status = drm_createDumbBuffer(&self->drm, &dumbBuffer);
     if (status < 0) {
-        debug_printNum("Failed to create dumb buffer (", status, "\n");
-        goto cleanup_drmKms;
+        debug_printNum("Failed to create dumb buffer (", status, ")\n");
+        goto cleanup_drm;
     }
     self->frameBufferSize = (int64_t)dumbBuffer.size;
 
@@ -47,40 +47,40 @@ static int32_t graphics_init(struct graphics *self) {
     self->frameBufferInfo.bpp = dumbBuffer.bpp;
     self->frameBufferInfo.depth = 24;
     self->frameBufferInfo.handle = dumbBuffer.handle;
-    status = drmKms_createFrameBuffer(&self->drmKms, &self->frameBufferInfo);
+    status = drm_createFrameBuffer(&self->drm, &self->frameBufferInfo);
     if (status < 0) {
-        debug_printNum("Failed to create frame buffer (", status, "\n");
+        debug_printNum("Failed to create frame buffer (", status, ")\n");
         goto cleanup_dumbBuffer;
     }
 
-    status = drmKms_setCrtc(&self->drmKms, modeIndex, self->frameBufferInfo.fb_id);
+    status = drm_setCrtc(&self->drm, modeIndex, self->frameBufferInfo.fb_id);
     if (status < 0) {
-        debug_printNum("Failed to set CRTC (", status, "\n");
+        debug_printNum("Failed to set CRTC (", status, ")\n");
         goto cleanup_frameBuffer;
     }
 
     // Map the frame buffer.
-    self->frameBuffer = drmKms_mmapDumbBuffer(&self->drmKms, self->frameBufferInfo.handle, self->frameBufferSize);
+    self->frameBuffer = drm_mmapDumbBuffer(&self->drm, self->frameBufferInfo.handle, self->frameBufferSize);
     if ((ssize_t)self->frameBuffer < 0) {
-        debug_printNum("Failed to map frame buffer (", status, "\n");
+        debug_printNum("Failed to map frame buffer (", status, ")\n");
         goto cleanup_frameBuffer;
     }
     return 0;
 
     cleanup_frameBuffer:
-    drmKms_destroyFrameBuffer(&self->drmKms, self->frameBufferInfo.fb_id);
+    drm_destroyFrameBuffer(&self->drm, self->frameBufferInfo.fb_id);
     cleanup_dumbBuffer:
-    drmKms_destroyDumbBuffer(&self->drmKms, dumbBuffer.handle);
-    cleanup_drmKms:
-    drmKms_deinit(&self->drmKms);
+    drm_destroyDumbBuffer(&self->drm, dumbBuffer.handle);
+    cleanup_drm:
+    drm_deinit(&self->drm);
     return -1;
 }
 
 static void graphics_deinit(struct graphics *self) {
     debug_CHECK(sys_munmap(self->frameBuffer, self->frameBufferSize), RES == 0);
-    drmKms_destroyFrameBuffer(&self->drmKms, self->frameBufferInfo.fb_id);
-    drmKms_destroyDumbBuffer(&self->drmKms, self->frameBufferInfo.handle);
-    drmKms_deinit(&self->drmKms);
+    drm_destroyFrameBuffer(&self->drm, self->frameBufferInfo.fb_id);
+    drm_destroyDumbBuffer(&self->drm, self->frameBufferInfo.handle);
+    drm_deinit(&self->drm);
 }
 
 static void graphics_draw(struct graphics *self) {
@@ -92,7 +92,7 @@ static void graphics_draw(struct graphics *self) {
     uint32_t colour = (red << 16) | (green << 8) | blue;
     int32_t numPixels = (int32_t)(self->frameBufferSize >> 2);
     for (int32_t i = 0; i < numPixels; ++i) self->frameBuffer[i] = colour;
-    drmKms_markFrameBufferDirty(&self->drmKms, self->frameBufferInfo.fb_id);
+    drm_markFrameBufferDirty(&self->drm, self->frameBufferInfo.fb_id);
 
     // Continuous iteration of colours.
     if (red == 0 && green == 0 && blue != 255) ++blue;

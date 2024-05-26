@@ -1,14 +1,14 @@
 static int32_t window_gbm_init(void **eglWindow) {
-    int32_t status = drmKms_init(&window.gbm.drmKms, "/dev/dri/card0");
+    int32_t status = drm_init(&window.gbm.drm, "/dev/dri/card0");
     if (status < 0) {
         debug_printNum("Failed to initialise DRM/KMS (", status, ")\n");
         return -1;
     }
-    window.gbm.drmModeIndex = drmKms_bestModeIndex(&window.gbm.drmKms);
-    struct drm_mode_modeinfo *bestMode = &window.gbm.drmKms.modeInfos[window.gbm.drmModeIndex];
+    window.gbm.drmModeIndex = drm_bestModeIndex(&window.gbm.drm);
+    struct drm_mode_modeinfo *bestMode = &window.gbm.drm.modeInfos[window.gbm.drmModeIndex];
 
-    status = gbm_init(&window.gbm.gbm, window.gbm.drmKms.cardFd);
-    if (status < 0) goto cleanup_drmKms;
+    status = gbm_init(&window.gbm.gbm, window.gbm.drm.cardFd);
+    if (status < 0) goto cleanup_drm;
 
     status = egl_createContext(
         &window.egl,
@@ -43,13 +43,13 @@ static int32_t window_gbm_init(void **eglWindow) {
     egl_destroyContext(&window.egl);
     cleanup_gbm:
     gbm_deinit(&window.gbm.gbm);
-    cleanup_drmKms:
-    drmKms_deinit(&window.gbm.drmKms);
+    cleanup_drm:
+    drm_deinit(&window.gbm.drm);
     return -1;
 }
 
 static void window_gbm_destroyFb(hc_UNUSED void *bo, void *data) {
-    drmKms_destroyFrameBuffer(&window.gbm.drmKms, (uint32_t)(size_t)data);
+    drm_destroyFrameBuffer(&window.gbm.drm, (uint32_t)(size_t)data);
 }
 
 static int64_t window_gbm_getFbId(void *bo) {
@@ -65,7 +65,7 @@ static int64_t window_gbm_getFbId(void *bo) {
         .handle = gbm_boGetHandle(&window.gbm.gbm, bo)
     };
 
-    int32_t status = drmKms_createFrameBuffer(&window.gbm.drmKms, &frameBuffer);
+    int32_t status = drm_createFrameBuffer(&window.gbm.drm, &frameBuffer);
     if (status < 0) return -1;
     gbm_boSetUserData(
         &window.gbm.gbm,
@@ -85,7 +85,7 @@ static int32_t window_gbm_run(void) {
     int64_t fbId = window_gbm_getFbId(bo);
     if (fbId < 0) return -3;
 
-    int32_t status = drmKms_setCrtc(&window.gbm.drmKms, window.gbm.drmModeIndex, (uint32_t)fbId);
+    int32_t status = drm_setCrtc(&window.gbm.drm, window.gbm.drmModeIndex, (uint32_t)fbId);
     if (status < 0) {
         debug_printNum("Failed to set CRTC (", status, ")\n");
         return -4;
@@ -104,10 +104,10 @@ static int32_t window_gbm_run(void) {
         fbId = window_gbm_getFbId(nextBo);
         if (fbId < 0) return -7;
 
-        status = drmKms_pageFlip(&window.gbm.drmKms, (uint32_t)fbId, DRM_MODE_PAGE_FLIP_EVENT | DRM_MODE_PAGE_FLIP_ASYNC);
+        status = drm_pageFlip(&window.gbm.drm, (uint32_t)fbId, DRM_MODE_PAGE_FLIP_EVENT | DRM_MODE_PAGE_FLIP_ASYNC);
         if (status < 0) return -8;
 
-        status = drmKms_awaitPageFlipEvent(&window.gbm.drmKms);
+        status = drm_awaitPageFlipEvent(&window.gbm.drm);
         if (status < 0) return -9;
 
         gbm_surfaceReleaseBuffer(&window.gbm.gbm, window.gbm.gbmSurface, bo);
@@ -119,5 +119,5 @@ static void window_gbm_deinit(void) {
     gbm_surfaceDestroy(&window.gbm.gbm, window.gbm.gbmSurface);
     egl_destroyContext(&window.egl);
     gbm_deinit(&window.gbm.gbm);
-    drmKms_deinit(&window.gbm.drmKms);
+    drm_deinit(&window.gbm.drm);
 }

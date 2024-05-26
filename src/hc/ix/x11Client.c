@@ -24,23 +24,23 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     self->receivedSize = 0;
 
     // Create circular buffer.
-    self->bufferMemFd = sys_memfd_create("", MFD_CLOEXEC);
+    self->bufferMemFd = memfd_create("", MFD_CLOEXEC);
     if (self->bufferMemFd < 0) return -1;
 
-    int32_t status = sys_ftruncate(self->bufferMemFd, (int64_t)x11Client_PAGE_SIZE);
+    int32_t status = ftruncate(self->bufferMemFd, (int64_t)x11Client_PAGE_SIZE);
     if (status < 0) {
         status = -2;
         goto cleanup_bufferMemFd;
     }
 
-    self->buffer = sys_mmap(NULL, 2 * (int64_t)x11Client_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    self->buffer = mmap(NULL, 2 * (int64_t)x11Client_PAGE_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     if ((int64_t)self->buffer < 0) {
         status = -3;
         goto cleanup_bufferMemFd;
     }
 
     for (int32_t i = 0; i < 2; ++i) {
-        void *address = sys_mmap(
+        void *address = mmap(
             self->buffer + i * (int64_t)x11Client_PAGE_SIZE,
             (int64_t)x11Client_PAGE_SIZE,
             PROT_READ | PROT_WRITE,
@@ -56,13 +56,13 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
 
     // Connect to server.
     uint16_t sockaddrFamily = *(uint16_t *)sockaddr;
-    self->socketFd = sys_socket(sockaddrFamily, SOCK_STREAM, 0);
+    self->socketFd = socket(sockaddrFamily, SOCK_STREAM, 0);
     if (self->socketFd < 0) {
         status = -5;
         goto cleanup_buffer;
     }
 
-    status = sys_connect(self->socketFd, sockaddr, sockaddrSize);
+    status = connect(self->socketFd, sockaddr, sockaddrSize);
     if (status < 0) {
         status = -6;
         goto cleanup_socket;
@@ -82,7 +82,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
         { .iov_base = &request,        .iov_len = math_PAD_BYTES(request.authProtocolDataLength, 4) }
     };
     int64_t sendLength = sizeof(request) + math_ALIGN_FORWARD(request.authProtocolNameLength, 4) + math_ALIGN_FORWARD(request.authProtocolDataLength, 4);
-    if (sys_sendmsg(self->socketFd, &(struct msghdr_const) { .msg_iov = &iov[0], .msg_iovlen = hc_ARRAY_LEN(iov) }, MSG_NOSIGNAL) != sendLength) {
+    if (sendmsg(self->socketFd, &(struct msghdr_const) { .msg_iov = &iov[0], .msg_iovlen = hc_ARRAY_LEN(iov) }, MSG_NOSIGNAL) != sendLength) {
         status = -7;
         goto cleanup_socket;
     }
@@ -92,7 +92,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     int64_t numRead = 0;
     while (numRead < (int64_t)sizeof(header)) {
         char *readPos = (char *)&header + numRead;
-        int64_t read = sys_recvfrom(self->socketFd, readPos, (int64_t)sizeof(header) - numRead, 0, NULL, NULL);
+        int64_t read = recvfrom(self->socketFd, readPos, (int64_t)sizeof(header) - numRead, 0, NULL, NULL);
         if (read <= 0) {
             status = -8;
             goto cleanup_socket;
@@ -102,7 +102,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
 
     // Allocate space for payload of response.
     self->setupResponseSize = (int32_t)header.length * 4;
-    self->setupResponse = sys_mmap(NULL, self->setupResponseSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
+    self->setupResponse = mmap(NULL, self->setupResponseSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, 0, 0);
     if ((int64_t)self->setupResponse < 0) {
         status = -9;
         goto cleanup_socket;
@@ -112,7 +112,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     numRead = 0;
     while (numRead < self->setupResponseSize) {
         char *readPos = (char *)self->setupResponse + numRead;
-        int64_t read = sys_recvfrom(self->socketFd, readPos, self->setupResponseSize - numRead, 0, NULL, NULL);
+        int64_t read = recvfrom(self->socketFd, readPos, self->setupResponseSize - numRead, 0, NULL, NULL);
         if (read <= 0) {
             status = -10;
             goto cleanup_setupResponse;
@@ -129,7 +129,7 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
                 { error, header.extra },
                 { hc_STR_COMMA_LEN("\n") }
             };
-            sys_writev(2, &print[0], hc_ARRAY_LEN(print));
+            writev(2, &print[0], hc_ARRAY_LEN(print));
         }
         status = -11;
         goto cleanup_setupResponse;
@@ -144,13 +144,13 @@ static int32_t x11Client_init(struct x11Client *self, void *sockaddr, int32_t so
     return 0;
 
     cleanup_setupResponse:
-    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseSize), RES == 0);
+    debug_CHECK(munmap(self->setupResponse, self->setupResponseSize), RES == 0);
     cleanup_socket:
-    debug_CHECK(sys_close(self->socketFd), RES == 0);
+    debug_CHECK(close(self->socketFd), RES == 0);
     cleanup_buffer:
-    debug_CHECK(sys_munmap(self->buffer, 2 * (int64_t)x11Client_PAGE_SIZE), RES == 0);
+    debug_CHECK(munmap(self->buffer, 2 * (int64_t)x11Client_PAGE_SIZE), RES == 0);
     cleanup_bufferMemFd:
-    debug_CHECK(sys_close(self->bufferMemFd), RES == 0);
+    debug_CHECK(close(self->bufferMemFd), RES == 0);
     return status;
 }
 
@@ -165,7 +165,7 @@ static uint32_t x11Client_nextId(struct x11Client *self) {
 static int32_t x11Client_sendRequests(struct x11Client *self, void *requests, int64_t requestsLength, int32_t numRequests) {
     int64_t numSent = 0;
     do {
-        int64_t sent = sys_sendto(self->socketFd, requests + numSent, requestsLength - numSent, MSG_NOSIGNAL, NULL, 0);
+        int64_t sent = sendto(self->socketFd, requests + numSent, requestsLength - numSent, MSG_NOSIGNAL, NULL, 0);
         if (sent <= 0) {
             if (sent == -EINTR) continue;
             return -1;
@@ -178,7 +178,7 @@ static int32_t x11Client_sendRequests(struct x11Client *self, void *requests, in
 }
 
 static int32_t x11Client_receive(struct x11Client *self) {
-    int32_t numRead = (int32_t)sys_recvfrom(
+    int32_t numRead = (int32_t)recvfrom(
         self->socketFd,
         &self->buffer[self->bufferPos + self->receivedSize],
         ((int64_t)x11Client_PAGE_SIZE - self->receivedSize),
@@ -215,8 +215,8 @@ static void x11Client_ackMessage(struct x11Client *self, int32_t size) {
 }
 
 static void x11Client_deinit(struct x11Client *self) {
-    debug_CHECK(sys_munmap(self->setupResponse, self->setupResponseSize), RES == 0);
-    debug_CHECK(sys_close(self->socketFd), RES == 0);
-    debug_CHECK(sys_munmap(self->buffer, 2 * (int64_t)x11Client_PAGE_SIZE), RES == 0);
-    debug_CHECK(sys_close(self->bufferMemFd), RES == 0);
+    debug_CHECK(munmap(self->setupResponse, self->setupResponseSize), RES == 0);
+    debug_CHECK(close(self->socketFd), RES == 0);
+    debug_CHECK(munmap(self->buffer, 2 * (int64_t)x11Client_PAGE_SIZE), RES == 0);
+    debug_CHECK(close(self->bufferMemFd), RES == 0);
 }

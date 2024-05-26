@@ -10,17 +10,19 @@
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
 #include "hc/linux/util.c"
-#include "hc/linux/xauth.c"
-static int32_t openGl_pageSize;
-#define x11Client_PAGE_SIZE openGl_pageSize
-#include "hc/linux/x11Client.c"
 #include "hc/linux/gnu/libc.so.6.h"
 #include "hc/linux/gnu/libdl.so.2.h"
-#include "hc/egl.h"
-#include "hc/linux/egl.c"
-#include "hc/linux/gbm.c"
-#include "hc/linux/drmKms.c"
 #include "hc/linux/gnu/_start.c"
+
+#define ix_ERRNO(RET) (*__errno_location())
+#include "hc/ix/xauth.c"
+static int32_t openGl_pageSize;
+#define x11Client_PAGE_SIZE openGl_pageSize
+#include "hc/ix/x11Client.c"
+#include "hc/egl.h"
+#include "hc/ix/egl.c"
+#include "hc/ix/gbm.c"
+#include "hc/ix/drm.c"
 
 #define game_EXPORT static
 #define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)

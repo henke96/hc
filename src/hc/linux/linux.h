@@ -2940,6 +2940,45 @@ struct statx {
 #define STATX_ATTR_VERITY 0x00100000 /* [I] Verity protected file */
 #define STATX_ATTR_DAX 0x00200000 /* File is currently in DAX state */
 
+#if hc_X86_64
+struct stat {
+    uint64_t st_dev;
+    uint64_t st_ino;
+    uint64_t st_nlink;
+    uint32_t st_mode;
+    uint32_t st_uid;
+    uint32_t st_gid;
+    uint32_t __pad;
+    uint64_t st_rdev;
+    int64_t st_size;
+    int64_t st_blksize;
+    int64_t st_blocks;
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+    int64_t unused[3];
+};
+#else
+struct stat {
+    uint64_t st_dev;
+    uint64_t st_ino;
+    uint32_t st_mode;
+    uint32_t st_nlink;
+    uint32_t st_uid;
+    uint32_t st_gid;
+    uint64_t st_rdev;
+    uint64_t __pad;
+    int64_t st_size;
+    int32_t st_blksize;
+    int32_t __pad2;
+    int64_t st_blocks;
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+    uint32_t unused[2];
+};
+#endif
+
 // reboot.h
 #define LINUX_REBOOT_MAGIC1 0xfee1dead
 #define LINUX_REBOOT_MAGIC2 672274793

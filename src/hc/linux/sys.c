@@ -1041,7 +1041,7 @@ static hc_INLINE int64_t sys_recvmsg(int32_t fd, const struct msghdr *msg, uint3
     return ret;
 }
 
-static hc_INLINE int64_t sys_recvfrom(int32_t fd, const void *restrict buf, int64_t len, uint32_t flags, const void *restrict addr, int32_t *restrict addrlen) {
+static hc_INLINE int64_t sys_recvfrom(int32_t fd, void *restrict buf, int64_t len, uint32_t flags, void *restrict addr, int32_t *restrict addrlen) {
     sys_SYSCALL6(sys_NR_recvfrom, fd, buf, len, flags, addr, addrlen)
     return ret;
 }

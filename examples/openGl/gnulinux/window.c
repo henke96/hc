@@ -23,7 +23,7 @@ struct window_x11 {
 
 struct window_gbm {
     struct gbm gbm;
-    struct drmKms drmKms;
+    struct drm drm;
     void *gbmSurface;
     uint32_t gbmFormat;
     int32_t drmModeIndex;

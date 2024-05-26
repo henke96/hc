@@ -17,26 +17,24 @@ struct xauth_entry {
 static int32_t xauth_init(struct xauth *self, const char *xAuthorityFile) {
     self->fileOffset = 0;
 
-    self->fd = sys_openat(-1, xAuthorityFile, O_RDONLY | O_CLOEXEC, 0);
+    self->fd = openat(-1, xAuthorityFile, O_RDONLY | O_CLOEXEC, 0);
     if (self->fd < 0) return -1;
 
     // Find file size.
-    struct statx statx;
-    statx.stx_size = 0;
-    int32_t status = sys_statx(self->fd, "", AT_EMPTY_PATH, STATX_SIZE, &statx);
+    struct stat stat;
+    int32_t status = fstatat(self->fd, "", &stat, AT_EMPTY_PATH);
     if (status < 0) {
         status = -2;
         goto cleanup_fd;
     }
-    self->fileSize = statx.stx_size;
-
+    self->fileSize = stat.st_size;
     if (self->fileSize < 1) {
         status = -3;
         goto cleanup_fd;
     }
 
     // Map file into memory.
-    self->mappedFile = sys_mmap(NULL, self->fileSize, PROT_READ, MAP_PRIVATE, self->fd, 0);
+    self->mappedFile = mmap(NULL, self->fileSize, PROT_READ, MAP_PRIVATE, self->fd, 0);
     if ((int64_t)self->mappedFile < 0) {
         status = -4;
         goto cleanup_fd;
@@ -44,7 +42,7 @@ static int32_t xauth_init(struct xauth *self, const char *xAuthorityFile) {
     return 0;
 
     cleanup_fd:
-    debug_CHECK(sys_close(self->fd), RES == 0);
+    debug_CHECK(close(self->fd), RES == 0);
     return status;
 }
 
@@ -88,6 +86,6 @@ static int32_t xauth_nextEntry(struct xauth *self, struct xauth_entry *entry) {
 }
 
 static void xauth_deinit(struct xauth *self) {
-    debug_CHECK(sys_munmap(self->mappedFile, self->fileSize), RES == 0);
-    debug_CHECK(sys_close(self->fd), RES == 0);
+    debug_CHECK(munmap(self->mappedFile, self->fileSize), RES == 0);
+    debug_CHECK(close(self->fd), RES == 0);
 }

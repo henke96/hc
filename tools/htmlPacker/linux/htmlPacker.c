@@ -18,11 +18,12 @@ int32_t pageSize;
 #define openat sys_openat
 #define read sys_read
 #define close sys_close
-struct stat {
-    struct statx inner;
-};
-#define fstatat(FD, PATH, STAT, FLAGS) sys_statx(FD, PATH, FLAGS, STATX_SIZE, &(STAT)->inner)
-#define st_size inner.stx_size
+static int32_t fstatat(int32_t fd, const char *path, struct stat *stat, uint32_t flags) {
+    struct statx statx;
+    if (sys_statx(fd, path, flags, STATX_SIZE, &statx) < 0) return -1;
+    stat->st_size = statx.stx_size;
+    return 0;
+}
 #include "../ix.c"
 
 static void initPageSize(char **envp) {

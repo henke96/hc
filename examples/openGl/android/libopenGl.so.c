@@ -14,7 +14,7 @@
 #include "hc/linux/android/libdl.so.h"
 #include "hc/linux/android/debug.c"
 #include "hc/linux/android/nativeGlue.c"
-#include "hc/linux/egl.c"
+#include "hc/ix/egl.c"
 
 // TODO: Implement input
 hc_UNUSED static void game_onKeyDown(int32_t key, uint64_t timestamp);
