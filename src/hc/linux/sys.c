@@ -1195,6 +1195,11 @@ static hc_INLINE int64_t sys_getdents64(int32_t fd, void *dirents, int64_t count
     return ret;
 }
 
+static hc_INLINE int32_t sys_lseek(int32_t fd, int64_t offset, int32_t whence) {
+    sys_SYSCALL3(sys_NR_lseek, fd, offset, whence)
+    return (int32_t)ret;
+}
+
 static hc_INLINE int32_t sys_readlinkat(int32_t dfd, const char *pathname, char *buf, int32_t bufsize) {
     sys_SYSCALL4(sys_NR_readlinkat, dfd, pathname, buf, bufsize)
     return (int32_t)ret;
