@@ -18,4 +18,6 @@ static int32_t pageSize;
 static void initPageSize(hc_UNUSED char **envp) {
     debug_CHECK(elf_aux_info(AT_PAGESZ, &pageSize, sizeof(pageSize)), RES == 0);
 }
+
+#define ix_D_NAME(DIRENT) ((void *)&(DIRENT)[1])
 #include "../ix.c"

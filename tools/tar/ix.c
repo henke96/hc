@@ -102,7 +102,7 @@ static int32_t add(char *name, char *root) {
                 current != (void *)state->names;
                 current = (void *)current + current->d_reclen
             ) {
-                char *currentName = (void *)&current[1];
+                char *currentName = ix_D_NAME(current);
                 if (isDot(currentName) || isDotDot(currentName)) continue;
                 allocSize += (int64_t)sizeof(state->names[0]);
                 if (allocator_resize(&alloc, allocSize) < 0) return -7;

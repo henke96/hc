@@ -28,9 +28,7 @@ static int32_t fstatat(int32_t fd, const char *path, struct stat *stat, uint32_t
     stat->st_size = statx.stx_size;
     return 0;
 }
-struct dirent {
-    struct linux_dirent64 inner;
-};
+#define ix_D_NAME(DIRENT) ((void *)&(DIRENT)->d_name)
+#define dirent linux_dirent64
 #define getdents sys_getdents64
-#define d_reclen inner.d_reclen
 #include "../ix.c"
