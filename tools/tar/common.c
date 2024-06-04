@@ -112,13 +112,11 @@ static void sortNames(char **names, int64_t length) {
     for (int64_t i = 1; i < length; ++i) {
         char *name = names[i];
         int64_t curr = i;
-        for (;;) {
-            int64_t prev = curr - 1;
-            if (util_cstrCmp(name, names[prev]) >= 0) break;
-            names[curr] = names[prev];
-            if (prev == 0) break;
-            curr = prev;
-        }
+        do {
+            char *prevName = names[curr - 1];
+            if (util_cstrCmp(prevName, name) < 0) break;
+            names[curr] = prevName;
+        } while(--curr > 0);
         names[curr] = name;
     }
 }
