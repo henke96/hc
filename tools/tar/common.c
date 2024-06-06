@@ -6,23 +6,9 @@ static int32_t openOutput(char *name);
 static void closeOutput(void);
 static int32_t add(char *name, char *root);
 
-#define NAME 0
-#define MODE 100
-#define SIZE 124
-#define MTIME 136
-#define CHKSUM 148
-#define TYPEFLAG 156
-#define MAGIC 257
-#define VERSION 263
-#define PREFIX 345
-#define END 512
-
-#define MAX_NAME_LEN 100
-#define MAX_PREFIX_LEN 155
-
 static char octalTable[8] = "01234567";
 static char buffer[65536] hc_ALIGNED(16);
-static char prefix[MAX_PREFIX_LEN + hc_STR_LEN("/") + MAX_NAME_LEN];
+static char prefix[tar_MAX_PREFIX_LEN + hc_STR_LEN("/") + tar_MAX_NAME_LEN];
 static int32_t prefixLen = 0;
 
 static bool isDot(char *name) {
@@ -44,16 +30,16 @@ static void leaveDirectory(char *name) {
 static int32_t writeRecord(char *name, int32_t nameLen, int64_t fileSize) {
     if (isDot(name)) return 0;
     if (
-        nameLen > MAX_NAME_LEN ||
-        prefixLen > MAX_PREFIX_LEN ||
-        fileSize > 077777777777
+        nameLen > tar_MAX_NAME_LEN ||
+        prefixLen > tar_MAX_PREFIX_LEN ||
+        fileSize > tar_MAX_FILE_SIZE
     ) return -1;
 
     // Fill in name and prefix, zero rest.
-    hc_MEMCPY(&buffer[NAME], name, (size_t)nameLen);
-    hc_MEMSET(&buffer[NAME + nameLen], 0, (size_t)(PREFIX - (NAME + nameLen)));
-    hc_MEMCPY(&buffer[PREFIX], prefix, (size_t)prefixLen);
-    hc_MEMSET(&buffer[PREFIX + prefixLen], 0, (size_t)(END - (PREFIX + prefixLen)));
+    hc_MEMCPY(&buffer[tar_OFFSET_NAME], name, (size_t)nameLen);
+    hc_MEMSET(&buffer[tar_OFFSET_NAME + nameLen], 0, (size_t)(tar_OFFSET_PREFIX - (tar_OFFSET_NAME + nameLen)));
+    hc_MEMCPY(&buffer[tar_OFFSET_PREFIX], prefix, (size_t)prefixLen);
+    hc_MEMSET(&buffer[tar_OFFSET_PREFIX + prefixLen], 0, (size_t)(tar_RECORD_SIZE - (tar_OFFSET_PREFIX + prefixLen)));
 
     char typeflag = '0';
     if (fileSize < 0) { // A directory.
@@ -67,27 +53,27 @@ static int32_t writeRecord(char *name, int32_t nameLen, int64_t fileSize) {
     }
 
     // Fill in other fields.
-    hc_MEMCPY(&buffer[MODE], hc_STR_COMMA_LEN("0000777"));
+    hc_MEMCPY(&buffer[tar_OFFSET_MODE], hc_STR_COMMA_LEN("0000777"));
     for (int32_t i = 0; i < 11; ++i) {
-        buffer[SIZE + 10 - i] = octalTable[(fileSize >> 3 * i) & 7];
+        buffer[tar_OFFSET_SIZE + 10 - i] = octalTable[(fileSize >> 3 * i) & 7];
     }
-    hc_MEMCPY(&buffer[MTIME], hc_STR_COMMA_LEN("00000000000"));
-    hc_MEMCPY(&buffer[CHKSUM], hc_STR_COMMA_LEN("        "));
-    buffer[TYPEFLAG] = typeflag;
-    hc_MEMCPY(&buffer[MAGIC], hc_STR_COMMA_LEN("ustar"));
-    hc_MEMCPY(&buffer[VERSION], hc_STR_COMMA_LEN("00"));
+    hc_MEMCPY(&buffer[tar_OFFSET_MTIME], hc_STR_COMMA_LEN("00000000000"));
+    hc_MEMCPY(&buffer[tar_OFFSET_CHKSUM], hc_STR_COMMA_LEN("        "));
+    buffer[tar_OFFSET_TYPEFLAG] = typeflag;
+    hc_MEMCPY(&buffer[tar_OFFSET_MAGIC], hc_STR_COMMA_LEN("ustar"));
+    hc_MEMCPY(&buffer[tar_OFFSET_VERSION], hc_STR_COMMA_LEN("00"));
 
     // Calculate checksum.
     int32_t checksum = 0;
-    for (int32_t i = 0; i < END; ++i) {
+    for (int32_t i = 0; i < tar_RECORD_SIZE; ++i) {
         checksum += buffer[i];
     }
     for (int32_t i = 0; i < 7; ++i) {
-        buffer[CHKSUM + 6 - i] = octalTable[(checksum >> 3 * i) & 7];
+        buffer[tar_OFFSET_CHKSUM + 6 - i] = octalTable[(checksum >> 3 * i) & 7];
     }
 
     // Write header.
-    if (writeBuffer(END) < 0) return -2;
+    if (writeBuffer(tar_RECORD_SIZE) < 0) return -2;
     if (fileSize == 0) return 0;
 
     // Write file content.
@@ -132,8 +118,8 @@ static int32_t validateName(char *name, int32_t maxLen) {
 }
 
 static int32_t finaliseOutput(void) {
-    hc_MEMSET(&buffer[0], 0, 2 * END);
-    int32_t status = writeBuffer(2 * END);
+    hc_MEMSET(&buffer[0], 0, 2 * tar_RECORD_SIZE);
+    int32_t status = writeBuffer(2 * tar_RECORD_SIZE);
     closeOutput();
     return status;
 }
@@ -162,7 +148,7 @@ static int32_t run(int32_t argc, char **argv) {
                     debug_print("No output opened\n");
                     return -1;
                 }
-                if (validateName(arg, MAX_NAME_LEN) < 0) {
+                if (validateName(arg, tar_MAX_NAME_LEN) < 0) {
                     debug_print("Invalid name\n");
                     return -1;
                 }
@@ -178,7 +164,7 @@ static int32_t run(int32_t argc, char **argv) {
                     debug_print("No output opened\n");
                     return -1;
                 }
-                int32_t len = validateName(arg, MAX_PREFIX_LEN);
+                int32_t len = validateName(arg, tar_MAX_PREFIX_LEN);
                 if (len < 0) {
                     debug_print("Invalid prefix\n");
                     return -1;
