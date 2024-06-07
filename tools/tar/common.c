@@ -4,7 +4,7 @@ static int32_t readIntoBuffer(void);
 static int32_t writeBuffer(int32_t size);
 static int32_t openOutput(char *name);
 static void closeOutput(void);
-static int32_t add(char *name, char *root);
+static int32_t add(char *path);
 
 static char octalTable[8] = "01234567";
 static char buffer[65536] hc_ALIGNED(16);
@@ -19,16 +19,25 @@ static bool isDotDot(char *name) {
     return name[0] == '.' && name[1] == '.' && name[2] == '\0';
 }
 
-static void leaveDirectory(char *name) {
-    if (isDot(name)) return;
-    while (prefixLen > 0) {
+static int32_t enterDirectory(char *name, int32_t nameLen) {
+    if (prefixLen > 0) {
+        if (prefixLen > tar_MAX_PREFIX_LEN) return -1;
+        prefix[prefixLen++] = '/';
+    }
+    hc_MEMCPY(&prefix[prefixLen], name, (uint64_t)nameLen);
+    prefixLen += nameLen;
+    return 0;
+}
+
+static void leaveDirectory(void) {
+    debug_ASSERT(prefixLen > 0);
+    do {
         --prefixLen;
         if (prefix[prefixLen] == '/') break;
-    }
+    } while (prefixLen > 0);
 }
 
 static int32_t writeRecord(char *name, int32_t nameLen, int64_t fileSize) {
-    if (isDot(name)) return 0;
     if (
         nameLen > tar_MAX_NAME_LEN ||
         prefixLen > tar_MAX_PREFIX_LEN ||
@@ -45,11 +54,6 @@ static int32_t writeRecord(char *name, int32_t nameLen, int64_t fileSize) {
     if (fileSize < 0) { // A directory.
         typeflag = '5';
         fileSize = 0;
-
-        // Update prefix since we will enter this directory.
-        if (prefixLen > 0) prefix[prefixLen++] = '/';
-        hc_MEMCPY(&prefix[prefixLen], name, (uint64_t)nameLen);
-        prefixLen += nameLen;
     }
 
     // Fill in other fields.
@@ -126,7 +130,6 @@ static int32_t finaliseOutput(void) {
 
 static int32_t run(int32_t argc, char **argv) {
     bool outputOpen = false;
-    char *root = ".";
 
     char prevOpt = '\0';
     int32_t argI = 0;
@@ -148,36 +151,37 @@ static int32_t run(int32_t argc, char **argv) {
                     debug_print("No output opened\n");
                     return -1;
                 }
-                if (validateName(arg, tar_MAX_NAME_LEN) < 0) {
+                int32_t status = add(arg);
+                if (status < 0) {
+                    debug_printNum("Failed to add directory contents (", status, ")\n");
+                    return -1;
+                }
+                break;
+            }
+            case 'd': {
+                if (!outputOpen) {
+                    debug_print("No output opened\n");
+                    return -1;
+                }
+                int32_t nameLen = validateName(arg, tar_MAX_NAME_LEN);
+                if (nameLen < 0) {
                     debug_print("Invalid name\n");
                     return -1;
                 }
-                int32_t status = add(arg, root);
-                if (status < 0) {
-                    debug_printNum("Failed to add entry (", status, ")\n");
+                if (writeRecord(arg, nameLen, -1) < 0) {
+                    debug_print("Failed to create directory\n");
                     return -1;
                 }
                 break;
             }
             case 'p': {
-                if (!outputOpen) {
-                    debug_print("No output opened\n");
-                    return -1;
-                }
-                int32_t len = validateName(arg, tar_MAX_PREFIX_LEN);
-                if (len < 0) {
+                int64_t len = util_cstrLen(arg);
+                if (len > (int64_t)sizeof(prefix)) {
                     debug_print("Invalid prefix\n");
                     return -1;
                 }
-                prefixLen = 0;
-                if (len > 0 && writeRecord(arg, len, -1) < 0) {
-                    debug_print("Failed to add prefix\n");
-                    return -1;
-                }
-                break;
-            }
-            case 'r': {
-                root = arg;
+                hc_MEMCPY(&prefix[0], arg, (uint64_t)len);
+                prefixLen = (int32_t)len;
                 break;
             }
             case '-': {
@@ -216,7 +220,7 @@ static int32_t run(int32_t argc, char **argv) {
 int32_t start(int32_t argc, char **argv, char **envp) {
     if (init(envp) < 0) return 1;
     if (run(argc, argv) < 0) {
-        debug_print("Usage: tar [-o OUTPUT_FILE | -r ROOT | -p PREFIX | -a FILE]...\n");
+        debug_print("Usage: tar [-o OUTPUT_FILE | -p PREFIX | -d DIRECTORY_NAME | -a DIRECTORY_PATH]...\n");
         return 1;
     }
     deinit();

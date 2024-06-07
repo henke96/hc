@@ -7,5 +7,5 @@ test -n "$OUT" || { echo "Please set OUT"; exit 1; }
 
 "$script_dir/tar/build.sh"
 prefix="hc_$(date +%Y-%m-%d)"
-"$OUT/tar" -o "$OUT/$prefix.tar" -r "$root_dir" -p "$prefix" -a .
+"$OUT/tar" -o "$OUT/$prefix.tar" -d "$prefix" -p "$prefix" -a "$root_dir"
 rm "$OUT/tar"

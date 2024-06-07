@@ -62,18 +62,16 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         if (size < 0) break;
         if (createFile(&buffer[tar_OFFSET_PREFIX], &buffer[tar_OFFSET_NAME]) < 0) break;
 
-        for (int64_t written = 0;; written += tar_RECORD_SIZE) {
+        while (size > 0) {
             if (readInput() < 0) break;
-            int64_t remaining = size - written;
-            if (remaining <= tar_RECORD_SIZE) {
-                if (writeToFile((int32_t)remaining) == 0) status = 0;
-                break;
-            }
-            if (writeToFile(tar_RECORD_SIZE) < 0) break;
+
+            int32_t toWrite = (size > 512) ? 512 : (int32_t)size;
+            if (writeToFile(toWrite) < 0) break;
+            size -= toWrite;
         }
 
         closeFile();
-        if (status != 0) break;
+        if (size != 0) break;
     }
 
     closeInput();
