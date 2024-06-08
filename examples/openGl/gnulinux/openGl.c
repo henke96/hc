@@ -9,7 +9,6 @@
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
-#include "hc/linux/util.c"
 #include "hc/linux/gnu/gnu.h"
 #include "hc/linux/gnu/libc.so.6.h"
 #include "hc/linux/gnu/libdl.so.2.h"

@@ -29,3 +29,4 @@ char *dlerror(void);
 void *dlsym(void *handle, const char *symbol);
 int32_t dlclose(void *handle);
 int32_t ioctl(int32_t fd, uint64_t request, ...);
+int32_t mkdirat(int32_t fd, const char *path, uint16_t mode);

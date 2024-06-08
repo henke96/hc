@@ -61,12 +61,12 @@ static void deinit(void) {
 }
 
 static int32_t readIntoBuffer(void) {
-    uint32_t read;
-    if (ReadFile(fileHandle, &buffer[0], sizeof(buffer), &read, NULL) == 0) return -1;
-    return (int32_t)read;
+    uint32_t numRead;
+    if (ReadFile(fileHandle, &hash_buffer[0], sizeof(hash_buffer), &numRead, NULL) == 0) return -1;
+    return (int32_t)numRead;
 }
 
 static int32_t printBuffer(int32_t size) {
     void *stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    return util_writeAll(stdoutHandle, &buffer[0], size);
+    return util_writeAll(stdoutHandle, &hash_buffer[0], size);
 }

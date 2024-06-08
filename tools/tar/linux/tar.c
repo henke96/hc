@@ -14,13 +14,17 @@ static int32_t pageSize;
 #include "hc/allocator.c"
 #include "hc/tar.h"
 
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+
 #include "../common.c"
 
 static void initPageSize(char **envp) {
     pageSize = util_getPageSize(util_getAuxv(envp));
 }
 #define openat sys_openat
-#define read sys_read
 #define close sys_close
 static int32_t fstatat(int32_t fd, const char *path, struct stat *stat, uint32_t flags) {
     struct statx statx;

@@ -5,17 +5,16 @@
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
-#include "hc/linux/util.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/linux/helpers/sys_clone3_exit.c"
 #include "hc/ix/drm.h"
 
-#define ix_ERRNO(RET) (-RET)
 #define openat sys_openat
 #define mmap sys_mmap
 #define ioctl sys_ioctl
 #define read sys_read
 #define close sys_close
+#define ix_ERRNO(RET) (-RET)
 #include "hc/ix/drm.c"
 
 #include "graphics.c"

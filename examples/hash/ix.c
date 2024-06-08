@@ -10,9 +10,9 @@ static void deinit(void) {
 }
 
 static int32_t readIntoBuffer(void) {
-    return (int32_t)read(fileFd, &buffer[0], sizeof(buffer));
+    return (int32_t)read(fileFd, &hash_buffer[0], sizeof(hash_buffer));
 }
 
 static int32_t printBuffer(int32_t size) {
-    return util_writeAll(1, &buffer[0], size);
+    return util_writeAll(1, &hash_buffer[0], size);
 }

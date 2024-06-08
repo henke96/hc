@@ -3,30 +3,30 @@ static int32_t init(char **includePaths) {
         int32_t fd = openat(AT_FDCWD, *includePaths, O_RDONLY, 0);
         if (fd < 0) return -1;
 
-        if (allocator_resize(&alloc, alloc.size + (int64_t)sizeof(fd)) < 0) return -2;
-        *((int32_t *)&alloc.mem[alloc.size] - 1) = fd;
+        if (allocator_resize(&htmlPacker_alloc, htmlPacker_alloc.size + (int64_t)sizeof(fd)) < 0) return -2;
+        *((int32_t *)&htmlPacker_alloc.mem[htmlPacker_alloc.size] - 1) = fd;
         ++includePaths;
     }
-    buffer = &alloc.mem[alloc.size];
+    htmlPacker_buffer = &htmlPacker_alloc.mem[htmlPacker_alloc.size];
     return 0;
 }
 
 static void deinit(void) {
-    for (int32_t *includePathFd = alloc.mem; (char *)includePathFd != buffer; ++includePathFd) {
+    for (int32_t *includePathFd = htmlPacker_alloc.mem; (char *)includePathFd != htmlPacker_buffer; ++includePathFd) {
         debug_CHECK(close(*includePathFd), RES == 0);
     }
 }
 
 static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *path, int32_t pathLen, bool asBase64) {
     // Add null terminator to path.
-    char *pathZ = &alloc.mem[alloc.size];
-    if (allocator_resize(&alloc, alloc.size + (int64_t)pathLen + 1) < 0) return -1;
+    char *pathZ = &htmlPacker_alloc.mem[htmlPacker_alloc.size];
+    if (allocator_resize(&htmlPacker_alloc, htmlPacker_alloc.size + (int64_t)pathLen + 1) < 0) return -1;
     hc_MEMCPY(pathZ, path, (uint64_t)pathLen);
     pathZ[pathLen] = '\0';
 
     // Find and open path relative to include paths.
     int32_t pathFd;
-    for (int32_t *includePathFd = alloc.mem; (char *)includePathFd != buffer; ++includePathFd) {
+    for (int32_t *includePathFd = htmlPacker_alloc.mem; (char *)includePathFd != htmlPacker_buffer; ++includePathFd) {
         pathFd = openat(*includePathFd, pathZ, O_RDONLY, 0);
         if (pathFd >= 0) goto foundPath;
     }
@@ -47,36 +47,30 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
     int64_t insertSize = contentSize;
     if (asBase64) insertSize = base64_ENCODE_SIZE(contentSize);
 
-    int64_t newBufferSize = bufferSize + (insertSize - replaceSize);
-    if (allocator_resize(&alloc, &buffer[newBufferSize] - (char *)alloc.mem) < 0) {
+    // Allocate an extra byte to be able to verify EOF when reading.
+    int64_t newBufferSize = 1 + htmlPacker_bufferSize + (insertSize - replaceSize);
+    if (allocator_resize(&htmlPacker_alloc, &htmlPacker_buffer[newBufferSize] - (char *)htmlPacker_alloc.mem) < 0) {
         status = -4;
         goto cleanup_pathFd;
     }
 
     // Move existing content to make room.
     hc_MEMMOVE(
-        &buffer[replaceIndex + insertSize],
-        &buffer[replaceIndex + replaceSize],
-        (uint64_t)(bufferSize - (replaceSize + replaceIndex))
+        &htmlPacker_buffer[replaceIndex + insertSize],
+        &htmlPacker_buffer[replaceIndex + replaceSize],
+        (uint64_t)(htmlPacker_bufferSize - (replaceSize + replaceIndex))
     );
-    bufferSize = newBufferSize;
+    htmlPacker_bufferSize = newBufferSize;
 
-    // Read content into buffer.
-    char *content = &buffer[replaceIndex + insertSize - contentSize];
-    if (util_readAll(pathFd, content, contentSize) < 0) {
+    // Read content into buffer, and verify EOF by attempting to read an extra byte.
+    char *content = &htmlPacker_buffer[replaceIndex + insertSize - contentSize];
+    if (util_readAll(pathFd, content, contentSize + 1) != contentSize) {
         status = -5;
         goto cleanup_pathFd;
     }
 
-    // Verify we are at end of file.
-    char eofTest;
-    if (read(pathFd, &eofTest, 1) != 0) {
-        status = -6;
-        goto cleanup_pathFd;
-    }
-
     // Convert to base 64 if requested. Can be done in place as we put content at end of insert gap.
-    if (asBase64) base64_encode(&buffer[replaceIndex], &content[0], contentSize);
+    if (asBase64) base64_encode(&htmlPacker_buffer[replaceIndex], &content[0], contentSize);
 
     status = 0;
     cleanup_pathFd:

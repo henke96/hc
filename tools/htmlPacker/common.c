@@ -4,14 +4,14 @@ static void deinit(void);
 static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *path, int32_t pathLen, bool asBase64);
 static int32_t writeToFile(char *path, char *content, int64_t contentSize);
 
-static struct allocator alloc;
-static char *buffer;
-static int64_t bufferSize = 0;
+static struct allocator htmlPacker_alloc;
+static char *htmlPacker_buffer;
+static int64_t htmlPacker_bufferSize = 0;
 
 static int64_t findPattern(int64_t bufferStartI, char *pattern, int64_t patternSize) {
-    for (int64_t bufferI = bufferStartI; bufferI < bufferSize - patternSize; ++bufferI) {
+    for (int64_t bufferI = bufferStartI; bufferI < htmlPacker_bufferSize - patternSize; ++bufferI) {
         for (int64_t patternI = 0; patternI < patternSize; ++patternI) {
-            if (buffer[bufferI + patternI] != pattern[patternI]) goto noMatch;
+            if (htmlPacker_buffer[bufferI + patternI] != pattern[patternI]) goto noMatch;
         }
         return bufferI;
         noMatch:;
@@ -36,7 +36,7 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
     int32_t status = replaceWithFile(
         startPatternI,
         endPatternI + endPatternLen - startPatternI,
-        &buffer[nameI],
+        &htmlPacker_buffer[nameI],
         (int32_t)nameLen,
         asBase64
     );
@@ -50,7 +50,7 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
 int32_t start(int32_t argc, char **argv, char **envp) {
     if (argc < 3) return 1;
     initPageSize(envp);
-    if (allocator_init(&alloc, (int64_t)1 << 32) < 0) return 1;
+    if (allocator_init(&htmlPacker_alloc, (int64_t)1 << 32) < 0) return 1;
 
     int32_t status;
     status = init(&argv[3]);
@@ -89,7 +89,7 @@ int32_t start(int32_t argc, char **argv, char **envp) {
         complete &= status;
     }
 
-    status = writeToFile(argv[1], buffer, bufferSize);
+    status = writeToFile(argv[1], htmlPacker_buffer, htmlPacker_bufferSize);
     if (status != 0) {
         debug_printNum("Failed to write output (", status, ")\n");
         status = 1;
@@ -98,6 +98,6 @@ int32_t start(int32_t argc, char **argv, char **envp) {
     cleanup_init:
     deinit();
     cleanup_alloc:
-    allocator_deinit(&alloc);
+    allocator_deinit(&htmlPacker_alloc);
     return status;
 }

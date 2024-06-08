@@ -35,3 +35,4 @@ hc_EXPORT void dlerror(void) {}
 hc_EXPORT void dlsym(void) {}
 hc_EXPORT void dlclose(void) {}
 hc_EXPORT void ioctl(void) {}
+hc_EXPORT void mkdirat(void) {}

@@ -6,9 +6,13 @@
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
-#include "hc/linux/util.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/tar.h"
+
+#define ix_ERRNO(RET) (-RET)
+#define write sys_write
+#define read sys_read
+#include "hc/ix/util.c"
 
 #include "../common.c"
 
