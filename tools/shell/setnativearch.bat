@@ -1,4 +1,5 @@
 @echo off
+set "ABI=windows-gnu"
 if "%processor_architecture%" == "AMD64" (
     set "ARCH=x86_64"
     exit /b 0

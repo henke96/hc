@@ -64,7 +64,6 @@ if not "%ARCH%" == "riscv64" (
     call "%root_dir%\tools\builder.bat" "%script_dir%\efi\hello.efi.c"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )
-
 exit /b
 
 :start

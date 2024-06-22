@@ -41,5 +41,5 @@ if test -z "$NO_WASM32"; then
     "$root_dir/tools/builder.sh" "$script_dir/web/allocation.wasm.c"
 
     "$root_dir/tools/htmlPacker/build.sh"
-    "$OUT/htmlPacker" "$OUT/allocation.html" "$script_dir/web/_start.html" "$OUT"
+    "$OUT/htmlPacker" "$OUT/allocation.html" _start.html "$script_dir/web" "$OUT"
 fi

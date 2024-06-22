@@ -5,10 +5,9 @@ root_dir="$script_dir/../.."
 
 test -n "$OUT" || { echo "Please set OUT"; exit 1; }
 
-export ARCH="${ARCH:-"$(uname -m)"}"
-UNAME="${UNAME:-"$(uname)"}"
+export ARCH="$(uname -m)"
 
-case "$UNAME" in
+case "$(uname)" in
     FreeBSD)
     export ABI="freebsd14"
     "$root_dir/cc.sh" -fPIC -shared -Wl,--version-script="$root_dir/src/hc/freebsd/libc.so.7.map" -o "$OUT/libc.so.7" "$root_dir/src/hc/freebsd/libc.so.7.c"

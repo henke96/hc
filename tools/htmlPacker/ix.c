@@ -1,13 +1,13 @@
 static int32_t init(char **includePaths) {
-    while (*includePaths != NULL) {
-        int32_t fd = openat(AT_FDCWD, *includePaths, O_RDONLY, 0);
-        if (fd < 0) return -1;
+    int64_t i = 0;
+    for (; includePaths[i] != NULL; ++i) {
+        if (allocator_resize(&htmlPacker_alloc, (i + 1) * (int64_t)sizeof(int32_t)) < 0) return -1;
 
-        if (allocator_resize(&htmlPacker_alloc, htmlPacker_alloc.size + (int64_t)sizeof(fd)) < 0) return -2;
-        *((int32_t *)&htmlPacker_alloc.mem[htmlPacker_alloc.size] - 1) = fd;
-        ++includePaths;
+        int32_t fd = openat(AT_FDCWD, includePaths[i], O_RDONLY, 0);
+        if (fd < 0) return -2;
+        ((int32_t *)htmlPacker_alloc.mem)[i] = fd;
     }
-    htmlPacker_buffer = &htmlPacker_alloc.mem[htmlPacker_alloc.size];
+    htmlPacker_buffer = (void *)&((int32_t *)htmlPacker_alloc.mem)[i];
     return 0;
 }
 

@@ -49,6 +49,10 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
 
 int32_t start(int32_t argc, char **argv, char **envp) {
     if (argc < 3) return 1;
+    char *inputName = argv[2];
+    int64_t inputNameLen = util_cstrLen(inputName);
+    if (inputNameLen > INT32_MAX) return 1;
+
     initPageSize(envp);
     if (allocator_init(&htmlPacker_alloc, (int64_t)1 << 32) < 0) return 1;
 
@@ -56,10 +60,11 @@ int32_t start(int32_t argc, char **argv, char **envp) {
     status = init(&argv[3]);
     if (status < 0) {
         debug_printNum("Failed to initialise (", status, ")\n");
+        status = 1;
         goto cleanup_alloc;
     }
 
-    status = replaceWithFile(0, 0, argv[2], (int32_t)util_cstrLen(argv[2]), false);
+    status = replaceWithFile(0, 0, inputName, (int32_t)inputNameLen, false);
     if (status < 0) {
         debug_printNum("Failed to read input (", status, ")\n");
         status = 1;
