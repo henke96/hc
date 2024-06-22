@@ -8,5 +8,5 @@ if "%processor_architecture%" == "ARM64" (
     exit /b 0
 )
 
-echo "Invalid architecture"
+echo Invalid architecture
 exit /b 1

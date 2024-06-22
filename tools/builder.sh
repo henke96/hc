@@ -18,20 +18,20 @@ FLAGS_DEBUG="-fsanitize-undefined-trap-on-error -fsanitize=undefined -Dhc_DEBUG=
 if test -z "$NO_DEBUG"; then
     eval "set -- $FLAGS_DEBUG"
     if test -n "$ASSEMBLY"; then
-        "$root_dir/cc.sh" -S -o "$OUT/debug_$full_name.s" "$source" "$@"
+        "$root_dir/cc.sh" -S -o "$OUT/debug_$full_name.s" "$@" "$source"
     fi
-    "$root_dir/cc.sh" -o "$OUT/debug_$full_name" "$source" "$@"
+    "$root_dir/cc.sh" -o "$OUT/debug_$full_name" "$@" "$source"
 fi
 
 eval "set -- $FLAGS_RELEASE"
 if test -n "$ASSEMBLY"; then
-    "$root_dir/cc.sh" -S -o "$OUT/$full_name.s" "$source" "$@"
+    "$root_dir/cc.sh" -S -o "$OUT/$full_name.s" "$@" "$source"
 fi
-"$root_dir/cc.sh" -o "$OUT/$full_name" "$source" "$@"
+"$root_dir/cc.sh" -o "$OUT/$full_name" "$@" "$source"
 
+analysis_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
 if test -z "$NO_ANALYSIS"; then
-    analysis_flags="--analyze --analyzer-output text -Xclang -analyzer-opt-analyze-headers"
-    "$root_dir/cc.sh" $analysis_flags "$source" "$@"
+    "$root_dir/cc.sh" $analysis_flags "$@" "$source"
     eval "set -- $FLAGS_DEBUG"
-    "$root_dir/cc.sh" $analysis_flags "$source" "$@"
+    "$root_dir/cc.sh" $analysis_flags "$@" "$source"
 fi
