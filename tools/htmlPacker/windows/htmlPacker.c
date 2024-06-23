@@ -44,14 +44,21 @@ static void initPageSize(hc_UNUSED char **envp) {
     GetSystemInfo(&systemInfo);
 }
 
+static void deinit(void) {
+    for (void **includePathHandle = htmlPacker_alloc.mem; (char *)includePathHandle != htmlPacker_buffer; ++includePathHandle) {
+        debug_CHECK(CloseHandle(*includePathHandle), RES == 1);
+    }
+}
+
 static int32_t init(char **includePaths) {
     int64_t i = 0;
+    void **includeHandles = htmlPacker_alloc.mem;
     for (; includePaths[i] != NULL; ++i) {
-        if (allocator_resize(&htmlPacker_alloc, (i + 1) * (int64_t)sizeof(void *)) < 0) return -1;
+        if (allocator_resize(&htmlPacker_alloc, (i + 1) * (int64_t)sizeof(void *)) < 0) break;
 
         int32_t utf16Count;
         uint16_t *pathZ = utf8ToUtf16(includePaths[i], -1, &utf16Count);
-        if (pathZ == NULL) return -2;
+        if (pathZ == NULL) break;
 
         void *handle = CreateFileW(
             pathZ,
@@ -62,17 +69,15 @@ static int32_t init(char **includePaths) {
             FILE_FLAG_BACKUP_SEMANTICS,
             NULL
         );
-        if (handle == INVALID_HANDLE_VALUE) return -3;
-        ((void **)htmlPacker_alloc.mem)[i] = handle;
+        if (handle == INVALID_HANDLE_VALUE) break;
+        includeHandles[i] = handle;
     }
-    htmlPacker_buffer = (void *)&((void **)htmlPacker_alloc.mem)[i];
+    htmlPacker_buffer = (void *)&includeHandles[i];
+    if (includePaths[i] != NULL) {
+        deinit();
+        return -1;
+    }
     return 0;
-}
-
-static void deinit(void) {
-    for (void **includePathHandle = htmlPacker_alloc.mem; (char *)includePathHandle != htmlPacker_buffer; ++includePathHandle) {
-        debug_CHECK(CloseHandle(*includePathHandle), RES == 1);
-    }
 }
 
 static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *path, int32_t pathLen, bool asBase64) {
@@ -128,9 +133,9 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
     int64_t insertSize = contentSize;
     if (asBase64) insertSize = base64_ENCODE_SIZE(contentSize);
 
+    int64_t newBufferSize = htmlPacker_bufferSize + (insertSize - replaceSize);
     // Allocate an extra byte to be able to verify EOF when reading.
-    int64_t newBufferSize = 1 + htmlPacker_bufferSize + (insertSize - replaceSize);
-    if (allocator_resize(&htmlPacker_alloc, &htmlPacker_buffer[newBufferSize] - (char *)htmlPacker_alloc.mem) < 0) {
+    if (allocator_resize(&htmlPacker_alloc, &htmlPacker_buffer[newBufferSize + 1] - (char *)htmlPacker_alloc.mem) < 0) {
         status = -4;
         goto cleanup_pathHandle;
     }
@@ -151,7 +156,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
     }
 
     // Convert to base 64 if requested. Can be done in place as we put content at end of insert gap.
-    if (asBase64) base64_encode(&htmlPacker_buffer[replaceIndex], &content[0], contentSize);
+    if (asBase64) base64_encode(&htmlPacker_buffer[replaceIndex], content, contentSize);
 
     status = 0;
     cleanup_pathHandle:
