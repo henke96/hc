@@ -15,7 +15,7 @@ build() {
 
     if test "$ARCH" != "riscv64"; then
         export ABI=windows-gnu
-        export FLAGS="-L $(escape "$OUT") -l:kernel32.lib"
+        export FLAGS="-fPIC -shared -L $(escape "$OUT") -l:kernel32.lib"
         export FLAGS_RELEASE="-Os -s"
         export FLAGS_DEBUG="-g -gcodeview -Wl,--pdb="
         "$root_dir/genlib.sh" "$OUT/kernel32.lib" "$root_dir/src/hc/windows/dll/kernel32.def"

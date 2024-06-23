@@ -6,6 +6,7 @@ root_dir="$script_dir/../.."
 test -n "$OUT" || { echo "Please set OUT"; exit 1; }
 
 ARCH="$(uname -m)"
+# TODO: freebsd
 ABI=linux
 
 if test -n "$JAVA_HOME"; then java_prefix="$JAVA_HOME/bin/"; fi
