@@ -7,10 +7,11 @@ root_dir="$script_dir/../.."
 test -n "$OUT" || { echo "Please set OUT"; exit 1; }
 
 build() {
-    export ABI=linux-gnu
-    export FLAGS="-L $(escape "$OUT") -l:libc.so.6 -l:libdl.so.2"
     export FLAGS_RELEASE="-Os"
     export FLAGS_DEBUG="-g"
+
+    export ABI=linux-gnu
+    export FLAGS="-L $(escape "$OUT") -l:libc.so.6 -l:libdl.so.2"
     "$root_dir/cc.sh" -fPIC -shared -o "$OUT/libc.so.6" "$root_dir/src/hc/linux/gnu/libc.so.6.c"
     "$root_dir/cc.sh" -fPIC -shared -o "$OUT/libdl.so.2" "$root_dir/src/hc/linux/gnu/libdl.so.2.c"
     "$root_dir/tools/builder.sh" "$script_dir/gnulinux/openGl.c"
@@ -18,8 +19,6 @@ build() {
 
     export ABI=freebsd14
     export FLAGS="-Wl,-dynamic-linker=/libexec/ld-elf.so.1 -L $(escape "$OUT") -l:libc.so.7"
-    export FLAGS_RELEASE="-Os"
-    export FLAGS_DEBUG="-g"
     "$root_dir/cc.sh" -fPIC -shared -Wl,--version-script="$root_dir/src/hc/freebsd/libc.so.7.map" -o "$OUT/libc.so.7" "$root_dir/src/hc/freebsd/libc.so.7.c"
     "$root_dir/tools/builder.sh" "$script_dir/freebsd/openGl.c"
     "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_openGl"
@@ -75,7 +74,7 @@ if test -z "$NO_WASM32"; then
     "$root_dir/tools/builder.sh" "$script_dir/web/openGl.wasm.c"
 
     "$root_dir/tools/htmlPacker/build.sh"
-    "$OUT/htmlPacker" "$OUT/openGl.html" "$script_dir/web/_start.html" "$OUT"
+    "$OUT/htmlPacker" "$OUT/openGl.html" _start.html "$script_dir/web" "$OUT"
 fi
 
 export ARCH=x86_64; build_android;
