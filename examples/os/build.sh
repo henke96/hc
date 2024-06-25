@@ -12,13 +12,13 @@ export FLAGS_RELEASE=
 export FLAGS_DEBUG=
 "$root_dir/tools/builder.sh" "$script_dir/kernel/kernel.elf.c"
 
-"$root_dir/objcopy.sh" -O binary "$OUT/x86_64-linux_kernel.elf" "$OUT/kernel.bin"
-"$root_dir/objcopy.sh" -O binary "$OUT/debug_x86_64-linux_kernel.elf" "$OUT/debug_kernel.bin"
+"$root_dir/objcopy.sh" -O binary "$OUT/$ARCH-${ABI}_kernel.elf" "$OUT/kernel.bin"
+"$root_dir/objcopy.sh" -O binary "$OUT/debug_$ARCH-${ABI}_kernel.elf" "$OUT/debug_kernel.bin"
 
 # Bootloader (with kernel binary embedded)
 export ARCH=x86_64
 export ABI=windows-gnu
-export FLAGS="-Os -s -I $(escape "$OUT") -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wl,-subsystem,efi_application "
+export FLAGS="-Os -s -I $(escape "$OUT") -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wl,-subsystem,efi_application"
 export FLAGS_RELEASE=
 export FLAGS_DEBUG=
 "$root_dir/tools/builder.sh" "$script_dir/bootloader/bootloader.efi.c"

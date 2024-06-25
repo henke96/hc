@@ -5,10 +5,11 @@ root_dir="$script_dir/../.."
 . "$root_dir/tools/shell/escape.sh"
 
 build() {
-    export ABI=linux
-    export FLAGS=
     export FLAGS_RELEASE="$opt"
     export FLAGS_DEBUG="-g"
+
+    export ABI=linux
+    export FLAGS=
     "$root_dir/tools/builder.sh" "$script_dir/linux/tests.c"
     "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_tests"
 

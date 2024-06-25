@@ -130,15 +130,23 @@ if not defined ANDROID_SDK (
 ) else (
     if defined JAVA_HOME set "java_prefix=%JAVA_HOME%\bin\"
 
-    if not defined NO_DEBUG call :build_apk "debug_" "--debug-mode"
+    if not defined NO_DEBUG (
+        call :build_apk "debug_" "--debug-mode"
+        if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+    )
     call :build_apk "" ""
+    if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 
     if not defined KEYSTORE (
         rem keytool -genkeypair -keyalg RSA -validity 100000 -keystore my.keystore
         echo Set KEYSTORE ^(and optionally KEYSTORE_PASS^) to sign apks
     ) else (
         if not defined KEYSTORE_PASS set "KEYSTORE_PASS=stdin"
-        if not defined NO_DEBUG call :sign_apk "debug_"
+        if not defined NO_DEBUG (
+            call :sign_apk "debug_"
+            if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+        )
         call :sign_apk ""
+        if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
     )
 )
