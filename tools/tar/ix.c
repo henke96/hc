@@ -32,31 +32,32 @@ static int32_t add(char *path) {
     struct state *state = NULL;
     int64_t allocSize = 0;
     currentFd = openat(AT_FDCWD, path, O_RDONLY, 0);
+    if (currentFd < 0) return -1;
 
     for (;;) {
-        // Build state for current directory.
-        struct state *prevState = state;
-        state = &alloc.mem[allocSize];
-        allocSize += sizeof(*state);
-        // No need to resize allocator here since we do it unconditionally below.
+        // Allocate new state.
+        struct state *newState = &alloc.mem[allocSize];
+        allocSize += sizeof(*newState);
+        // `allocator_resize` is called unconditionally below.
 
         // Read directory entries.
         for (;;) {
             debug_ASSERT((allocSize & 7) == 0);
-            if (allocator_resize(&alloc, allocSize + 8192) < 0) return -1;
+            if (allocator_resize(&alloc, allocSize + 8192) < 0) goto cleanup_currentFd;
 
             int64_t numRead = getdents(currentFd, &alloc.mem[allocSize], alloc.size - allocSize);
             if (numRead <= 0) {
                 if (numRead == 0) break;
-                return -2;
+                goto cleanup_currentFd;
             }
             allocSize += numRead;
         }
 
-        // Initialise the new state.
-        state->prev = prevState;
-        state->names = &alloc.mem[allocSize];
-        state->rootFd = currentFd;
+        // Initialise and commit new state.
+        newState->prev = state;
+        newState->names = &alloc.mem[allocSize];
+        newState->rootFd = currentFd;
+        state = newState;
 
         // Build list of names.
         for (
@@ -67,7 +68,7 @@ static int32_t add(char *path) {
             char *currentName = ix_D_NAME(current);
             if (isDot(currentName) || isDotDot(currentName)) continue;
             allocSize += (int64_t)sizeof(state->names[0]);
-            if (allocator_resize(&alloc, allocSize) < 0) return -3;
+            if (allocator_resize(&alloc, allocSize) < 0) goto cleanup_rootFds;
             *((char **)&alloc.mem[allocSize] - 1) = currentName;
         }
         int64_t namesLength = (&alloc.mem[allocSize] - (void *)state->names) / (int64_t)sizeof(state->names[0]);
@@ -93,9 +94,8 @@ static int32_t add(char *path) {
 
             // Open and write current name.
             currentFd = openat(state->rootFd, name, O_RDONLY, 0);
-            if (currentFd < 0) return -4;
+            if (currentFd < 0) goto cleanup_rootFds;
 
-            int32_t status = -1;
             int32_t nameLen = (int32_t)util_cstrLen(name);
             struct stat stat;
             stat.st_mode = 0; // Make static analysis happy.
@@ -104,16 +104,12 @@ static int32_t add(char *path) {
             if (S_ISDIR(stat.st_mode)) stat.st_size = -1;
             else if (!S_ISREG(stat.st_mode)) goto cleanup_currentFd;
 
-            status = writeRecord(
-                name, nameLen,
-                stat.st_size
-            );
-            cleanup_currentFd:
-            if (status < 0) {
-                debug_printNum("Failed to write record (", status, ")\n");
-                debug_CHECK(close(currentFd), RES == 0);
-                return -5;
-            }
+            if (
+                writeRecord(
+                    name, nameLen,
+                    stat.st_size
+                ) < 0
+            ) goto cleanup_currentFd;
 
             // If it was a directory, enter it. Otherwise, keep iterating entries.
             if (stat.st_size < 0) {
@@ -122,6 +118,14 @@ static int32_t add(char *path) {
             } else debug_CHECK(close(currentFd), RES == 0);
         }
     }
+    cleanup_currentFd:
+    debug_CHECK(close(currentFd), RES == 0);
+    cleanup_rootFds:
+    while (state != NULL) {
+        debug_CHECK(close(state->rootFd), RES == 0);
+        state = state->prev;
+    }
+    return -1;
 }
 
 static int32_t readIntoBuffer(void) {

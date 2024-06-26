@@ -46,7 +46,7 @@ static void initPageSize(hc_UNUSED char **envp) {
 
 static void deinit(void) {
     for (void **includePathHandle = htmlPacker_alloc.mem; (char *)includePathHandle != htmlPacker_buffer; ++includePathHandle) {
-        debug_CHECK(CloseHandle(*includePathHandle), RES == 1);
+        debug_CHECK(CloseHandle(*includePathHandle), RES != 0);
     }
 }
 
@@ -160,7 +160,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
 
     status = 0;
     cleanup_pathHandle:
-    debug_CHECK(CloseHandle(pathHandle), RES == 1);
+    debug_CHECK(CloseHandle(pathHandle), RES != 0);
     return status;
 }
 

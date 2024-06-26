@@ -20,4 +20,4 @@ if "%ARCH%" == "aarch64" (
     set "extra_flags=%extra_flags% -mno-outline-atomics"
 )
 
-"%llvm_prefix%clang" -target "%ARCH%-unknown-%ABI%" -fuse-ld=lld -I"%script_dir%\src" %base_flags% %extra_flags% %*
+"%llvm_prefix%clang" -target "%ARCH%-unknown-%ABI%" -fuse-ld=lld -I "%script_dir%\src" %base_flags% %extra_flags% %*
