@@ -822,7 +822,6 @@ struct BY_HANDLE_FILE_INFORMATION {
 };
 
 // NT internals
-#define NT_SUCCESS(STATUS) ((int32_t)STATUS >= 0)
 #define STATUS_NO_MORE_FILES ((int32_t)0x80000006)
 
 #define DELETE 0x010000

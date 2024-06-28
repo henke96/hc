@@ -9,10 +9,12 @@ static int32_t openInput(char *path) {
     }
     return inputFd;
 }
+
 static int32_t readInput(void) {
     if (util_readAll(inputFd, &buffer[0], sizeof(buffer)) != sizeof(buffer)) return -1;
     return 0;
 }
+
 static void closeInput(void) {
     debug_CHECK(close(inputFd), RES == 0);
 }

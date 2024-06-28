@@ -52,7 +52,10 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
 
         // Handle directories.
         if (typeflag == '5') {
-            if (createDir(&buffer[tar_OFFSET_PREFIX], &buffer[tar_OFFSET_NAME]) < 0) break;
+            if (createDir(&buffer[tar_OFFSET_PREFIX], &buffer[tar_OFFSET_NAME]) < 0) {
+                debug_print("Failed to create directory\n");
+                break;
+            }
             continue;
         }
         if (typeflag != '0') break;
@@ -60,7 +63,10 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         // Handle files.
         int64_t size = parseSize();
         if (size < 0) break;
-        if (createFile(&buffer[tar_OFFSET_PREFIX], &buffer[tar_OFFSET_NAME]) < 0) break;
+        if (createFile(&buffer[tar_OFFSET_PREFIX], &buffer[tar_OFFSET_NAME]) < 0) {
+            debug_print("Failed to create file\n");
+            break;
+        }
 
         while (size > 0) {
             if (readInput() < 0) break;

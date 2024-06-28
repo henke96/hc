@@ -106,7 +106,7 @@ static int32_t add(char *path) {
                 false
             );
             if (status == STATUS_NO_MORE_FILES) break;
-            if (!NT_SUCCESS(status) || ioStatusBlock.information == 0) goto cleanup_currentHandle;
+            if (status < 0 || ioStatusBlock.information == 0) goto cleanup_currentHandle;
 
             struct FILE_NAMES_INFORMATION *current = (void *)&buffer[0];
             for (;;) {
@@ -199,7 +199,7 @@ static int32_t add(char *path) {
             };
             int32_t status = NtCreateFile(
                 &currentHandle,
-                READ_CONTROL | FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_READ_EA | SYNCHRONIZE,
+                GENERIC_READ | SYNCHRONIZE,
                 &objectAttributes,
                 &ioStatusBlock,
                 NULL,
@@ -210,7 +210,7 @@ static int32_t add(char *path) {
                 NULL,
                 0
             );
-            if (!NT_SUCCESS(status)) goto cleanup_rootHandles;
+            if (status < 0) goto cleanup_rootHandles;
 
             int32_t nameLen = (int32_t)util_cstrLen(name);
             struct BY_HANDLE_FILE_INFORMATION handleInfo;

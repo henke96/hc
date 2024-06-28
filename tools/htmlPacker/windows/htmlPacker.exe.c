@@ -105,7 +105,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
         };
         int32_t status = NtCreateFile(
             &pathHandle,
-            READ_CONTROL | FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_READ_EA | SYNCHRONIZE,
+            GENERIC_READ | SYNCHRONIZE,
             &objectAttributes,
             &ioStatusBlock,
             NULL,
@@ -116,7 +116,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
             NULL,
             0
         );
-        if (NT_SUCCESS(status)) goto foundPath;
+        if (status >= 0) goto foundPath;
     }
     return -2;
     foundPath:;
