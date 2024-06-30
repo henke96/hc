@@ -114,7 +114,31 @@ static int64_t window_proc(
             return 0;
         }
         case WM_NCHITTEST: {
-            return HTCLIENT; // TODO
+            if (window.pointerGrabbed) return HTCLIENT;
+
+            int16_t x = (int16_t)(lParam & 0xFFFF);
+            int16_t y = (int16_t)((lParam >> 16) & 0xFFFF);
+            struct RECT windowRect;
+            debug_CHECK(GetWindowRect(windowHandle, &windowRect), RES != 0);
+
+            bool left = (x < windowRect.left + 5);
+            bool right = (x >= windowRect.right - 5);
+            bool top = (y < windowRect.top + 5);
+            bool bottom = (y >= windowRect.bottom - 5);
+            if (left) {
+                if (top) return HTTOPLEFT;
+                if (bottom) return HTBOTTOMLEFT;
+                return HTLEFT;
+            }
+            if (right) {
+                if (top) return HTTOPRIGHT;
+                if (bottom) return HTBOTTOMRIGHT;
+                return HTRIGHT;
+            }
+            if (top) return HTTOP;
+            if (bottom) return HTBOTTOM;
+            bool caption = (y < windowRect.top + 40);
+            return caption ? HTCAPTION : HTCLIENT;
         }
         case WM_SIZE: {
             int32_t width = lParam & 0xffff;

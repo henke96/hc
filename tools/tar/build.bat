@@ -16,4 +16,4 @@ call "%root_dir%\genlib.bat" "%OUT%\ntdll.lib" "%root_dir%\src\hc\windows\dll\nt
 if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 call "%root_dir%\genlib.bat" "%OUT%\kernel32.lib" "%root_dir%\src\hc\windows\dll\kernel32.def"
 if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
-call "%root_dir%\cc.bat" -Wl,-subsystem,console -L "%OUT%" -o "%OUT%\tar.exe" "%script_dir%\windows\tar.exe.c" -l:ntdll.lib -l:kernel32.lib
+call "%root_dir%\cc.bat" -Wl,-subsystem,console -L "%OUT%" -o "%OUT%\tar.exe" -l:ntdll.lib -l:kernel32.lib "%script_dir%\windows\tar.exe.c"
