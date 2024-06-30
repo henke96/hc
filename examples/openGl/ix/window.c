@@ -74,7 +74,7 @@ static int32_t window_init(char **envp) {
 
     int32_t status = egl_init(&window.egl, "libEGL.so.1");
     if (status < 0) {
-        debug_printNum("Failed to initalise EGL (", status, ")\n");
+        debug_printNum("Failed to initialise EGL (", status, ")\n");
         return -1;
     }
 

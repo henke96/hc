@@ -49,7 +49,7 @@ static int32_t app_init(void) {
 
     int32_t status = egl_init(&app.egl, "libEGL.so");
     if (status < 0) {
-        debug_printNum("Failed to initalise EGL (", status, ")\n");
+        debug_printNum("Failed to initialise EGL (", status, ")\n");
         return -1;
     }
     return 0;
