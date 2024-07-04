@@ -8,7 +8,7 @@ if not defined OUT (
     echo Please set OUT
     exit /b 1
 )
-set "name=htmlPacker"
+set "name=webPacker"
 set "opt=-Os"
 goto start
 

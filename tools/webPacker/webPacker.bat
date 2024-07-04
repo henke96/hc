@@ -12,4 +12,4 @@ if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 call "%script_dir%\build.bat"
 if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 
-"%OUT%\%HOST_ARCH%-%HOST_ABI%_htmlPacker.exe" %*
+"%OUT%\%HOST_ARCH%-%HOST_ABI%_webPacker.exe" %*

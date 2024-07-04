@@ -9,4 +9,4 @@ export NO_ANALYSIS=1
 
 "$script_dir/build.sh"
 
-"$OUT/$HOST_ARCH-${HOST_ABI}_htmlPacker" "$@"
+"$OUT/$HOST_ARCH-${HOST_ABI}_webPacker" "$@"

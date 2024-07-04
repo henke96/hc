@@ -71,6 +71,6 @@ if not defined NO_WASM32 (
     call "%root_dir%\tools\builder.bat" "%script_dir%\web\%name%.wasm.c"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 
-    call "%root_dir%\tools\htmlPacker\htmlPacker.bat" "%OUT%\%name%.html" _start.html "%script_dir%\web" "%OUT%"
+    call "%root_dir%\tools\webPacker\webPacker.bat" "%OUT%\%name%.html" _start.html "%script_dir%\web" "%OUT%"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )

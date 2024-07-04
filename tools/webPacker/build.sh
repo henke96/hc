@@ -5,7 +5,7 @@ root_dir="$script_dir/../.."
 . "$root_dir/src/shell/escape.sh"
 
 test -n "$OUT" || { echo "Please set OUT"; exit 1; }
-name=htmlPacker
+name=webPacker
 opt=-Os
 
 build() {

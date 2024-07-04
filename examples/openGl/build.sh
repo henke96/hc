@@ -81,7 +81,7 @@ if test -z "$NO_WASM32"; then
     export FLAGS_DEBUG="-g"
     "$root_dir/tools/builder.sh" "$script_dir/web/$name.wasm.c"
 
-    "$root_dir/tools/htmlPacker/htmlPacker.sh" "$OUT/$name.html" _start.html "$script_dir/web" "$OUT"
+    "$root_dir/tools/webPacker/webPacker.sh" "$OUT/$name.html" _start.html "$script_dir/web" "$OUT"
 fi
 
 export ARCH=x86_64; build_android
