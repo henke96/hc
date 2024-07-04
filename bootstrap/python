@@ -1,7 +1,7 @@
 #!/bin/sh --
 set -ex
 SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
-. "$SCRIPT_DIR/../tools/shell/recipe.sh"
+. "$SCRIPT_DIR/../src/shell/recipe.sh"
 
 pkg="Python-3.11.4"
 url="https://www.python.org/ftp/python/3.11.4/$pkg.tar.xz"

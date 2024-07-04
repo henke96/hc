@@ -41,7 +41,6 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
     // Get file size.
     int32_t status;
     struct stat contentStat;
-    contentStat.st_size = 0; // Make static analysis happy.
     if (fstatat(pathFd, "", &contentStat, AT_EMPTY_PATH) < 0) {
         status = -3;
         goto cleanup_pathFd;

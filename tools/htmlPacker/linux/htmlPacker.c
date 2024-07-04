@@ -24,6 +24,7 @@ int32_t pageSize;
 #define close sys_close
 static int32_t fstatat(int32_t fd, const char *path, struct stat *stat, uint32_t flags) {
     struct statx statx;
+    statx.stx_size = 0; // Make static analysis happy.
     if (sys_statx(fd, path, flags, STATX_SIZE, &statx) < 0) return -1;
     stat->st_size = statx.stx_size;
     return 0;

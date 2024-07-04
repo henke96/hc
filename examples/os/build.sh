@@ -2,7 +2,9 @@
 set -e
 script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../.."
-. $root_dir/tools/shell/escape.sh
+. $root_dir/src/shell/escape.sh
+
+test -n "$OUT" || { echo "Please set OUT"; exit 1; }
 
 # Kernel
 export ARCH=x86_64
@@ -13,7 +15,9 @@ export FLAGS_DEBUG=
 "$root_dir/tools/builder.sh" "$script_dir/kernel/kernel.elf.c"
 
 "$root_dir/objcopy.sh" -O binary "$OUT/$ARCH-${ABI}_kernel.elf" "$OUT/kernel.bin"
-"$root_dir/objcopy.sh" -O binary "$OUT/debug_$ARCH-${ABI}_kernel.elf" "$OUT/debug_kernel.bin"
+if test -z "$NO_DEBUG"; then
+    "$root_dir/objcopy.sh" -O binary "$OUT/debug_$ARCH-${ABI}_kernel.elf" "$OUT/debug_kernel.bin"
+fi
 
 # Bootloader (with kernel binary embedded)
 export ARCH=x86_64

@@ -2,15 +2,22 @@
 set -e
 script_dir="$(cd -- "${0%/*}/" && pwd)"
 root_dir="$script_dir/../.."
-. "$root_dir/tools/shell/escape.sh"
+. "$root_dir/src/shell/escape.sh"
+
+test -n "$OUT" || { echo "Please set OUT"; exit 1; }
+name=ssh
+opt=-Os
 
 build() {
-    export ABI=linux
-    export FLAGS=
-    export FLAGS_RELEASE="-Os"
+    export FLAGS_RELEASE="$opt"
     export FLAGS_DEBUG="-g"
-    "$root_dir/tools/builder.sh" "$script_dir/ssh.c"
-    "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_ssh"
+
+    export ABI=linux
+    if test -z "$NO_LINUX"; then
+        export FLAGS=
+        "$root_dir/tools/builder.sh" "$script_dir/$name.c"
+        "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_$name"
+    fi
 }
 
 if test -z "$NO_X86_64"; then export ARCH=x86_64; build; fi
