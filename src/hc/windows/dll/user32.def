@@ -31,3 +31,4 @@ RegisterRawInputDevices
 GetRawInputData
 GetMonitorInfoW
 MonitorFromWindow
+GetSystemMetrics

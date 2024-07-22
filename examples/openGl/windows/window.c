@@ -1,6 +1,3 @@
-#define window_DEFAULT_WIDTH 640
-#define window_DEFAULT_HEIGHT 480
-
 static int32_t window_codeToKey[0x80] = {
     [0x10] = 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
     [0x1E] = 'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L',
@@ -16,14 +13,17 @@ struct window {
     uint64_t timestampMult;
     uint64_t eventTimestamp;
     struct WINDOWPLACEMENT prevPlacement;
+    uint16_t width;
+    uint16_t height;
     bool pointerGrabbed;
     bool initialised;
-    char __pad[2];
+    bool fullscreen;
+    char __pad[5];
 };
 
 static struct window window;
 
-static void window_clipCursor(void *windowHandle) {
+static void _window_clipCursor(void *windowHandle) {
     struct RECT rect;
     if (
         GetClientRect(windowHandle, &rect) &&
@@ -34,7 +34,27 @@ static void window_clipCursor(void *windowHandle) {
     }
 }
 
-static int64_t window_proc(
+static void _window_fixWindowRect(void *windowHandle, struct RECT *rect) {
+    int32_t needAdjustMask = WS_MAXIMIZE | WS_BORDER;
+    if ((GetWindowLongW(windowHandle, GWL_STYLE) & needAdjustMask) == needAdjustMask) {
+        int32_t padding = GetSystemMetrics(SM_CXPADDEDBORDER);
+        int32_t xAdjust = GetSystemMetrics(SM_CXSIZEFRAME) + padding;
+        int32_t yAdjust = GetSystemMetrics(SM_CYSIZEFRAME) + padding;
+        rect->left += xAdjust;
+        rect->right -= xAdjust;
+        rect->top += yAdjust;
+        rect->bottom -= yAdjust;
+    }
+}
+
+static void _window_draw(void) {
+    int64_t drawTime;
+    debug_CHECK(QueryPerformanceCounter(&drawTime), RES != 0);
+    game_draw((uint64_t)drawTime * window.timestampMult, !window.pointerGrabbed && !window.fullscreen);
+    debug_CHECK(SwapBuffers(window.dc), RES == 1);
+}
+
+static int64_t _window_proc(
     void *windowHandle,
     uint32_t message,
     uint64_t wParam,
@@ -42,7 +62,6 @@ static int64_t window_proc(
 ) {
     switch (message) {
         case WM_CREATE: {
-            struct CREATESTRUCTW *createStruct = (void *)lParam;
             window.dc = GetDC(windowHandle);
             if (window.dc == NULL) return -1;
 
@@ -77,7 +96,7 @@ static int64_t window_proc(
 
             int64_t initTime;
             debug_CHECK(QueryPerformanceCounter(&initTime), RES != 0);
-            status = game_init(createStruct->width, createStruct->height, (uint64_t)initTime * window.timestampMult);
+            status = game_init((uint64_t)initTime * window.timestampMult);
             if (status < 0) {
                 debug_printNum("Failed to initialise game (", status, ")\n");
                 goto cleanup_context;
@@ -90,7 +109,7 @@ static int64_t window_proc(
                 0, 0, 0, 0,
                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
             );
-            return 0;
+            break;
 
             cleanup_context:
             wgl_destroyContext(&window.wgl, window.dc);
@@ -106,20 +125,22 @@ static int64_t window_proc(
                 debug_CHECK(ReleaseDC(windowHandle, window.dc), RES == 1);
                 PostQuitMessage(0);
             }
-            return 0;
+            break;
         }
         case WM_NCCALCSIZE: {
             if (!wParam) break;
-            // Handle this to prevent window decorations.
+
+            _window_fixWindowRect(windowHandle, (struct RECT *)lParam);
             return 0;
         }
         case WM_NCHITTEST: {
-            if (window.pointerGrabbed) return HTCLIENT;
+            if (window.pointerGrabbed || window.fullscreen) return HTCLIENT;
 
             int16_t x = (int16_t)(lParam & 0xFFFF);
             int16_t y = (int16_t)((lParam >> 16) & 0xFFFF);
             struct RECT windowRect;
             debug_CHECK(GetWindowRect(windowHandle, &windowRect), RES != 0);
+            _window_fixWindowRect(windowHandle, &windowRect);
 
             bool left = (x < windowRect.left + 5);
             bool right = (x >= windowRect.right - 5);
@@ -137,15 +158,26 @@ static int64_t window_proc(
             }
             if (top) return HTTOP;
             if (bottom) return HTBOTTOM;
-            bool caption = (y < windowRect.top + 40);
-            return caption ? HTCAPTION : HTCLIENT;
+            if (y < windowRect.top + game_FRAME_HEIGHT) {
+                if (x >= windowRect.right - game_FRAME_HEIGHT) return HTCLOSE;
+                return HTCAPTION;
+            }
+            return HTCLIENT;
+        }
+        case WM_NCLBUTTONDOWN: {
+            // DefWindowProcW seemingly doesn't trust wParam for the close button.
+            if (wParam == HTCLOSE) {
+                debug_CHECK(PostMessageW(windowHandle, WM_SYSCOMMAND, SC_CLOSE, 0), RES != 0);
+                return 0;
+            }
+            break;
         }
         case WM_SIZE: {
-            int32_t width = lParam & 0xffff;
-            int32_t height = (lParam >> 16) & 0xffff;
-            if (window.pointerGrabbed) window_clipCursor(windowHandle);
-            game_onResize(width, height);
-            return 0;
+            window.width = (uint16_t)(lParam & 0xFFFF);
+            window.height = (uint16_t)((lParam >> 16) & 0xFFFF);
+            if (window.pointerGrabbed) _window_clipCursor(windowHandle);
+            game_onResize();
+            break;
         }
         case WM_KILLFOCUS: {
             if (window.pointerGrabbed) {
@@ -154,18 +186,18 @@ static int64_t window_proc(
                 debug_CHECK(ShowCursor(1), RES == 0);
                 window.pointerGrabbed = false;
             }
-            return 0;
+            break;
         }
         case WM_LBUTTONDOWN:
         case WM_MBUTTONDOWN:
         case WM_RBUTTONDOWN: {
             if (!window.pointerGrabbed) {
                 // Grab pointer.
-                window_clipCursor(windowHandle);
+                _window_clipCursor(windowHandle);
                 debug_CHECK(ShowCursor(0), RES == -1);
                 window.pointerGrabbed = true;
             }
-            return 0;
+            break;
         }
         case WM_INPUT: {
             struct RAWINPUT input;
@@ -197,13 +229,13 @@ static int64_t window_proc(
                     } else if (input.data.keyboard.makeCode == 0x57) { // F11.
                         // Toggle fullscreen.
                         int32_t style = GetWindowLongW(windowHandle, GWL_STYLE);
-                        if (style & WS_OVERLAPPEDWINDOW) {
+                        window.fullscreen = !window.fullscreen;
+                        if (window.fullscreen) {
                             struct MONITORINFOEXW mi = { .size = sizeof(mi) };
-                            if (
-                                GetWindowPlacement(windowHandle, &window.prevPlacement) &&
-                                GetMonitorInfoW(MonitorFromWindow(windowHandle, MONITOR_DEFAULTTOPRIMARY), &mi)
-                            ) {
-                                SetWindowLongW(windowHandle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+                            debug_CHECK(GetWindowPlacement(windowHandle, &window.prevPlacement), RES != 0);
+                            debug_CHECK(GetMonitorInfoW(MonitorFromWindow(windowHandle, MONITOR_DEFAULTTOPRIMARY), &mi), RES != 0);
+                            SetWindowLongW(windowHandle, GWL_STYLE, style & ~WS_OVERLAPPEDWINDOW);
+                            debug_CHECK(
                                 SetWindowPos(
                                     windowHandle,
                                     HWND_TOP,
@@ -211,14 +243,21 @@ static int64_t window_proc(
                                     mi.monitorRect.right - mi.monitorRect.left,
                                     mi.monitorRect.bottom - mi.monitorRect.top,
                                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED
-                                );
-                            }
+                                ),
+                                RES != 0
+                            );
                         } else {
                             SetWindowLongW(windowHandle, GWL_STYLE, style | WS_OVERLAPPEDWINDOW);
-                            SetWindowPlacement(windowHandle, &window.prevPlacement);
-                            SetWindowPos(
-                                windowHandle, NULL, 0, 0, 0, 0,
-                                SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+                            debug_CHECK(
+                                SetWindowPlacement(windowHandle, &window.prevPlacement),
+                                RES != 0
+                            );
+                            debug_CHECK(
+                                SetWindowPos(
+                                    windowHandle, NULL, 0, 0, 0, 0,
+                                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED
+                                ),
+                                RES != 0
                             );
                         }
                     }
@@ -227,7 +266,11 @@ static int64_t window_proc(
                     if (key != 0) game_onKeyUp(key, window.eventTimestamp);
                 }
             }
-            return 0;
+            break;
+        }
+        case WM_PAINT: {
+            _window_draw();
+            break;
         }
     }
     return DefWindowProcW(windowHandle, message, wParam, lParam);
@@ -236,6 +279,9 @@ static int64_t window_proc(
 static int32_t window_init(void) {
     window.initialised = false;
     window.pointerGrabbed = false;
+    window.fullscreen = false;
+    window.width = 640;
+    window.height = 480;
     window.prevPlacement.length = sizeof(window.prevPlacement);
 
     int64_t timerFrequency;
@@ -249,7 +295,7 @@ static int32_t window_init(void) {
     struct WNDCLASSW windowClass = {
         .instanceHandle = __ImageBase,
         .className = u"gl",
-        .windowProc = window_proc,
+        .windowProc = _window_proc,
         .style = CS_OWNDC | CS_VREDRAW | CS_HREDRAW,
         .cursorHandle = LoadCursorW(NULL, IDC_ARROW)
     };
@@ -263,7 +309,8 @@ static int32_t window_init(void) {
         windowClass.className,
         u"",
         WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-        CW_USEDEFAULT, CW_USEDEFAULT, window_DEFAULT_WIDTH, window_DEFAULT_HEIGHT,
+        CW_USEDEFAULT, CW_USEDEFAULT,
+        window.width, window.height,
         NULL,
         NULL,
         windowClass.instanceHandle,
@@ -295,7 +342,7 @@ static int32_t window_init(void) {
     return 0;
 
     cleanup_windowClass:
-    debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), RES == 1);
+    debug_CHECK(UnregisterClassW(windowClass.className, windowClass.instanceHandle), RES != 0);
     cleanup_wgl:
     wgl_deinit(&window.wgl);
     return status;
@@ -312,16 +359,19 @@ static void window_run(void) {
             if (msg.message == WM_QUIT) return;
             DispatchMessageW(&msg);
         }
-        int64_t drawTime;
-        debug_CHECK(QueryPerformanceCounter(&drawTime), RES != 0);
-        if (game_draw((uint64_t)drawTime * window.timestampMult) < 0 || !SwapBuffers(window.dc)) {
-            debug_CHECK(PostMessageW(window.windowHandle, WM_CLOSE, 0, 0), RES != 0);
-            continue;
-        }
+        _window_draw();
     }
 }
 
 static void window_deinit(void) {
-    debug_CHECK(UnregisterClassW(u"gl", __ImageBase), RES == 1);
+    debug_CHECK(UnregisterClassW(u"gl", __ImageBase), RES != 0);
     wgl_deinit(&window.wgl);
+}
+
+static int32_t window_width(void) {
+    return window.width;
+}
+
+static int32_t window_height(void) {
+    return window.height;
 }

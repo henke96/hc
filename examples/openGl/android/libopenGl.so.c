@@ -22,10 +22,7 @@ hc_UNUSED static void game_onKeyUp(int32_t key, uint64_t timestamp);
 #define game_EXPORT static
 #define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)
 #include "../shared/gl.c"
-#include "../shaders.c"
-#include "../vertexArrays.c"
-#include "../trig.c"
-#include "../mat.c"
+#include "../shared/window.h"
 #include "../game.c"
 
 struct app {
@@ -39,6 +36,14 @@ struct app {
 };
 
 static struct app app;
+
+static int32_t window_width(void) {
+    return app.width;
+}
+
+static int32_t window_height(void) {
+    return app.height;
+}
 
 static int32_t app_init(void) {
     app.window = NULL;
@@ -145,11 +150,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         struct timespec initTimespec;
                         debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &initTimespec), RES == 0);
                         uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
-                        int32_t status = game_init(
-                            app.width,
-                            app.height,
-                            initTimestamp
-                        );
+                        int32_t status = game_init(initTimestamp);
                         if (status < 0) {
                             debug_printNum("Failed to initialise game (", status, ")\n");
                             return -5;
@@ -227,14 +228,14 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
         ) {
             app.width = width;
             app.height = height;
-            game_onResize(app.width, app.height);
+            game_onResize();
         }
 
         // Rendering.
         struct timespec drawTimespec;
         debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &drawTimespec), RES == 0);
         uint64_t drawTimestamp = (uint64_t)drawTimespec.tv_sec * 1000000000 + (uint64_t)drawTimespec.tv_nsec;
-        if (game_draw(drawTimestamp) < 0) return -6;
+        game_draw(drawTimestamp, false);
         debug_CHECK(egl_swapBuffers(&app.egl), RES == 1);
     }
 }

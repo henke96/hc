@@ -81,12 +81,13 @@ if test -z "$NO_WASM32"; then
     export FLAGS_DEBUG="-g"
     "$root_dir/tools/builder.sh" "$script_dir/web/$name.wasm.c"
 
+    # TODO debug
     "$root_dir/tools/webPacker/webPacker.sh" "$OUT/$name.html" _start.html "$script_dir/web" "$OUT"
 fi
 
 export ARCH=x86_64; build_android
 export ARCH=aarch64; build_android
-# TODO: riscv64?
+# TODO riscv64?
 
 if test -z "$ANDROID_SDK"; then
     # Download android command line tools: https://developer.android.com/studio (scroll down)

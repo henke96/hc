@@ -36,22 +36,55 @@ static int32_t vertexArrays_init(void) {
             3,
             gl_SHORT,
             gl_TRUE,
-            0,
+            12,
             0
         );
         gl_enableVertexAttribArray(shaders_POSITION_LOC);
+        gl_vertexAttribPointer(
+            shaders_COLOUR_LOC,
+            3,
+            gl_SHORT,
+            gl_TRUE,
+            12,
+            (void *)6
+        );
+        gl_enableVertexAttribArray(shaders_COLOUR_LOC);
 
+        #define ONE INT16_MAX
+        #define HALF (INT16_MAX / 2)
+        #define FRAME_COLOUR INT16_MAX / 6, INT16_MAX / 6, INT16_MAX / 6
+        #define CLOSE_BUTTON_COLOUR HALF, 0, 0
         int16_t vertices[] = {
-            -INT16_MAX/2, -INT16_MAX/2, 0,
-             INT16_MAX/2, -INT16_MAX/2, 0,
-             0,            INT16_MAX/2, 0
+            0, 0, 0,   FRAME_COLOUR,
+            ONE, 0, 0, FRAME_COLOUR,
+            0, ONE, 0, FRAME_COLOUR,
+
+            0, 0, 0,     CLOSE_BUTTON_COLOUR,
+            ONE, 0, 0,   CLOSE_BUTTON_COLOUR,
+            0, ONE, 0,   CLOSE_BUTTON_COLOUR,
+
+            -HALF, -HALF, 0, HALF, HALF, HALF,
+            HALF, -HALF, 0,  HALF, HALF, HALF,
+            0, HALF, 0,      HALF, HALF, HALF
         };
+        #undef ONE
+        #undef HALF
+        #undef FRAME_COLOUR
+        #undef CLOSE_BUTTON_COLOUR
         gl_bufferData(gl_ARRAY_BUFFER, sizeof(vertices), &vertices[0], gl_STATIC_DRAW);
 
         // Index buffer.
         gl_bindBuffer(gl_ELEMENT_ARRAY_BUFFER, vertexArrays_buffers[VERTEX_ARRAY][vertexArrays_INDEX_BUFFER]);
         uint16_t indices[] = {
-            0, 1, 2
+            #define vertexArrays_FRAME_OFFSET 0
+            #define vertexArrays_FRAME_COUNT 3
+            0, 1, 2,
+            #define vertexArrays_CLOSE_BUTTON_OFFSET (vertexArrays_FRAME_OFFSET + 2 * vertexArrays_FRAME_COUNT)
+            #define vertexArrays_CLOSE_BUTTON_COUNT 3
+            3, 4, 5,
+            #define vertexArrays_TRIANGLE_OFFSET (vertexArrays_CLOSE_BUTTON_OFFSET + 2 * vertexArrays_CLOSE_BUTTON_COUNT)
+            #define vertexArrays_TRIANGLE_COUNT 3
+            6, 7, 8
         };
         gl_bufferData(gl_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], gl_STATIC_DRAW);
 

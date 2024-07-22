@@ -231,8 +231,8 @@ struct PIXELFORMATDESCRIPTOR {
 #define WS_VISIBLE 0x10000000
 #define WS_DISABLED 0x08000000
 #define WS_CLIPSIBLINGS 0x04000000
-#define WS_CLIPCHILDREN 0x0200000
-#define WS_MAXIMIZE 0x0100000
+#define WS_CLIPCHILDREN 0x02000000
+#define WS_MAXIMIZE 0x01000000
 #define WS_CAPTION 0x00C00000
 #define WS_BORDER 0x00800000
 #define WS_DLGFRAME 0x00400000
@@ -520,6 +520,15 @@ struct PIXELFORMATDESCRIPTOR {
 #define HTTRANSPARENT -1
 #define HTVSCROLL 7
 #define HTZOOM 9
+
+#define SM_CXSIZEFRAME 32
+#define SM_CYSIZEFRAME 33
+#define SM_CXPADDEDBORDER 92
+
+#define SC_CLOSE 0xF060
+#define SC_MAXIMIZE 0xF030
+#define SC_MOVE 0xF010
+#define SC_SIZE 0xF000
 
 struct WNDCLASSW {
     uint32_t style;
@@ -1002,6 +1011,7 @@ hc_DLLIMPORT uint32_t GetRawInputData(void *rawInputHandle, uint32_t command, vo
 
 hc_DLLIMPORT int32_t GetMonitorInfoW(void *monitorHandle, struct MONITORINFOEXW *monitorInfo);
 hc_DLLIMPORT void *MonitorFromWindow(void *windowHandle, uint32_t flags);
+hc_DLLIMPORT int32_t GetSystemMetrics(int32_t index);
 
 // gdi32.dll
 hc_DLLIMPORT int32_t ChoosePixelFormat(void *dc, const struct PIXELFORMATDESCRIPTOR *pfd);

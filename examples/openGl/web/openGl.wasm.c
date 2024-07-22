@@ -3,10 +3,7 @@
 #include "hc/debug.h"
 
 #define game_EXPORT hc_EXPORT
-#include "debug.c"
+#include "debug.h"
 #include "gl.h"
-#include "../shaders.c"
-#include "../vertexArrays.c"
-#include "../trig.c"
-#include "../mat.c"
+#include "window.h"
 #include "../game.c"

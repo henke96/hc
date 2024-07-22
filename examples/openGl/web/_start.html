@@ -42,6 +42,22 @@
                             for (postEnd = post; wasmMemoryU8[postEnd]; ++postEnd);
                             console.log(textDecoder.decode(wasmMemoryU8.subarray(pre, preEnd)) + num + textDecoder.decode(wasmMemoryU8.subarray(post, postEnd)));
                         },
+                        debug_fail: (res, expression, file, line) => {
+                            let wasmMemoryU8 = new Uint8Array(wasmExports.memory.buffer);
+                            let expressionEnd, fileEnd;
+                            for (expressionEnd = expression; wasmMemoryU8[expressionEnd]; ++expressionEnd);
+                            for (fileEnd = file; wasmMemoryU8[fileEnd]; ++fileEnd);
+                            throw (
+                                textDecoder.decode(wasmMemoryU8.subarray(file, fileEnd)) +
+                                ":" +
+                                line +
+                                " fail: " +
+                                textDecoder.decode(wasmMemoryU8.subarray(expression, expressionEnd)) +
+                                " = " + res
+                            );
+                        },
+                        window_width: () => canvas.width,
+                        window_height: () => canvas.height,
                         gl_getError: () => gl.getError(),
                         gl_createShader: type => glPush(gl.createShader(type)),
                         gl_shaderSource: (shader, count, string, length) => {
@@ -105,7 +121,9 @@
                             let end;
                             for (end = name; wasmMemoryU8[end]; ++end);
                             return glPush(gl.getUniformLocation(glObjects[program], textDecoder.decode(wasmMemoryU8.subarray(name, end))));
-                        }
+                        },
+                        gl_enable: cap => gl.enable(cap),
+                        gl_disable: cap => gl.disable(cap)
                     }
                 };
                 let wasmBase64 = "/*INCLUDE_BASE64(wasm32-unknown_openGl.wasm)*/";
@@ -118,7 +136,7 @@
                         wasmMemoryU32 = new Uint32Array(wasmExports.memory.buffer);
                         wasmMemoryF32 = new Float32Array(wasmExports.memory.buffer);
 
-                        let status = wasmExports.game_init(canvas.width, canvas.height, BigInt(Math.round(performance.now() * 1000)) * 1000n);
+                        let status = wasmExports.game_init(BigInt(Math.round(performance.now() * 1000)) * 1000n);
                         if (status < 0) throw "Failed to initialise game (" + status + ")";
 
                         window.addEventListener("resize", () => {
@@ -126,7 +144,7 @@
                             let height = window.innerHeight;
                             canvas.width = width;
                             canvas.height = height;
-                            wasmExports.game_onResize(width, height);
+                            wasmExports.game_onResize();
                         });
 
                         let onMouseMove = (event) => {
@@ -166,8 +184,7 @@
                         document.addEventListener("mousedown", onMouseDown);
 
                         let mainLoop = () => {
-                            let status = wasmExports.game_draw(BigInt(Math.round(performance.now() * 1000)) * 1000n);
-                            if (status < 0) throw "Failed to draw game (" + status + ")";
+                            wasmExports.game_draw(BigInt(Math.round(performance.now() * 1000)) * 1000n, false);
                             window.requestAnimationFrame(mainLoop);
                         };
                         mainLoop();

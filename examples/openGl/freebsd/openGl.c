@@ -26,10 +26,7 @@ static int32_t openGl_pageSize;
 #define game_EXPORT static
 #define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)
 #include "../shared/gl.c"
-#include "../shaders.c"
-#include "../vertexArrays.c"
-#include "../trig.c"
-#include "../mat.c"
+#include "../shared/window.h"
 #include "../game.c"
 #include "../ix/window.c"
 

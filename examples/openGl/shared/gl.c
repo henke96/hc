@@ -28,6 +28,8 @@ static void (*gl_drawElementsInstanced)(uint32_t mode, int32_t count, uint32_t t
 static void (*gl_vertexAttribDivisor)(uint32_t index, uint32_t divisor);
 static void (*gl_uniformMatrix4fv)(int32_t location, int32_t count, uint8_t transpose, const float *value);
 static int32_t (*gl_getUniformLocation)(uint32_t program, const char *name);
+static void (*gl_enable)(int32_t cap);
+static void (*gl_disable)(int32_t cap);
 
 static int32_t gl_init(void *loader) {
     if ((gl_getError = gl_GET_PROC_ADDR(loader, "glGetError")) == NULL) return -1;
@@ -56,5 +58,7 @@ static int32_t gl_init(void *loader) {
     if ((gl_vertexAttribDivisor = gl_GET_PROC_ADDR(loader, "glVertexAttribDivisor")) == NULL) return -1;
     if ((gl_uniformMatrix4fv = gl_GET_PROC_ADDR(loader, "glUniformMatrix4fv")) == NULL) return -1;
     if ((gl_getUniformLocation = gl_GET_PROC_ADDR(loader, "glGetUniformLocation")) == NULL) return -1;
+    if ((gl_enable = gl_GET_PROC_ADDR(loader, "glEnable")) == NULL) return -1;
+    if ((gl_disable = gl_GET_PROC_ADDR(loader, "glDisable")) == NULL) return -1;
     return 0;
 }

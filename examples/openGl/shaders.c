@@ -1,21 +1,26 @@
 #define shaders_POSITION_LOC 0
-#define shaders_MODELVIEW_MATRIX_LOC 1
+#define shaders_COLOUR_LOC 1
+#define shaders_MODELVIEW_MATRIX_LOC 2
 
 static const char *shaders_mainVertex =
     "#version 300 es\n"
     "layout (location = " hc_XSTR(shaders_POSITION_LOC) ") in vec3 position;\n"
+    "layout (location = " hc_XSTR(shaders_COLOUR_LOC) ") in vec3 colour;\n"
     "layout (location = " hc_XSTR(shaders_MODELVIEW_MATRIX_LOC) ") in mat4 modelViewMatrix;\n"
     "uniform mat4 projectionMatrix;\n"
+    "out vec3 varColour;\n"
     "void main() {\n"
+    "    varColour = colour;\n"
     "    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);\n"
     "}\n";
 
 static const char *shaders_mainFragment =
     "#version 300 es\n"
     "precision mediump float;\n"
-    "out vec4 outColor;\n"
+    "layout (location = 0) out vec4 outColour;\n"
+    "in vec3 varColour;\n"
     "void main() {\n"
-    "    outColor = vec4(1.0, 0.6, 0.2, 1.0);\n"
+    "    outColour = vec4(varColour, 1.0);\n"
     "}\n";
 
 static uint32_t shaders_mainProgram;

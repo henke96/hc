@@ -121,11 +121,7 @@ static int32_t window_init(char **envp) {
     struct timespec initTimespec;
     debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &initTimespec), RES == 0);
     uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
-    status = game_init(
-        window.width,
-        window.height,
-        initTimestamp
-    );
+    status = game_init(initTimestamp);
     if (status < 0) {
         debug_printNum("Failed to initialise game (", status, ")\n");
         goto cleanup_eglSurface;
@@ -162,4 +158,12 @@ static void window_deinit(void) {
         default: hc_UNREACHABLE;
     }
     egl_deinit(&window.egl);
+}
+
+static int32_t window_width(void) {
+    return window.width;
+}
+
+static int32_t window_height(void) {
+    return window.height;
 }

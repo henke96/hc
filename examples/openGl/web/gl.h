@@ -75,3 +75,9 @@ void gl_uniformMatrix4fv(int32_t location, int32_t count, uint8_t transpose, con
 
 hc_WASM_IMPORT("env", "gl_getUniformLocation")
 int32_t gl_getUniformLocation(uint32_t program, const char *name);
+
+hc_WASM_IMPORT("env", "gl_enable")
+int32_t gl_enable(int32_t cap);
+
+hc_WASM_IMPORT("env", "gl_disable")
+int32_t gl_disable(int32_t cap);

@@ -96,7 +96,7 @@ static int32_t window_gbm_run(void) {
         struct timespec drawTimespec;
         debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &drawTimespec), RES == 0);
         uint64_t drawTimestamp = (uint64_t)drawTimespec.tv_sec * 1000000000 + (uint64_t)drawTimespec.tv_nsec;
-        if (game_draw(drawTimestamp) < 0) return -5;
+        game_draw(drawTimestamp, false);
         debug_CHECK(egl_swapBuffers(&window.egl), RES == 1);
 
         void *nextBo = gbm_surfaceLockFrontBuffer(&window.gbm.gbm, window.gbm.gbmSurface);

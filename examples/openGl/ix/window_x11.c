@@ -524,7 +524,7 @@ static int32_t window_x11_run(void) {
                             struct x11_configureNotify *configureNotify = (void *)generic;
                             window.width = configureNotify->width;
                             window.height = configureNotify->height;
-                            game_onResize(window.width, window.height);
+                            game_onResize();
                             break;
                         }
                         case x11_genericEvent_TYPE: {
@@ -582,7 +582,7 @@ static int32_t window_x11_run(void) {
         struct timespec drawTimespec;
         debug_CHECK(clock_gettime(CLOCK_MONOTONIC, &drawTimespec), RES == 0);
         uint64_t drawTimestamp = (uint64_t)drawTimespec.tv_sec * 1000000000 + (uint64_t)drawTimespec.tv_nsec;
-        if (game_draw(drawTimestamp) < 0) return -9;
+        game_draw(drawTimestamp, !window.pointerGrabbed);
         debug_CHECK(egl_swapBuffers(&window.egl), RES == 1);
     }
 }

@@ -1,7 +1,13 @@
-#if !defined(game_EXPORT)
-    #error "`#define game_EXPORT` before including"
-#endif
+#include "shaders.c"
+#include "vertexArrays.c"
+#include "trig.c"
+#include "mat.c"
+
+#define game_FRAME_HEIGHT 40
+
 static struct {
+    float perspectiveMatrix[16];
+    float orthographicMatrix[16];
     uint64_t prevFpsCountTime;
     int64_t frameCounter;
     uint32_t cameraYaw;
@@ -10,20 +16,42 @@ static struct {
     int32_t __pad;
 } game;
 
-game_EXPORT int32_t game_draw(uint64_t timestamp) {
+game_EXPORT void game_draw(uint64_t timestamp, bool drawFrame) {
     game.triangleYaw = (game.triangleYaw + 1) & 4095;
 
     float matrix[16];
-    mat_init(&matrix[0], 1.0f);
+    mat_init(&matrix[0]);
     mat_rotateY(&matrix[0], game.triangleYaw);
     mat_translate(&matrix[0], -2.0f, -0.5f, 3.5f);
     mat_rotateY(&matrix[0], game.cameraYaw);
     mat_rotateX(&matrix[0], game.cameraPitch & 4095);
     gl_bufferData(gl_ARRAY_BUFFER, sizeof(matrix), &matrix[0], gl_STREAM_DRAW);
 
-    gl_clear(gl_COLOR_BUFFER_BIT);
-    gl_drawElementsInstanced(gl_TRIANGLES, 3, gl_UNSIGNED_SHORT, 0, 1);
-    if (gl_getError() != gl_NO_ERROR) return -1;
+    gl_clear(gl_COLOR_BUFFER_BIT | gl_DEPTH_BUFFER_BIT);
+
+    gl_uniformMatrix4fv(shaders_mainProjectionMatrixLoc, 1, gl_FALSE, &game.perspectiveMatrix[0]);
+    gl_enable(gl_DEPTH_TEST);
+
+    gl_drawElementsInstanced(gl_TRIANGLES, vertexArrays_TRIANGLE_COUNT, gl_UNSIGNED_SHORT, (void *)vertexArrays_TRIANGLE_OFFSET, 1);
+
+    gl_uniformMatrix4fv(shaders_mainProjectionMatrixLoc, 1, gl_FALSE, &game.orthographicMatrix[0]);
+    gl_disable(gl_DEPTH_TEST);
+
+    if (drawFrame) {
+        mat_init(&matrix[0]);
+        mat_translate(&matrix[0], 0.0f, (float)(window_height() - game_FRAME_HEIGHT), 0.0f);
+        mat_scale(&matrix[0], (float)(2 * window_width()), 2 * game_FRAME_HEIGHT, 1.0f);
+        gl_bufferData(gl_ARRAY_BUFFER, sizeof(matrix), &matrix[0], gl_STREAM_DRAW);
+        gl_drawElementsInstanced(gl_TRIANGLES, vertexArrays_FRAME_COUNT, gl_UNSIGNED_SHORT, (void *)vertexArrays_FRAME_OFFSET, 1);
+
+        mat_init(&matrix[0]);
+        mat_translate(&matrix[0], (float)(window_width() - game_FRAME_HEIGHT), (float)(window_height() - game_FRAME_HEIGHT), 0.0f);
+        mat_scale(&matrix[0], 2 * game_FRAME_HEIGHT, 2 * game_FRAME_HEIGHT, 1.0f);
+        gl_bufferData(gl_ARRAY_BUFFER, sizeof(matrix), &matrix[0], gl_STREAM_DRAW);
+        gl_drawElementsInstanced(gl_TRIANGLES, vertexArrays_CLOSE_BUTTON_COUNT, gl_UNSIGNED_SHORT, (void *)vertexArrays_CLOSE_BUTTON_OFFSET, 1);
+    }
+
+    debug_ASSERT(gl_getError() == gl_NO_ERROR);
 
     ++game.frameCounter;
     uint64_t nextFpsCountTime = game.prevFpsCountTime + 1000000000;
@@ -32,15 +60,15 @@ game_EXPORT int32_t game_draw(uint64_t timestamp) {
         game.prevFpsCountTime = nextFpsCountTime;
         game.frameCounter = 0;
     }
-    return 0;
 }
 
-game_EXPORT void game_onResize(int32_t width, int32_t height) {
+game_EXPORT void game_onResize(void) {
+    int32_t width = window_width();
+    int32_t height = window_height();
     gl_viewport(0, 0, width, height);
 
-    float projectionMatrix[16];
-    mat_init_projection(&projectionMatrix[0], 0.1, 100.0, width, height);
-    gl_uniformMatrix4fv(shaders_mainProjectionMatrixLoc, 1, gl_FALSE, &projectionMatrix[0]);
+    mat_initPerspective(&game.perspectiveMatrix[0], width, height, 0.1, 100.0);
+    mat_initOrthographic(&game.orthographicMatrix[0], width, height, 100.0);
 }
 
 game_EXPORT void game_onMouseMove(int64_t deltaX, int64_t deltaY, hc_UNUSED uint64_t timestamp) {
@@ -60,7 +88,7 @@ game_EXPORT void game_onKeyUp(int32_t key, uint64_t timestamp) {
     debug_printNum("At: ", (int64_t)timestamp, "\n");
 }
 
-game_EXPORT int32_t game_init(int32_t width, int32_t height, uint64_t timestamp) {
+game_EXPORT int32_t game_init(uint64_t timestamp) {
     game.cameraYaw = 0;
     game.cameraPitch = 0;
     game.triangleYaw = 0;
@@ -84,7 +112,7 @@ game_EXPORT int32_t game_init(int32_t width, int32_t height, uint64_t timestamp)
         status = -3;
         goto cleanup_vertexArrays;
     }
-    game_onResize(width, height);
+    game_onResize();
     return 0;
 
     cleanup_vertexArrays:
