@@ -10,11 +10,16 @@ for /r "%root_dir%" %%f in (*build.bat) do (
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )
 
-call "%root_dir%\tools\hostbuild.bat"
-if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+if "%processor_architecture%" == "AMD64" (
+    set "arch=x86_64"
+) else if "%processor_architecture%" == "AARCH64" (
+    set "arch=aarch64"
+) else exit /b 1
+
+set "abi=window-gnu"
 
 if not defined NO_DEBUG (
-    "%OUT%\debug_%HOST_ARCH%-%HOST_ABI%_tests.exe" %*
+    "%OUT%\debug_%arch%-%abi%_tests.exe" %*
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )
-"%OUT%\%HOST_ARCH%-%HOST_ABI%_tests.exe" %*
+"%OUT%\%arch%-%abi%_tests.exe" %*

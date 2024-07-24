@@ -120,7 +120,8 @@ if not defined NO_WASM32 (
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 
     rem TODO debug
-    call "%root_dir%\tools\webPacker\webPacker.bat" "%OUT%\%name%.html" _start.html "%script_dir%\web" "%OUT%"
+    call "%root_dir%\tools\webPacker\hostbuild.bat"
+    "%OUT%\webPacker.exe" "%OUT%\%name%.html" _start.html "%script_dir%\web" "%OUT%"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )
 

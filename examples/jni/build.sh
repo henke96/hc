@@ -19,6 +19,7 @@ build() {
         "$root_dir/tools/builder.sh" "$script_dir/linux/lib$name.so.c"
         "$root_dir/objcopy.sh" --strip-sections "$OUT/$ARCH-${ABI}_lib$name.so"
     fi
+    # TODO freebsd
     export ABI=windows-gnu
     if test -z "$NO_WINDOWS"; then
         export FLAGS="-fPIC -shared -L $(escape "$OUT") -l:kernel32.lib"
