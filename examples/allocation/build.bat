@@ -27,7 +27,7 @@ setlocal
     )
     set "ABI=freebsd14"
     if not defined NO_FREEBSD (
-        set "FLAGS=-Wl,-dynamic-linker=/libexec/ld-elf.so.1 -L ^"%OUT%^" -l:libc.so.7"
+        set "FLAGS=-Wl,-dynamic-linker=/libexec/ld-elf.so.1 -L "%OUT%" -l:libc.so.7"
         call "%root_dir%\cc.bat" -fPIC -shared -Wl,--version-script="%root_dir%\src\hc\freebsd\libc.so.7.map" -o "%OUT%\libc.so.7" "%root_dir%\src\hc\freebsd\libc.so.7.c"
         if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
         call "%root_dir%\tools\builder.bat" "%script_dir%\freebsd\%name%.c"
@@ -37,7 +37,7 @@ setlocal
     )
     set "ABI=windows-gnu"
     if not defined NO_WINDOWS (
-        set "FLAGS=-Wl,-subsystem,console -L ^"%OUT%^" -l:kernel32.lib"
+        set "FLAGS=-Wl,-subsystem,console -L "%OUT%" -l:kernel32.lib"
         set "FLAGS_RELEASE=%opt% -s"
         set "FLAGS_DEBUG=-g -gcodeview -Wl,--pdb="
         call "%root_dir%\genlib.bat" "%OUT%\kernel32.lib" "%root_dir%\src\hc\windows\dll\kernel32.def"

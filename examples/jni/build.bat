@@ -29,7 +29,7 @@ setlocal
     rem TODO freebsd
     set "ABI=windows-gnu"
     if not defined NO_WINDOWS (
-        set "FLAGS=-fPIC -shared -L ^"%OUT%^" -l:kernel32.lib"
+        set "FLAGS=-fPIC -shared -L "%OUT%" -l:kernel32.lib"
         set "FLAGS_RELEASE=%opt% -s"
         set "FLAGS_DEBUG=-g -gcodeview -Wl,--pdb="
         call "%root_dir%\genlib.bat" "%OUT%\kernel32.lib" "%root_dir%\src\hc\windows\dll\kernel32.def"

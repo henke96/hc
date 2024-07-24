@@ -12,7 +12,7 @@ if not defined OUT (
 rem Kernel
 set "ARCH=x86_64"
 set "ABI=linux"
-set "FLAGS=-Os -s -Wl,-T,^"%script_dir%\kernel\kernel.ld^" -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
+set "FLAGS=-Os -s -Wl,-T,"%script_dir%\kernel\kernel.ld" -mno-red-zone -mno-mmx -mno-sse -mno-sse2"
 set "FLAGS_RELEASE="
 set "FLAGS_DEBUG="
 call "%root_dir%\tools\builder.bat" "%script_dir%\kernel\kernel.elf.c"
@@ -28,7 +28,7 @@ if not defined NO_DEBUG (
 rem Bootloader (with kernel binary embedded)
 set "ARCH=x86_64"
 set "ABI=windows-gnu"
-set "FLAGS=-Os -s -I ^"%OUT%^" -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wl,-subsystem,efi_application"
+set "FLAGS=-Os -s -I "%OUT%" -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wl,-subsystem,efi_application"
 set "FLAGS_RELEASE="
 set "FLAGS_DEBUG="
 call "%root_dir%\tools\builder.bat" "%script_dir%\bootloader\bootloader.efi.c"

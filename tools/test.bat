@@ -16,7 +16,7 @@ if "%processor_architecture%" == "AMD64" (
     set "arch=aarch64"
 ) else exit /b 1
 
-set "abi=window-gnu"
+set "abi=windows-gnu"
 
 if not defined NO_DEBUG (
     "%OUT%\debug_%arch%-%abi%_tests.exe" %*

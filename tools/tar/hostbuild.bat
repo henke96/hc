@@ -14,7 +14,7 @@ if "%processor_architecture%" == "AMD64" (
 set "NO_LINUX=1"
 set "NO_FREEBSD=1"
 set "NO_WINDOWS="
-set "abi=window-gnu"
+set "abi=windows-gnu"
 
 set "NO_DEBUG=1"
 set "NO_ANALYSIS=1"
