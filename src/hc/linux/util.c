@@ -14,3 +14,17 @@ static int32_t util_getPageSize(const uint64_t *auxv) {
         debug_ASSERT(auxv[i] != AT_NULL);
     }
 }
+
+hc_UNUSED
+// Best effort implementation.
+static int32_t util_getCpuCount(void) {
+    uint64_t mask[16] = {0};
+    if (sys_sched_getaffinity(0, sizeof(mask), &mask[0]) < 0) return 1;
+
+    int32_t count = 0;
+    for (int32_t i = 0; i < (int32_t)hc_ARRAY_LEN(mask); ++i) {
+        count += hc_POPCOUNT64(mask[i]);
+    }
+    if (count == 0) return 1;
+    return count;
+}

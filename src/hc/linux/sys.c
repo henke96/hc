@@ -1254,3 +1254,8 @@ static hc_INLINE int32_t sys_pidfd_send_signal(int32_t pidfd, int32_t sig, struc
     sys_SYSCALL4(sys_NR_pidfd_send_signal, pidfd, sig, info, flags)
     return (int32_t)ret;
 }
+
+static hc_INLINE int32_t sys_sched_getaffinity(int32_t pid, int32_t len, uint64_t *mask) {
+    sys_SYSCALL3(sys_NR_sched_getaffinity, pid, len, mask)
+    return (int32_t)ret;
+}
