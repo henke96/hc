@@ -13,7 +13,7 @@ if not "%hostarch%" == "riscv64" set "NO_RISCV64=1"
 set "NO_LINUX=1"
 set "NO_FREEBSD=1"
 set "NO_WINDOWS="
-set "abi=windows-gnu"
+set "hostabi=windows-gnu"
 
 set "NO_ANALYSIS=1"
 call "%script_dir%\build.bat"
