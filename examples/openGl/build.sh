@@ -86,7 +86,7 @@ if test -z "$NO_WASM32"; then
     "$OUT/webPacker" "$OUT/$name.html" _start.html "$script_dir/web" "$OUT"
 fi
 
-test -n "$NO_ANDROID" && exit
+if test -n "$NO_ANDROID"; then exit; fi
 
 export ARCH=x86_64; build_android
 export ARCH=aarch64; build_android

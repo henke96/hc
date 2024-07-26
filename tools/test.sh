@@ -6,14 +6,14 @@ root_dir="$script_dir/.."
 fail="$(find "$(cd -- "$root_dir" && pwd)" -name "build.sh" -type f -exec sh -c 'echo "$1"; "$1" || echo x >&3' sh {} \; 3>&1 >&2)"
 test -z "$fail"
 
-arch="$(uname -m)"
+. "$root_dir/src/shell/hostarch.sh"
 
 case "$(uname)" in
     FreeBSD)
-    abi=freebsd14
+    hostabi=freebsd14
     ;;
     Linux)
-    abi=linux
+    hostabi=linux
     ;;
     *)
     exit 1
@@ -21,6 +21,6 @@ case "$(uname)" in
 esac
 
 if test -z "$NO_DEBUG"; then
-    "$OUT/debug_$arch-${abi}_tests" "$@"
+    "$OUT/debug_$hostarch-${hostabi}_tests" "$@"
 fi
-"$OUT/$arch-${abi}_tests" "$@"
+"$OUT/$hostarch-${hostabi}_tests" "$@"
