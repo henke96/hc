@@ -26,7 +26,13 @@ setlocal
         call "%root_dir%\objcopy.bat" --strip-sections "%OUT%\%ARCH%-%ABI%_lib%name%.so"
         if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
     )
-    rem TODO freebsd
+    if not defined NO_FREEBSD (
+        set "FLAGS=-fPIC -shared"
+        call "%root_dir%\tools\builder.bat" "%script_dir%\freebsd\lib%name%.so.c"
+        if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+        call "%root_dir%\objcopy.bat" --strip-sections "%OUT%\%ARCH%-%ABI%_lib%name%.so"
+        if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+    )
     set "ABI=windows-gnu"
     if not defined NO_WINDOWS (
         set "FLAGS=-fPIC -shared -L "%OUT%" -l:kernel32.lib"
