@@ -9,6 +9,6 @@ public class Test {
     private native void hello();
 
     public void world() {
-        System.out.println("world!");
+        System.err.println("world!");
     }
 }

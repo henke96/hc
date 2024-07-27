@@ -67,6 +67,6 @@ static int32_t readIntoBuffer(void) {
 }
 
 static int32_t printBuffer(int32_t size) {
-    void *stdoutHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    return util_writeAll(stdoutHandle, &hash_buffer[0], size);
+    void *outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+    return util_writeAll(outHandle, &hash_buffer[0], size);
 }

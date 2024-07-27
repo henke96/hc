@@ -46,6 +46,6 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
         { .iov_base = &result[0], .iov_len = sizeof(result) },
         { .iov_base = &resultSyscall[0], .iov_len = sizeof(resultSyscall) }
     };
-    sys_writev(1, &print[0], hc_ARRAY_LEN(print));
+    sys_writev(2, &print[0], hc_ARRAY_LEN(print));
     return 0;
 }

@@ -24,7 +24,7 @@ static int32_t graphics_init(struct graphics *self) {
         { hc_STR_COMMA_LEN("Selected mode \"") },
         { self->drm.modeInfos[modeIndex].name, DRM_DISPLAY_MODE_LEN }
     };
-    sys_writev(1, &print[0], hc_ARRAY_LEN(print));
+    sys_writev(2, &print[0], hc_ARRAY_LEN(print));
     debug_printNum("\" at ", self->drm.modeInfos[modeIndex].vrefresh, " Hz.\n");
 
     // Setup frame buffer using the selected mode.

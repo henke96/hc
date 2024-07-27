@@ -6,7 +6,7 @@
 #define HELLO "Hello!\n"
 
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
-    int64_t status = sys_write(1, hc_STR_COMMA_LEN(HELLO));
+    int64_t status = sys_write(2, hc_STR_COMMA_LEN(HELLO));
     if (status != hc_STR_LEN(HELLO)) return 1;
     return 0;
 }

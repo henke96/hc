@@ -91,7 +91,7 @@ static int32_t window_init(char **envp) {
             { hc_STR_COMMA_LEN("\n") },
         };
         if (status < 0) print[0] = (struct iovec_const) { hc_STR_COMMA_LEN("Failed using platform ") };
-        writev(1, &print[0], hc_ARRAY_LEN(print));
+        writev(2, &print[0], hc_ARRAY_LEN(print));
         if (status == 0) {
             window.platform = platform;
             goto initialisedPlatform;

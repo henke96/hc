@@ -22,7 +22,7 @@ static noreturn void debug_fail(int64_t res, const char *expression, const char 
         { resStr, (ssize_t)(&resBuffer[hc_ARRAY_LEN(resBuffer)] - resStr) }
     };
     ssize_t written;
-    fd_write(1, &print[0], hc_ARRAY_LEN(print), &written);
+    fd_write(2, &print[0], hc_ARRAY_LEN(print), &written);
     debug_abort();
 }
 
@@ -30,7 +30,7 @@ hc_UNUSED
 static void debug_print(const char *str) {
     struct ciovec iov = { str, util_cstrLen(str) };
     ssize_t written;
-    fd_write(1, &iov, 1, &written);
+    fd_write(2, &iov, 1, &written);
 }
 
 hc_UNUSED
@@ -44,5 +44,5 @@ static void debug_printNum(const char *pre, int64_t num, const char *post) {
         { post, util_cstrLen(post) }
     };
     ssize_t written;
-    fd_write(1, &print[0], hc_ARRAY_LEN(print), &written);
+    fd_write(2, &print[0], hc_ARRAY_LEN(print), &written);
 }

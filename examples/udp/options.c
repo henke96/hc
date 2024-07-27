@@ -81,11 +81,11 @@ static int32_t options_init(struct options *self, int32_t argc, char **argv) {
             { &prevOpt, 1 },
             { hc_STR_COMMA_LEN("`\n") },
         };
-        sys_writev(1, &print[0], hc_ARRAY_LEN(print));
+        sys_writev(2, &print[0], hc_ARRAY_LEN(print));
         return -1;
     }
     if (argc != 0) {
-        sys_write(1, hc_STR_COMMA_LEN("Too many arguments\n"));
+        sys_write(2, hc_STR_COMMA_LEN("Too many arguments\n"));
         return -1;
     }
     return 0;
