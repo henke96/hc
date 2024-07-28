@@ -21,6 +21,6 @@ case "$(uname)" in
 esac
 
 if test -z "$NO_DEBUG"; then
-    "$OUT/debug_$hostarch-${hostabi}_tests" "$@"
+    "$OUT/debug/$hostarch-${hostabi}_tests" "$@"
 fi
 "$OUT/$hostarch-${hostabi}_tests" "$@"

@@ -25,11 +25,14 @@ set "FLAGS_RELEASE=%FLAGS% %FLAGS_RELEASE%"
 set "FLAGS_DEBUG=-fsanitize-undefined-trap-on-error -fsanitize=undefined -Dhc_DEBUG=1 %FLAGS% %FLAGS_DEBUG%"
 
 if not defined NO_DEBUG (
+    if not exist "%OUT%\debug" (
+        mkdir "%OUT%\debug"
+    )
     if defined ASSEMBLY (
-        call "%root_dir%\cc.bat" -S -o "%OUT%\debug_%full_name%.s" %FLAGS_DEBUG% "%source%"
+        call "%root_dir%\cc.bat" -S -o "%OUT%\debug\%full_name%.s" %FLAGS_DEBUG% "%source%"
         if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
     )
-    call "%root_dir%\cc.bat" -o "%OUT%\debug_%full_name%" %FLAGS_DEBUG% "%source%"
+    call "%root_dir%\cc.bat" -o "%OUT%\debug\%full_name%" %FLAGS_DEBUG% "%source%"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )
 

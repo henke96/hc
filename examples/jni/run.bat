@@ -25,7 +25,7 @@ if defined JAVA_HOME set "java_prefix=%JAVA_HOME%\bin\"
 if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 
 if not defined NO_DEBUG (
-    copy /b /y "%OUT%\debug_%hostarch%-%hostabi%_test.dll" "%OUT%\test.dll" >nul
+    copy /b /y "%OUT%\debug\%hostarch%-%hostabi%_test.dll" "%OUT%\test.dll" >nul
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
     "%java_prefix%java" -cp "%OUT%" -Djava.library.path="%OUT%" jni/Test
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b

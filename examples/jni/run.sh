@@ -33,7 +33,7 @@ if test -n "$JAVA_HOME"; then java_prefix="$JAVA_HOME/bin/"; fi
 "${java_prefix}javac" -d "$OUT" "$script_dir/jni/Test.java"
 
 if test -z "$NO_DEBUG"; then
-    cp "$OUT/debug_$hostarch-${hostabi}_libtest.so" "$OUT/libtest.so"
+    cp "$OUT/debug/$hostarch-${hostabi}_libtest.so" "$OUT/libtest.so"
     "${java_prefix}java" -cp "$OUT" -Djava.library.path="$OUT" jni/Test
 fi
 cp "$OUT/$hostarch-${hostabi}_libtest.so" "$OUT/libtest.so"

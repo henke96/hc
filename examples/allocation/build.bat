@@ -74,4 +74,8 @@ if not defined NO_WASM32 (
     call "%root_dir%\tools\webPacker\hostbuild.bat"
     "%OUT%\webPacker.exe" "%OUT%\%name%.html" _start.html "%script_dir%\web" "%OUT%"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+    if not defined NO_DEBUG (
+        "%OUT%\webPacker.exe" "%OUT%\debug\%name%.html" _start.html "%script_dir%\web" "%OUT%\debug"
+        if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+    )
 )

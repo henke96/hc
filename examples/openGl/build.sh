@@ -81,9 +81,11 @@ if test -z "$NO_WASM32"; then
     export FLAGS_DEBUG="-g"
     "$root_dir/tools/builder.sh" "$script_dir/web/$name.wasm.c"
 
-    # TODO debug
     "$root_dir/tools/webPacker/hostbuild.sh"
     "$OUT/webPacker" "$OUT/$name.html" _start.html "$script_dir/web" "$OUT"
+    if test -z "$NO_DEBUG"; then
+        "$OUT/webPacker" "$OUT/debug/$name.html" _start.html "$script_dir/web" "$OUT/debug"
+    fi
 fi
 
 if test -n "$NO_ANDROID"; then exit; fi
@@ -99,7 +101,7 @@ if test -z "$ANDROID_SDK"; then
 else
     if test -n "$JAVA_HOME"; then java_prefix="$JAVA_HOME/bin/"; fi
 
-    if test -z "$NO_DEBUG"; then build_apk "debug_" "--debug-mode"; fi
+    if test -z "$NO_DEBUG"; then build_apk "debug/" "--debug-mode"; fi
     build_apk "" ""
 
     if test -z "$KEYSTORE"; then
@@ -107,7 +109,7 @@ else
         echo "Set KEYSTORE (and optionally KEYSTORE_PASS) to sign apks"
     else
         KEYSTORE_PASS="${KEYSTORE_PASS:-stdin}"
-        if test -z "$NO_DEBUG"; then sign_apk "debug_"; fi
+        if test -z "$NO_DEBUG"; then sign_apk "debug/"; fi
         sign_apk ""
     fi
 fi

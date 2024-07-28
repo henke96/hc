@@ -52,4 +52,7 @@ if test -z "$NO_WASM32"; then
 
     "$root_dir/tools/webPacker/hostbuild.sh"
     "$OUT/webPacker" "$OUT/$name.html" _start.html "$script_dir/web" "$OUT"
+    if test -z "$NO_DEBUG"; then
+        "$OUT/webPacker" "$OUT/debug/$name.html" _start.html "$script_dir/web" "$OUT/debug"
+    fi
 fi

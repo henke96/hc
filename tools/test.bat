@@ -18,7 +18,7 @@ if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 set "hostabi=windows-gnu"
 
 if not defined NO_DEBUG (
-    "%OUT%\debug_%hostarch%-%hostabi%_tests.exe" %*
+    "%OUT%\debug\%hostarch%-%hostabi%_tests.exe" %*
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )
 "%OUT%\%hostarch%-%hostabi%_tests.exe" %*

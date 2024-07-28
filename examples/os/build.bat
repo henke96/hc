@@ -21,14 +21,14 @@ if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 call "%root_dir%\objcopy.bat" -O binary "%OUT%\%ARCH%-%ABI%_kernel.elf" "%OUT%\kernel.bin"
 if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 if not defined NO_DEBUG (
-    call "%root_dir%\objcopy.bat" -O binary "%OUT%\debug_%ARCH%-%ABI%_kernel.elf" "%OUT%\debug_kernel.bin"
+    call "%root_dir%\objcopy.bat" -O binary "%OUT%\debug\%ARCH%-%ABI%_kernel.elf" "%OUT%\debug\kernel.bin"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 )
 
 rem Bootloader (with kernel binary embedded)
 set "ARCH=x86_64"
 set "ABI=windows-gnu"
-set "FLAGS=-Os -s -I "%OUT%" -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wl,-subsystem,efi_application"
-set "FLAGS_RELEASE="
-set "FLAGS_DEBUG="
+set "FLAGS=-Os -s -mno-red-zone -mno-mmx -mno-sse -mno-sse2 -Wl,-subsystem,efi_application"
+set "FLAGS_RELEASE=-I "%OUT%""
+set "FLAGS_DEBUG=-I "%OUT%\debug""
 call "%root_dir%\tools\builder.bat" "%script_dir%\bootloader\bootloader.efi.c"

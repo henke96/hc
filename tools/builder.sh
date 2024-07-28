@@ -16,11 +16,12 @@ FLAGS_RELEASE="$FLAGS $FLAGS_RELEASE"
 FLAGS_DEBUG="-fsanitize-undefined-trap-on-error -fsanitize=undefined -Dhc_DEBUG=1 $FLAGS $FLAGS_DEBUG"
 
 if test -z "$NO_DEBUG"; then
+    mkdir -p "$OUT/debug"
     eval "set -- $FLAGS_DEBUG"
     if test -n "$ASSEMBLY"; then
-        "$root_dir/cc.sh" -S -o "$OUT/debug_$full_name.s" "$@" "$source"
+        "$root_dir/cc.sh" -S -o "$OUT/debug/$full_name.s" "$@" "$source"
     fi
-    "$root_dir/cc.sh" -o "$OUT/debug_$full_name" "$@" "$source"
+    "$root_dir/cc.sh" -o "$OUT/debug/$full_name" "$@" "$source"
 fi
 
 eval "set -- $FLAGS_RELEASE"

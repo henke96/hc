@@ -119,10 +119,13 @@ if not defined NO_WASM32 (
     call "%root_dir%\tools\builder.bat" "%script_dir%\web\%name%.wasm.c"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
 
-    rem TODO debug
     call "%root_dir%\tools\webPacker\hostbuild.bat"
     "%OUT%\webPacker.exe" "%OUT%\%name%.html" _start.html "%script_dir%\web" "%OUT%"
     if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+    if not defined NO_DEBUG (
+        "%OUT%\webPacker.exe" "%OUT%\debug\%name%.html" _start.html "%script_dir%\web" "%OUT%\debug"
+        if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
+    )
 )
 
 if defined NO_ANDROID exit /b
