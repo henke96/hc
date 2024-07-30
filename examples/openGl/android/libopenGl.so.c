@@ -189,7 +189,6 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         egl_deinit(&app.egl);
                         return 0;
                     }
-                    default: break;
                 }
                 nativeGlue_signalAppDone();
 
