@@ -24,10 +24,10 @@ static uint16_t *utf8ToUtf16(char *utf8, int32_t utf8Length, int32_t *utf16Count
     );
     if (count <= 0) return NULL;
 
-    int64_t alignedAllocOffset = math_ALIGN_FORWARD(webPacker_alloc.size, 2);
-    uint16_t *utf16Z = &webPacker_alloc.mem[alignedAllocOffset];
+    int64_t alignedAllocOffset = math_ALIGN_FORWARD(alloc.size, 2);
+    uint16_t *utf16Z = &alloc.mem[alignedAllocOffset];
     *utf16Count = count + (utf8Length != -1);
-    if (allocator_resize(&webPacker_alloc, alignedAllocOffset + *utf16Count * (int64_t)sizeof(uint16_t)) < 0) return NULL;
+    if (allocator_resize(&alloc, alignedAllocOffset + *utf16Count * (int64_t)sizeof(uint16_t)) < 0) return NULL;
 
     if (
         MultiByteToWideChar(
@@ -45,16 +45,16 @@ static void initPageSize(hc_UNUSED char **envp) {
 }
 
 static void deinit(void) {
-    for (void **includePathHandle = webPacker_alloc.mem; (char *)includePathHandle != webPacker_buffer; ++includePathHandle) {
+    for (void **includePathHandle = alloc.mem; (char *)includePathHandle != buffer; ++includePathHandle) {
         debug_CHECK(CloseHandle(*includePathHandle), RES != 0);
     }
 }
 
 static int32_t init(char **includePaths) {
     int64_t i = 0;
-    void **includeHandles = webPacker_alloc.mem;
+    void **includeHandles = alloc.mem;
     for (; includePaths[i] != NULL; ++i) {
-        if (allocator_resize(&webPacker_alloc, (i + 1) * (int64_t)sizeof(void *)) < 0) break;
+        if (allocator_resize(&alloc, (i + 1) * (int64_t)sizeof(void *)) < 0) break;
 
         int32_t utf16Count;
         uint16_t *pathZ = utf8ToUtf16(includePaths[i], -1, &utf16Count);
@@ -72,7 +72,7 @@ static int32_t init(char **includePaths) {
         if (handle == INVALID_HANDLE_VALUE) break;
         includeHandles[i] = handle;
     }
-    webPacker_buffer = (void *)&includeHandles[i];
+    buffer = (void *)&includeHandles[i];
     if (includePaths[i] != NULL) {
         deinit();
         return -1;
@@ -87,7 +87,7 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
 
     // Find and open path relative to include paths.
     void *pathHandle;
-    for (void **includePathHandle = webPacker_alloc.mem; (char *)includePathHandle != webPacker_buffer; ++includePathHandle) {
+    for (void **includePathHandle = alloc.mem; (char *)includePathHandle != buffer; ++includePathHandle) {
         struct IO_STATUS_BLOCK ioStatusBlock;
         uint16_t pathUtf16Size = (uint16_t)(utf16Count - 1) * sizeof(uint16_t); // Without null terminator.
         struct UNICODE_STRING pathUnicodeString = {
@@ -133,30 +133,30 @@ static int32_t replaceWithFile(int64_t replaceIndex, int64_t replaceSize, char *
     int64_t insertSize = contentSize;
     if (asBase64) insertSize = base64_ENCODE_SIZE(contentSize);
 
-    int64_t newBufferSize = webPacker_bufferSize + (insertSize - replaceSize);
+    int64_t newBufferSize = bufferSize + (insertSize - replaceSize);
     // Allocate an extra byte to be able to verify EOF when reading.
-    if (allocator_resize(&webPacker_alloc, &webPacker_buffer[newBufferSize + 1] - (char *)webPacker_alloc.mem) < 0) {
+    if (allocator_resize(&alloc, &buffer[newBufferSize + 1] - (char *)alloc.mem) < 0) {
         status = -4;
         goto cleanup_pathHandle;
     }
 
     // Move existing content to make room.
     hc_MEMMOVE(
-        &webPacker_buffer[replaceIndex + insertSize],
-        &webPacker_buffer[replaceIndex + replaceSize],
-        (uint64_t)(webPacker_bufferSize - (replaceSize + replaceIndex))
+        &buffer[replaceIndex + insertSize],
+        &buffer[replaceIndex + replaceSize],
+        (uint64_t)(bufferSize - (replaceSize + replaceIndex))
     );
-    webPacker_bufferSize = newBufferSize;
+    bufferSize = newBufferSize;
 
     // Read content into buffer, and verify EOF by attempting to read an extra byte.
-    char *content = &webPacker_buffer[replaceIndex + insertSize - contentSize];
+    char *content = &buffer[replaceIndex + insertSize - contentSize];
     if (util_readAll(pathHandle, content, contentSize + 1) != contentSize) {
         status = -5;
         goto cleanup_pathHandle;
     }
 
     // Convert to base 64 if requested. Can be done in place as we put content at end of insert gap.
-    if (asBase64) base64_encode(&webPacker_buffer[replaceIndex], content, contentSize);
+    if (asBase64) base64_encode(&buffer[replaceIndex], content, contentSize);
 
     status = 0;
     cleanup_pathHandle:
