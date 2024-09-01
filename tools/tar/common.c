@@ -103,9 +103,9 @@ static void sortNames(char **names, int64_t length) {
         char *name = names[i];
         int64_t curr = i;
         do {
-            char *prevName = names[curr - 1];
-            if (util_cstrCmp(prevName, name) < 0) break;
-            names[curr] = prevName;
+            char *prev = names[curr - 1];
+            if (util_cstrCmp(name, prev) >= 0) break;
+            names[curr] = prev;
         } while(--curr > 0);
         names[curr] = name;
     }
