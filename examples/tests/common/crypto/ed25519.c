@@ -48,46 +48,9 @@ static void ed25519_tests(void) {
     if (tests_level >= 1) {
         int32_t offset = 0;
         for (int32_t caseN = 0; caseN < 1024; ++caseN) {
-            uint8_t secret[32];
-            uint8_t expected[64];
-            uint8_t message[1023];
-
-            // Parse secret.
-            for (int32_t i = 0; i < 32; i += 8) {
-                uint64_t val;
-                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 16, &val);
-                CHECK(status, RES == 16);
-                mem_storeU64BE(&secret[i], val);
-            }
-            offset += 64;
-
-            // Parse expected.
-            for (int32_t i = 0; i < 64; i += 8) {
-                uint64_t val;
-                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 16, &val);
-                CHECK(status, RES == 16);
-                mem_storeU64BE(&expected[i], val);
-            }
-            offset += 128;
-
-            // Parse message.
-            int32_t i = 0;
-            for (; i < math_ALIGN_BACKWARD(caseN, 8); i += 8) {
-                uint64_t val;
-                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 16, &val);
-                CHECK(status, RES == 16);
-                mem_storeU64BE(&message[i], val);
-            }
-            for (; i < caseN; ++i) {
-                uint64_t val;
-                int32_t status = util_hexToUint(&_ed25519_cases[offset + (i << 1)], 2, &val);
-                CHECK(status, RES == 2);
-                message[i] = (uint8_t)val;
-            }
-            offset += caseN << 1;
-
-            // Run the test case.
-            _ed25519_test(&message[0], caseN, &secret[0], &expected[0]);
+            _ed25519_test(&_ed25519_cases[offset + 32 + 64], caseN, &_ed25519_cases[offset], &_ed25519_cases[offset + 32]);
+            offset += 32 + 64 + caseN;
         }
+        CHECK(offset, RES == _ed25519_cases_size);
     }
 }
