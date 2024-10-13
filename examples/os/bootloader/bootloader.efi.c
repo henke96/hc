@@ -167,7 +167,8 @@ int64_t _start(void *imageHandle, struct efi_systemTable *systemTable) {
     // We are on our own!
 
     // Load kernel where we want it in physical memory.
-    hc_MEMCPY((void *)kernelPageAddress, &kernelBin[0], kernelBin_size);
+    uint64_t kernelBinSize = (uint64_t)(&kernelBin_end - &kernelBin[0]);
+    hc_MEMCPY((void *)kernelPageAddress, &kernelBin[0], kernelBinSize);
 
     // Fill out contents of bootloader page.
     struct bootloaderPage *bootloaderPage = (void *)bootloaderPageAddress;

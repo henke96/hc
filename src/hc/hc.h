@@ -114,6 +114,7 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
     #define hc_ATOMIC_PAUSE
 #endif
 
+// 128 bit integer support.
 typedef __int128_t int128_t;
 typedef __uint128_t uint128_t;
 
@@ -122,6 +123,27 @@ typedef __uint128_t uint128_t;
 #else
     #define hc_MUL128_64x64(A, B) ((uint128_t)(A) * (B))
 #endif
+
+// Support for including binary files.
+#if hc_WASM32
+    #define _hc_INCBIN_SECTION ".data\n"
+#elif defined(_WIN32)
+    #define _hc_INCBIN_SECTION ".section .rdata\n"
+#else
+    #define _hc_INCBIN_SECTION ".section .rodata\n"
+#endif
+#define hc_INCBIN(PATH, NAME, ALIGN) \
+asm( \
+    _hc_INCBIN_SECTION \
+    ".balign " hc_XSTR(ALIGN) "\n" \
+    hc_XSTR(NAME) ":\n" \
+    ".incbin \"" PATH "\"\n" \
+    ".balign 1\n" \
+    hc_XSTR(NAME) "_end:\n" \
+    ".byte 0\n" \
+); \
+extern hc_ALIGNED(ALIGN) const uint8_t NAME[]; \
+extern const uint8_t NAME##_end;
 
 // Standard C
 #define NULL ((void *)0)

@@ -1,4 +1,6 @@
-#include "_ed25519_cases.h"
+// Based on sign.input from http://ed25519.cr.yp.to/software.html.
+// Entry N (0-1023) has format secret|expectedSignature|message, with sizes 32|64|N bytes.
+hc_INCBIN("_ed25519_cases", _ed25519_cases, 1)
 
 static void _ed25519_test(
     const void *message,
@@ -51,6 +53,6 @@ static void ed25519_tests(void) {
             _ed25519_test(&_ed25519_cases[offset + 32 + 64], caseN, &_ed25519_cases[offset], &_ed25519_cases[offset + 32]);
             offset += 32 + 64 + caseN;
         }
-        CHECK(offset, RES == _ed25519_cases_size);
+        CHECK(&_ed25519_cases[offset], RES == &_ed25519_cases_end);
     }
 }
