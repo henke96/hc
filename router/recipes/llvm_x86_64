@@ -1,0 +1,73 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="89a67ebfbbc764cc456e8825ecfa90707741f8835b1b2adffae0b227ab1fe5ca9cce75b0efaffc9ca8431cae528dc54fd838867a56a2b645344d9e82d19ab1b7"
+
+DEPENDENCIES="make xz python cmake llvm musl_x86_64"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/xz/bin:$OUT/python/bin:$OUT/cmake/bin:$OUT/llvm/bin:$PATH"
+xz -d -c "$(recipe_download "$url_llvm" "$sha512")" | tar xf -
+cd ./llvm-project-16.0.6.src
+
+arch=x86_64
+cmake -S runtimes -B libcxxbuild -G "Unix Makefiles" -Wno-dev \
+-DCMAKE_SYSTEM_NAME=Linux \
+-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=NO \
+-DCMAKE_INSTALL_PREFIX="$OUT/$SCRIPT_NAME" \
+-DCMAKE_MAKE_PROGRAM=make -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang \
+-DCMAKE_CXX_FLAGS="-ffile-prefix-map=$PWD=." \
+-DCMAKE_SYSROOT="$OUT/musl_$arch" \
+-DCMAKE_BUILD_TYPE=MinSizeRel \
+-DLLVM_HOST_TRIPLE="x86_64-unknown-linux-musl" \
+-DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_DOCS=OFF \
+-DLLVM_ENABLE_RUNTIMES="libcxx;libcxxabi;libunwind" \
+-DLIBCXX_ENABLE_STATIC=ON \
+-DLIBCXX_ENABLE_SHARED=OFF \
+-DLIBCXX_HAS_MUSL_LIBC=ON \
+-DLIBCXX_INCLUDE_BENCHMARKS=OFF \
+-DLIBCXX_CXX_ABI="libcxxabi" \
+-DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON \
+-DLIBCXXABI_ENABLE_STATIC=ON \
+-DLIBCXXABI_ENABLE_SHARED=OFF \
+-DLIBCXXABI_USE_LLVM_UNWINDER=ON \
+-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON \
+-DLIBCXXABI_USE_COMPILER_RT=ON \
+-DLIBUNWIND_ENABLE_STATIC=ON \
+-DLIBUNWIND_ENABLE_SHARED=OFF \
+-DLIBUNWIND_USE_COMPILER_RT=ON >/dev/null
+make -C libcxxbuild -j "$NUM_CPUS" install >/dev/null
+
+# https://github.com/llvm/llvm-project/issues/64014
+cmake -S llvm -B build -G "Unix Makefiles" -Wno-dev \
+-DCMAKE_SYSTEM_NAME=Linux \
+-DCMAKE_FIND_USE_CMAKE_SYSTEM_PATH=NO \
+-DCMAKE_INSTALL_PREFIX="$OUT/$SCRIPT_NAME" \
+-DCMAKE_MAKE_PROGRAM=make -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
+-DCMAKE_CXX_FLAGS="-I$OUT/$SCRIPT_NAME/include -I$OUT/$SCRIPT_NAME/include/c++/v1 -ffile-prefix-map=$PWD=." \
+-DCMAKE_EXE_LINKER_FLAGS="-L$OUT/$SCRIPT_NAME/lib" \
+-DCMAKE_SYSROOT="$OUT/musl_$arch" \
+-DCMAKE_BUILD_TYPE=MinSizeRel \
+-DCMAKE_BUILD_WITH_INSTALL_RPATH=ON \
+-DLLVM_HOST_TRIPLE="x86_64-unknown-linux-musl" \
+-DLLVM_NATIVE_TOOL_DIR="$OUT/llvm/bin" \
+-DLLVM_BUILD_STATIC=ON \
+-DLLVM_ENABLE_PIC=OFF \
+-DLLVM_APPEND_VC_REV=OFF \
+-DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_UTILS=OFF \
+-DLLVM_ENABLE_DOXYGEN=OFF -DLLVM_ENABLE_FFI=OFF -DLLVM_ENABLE_LIBXML2=OFF -DLLVM_ENABLE_CURL=OFF -DLLVM_ENABLE_LIBEDIT=OFF -DLLVM_ENABLE_LIBPFM=OFF -DLLVM_ENABLE_ZLIB=OFF -DLLVM_ENABLE_BINDINGS=OFF -DLLVM_ENABLE_UNWIND_TABLES=OFF -DLLVM_ENABLE_TERMINFO=OFF -DLLVM_HAVE_LIBXAR=OFF -DCLANG_ENABLE_ARCMT=OFF \
+-DLLVM_ENABLE_PROJECTS="clang;lld" \
+-DLLVM_TARGETS_TO_BUILD="X86" \
+-DLLVM_DEFAULT_TARGET_TRIPLE="x86_64-unknown-linux-musl" \
+-DDEFAULT_SYSROOT=".." -DCLANG_DEFAULT_RTLIB="compiler-rt" -DCLANG_DEFAULT_CXX_STDLIB="libc++" >/dev/null
+make -C build -j "$NUM_CPUS" install-clang install-lld install-llvm-ar >/dev/null
+
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/clang-16"
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/lld"
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/llvm-ar"
+
+rm -rf "$PWD"
+recipe_finish

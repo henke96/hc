@@ -1,0 +1,41 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="498ec5d7941194a8806f4d42f0f6d218c862996ef1398b737d0d06995e0b7a6574b240a48088f6b84016b14b2776fe463f829dcb11149cdfc1023d496b235c55"
+sha512_linux="458b2c34d46206f9b4ccbac54cc57aeca1eaecaf831bc441e59701bac6eadffc17f6ce24af6eadd0454964e843186539ac0d63295ad2cc32d112b60360c39a35"
+
+DEPENDENCIES="make llvm xz"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/llvm/bin:$OUT/xz/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_musl" "$sha512")" | tar xf -
+cd ./musl-1.2.4
+
+arch=x86_64
+hostcc="$CC"
+
+export CC=clang AR=llvm-ar RANLIB=true
+export CFLAGS="-target $arch-unknown-linux-musl"
+export LDFLAGS="-target $arch-unknown-linux-musl -Wl,--hash-style=gnu,-znow,-znorelro" # Override clang distro detection based flags.
+export LIBCC="$("$CC" $CFLAGS --print-libgcc-file-name)"
+./configure --prefix= --target=$arch >/dev/null
+make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+rm "$OUT/$SCRIPT_NAME/lib/ld-musl-x86_64.so.1"
+
+cd ..
+rm -rf ./musl-1.2.4
+
+# Install Linux headers as well.
+xz -d -c "$(recipe_download "$url_linux" "$sha512_linux")" | tar xf -
+cd ./linux-6.6
+
+export ARCH=$arch
+make -j "$NUM_CPUS" headers HOSTCC="$hostcc" >/dev/null
+fails="$(cd usr && find include -type f -name "*.h" ! -exec sh -ec 'dest="$1/$2"; mkdir -p "${dest%/*}/"; cp "$2" "$dest"' sh "$OUT/$SCRIPT_NAME" {} \; -print)"
+test -z "$fails"
+
+rm -rf "$PWD"
+recipe_finish

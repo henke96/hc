@@ -1,0 +1,118 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+
+DEPENDENCIES="llvm llvm_x86_64 musl_x86_64 coreutils_x86_64 bash_x86_64 gzip_x86_64 tar_x86_64 sed_x86_64 diffutils_x86_64 findutils_x86_64 grep_x86_64 mawk_x86_64 utilities_x86_64 hc xorriso img_x86_64 "
+DIR_DEPENDENCIES=".."
+
+recipe_start
+export PATH="$OUT/xorriso/bin:$PATH"
+
+xorriso -as mkisofs -V ROUTER -o router.iso -J --norock -append_partition 2 0xef "$OUT/img_x86_64/efi.img" -e --interval:appended_partition_2:all:: -no-emul-boot --boot-catalog-hide -partition_offset 16 -no-pad -graft-points \
+"hc/core=$SCRIPT_DIR/../../hc/core" \
+"router=$SCRIPT_DIR/.." \
+"bin/clang=$OUT/llvm_x86_64/bin/clang-16" \
+"bin/ld.lld=$OUT/llvm_x86_64/bin/lld" \
+"bin/ar=$OUT/llvm_x86_64/bin/llvm-ar" \
+"bin/coreutils=$OUT/coreutils_x86_64/bin/coreutils" \
+"bin/sh=$OUT/bash_x86_64/bin/bash" \
+"bin/gzip=$OUT/gzip_x86_64/gzip" \
+"bin/tar=$OUT/tar_x86_64/bin/tar" \
+"bin/sed=$OUT/sed_x86_64/bin/sed" \
+"bin/diff=$OUT/diffutils_x86_64/bin/diff" \
+"bin/cmp=$OUT/diffutils_x86_64/bin/cmp" \
+"bin/find=$OUT/findutils_x86_64/bin/find" \
+"bin/xargs=$OUT/findutils_x86_64/bin/xargs" \
+"bin/grep=$OUT/grep_x86_64/bin/grep" \
+"bin/awk=$OUT/mawk_x86_64/bin/mawk" \
+"bin/echo=$OUT/utilities_x86_64/x86_64-linux_shWrapper" \
+"bin/false=$OUT/utilities_x86_64/x86_64-linux_shWrapper" \
+"bin/printf=$OUT/utilities_x86_64/x86_64-linux_shWrapper" \
+"bin/test=$OUT/utilities_x86_64/x86_64-linux_shWrapper" \
+"bin/true=$OUT/utilities_x86_64/x86_64-linux_shWrapper" \
+"bin/basename=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/cat=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/chmod=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/comm=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/cp=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/cut=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/date=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/dd=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/dirname=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/env=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/expr=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/head=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/install=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/ln=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/ls=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/mkdir=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/mv=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/nl=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/rm=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/rmdir=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/sha512sum=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/sleep=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/sort=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/tail=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/tee=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/touch=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/tr=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/uname=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/uniq=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/wc=$OUT/utilities_x86_64/x86_64-linux_coreutilsWrapper" \
+"bin/cpp=$OUT/utilities_x86_64/x86_64-linux_clangWrapper" \
+"bin/cc=$OUT/utilities_x86_64/x86_64-linux_clangCompilerWrapper" \
+"bin/c++=$OUT/utilities_x86_64/x86_64-linux_clangCompilerWrapper" \
+"bin/ld=$OUT/utilities_x86_64/x86_64-linux_lldWrapper" \
+"bin/ldd=$OUT/utilities_x86_64/x86_64-linux_libcSoWrapper" \
+"lib/Scrt1.o=$OUT/musl_x86_64/lib/Scrt1.o" \
+"lib/crti.o=$OUT/musl_x86_64/lib/crti.o" \
+"lib/crtn.o=$OUT/musl_x86_64/lib/crtn.o" \
+"lib/libc.so=$OUT/musl_x86_64/lib/libc.so" \
+"lib/libdl.a=$OUT/musl_x86_64/lib/libdl.a" \
+"lib/libm.a=$OUT/musl_x86_64/lib/libm.a" \
+"lib/libpthread.a=$OUT/musl_x86_64/lib/libpthread.a" \
+"lib/librt.a=$OUT/musl_x86_64/lib/librt.a" \
+"lib=$OUT/llvm/lib" \
+"lib=$OUT/llvm_x86_64/lib" \
+"include=$OUT/llvm_x86_64/include" \
+"include=$OUT/musl_x86_64/include" \
+"downloads/bash-5.2.21.tar.gz=$(recipe_download "$url_bash" "68af0b6b04b6825a3cb294ed8e1061d14d51d786aa7fb1c88d2848257409122f308ef4b8006ed401e2897aabe2adf6837074cea6f3a0523077308e45f49319fd")" \
+"downloads/bc-6.7.5.tar.xz=$(recipe_download "$url_bc" "5f689fd20801ea7ede725ae5dc4e8744bdf2d72424bffef99c53193a950f4bd83b6eb4c5a07556576d0b3f5b6cd7f9fc7cbcb41d27891f488bb2e97a186f76a4")" \
+"downloads/cmake-3.27.1.tar.gz=$(recipe_download "$url_cmake" "d8831105fed3772bcb821a2b184fe0ffbff15795a5b0a89f2ad1cb0372a40c8f22f2bab72c671a6d17464521b7337067df929a5c3ece99f84848cc3a2fe6716f")" \
+"downloads/coreutils-9.5.tar.xz=$(recipe_download "$url_coreutils" "2ca0deac4dc10a80fd0c6fd131252e99d457fd03b7bd626a6bc74fe5a0529c0a3d48ce1f5da1d3b3a7a150a1ce44f0fbb6b68a6ac543dfd5baa3e71f5d65401c")" \
+"downloads/bison-3.8.2.tar.xz=$(recipe_download "$url_bison" "d4d23af6671406e97257892f90651b67f2ab95219831372be032190b7156c10a3435d457857e677445df8b2327aacccc15344acbbc3808a6f332a93cce23b444")" \
+"downloads/bzip2-1.0.8.tar.gz=$(recipe_download "$url_bzip2" "083f5e675d73f3233c7930ebe20425a533feedeaaa9d8cc86831312a6581cefbe6ed0d08d2fa89be81082f2a5abdabca8b3c080bf97218a1bd59dc118a30b9f3")" \
+"downloads/diffutils-3.10.tar.xz=$(recipe_download "$url_diffutils" "219d2c815a120690c6589846271e43aee5c96c61a7ee4abbef97dfcdb3d6416652ed494b417de0ab6688c4322540d48be63b5e617beb6d20530b5d55d723ccbb")" \
+"downloads/e2fsprogs-1.47.1.tar.xz=$(recipe_download "$url_e2fsprogs" "2ac51f7654a44adf3ee5a5e32cecd7f129e423bdf3074c60b22a7acdba131e7dd0bb2964c107a06ae133f51836272be166f5da1f996f67ceb6c22e2636117beb")" \
+"downloads/elfutils-0.189.tar.bz2=$(recipe_download "$url_elfutils" "93a877e34db93e5498581d0ab2d702b08c0d87e4cafd9cec9d6636dfa85a168095c305c11583a5b0fb79374dd93bc8d0e9ce6016e6c172764bcea12861605b71")" \
+"downloads/findutils-4.9.0.tar.xz=$(recipe_download "$url_findutils" "ba4844f4403de0148ad14b46a3dbefd5a721f6257c864bf41a6789b11705408524751c627420b15a52af95564d8e5b52f0978474f640a62ab86a41d20cf14be9")" \
+"downloads/flex-2.6.4.tar.gz=$(recipe_download "$url_flex" "e9785f3d620a204b7d20222888917dc065c2036cae28667065bf7862dfa1b25235095a12fd04efdbd09bfd17d3452e6b9ef953a8c1137862ff671c97132a082e")" \
+"downloads/grep-3.11.tar.xz=$(recipe_download "$url_grep" "f254a1905a08c8173e12fbdd4fd8baed9a200217fba9d7641f0d78e4e002c1f2a621152d67027d9b25f0bb2430898f5233dc70909d8464fd13d7dd9298e65c42")" \
+"downloads/llvm-project-16.0.6.src.tar.xz=$(recipe_download "$url_llvm" "89a67ebfbbc764cc456e8825ecfa90707741f8835b1b2adffae0b227ab1fe5ca9cce75b0efaffc9ca8431cae528dc54fd838867a56a2b645344d9e82d19ab1b7")" \
+"downloads/m4-1.4.19.tar.xz=$(recipe_download "$url_m4" "47f595845c89709727bda0b3fc78e3188ef78ec818965b395532e7041cabe9e49677ee4aca3d042930095a7f8df81de3da1026b23b6897be471f6cf13ddd512b")" \
+"downloads/mawk-1.3.4-20240123.tgz=$(recipe_download "$url_mawk" "f6d5da44280afeac4a9bb6d3788ed71ee816daaa5816f49b9d40add5292f3ae06e5af007a6c993d14405238cbb70ba4997fdd2fcd5901c9a1a4b61357045c4a6")" \
+"downloads/mtools-4.0.44.tar.gz=$(recipe_download "$url_mtools" "87225c6f7399fea770fa4f19db989c6d55463da3f482e2a18226a836aa90024173d4d6466a6d208c5014f414f14872258000e0e79f6dbb8d076af8dc7e7bc18e")" \
+"downloads/perl-5.38.2.tar.xz=$(recipe_download "$url_perl" "0ca51e447c7a18639627c281a1c7ae6662c773745ea3c86bede46336d5514ecc97ded2c61166e1ac15635581489dc596368907aa3a775b34db225b76d7402d10")" \
+"downloads/hostapd-2.10.tar.gz=$(recipe_download "$url_hostapd" "243baa82d621f859d2507d8d5beb0ebda15a75548a62451dc9bca42717dcc8607adac49b354919a41d8257d16d07ac7268203a79750db0cfb34b51f80ff1ce8f")" \
+"downloads/libnl-3.8.0.tar.gz=$(recipe_download "$url_libnl3" "a8da7e8464c5cab2807cd86f83fca53bc77f7c3bdefe43880db7be9caf5ba6bfca1b7e778b906c12fda1cf7e6f413f88cc7ad1dcc42fe8c050a8d28a6e656c02")" \
+"downloads/linux-6.6.tar.xz=$(recipe_download "$url_linux" "458b2c34d46206f9b4ccbac54cc57aeca1eaecaf831bc441e59701bac6eadffc17f6ce24af6eadd0454964e843186539ac0d63295ad2cc32d112b60360c39a35")" \
+"downloads/linux-firmware-20230625.tar.xz=$(recipe_download "$url_linux_firmware" "0e48aa7f63495485426d37491c7cb61843165625bd47f912c5d83628c6de871759f1a78be3af3d651f7c396bd87dff07e21ba7afc47896c1c143106d5f16d351")" \
+"downloads/make-4.4.tar.gz=$(recipe_download "$url_make" "4be73f494295dcfa10034531b0d920cfdb5438bc20625f863f5c878549c140e1e67195162580c53060c3c11c67a2c739c09051f02cdd283e5aa9ebcd68975a1f")" \
+"downloads/musl-1.2.4.tar.gz=$(recipe_download "$url_musl" "498ec5d7941194a8806f4d42f0f6d218c862996ef1398b737d0d06995e0b7a6574b240a48088f6b84016b14b2776fe463f829dcb11149cdfc1023d496b235c55")" \
+"downloads/nano-8.0.tar.xz=$(recipe_download "$url_nano" "86c484428b8805768fd580d0f62aa32ce8f588f4beedcdd35a4014506b562928c7a2fa6487aa0d853b4c9c1639a4d186f46b4e96721568ff81191d5098403ca8")" \
+"downloads/ncurses-6.5.tar.gz=$(recipe_download "$url_ncurses" "fc5a13409d2a530a1325776dcce3a99127ddc2c03999cfeb0065d0eee2d68456274fb1c7b3cc99c1937bc657d0e7fca97016e147f93c7821b5a4a6837db821e8")" \
+"downloads/Python-3.11.4.tar.xz=$(recipe_download "$url_python" "7eb14fecbf60824d10c22a9057584c3a142c2866f4af6caa2525c10c8bcb24e6e7afb32a44a0e118df0a2b2543d578c3b422ffd4a5fa317dfe6ea371cc7ee1ee")" \
+"downloads/sed-4.9.tar.xz=$(recipe_download "$url_sed" "36157a4b4a2430cf421b7bd07f1675d680d9f1616be96cf6ad6ee74a9ec0fe695f8d0b1e1f0b008bbb33cc7fcde5e1c456359bbbc63f8aebdd4fedc3982cf6dc")" \
+"downloads/tar-1.35.tar.xz=$(recipe_download "$url_tar" "8b84ed661e6c878fa33eb5c1808d20351e6f40551ac63f96014fb0d0b9c72d5d94d8865d39e36bcb184fd250f84778a3b271bbd8bd2ceb69eece0c3568577510")" \
+"downloads/util-linux-2.40.tar.xz=$(recipe_download "$url_util_linux" "f06e61d4ee0e196223f7341ec75a16a6671f82d6e353823490ecff17e947bb169a6b65177e3ab0da6e733e079b24d6a77905a0e8bbfed82ca9aa22a3facb6180")" \
+"downloads/wireless-regdb-2023.09.01.tar.xz=$(recipe_download "$url_wireless_regdb" "e88b4ea8b40f916f4e6c7fea8ea1b9fc7c6ece755d6ce24a8f43f66840f68e9971938707b0d94c87a2aa00dfe7f5734df469e0e088a82fe544a031b1d7422596")" \
+"downloads/xorriso-1.5.6.pl02.tar.gz=$(recipe_download "$url_xorriso" "e5253e7d5b2afea169cd04c5d697d818e1fd53c28ca18de4dc067b96e80d2fdb366bb405683b7d2d7758fc6d4c70a27acdfcdce35781230d1b9ecb853d6480d6")" \
+"downloads/xz-5.4.3.tar.gz=$(recipe_download "$url_xz" "aff0fe166af6df4491a6f5df2372cab100b081452461a0e8c6fd65b72af3f250f16c64d9fb8fd309141e9b9ae4e41649f48687cc29e63dd82f27f2eab19b4023")" \
+"downloads/zlib-1.3.1.tar.xz=$(recipe_download "$url_zlib" "1e8e70b362d64a233591906a1f50b59001db04ca14aaffad522198b04680be501736e7d536b4191e2f99767e7001ca486cd802362cca2be05d5d409b83ea732d")" \
+-- -alter_date_r b =0 / --
+
+recipe_finish

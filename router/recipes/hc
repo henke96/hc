@@ -1,0 +1,9 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+DIR_DEPENDENCIES="../../hc/core"
+
+recipe_start
+recipe_finish

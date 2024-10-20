@@ -1,0 +1,31 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="f6d5da44280afeac4a9bb6d3788ed71ee816daaa5816f49b9d40add5292f3ae06e5af007a6c993d14405238cbb70ba4997fdd2fcd5901c9a1a4b61357045c4a6"
+
+DEPENDENCIES="make llvm musl_x86_64"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/llvm/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_mawk" "$sha512")" | tar xf -
+cd ./mawk-1.3.4-20240123
+
+arch=x86_64
+export CC=clang AR=llvm-ar
+export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
+export CPPFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch"
+export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -static -Wl,--gc-sections"
+# https://savannah.gnu.org/support/?110846
+sed -e 's/cross_compiling=maybe/cross_compiling=yes/' ./configure > ./sed.temp
+mv ./sed.temp ./configure
+chmod +x ./configure
+./configure --prefix= --host=$arch-unknown-linux-musl --with-build-cc=cc --disable-dependency-tracking >/dev/null
+
+make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/mawk"
+
+rm -rf "$PWD"
+recipe_finish

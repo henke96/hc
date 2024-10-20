@@ -1,0 +1,26 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="93a877e34db93e5498581d0ab2d702b08c0d87e4cafd9cec9d6636dfa85a168095c305c11583a5b0fb79374dd93bc8d0e9ce6016e6c172764bcea12861605b71"
+
+DEPENDENCIES="make bzip2 m4 zlib"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/bzip2/bin:$OUT/m4/bin:$PATH"
+bzip2 -d -c "$(recipe_download "$url_elfutils" "$sha512")" | tar xf -
+cd ./elfutils-0.189
+
+cat > ./libelf/libintl.h <<"end"
+#ifndef dgettext
+#define dgettext(DOMAIN, STR) (STR)
+#endif
+end
+
+./configure ac_cv_search__obstack_free= ac_cv_search_fts_close= ac_cv_search_argp_parse= --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --disable-demangler --disable-nls --without-valgrind --without-bzlib --without-lzma --without-zstd --without-libiconv-prefix --without-libintl-prefix --disable-debuginfod --disable-libdebuginfod --disable-symbol-versioning CFLAGS="-Wno-error -I$OUT/zlib/include" LDFLAGS="-L$OUT/zlib/lib -Wl,-rpath,$OUT/zlib/lib" >/dev/null
+make -C libelf -j "$NUM_CPUS" install libelf_so_DEPS= >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

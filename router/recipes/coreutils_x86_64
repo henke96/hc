@@ -1,0 +1,32 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="2ca0deac4dc10a80fd0c6fd131252e99d457fd03b7bd626a6bc74fe5a0529c0a3d48ce1f5da1d3b3a7a150a1ce44f0fbb6b68a6ac543dfd5baa3e71f5d65401c"
+
+DEPENDENCIES="make xz llvm musl_x86_64"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/xz/bin:$OUT/llvm/bin:$PATH"
+xz -d -c "$(recipe_download "$url_coreutils" "$sha512")" | tar xf -
+cd ./coreutils-9.5
+
+arch=x86_64
+export CC=clang AR=llvm-ar
+export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
+export CPPFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch"
+export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -static -Wl,--gc-sections"
+# https://savannah.gnu.org/support/?110846
+sed -e 's/cross_compiling=maybe/cross_compiling=yes/' ./configure > ./sed.temp
+mv ./sed.temp ./configure
+chmod +x ./configure
+./configure --prefix= --host=$arch-unknown-linux-musl --disable-dependency-tracking --disable-threads --disable-acl --disable-rpath --disable-xattr --disable-libsmack --disable-libcap --enable-single-binary=symlinks --disable-nls --with-openssl=no --without-libiconv-prefix --without-libgmp --without-selinux --without-libintl-prefix \
+--enable-no-install-program=[,b2sum,base32,base64,basenc,chcon,chgrp,chown,chroot,cksum,csplit,df,dir,dircolors,du,echo,expand,false,factor,fmt,fold,groups,hostid,id,join,kill,link,logname,md5sum,mkfifo,mknod,mktemp,nice,nohup,nproc,numfmt,od,paste,pathchk,pinky,pr,printenv,printf,ptx,pwd,readlink,realpath,runcon,seq,sha1sum,sha224sum,sha256sum,sha384sum,shred,shuf,split,stat,stdbuf,stty,sum,sync,tac,test,timeout,true,truncate,tsort,tty,unexpand,unlink,uptime,users,vdir,who,whoami,yes >/dev/null
+
+make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/coreutils"
+
+rm -rf "$PWD"
+recipe_finish

@@ -1,0 +1,16 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+DEPENDENCIES="mtools linux_x86_64"
+
+recipe_start
+export PATH="$OUT/mtools/bin:$PATH"
+
+dd if=/dev/zero of=efi.img bs=1048576 count=4
+mformat -i efi.img -N 0 -v EFI ::
+mmd -i efi.img ::/efi ::/efi/boot
+mcopy -i efi.img "$OUT/linux_x86_64/bootx64.efi" ::/efi/boot/
+
+recipe_finish

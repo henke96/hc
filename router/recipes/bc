@@ -1,0 +1,21 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="5f689fd20801ea7ede725ae5dc4e8744bdf2d72424bffef99c53193a950f4bd83b6eb4c5a07556576d0b3f5b6cd7f9fc7cbcb41d27891f488bb2e97a186f76a4"
+
+DEPENDENCIES="make xz"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/xz/bin:$PATH"
+xz -d -c "$(recipe_download "$url_bc" "$sha512")" | tar xf -
+cd ./bc-6.7.5
+
+./configure.sh --prefix="$OUT/$SCRIPT_NAME" --bc-only --disable-extra-math --disable-generated-tests --disable-history --disable-man-pages --disable-nls --disable-strip >/dev/null
+make -j "$NUM_CPUS" >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

@@ -1,0 +1,19 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="4be73f494295dcfa10034531b0d920cfdb5438bc20625f863f5c878549c140e1e67195162580c53060c3c11c67a2c739c09051f02cdd283e5aa9ebcd68975a1f"
+
+recipe_start
+gzip -d -c "$(recipe_download "$url_make" "$sha512")" | tar xf -
+cd ./make-4.4
+
+./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix --without-guile --without-customs --without-dmalloc --disable-nls >/dev/null
+./build.sh >/dev/null
+mkdir "$OUT/$SCRIPT_NAME/bin"
+mv ./make "$OUT/$SCRIPT_NAME/bin/"
+
+rm -rf "$PWD"
+recipe_finish

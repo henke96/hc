@@ -1,0 +1,14 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="e88b4ea8b40f916f4e6c7fea8ea1b9fc7c6ece755d6ce24a8f43f66840f68e9971938707b0d94c87a2aa00dfe7f5734df469e0e088a82fe544a031b1d7422596"
+
+DEPENDENCIES="xz"
+
+recipe_start
+"$OUT/xz/bin/xz" -d -c "$(recipe_download "$url_wireless_regdb" "$sha512")" | tar xf - "wireless-regdb-2023.09.01/regulatory.db"
+mv ./wireless-regdb-2023.09.01 bin
+recipe_finish

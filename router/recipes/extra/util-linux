@@ -1,0 +1,27 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/../files/urls"
+sha512="f06e61d4ee0e196223f7341ec75a16a6671f82d6e353823490ecff17e947bb169a6b65177e3ab0da6e733e079b24d6a77905a0e8bbfed82ca9aa22a3facb6180"
+
+DEPENDENCIES="../make ../xz ncurses"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/xz/bin:$PATH"
+xz -d -c "$(recipe_download "$url_util_linux" "$sha512")" | tar xf -
+cd ./util-linux-2.40
+
+# TODO: Upstream similar to https://github.com/util-linux/util-linux/commit/37641f246ee9df7289b4e3054b3ded3912773722
+sed -e 's/build_dmesg=no/build_dmesg=yes/; s/build_lsblk=no/build_lsblk=yes/' configure > sed.temp
+mv sed.temp configure
+chmod +x configure
+
+export CFLAGS="-I$OUT/ncurses/include"
+export LDFLAGS="-L$OUT/ncurses/lib"
+./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --disable-nls --disable-all-programs --disable-widechar --enable-libuuid --enable-libblkid --enable-libmount --enable-libsmartcols --enable-libfdisk --enable-fdisks --enable-mount --enable-blkid --enable-wipefs --enable-fallocate --enable-lscpu --enable-lsfd --enable-kill --enable-more --disable-bash-completion --disable-makeinstall-chown --disable-makeinstall-setuid --without-libiconv-prefix --without-libintl-prefix --without-ncursesw --with-ncurses --without-readline >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

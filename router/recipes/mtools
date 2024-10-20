@@ -1,0 +1,20 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="87225c6f7399fea770fa4f19db989c6d55463da3f482e2a18226a836aa90024173d4d6466a6d208c5014f414f14872258000e0e79f6dbb8d076af8dc7e7bc18e"
+
+DEPENDENCIES="make"
+
+recipe_start
+export PATH="$OUT/make/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_mtools" "$sha512")" | tar xf -
+cd ./mtools-4.0.44
+
+./configure --prefix="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

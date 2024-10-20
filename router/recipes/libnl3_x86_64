@@ -1,0 +1,28 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="a8da7e8464c5cab2807cd86f83fca53bc77f7c3bdefe43880db7be9caf5ba6bfca1b7e778b906c12fda1cf7e6f413f88cc7ad1dcc42fe8c050a8d28a6e656c02"
+
+DEPENDENCIES="make llvm bison flex musl_x86_64"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/llvm/bin:$OUT/bison/bin:$OUT/flex/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_libnl3" "$sha512")" | tar xf -
+cd ./libnl-3.8.0
+
+arch=x86_64
+export CC=clang AR=llvm-ar RANLIB=true
+export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
+export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Wl,--gc-sections"
+# https://savannah.gnu.org/support/?110846
+sed -e 's/cross_compiling=maybe/cross_compiling=yes/' ./configure > ./sed.temp
+mv ./sed.temp ./configure
+chmod +x ./configure
+./configure --prefix= --host=$arch-unknown-linux-musl --disable-dependency-tracking --disable-debug --enable-shared=no >/dev/null
+make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

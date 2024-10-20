@@ -1,0 +1,31 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="f254a1905a08c8173e12fbdd4fd8baed9a200217fba9d7641f0d78e4e002c1f2a621152d67027d9b25f0bb2430898f5233dc70909d8464fd13d7dd9298e65c42"
+
+DEPENDENCIES="make xz llvm musl_x86_64"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/xz/bin:$OUT/llvm/bin:$PATH"
+xz -d -c "$(recipe_download "$url_grep" "$sha512")" | tar xf -
+cd ./grep-3.11
+
+arch=x86_64
+export CC=clang AR=llvm-ar
+export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
+export CPPFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch"
+export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -static -Wl,--gc-sections"
+# https://savannah.gnu.org/support/?110846
+sed -e 's/cross_compiling=maybe/cross_compiling=yes/' ./configure > ./sed.temp
+mv ./sed.temp ./configure
+chmod +x ./configure
+./configure --prefix= --host=$arch-unknown-linux-musl --disable-dependency-tracking --disable-threads --disable-rpath --disable-nls --disable-perl-regexp --without-libsigsegv-prefix --without-libiconv-prefix --without-libintl-prefix >/dev/null
+
+make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/grep"
+
+rm -rf "$PWD"
+recipe_finish

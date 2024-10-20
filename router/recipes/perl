@@ -1,0 +1,20 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="0ca51e447c7a18639627c281a1c7ae6662c773745ea3c86bede46336d5514ecc97ded2c61166e1ac15635581489dc596368907aa3a775b34db225b76d7402d10"
+
+DEPENDENCIES="make xz"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/xz/bin:$PATH"
+xz -d -c "$(recipe_download "$url_perl" "$sha512")" | tar xf -
+cd ./perl-5.38.2
+
+./Configure -des -Dinstallusrbinperl=n -Dusenm=false -Dplibpth=" " -Dman1dir=none -Dman3dir=none -Dprefix="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

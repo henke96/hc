@@ -1,0 +1,20 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/../files/urls"
+sha512="fc5a13409d2a530a1325776dcce3a99127ddc2c03999cfeb0065d0eee2d68456274fb1c7b3cc99c1937bc657d0e7fca97016e147f93c7821b5a4a6837db821e8"
+
+DEPENDENCIES="../make"
+
+recipe_start
+export PATH="$OUT/make/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_ncurses" "$sha512")" | tar xf -
+cd ./ncurses-6.5
+
+./configure --prefix="$OUT/$SCRIPT_NAME" --without-debug --enable-overwrite --disable-widec --disable-stripping >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

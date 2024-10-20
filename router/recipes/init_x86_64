@@ -1,0 +1,19 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+DEPENDENCIES="llvm hc"
+DIR_DEPENDENCIES="../init"
+
+recipe_start
+export LLVM="$OUT/llvm"
+export ARCH=x86_64
+export ABI=linux
+export FLAGS="-Werror -Os"
+export FLAGS_RELEASE= FLAGS_DEBUG=
+OUT="$OUT/$SCRIPT_NAME" "$SCRIPT_DIR/../../hc/core/builder.sh" "$SCRIPT_DIR/../init/init.c"
+"$SCRIPT_DIR/../../hc/core/objcopy.sh" --strip-sections "$OUT/$SCRIPT_NAME/$ARCH-${ABI}_init"
+touch -t 197001010000 "$OUT/$SCRIPT_NAME/$ARCH-${ABI}_init"
+touch -t 197001010000 "$OUT/$SCRIPT_NAME/debug/$ARCH-${ABI}_init"
+recipe_finish

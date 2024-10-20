@@ -1,0 +1,20 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="d8831105fed3772bcb821a2b184fe0ffbff15795a5b0a89f2ad1cb0372a40c8f22f2bab72c671a6d17464521b7337067df929a5c3ece99f84848cc3a2fe6716f"
+
+DEPENDENCIES="make"
+
+recipe_start
+export PATH="$OUT/make/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_cmake" "$sha512")" | tar xf -
+cd ./cmake-3.27.1
+
+./bootstrap --prefix="$OUT/$SCRIPT_NAME" --no-debugger --parallel="$NUM_CPUS" --generator="Unix Makefiles" -- -DCMAKE_USE_OPENSSL=OFF >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

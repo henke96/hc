@@ -1,0 +1,40 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="e5253e7d5b2afea169cd04c5d697d818e1fd53c28ca18de4dc067b96e80d2fdb366bb405683b7d2d7758fc6d4c70a27acdfcdce35781230d1b9ecb853d6480d6"
+
+DEPENDENCIES="make"
+
+recipe_start
+export PATH="$OUT/make/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_xorriso" "$sha512")" | tar xf -
+cd ./xorriso-1.5.6
+
+# Make output reproducible. Upstreamed: https://lists.gnu.org/archive/html/bug-xorriso/2024-08/msg00000.html
+sed -e 's/isoburn_igopt_set_sort_files(sopts, 1);/isoburn_igopt_set_sort_files(sopts, 0);/' ./xorriso/write_run.c > ./sed.temp
+mv ./sed.temp ./xorriso/write_run.c
+
+sed -e 's$int cmp_node_name$ \
+int cmp_node_name_tiebreak(const void *f1, const void *f2) \
+{ \
+    Ecma119Node *f = *((Ecma119Node**)f1); \
+    Ecma119Node *g = *((Ecma119Node**)f2); \
+    int cmp = strcmp(f->iso_name, g->iso_name); \
+    if (cmp) \
+        return cmp; \
+    /* use original node name as tie-breaker */ \
+    return strcmp(f->node->name, g->node->name); \
+} \
+static int cmp_node_name$' ./libisofs/ecma119_tree.c > ./sed.temp
+mv ./sed.temp ./libisofs/ecma119_tree.c
+sed -e 's/  cmp_node_name);/cmp_node_name_tiebreak);/' ./libisofs/ecma119_tree.c > ./sed.temp
+mv ./sed.temp ./libisofs/ecma119_tree.c
+
+./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --enable-shared=no --enable-static=no --disable-debug --disable-libreadline --disable-libedit --disable-libacl --disable-xattr --disable-zlib --disable-libbz2 --disable-external-filters --disable-launch-frontend >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish

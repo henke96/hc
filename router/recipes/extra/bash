@@ -1,0 +1,28 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/../files/urls"
+sha512="68af0b6b04b6825a3cb294ed8e1061d14d51d786aa7fb1c88d2848257409122f308ef4b8006ed401e2897aabe2adf6837074cea6f3a0523077308e45f49319fd"
+
+DEPENDENCIES="../make ncurses"
+
+recipe_start
+export PATH="$OUT/make/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_bash" "$sha512")" | tar xf -
+cd ./bash-5.2.21
+
+export CFLAGS="-I$OUT/ncurses/include"
+export LDFLAGS="-L$OUT/ncurses/lib"
+./configure bash_cv_termcap_lib=libncurses --prefix="$OUT/$SCRIPT_NAME" --disable-nls --without-bash-malloc --without-libpth-prefix --without-libiconv-prefix --without-libintl-prefix >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+cat > "$OUT/$SCRIPT_NAME/bashrc" <<"end"
+HISTCONTROL=ignoreboth
+PS1="\[\033[01;34m\]\w\[\033[00m\]# "
+alias ls='ls --color=auto'
+end
+
+rm -rf "$PWD"
+recipe_finish

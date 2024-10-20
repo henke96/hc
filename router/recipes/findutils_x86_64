@@ -1,0 +1,32 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="ba4844f4403de0148ad14b46a3dbefd5a721f6257c864bf41a6789b11705408524751c627420b15a52af95564d8e5b52f0978474f640a62ab86a41d20cf14be9"
+
+DEPENDENCIES="make xz llvm musl_x86_64"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/xz/bin:$OUT/llvm/bin:$PATH"
+xz -d -c "$(recipe_download "$url_findutils" "$sha512")" | tar xf -
+cd ./findutils-4.9.0
+
+arch=x86_64
+export CC=clang AR=llvm-ar
+export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
+export CPPFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch"
+export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -static -Wl,--gc-sections"
+# https://savannah.gnu.org/support/?110846
+sed -e 's/cross_compiling=maybe/cross_compiling=yes/' ./configure > ./sed.temp
+mv ./sed.temp ./configure
+chmod +x ./configure
+./configure --prefix= --host=$arch-unknown-linux-musl --disable-dependency-tracking --disable-threads --disable-nls --disable-rpath --without-selinux --without-libiconv-prefix >/dev/null
+
+make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/find"
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/xargs"
+
+rm -rf "$PWD"
+recipe_finish

@@ -1,0 +1,38 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="68af0b6b04b6825a3cb294ed8e1061d14d51d786aa7fb1c88d2848257409122f308ef4b8006ed401e2897aabe2adf6837074cea6f3a0523077308e45f49319fd"
+
+DEPENDENCIES="make llvm musl_x86_64"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/llvm/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_bash" "$sha512")" | tar xf -
+cd ./bash-5.2.21
+
+arch=x86_64
+export CC_FOR_BUILD="$CC"
+export CC=clang AR=llvm-ar RANLIB=true
+export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
+export CPPFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch"
+export LDFLAGS="-Wl,--gc-sections"
+# https://savannah.gnu.org/support/?110846
+sed -e 's/cross_compiling=maybe/cross_compiling=yes/' ./configure > ./sed.temp
+mv ./sed.temp ./configure
+chmod +x ./configure
+# https://savannah.gnu.org/patch/?10451
+sed -e '7542s/FREE (tt);/#if defined (ARRAY_VARS)\
+FREE (tt);\
+#endif/' ./subst.c > ./sed.temp
+mv ./sed.temp ./subst.c
+# TODO: Fix cross compilation problems, such as pipesize.h
+# https://savannah.gnu.org/patch/?10449
+./configure bash_cv_func_strtoimax=no bash_cv_dev_stdin=absent bash_cv_dev_fd=standard bash_cv_mail_dir= bash_cv_wexitstatus_offset=8 bash_cv_pgrp_pipe=yes bash_cv_ulimit_maxfds=yes bash_cv_printf_a_format=yes bash_cv_sys_named_pipes=present bash_cv_unusable_rtsigs=no --prefix= --host=$arch-unknown-linux-musl --enable-minimal-config --enable-job-control --enable-strict-posix-default --enable-static-link --disable-nls --disable-threads --disable-rpath --without-bash-malloc --without-libpth-prefix --without-libiconv-prefix --without-libintl-prefix >/dev/null
+make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/bash"
+
+rm -rf "$PWD"
+recipe_finish

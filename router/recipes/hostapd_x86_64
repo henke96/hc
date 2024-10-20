@@ -1,0 +1,27 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="243baa82d621f859d2507d8d5beb0ebda15a75548a62451dc9bca42717dcc8607adac49b354919a41d8257d16d07ac7268203a79750db0cfb34b51f80ff1ce8f"
+
+DEPENDENCIES="make llvm musl_x86_64 libnl3_x86_64"
+DIR_DEPENDENCIES="files/hostapd"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/llvm/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_hostapd" "$sha512")" | tar xf -
+cd ./hostapd-2.10
+
+cp "$SCRIPT_DIR/files/hostapd/.config" hostapd/
+arch=x86_64
+export CC=clang
+export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
+export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -L$OUT/libnl3_x86_64/lib -static -Wl,--gc-sections"
+make -C hostapd -j "$NUM_CPUS" install BINDIR= DESTDIR="$OUT/$SCRIPT_NAME" LIBNL_INC="$OUT/libnl3_x86_64/include/libnl3" >/dev/null
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/hostapd"
+touch -t 197001010000 "$OUT/$SCRIPT_NAME/hostapd"
+
+rm -rf "$PWD"
+recipe_finish

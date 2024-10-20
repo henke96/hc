@@ -1,0 +1,21 @@
+#!/bin/sh --
+set -ex
+SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
+. "$SCRIPT_DIR/../../hc/core/shell/recipe.sh"
+
+. "$SCRIPT_DIR/files/urls"
+sha512="e9785f3d620a204b7d20222888917dc065c2036cae28667065bf7862dfa1b25235095a12fd04efdbd09bfd17d3452e6b9ef953a8c1137862ff671c97132a082e"
+
+DEPENDENCIES="make m4"
+
+recipe_start
+export PATH="$OUT/make/bin:$OUT/m4/bin:$PATH"
+gzip -d -c "$(recipe_download "$url_flex" "$sha512")" | tar xf -
+cd ./flex-2.6.4
+
+# https://github.com/westes/flex/issues/428
+./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --disable-nls --disable-libfl --without-libiconv-prefix --without-libintl-prefix CFLAGS="-g -O2 -D_GNU_SOURCE" >/dev/null
+make -j "$NUM_CPUS" install >/dev/null
+
+rm -rf "$PWD"
+recipe_finish
