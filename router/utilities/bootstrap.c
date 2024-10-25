@@ -23,6 +23,8 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     if (S_ISDIR(statx.stx_mode)) {
         path = device;
         device = NULL;
+    } else {
+        if (sys_umount2(path, 0) == 0) return 0;
     }
 
     int64_t pathLen = util_cstrLen(path);
