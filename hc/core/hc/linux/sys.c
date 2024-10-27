@@ -1259,3 +1259,8 @@ static hc_INLINE int32_t sys_sched_getaffinity(int32_t pid, int32_t len, uint64_
     sys_SYSCALL3(sys_NR_sched_getaffinity, pid, len, mask)
     return (int32_t)ret;
 }
+
+static hc_INLINE int32_t sys_dup3(int32_t oldfd, int32_t newfd, uint32_t flags) {
+    sys_SYSCALL3(sys_NR_dup3, oldfd, newfd, flags)
+    return (int32_t)ret;
+}

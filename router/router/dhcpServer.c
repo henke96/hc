@@ -74,10 +74,10 @@ static void dhcpServer_init(struct dhcpServer *self, int32_t ifIndex, uint32_t s
 }
 
 static void dhcpServer_onFd(struct dhcpServer *self) {
-    int64_t read = sys_read(self->fd, &buffer[0], sizeof(buffer));
-    debug_ASSERT(read > 0);
-    if (read < (int64_t)sizeof(struct dhcp_header)) return;
-    void *end = &buffer[read];
+    int64_t numRead = sys_read(self->fd, &buffer[0], sizeof(buffer));
+    debug_ASSERT(numRead > 0);
+    if (numRead < (int64_t)sizeof(struct dhcp_header)) return;
+    void *end = &buffer[numRead];
     struct dhcp_header *header = (void *)&buffer[0];
 
     // Find DHCP options.

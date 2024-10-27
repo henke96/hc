@@ -137,8 +137,8 @@ static void packetDumper_onPacketFd(struct packetDumper *self) {
         .msg_controllen = sizeof(cmsg)
     };
 
-    int64_t read = sys_recvmsg(self->packetFd, &recvMsghdr, 0);
-    CHECK(read, RES > 0);
+    int64_t numRead = sys_recvmsg(self->packetFd, &recvMsghdr, 0);
+    CHECK(numRead, RES > 0);
     debug_ASSERT(cmsg.cmsghdr.cmsg_type == SO_TIMESTAMPING);
     debug_ASSERT(cmsg.cmsghdr.cmsg_len == sizeof(cmsg));
 
@@ -150,20 +150,20 @@ static void packetDumper_onPacketFd(struct packetDumper *self) {
     } pcapPacketRecord = {
         .timestampSec = (uint32_t)cmsg.ts[0].tv_sec,
         .timestampNs = (uint32_t)cmsg.ts[0].tv_nsec,
-        .capturedLength = (uint32_t)read,
-        .originalLength = (uint32_t)read
+        .capturedLength = (uint32_t)numRead,
+        .originalLength = (uint32_t)numRead
     };
 
     struct iovec_const iov[] = {
         { .iov_base = &pcapPacketRecord, .iov_len = sizeof(pcapPacketRecord) },
-        { .iov_base = &buffer[0], .iov_len = read }
+        { .iov_base = &buffer[0], .iov_len = numRead }
     };
     struct msghdr_const sendMsghdr = {
         .msg_iov = &iov[0],
         .msg_iovlen = hc_ARRAY_LEN(iov)
     };
     int64_t written = sys_sendmsg(self->clientFd, &sendMsghdr, MSG_NOSIGNAL);
-    if (written != (int64_t)sizeof(pcapPacketRecord) + read) packetDumper_stop(self);
+    if (written != (int64_t)sizeof(pcapPacketRecord) + numRead) packetDumper_stop(self);
 }
 
 static void packetDumper_onClientFd(struct packetDumper *self) {

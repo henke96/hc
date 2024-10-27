@@ -92,13 +92,13 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
 
     uint64_t totalRead = 0;
     for (;;) {
-        int64_t read = sys_recvfrom(fd, &buffer[0], sizeof(buffer), 0, NULL, NULL);
-        if (read == 0) break;
-        if (read < 0) {
+        int64_t numRead = sys_recvfrom(fd, &buffer[0], sizeof(buffer), 0, NULL, NULL);
+        if (numRead == 0) break;
+        if (numRead < 0) {
             debug_print("Receive failed\n");
             return 1;
         }
-        totalRead += (uint64_t)read;
+        totalRead += (uint64_t)numRead;
         debug_printNum("Total received: ", (int64_t)totalRead, "\n");
     }
     return 0;

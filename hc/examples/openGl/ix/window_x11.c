@@ -209,14 +209,14 @@ static int32_t window_x11_setup(uint32_t visualId) {
                     if (msgSize < 0) {
                         int32_t totalRead = window.x11.client.receivedSize;
                         while (totalRead < window.x11.keyboardMapSize) {
-                            int32_t read = (int32_t)recvfrom(
+                            int32_t numRead = (int32_t)recvfrom(
                                 window.x11.client.socketFd,
                                 (char *)window.x11.keyboardMap + totalRead,
                                 window.x11.keyboardMapSize - totalRead,
                                 0, NULL, NULL
                             );
-                            if (read <= 0) return -9;
-                            totalRead += read;
+                            if (numRead <= 0) return -9;
+                            totalRead += numRead;
                         }
 
                         // Make msgSize normal again.

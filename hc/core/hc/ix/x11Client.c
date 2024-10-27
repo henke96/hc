@@ -88,15 +88,15 @@ static int32_t x11Client_init(struct x11Client *self, int32_t sockaddrFamily, vo
 
     // Read header.
     struct x11_setupResponse_header header = { .status = x11_setupResponse_FAILED };
-    int64_t numRead = 0;
-    while (numRead < (int64_t)sizeof(header)) {
-        char *readPos = (char *)&header + numRead;
-        int64_t read = recvfrom(self->socketFd, readPos, (int64_t)sizeof(header) - numRead, 0, NULL, NULL);
-        if (read <= 0) {
+    int64_t totalRead = 0;
+    while (totalRead < (int64_t)sizeof(header)) {
+        char *readPos = (char *)&header + totalRead;
+        int64_t numRead = recvfrom(self->socketFd, readPos, (int64_t)sizeof(header) - totalRead, 0, NULL, NULL);
+        if (numRead <= 0) {
             status = -8;
             goto cleanup_socket;
         }
-        numRead += read;
+        totalRead += numRead;
     }
 
     // Allocate space for payload of response.
@@ -108,15 +108,15 @@ static int32_t x11Client_init(struct x11Client *self, int32_t sockaddrFamily, vo
     }
 
     // Read payload.
-    numRead = 0;
-    while (numRead < self->setupResponseSize) {
-        char *readPos = (char *)self->setupResponse + numRead;
-        int64_t read = recvfrom(self->socketFd, readPos, self->setupResponseSize - numRead, 0, NULL, NULL);
-        if (read <= 0) {
+    totalRead = 0;
+    while (totalRead < self->setupResponseSize) {
+        char *readPos = (char *)self->setupResponse + totalRead;
+        int64_t numRead = recvfrom(self->socketFd, readPos, self->setupResponseSize - totalRead, 0, NULL, NULL);
+        if (numRead <= 0) {
             status = -10;
             goto cleanup_setupResponse;
         }
-        numRead += read;
+        totalRead += numRead;
     }
 
     // Check status.

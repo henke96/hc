@@ -1359,6 +1359,17 @@ struct termios2 {
 #define TIOCCBRK 0x5428 // BSD compatibility
 #define TIOCGSID 0x5429 // Return the session ID of FD
 
+#define TIOCSPTLCK _IOW('T', 0x31, int32_t)  // Lock/unlock Pty
+#define TIOCGPTPEER _IO('T', 0x41) // Safely open the slave
+
+// termios.h
+struct winsize {
+    uint16_t ws_row;
+    uint16_t ws_col;
+    uint16_t ws_xpixel;
+    uint16_t ws_ypixel;
+};
+
 // vt.h
 #define MIN_NR_CONSOLES 1
 #define MAX_NR_CONSOLES 63 // serial lines start at 64

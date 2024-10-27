@@ -7,6 +7,8 @@ dir /disk 0755 0 0
 dir /dev 0755 0 0
 nod /dev/console 0600 0 0 c 5 1
 
+dir /devpts 0755 0 0
+
 dir /lib 0755 0 0
 dir /lib/firmware 0755 0 0
 file /lib/firmware/iwlwifi-cc-a0-77.ucode ../../linux-firmware/bin/iwlwifi-cc-a0-77.ucode 0755 0 0

@@ -28,7 +28,7 @@ static noreturn void _hostapd(hc_UNUSED void *arg) {
 }
 
 static void hostapd_init(void) {
-    hostapd.pidFd = INT32_MIN;
+    hostapd.pidFd = -1;
 
     // Read config.
     int32_t fd = sys_openat(-1, "/disk/config/wifi/password", O_RDONLY, 0);

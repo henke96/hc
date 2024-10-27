@@ -4,6 +4,7 @@
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/base64.c"
+#include "hc/telnet.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
@@ -41,8 +42,11 @@ static void epollAdd(int32_t epollFd, int32_t fd) {
 #include "packetDumper.c"
 #include "modemClient.c"
 #include "hostapd.c"
+#include "telnetServer.c"
 
 int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **envp) {
+    CHECK(sys_dup3(0, 3, O_CLOEXEC), RES == 3);
+
     disk_mount();
 
     genetlink_init();
@@ -69,6 +73,8 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
     struct modemClient modemClient;
     modemClient_init(&modemClient, "/dev/ttyUSB2");
 
+    telnetServer_init();
+
     // Setup epoll.
     int32_t epollFd = sys_epoll_create1(0);
     CHECK(epollFd, RES > 0);
@@ -81,13 +87,16 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
     epollAdd(epollFd, wanDumper.listenFd);
     epollAdd(epollFd, lanDumper.listenFd);
     epollAdd(epollFd, modemClient.timerFd);
+    epollAdd(epollFd, telnetServer.listenFd);
+    epollAdd(epollFd, telnetServer.pidFd);
+    epollAdd(epollFd, telnetServer.ptMasterFd);
 
     for (;;) {
         struct epoll_event event;
         event.data.fd = 0;
         CHECK(sys_epoll_pwait(epollFd, &event, 1, -1, NULL), RES == 1);
         if (event.data.fd == acpi.netlinkFd) break;
-        if (event.data.fd == hostapd.pidFd) debug_abort();
+        if (event.data.fd == hostapd.pidFd || event.data.fd == telnetServer.pidFd) debug_abort();
 
         if (event.data.fd == ksmb.netlinkFd) ksmb_onNetlinkFd();
         else if (event.data.fd == dhcpClient.fd) dhcpClient_onFd();
@@ -101,9 +110,13 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
         else if (event.data.fd == lanDumper.clientFd) packetDumper_onClientFd(&lanDumper);
         else if (event.data.fd == modemClient.timerFd) modemClient_onTimerFd(&modemClient, epollFd);
         else if (event.data.fd == modemClient.fd) modemClient_onFd(&modemClient);
+        else if (event.data.fd == telnetServer.listenFd) telnetServer_onListenFd(epollFd);
+        else if (event.data.fd == telnetServer.ptMasterFd) telnetServer_onPtMasterFd();
+        else if (event.data.fd == telnetServer.clientFd) telnetServer_onClientFd();
         else debug_ASSERT(0);
     }
 
+    telnetServer_deinit();
     modemClient_deinit(&modemClient);
     packetDumper_deinit(&lanDumper);
     packetDumper_deinit(&wanDumper);

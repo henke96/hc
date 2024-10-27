@@ -30,6 +30,7 @@ static int32_t initialise(void) {
 
     if (sys_mount("", "/sys", "sysfs", 0, NULL) < 0) return -8;
     if (sys_mount("", "/dev", "devtmpfs", 0, NULL) < 0) return -9;
+    if (sys_mount("", "/devpts", "devpts", 0, "ptmxmode=0600") < 0) return -10;
     return 0;
 }
 

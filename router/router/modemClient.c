@@ -203,9 +203,9 @@ static void modemClient_onTimerFd(struct modemClient *self, int32_t epollFd) {
 static void modemClient_onFd(struct modemClient *self) {
     int32_t lineStart = 0;
 
-    int64_t read = sys_read(self->fd, &self->buffer[self->receivedSize], (int32_t)sizeof(self->buffer) - self->receivedSize);
-    if (read <= 0) goto out_fail;
-    self->receivedSize += read;
+    int64_t numRead = sys_read(self->fd, &self->buffer[self->receivedSize], (int32_t)sizeof(self->buffer) - self->receivedSize);
+    if (numRead <= 0) goto out_fail;
+    self->receivedSize += numRead;
 
     uint8_t pendingCmdTag = modemClient_pendingCmdTag(self);
     int32_t lineLength;
