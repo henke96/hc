@@ -12,6 +12,7 @@ static struct SYSTEMINFO systemInfo;
 #define allocator_PAGE_SIZE systemInfo.pageSize
 #include "hc/allocator.c"
 #include "hc/tar.h"
+#include "hc/argParse.h"
 
 #include "../common.c"
 

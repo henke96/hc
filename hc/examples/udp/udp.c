@@ -5,6 +5,7 @@
 #include "hc/linux/sys.c"
 #include "hc/linux/debug.c"
 #include "hc/linux/helpers/_start.c"
+#include "hc/argParse.h"
 
 #include "options.c"
 
@@ -33,9 +34,9 @@ static int32_t join_multicast(int32_t fd, char *groups, int32_t ifIndex) {
     return 0;
 }
 
-int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
+int32_t start(hc_UNUSED int32_t argc, char **argv, hc_UNUSED char **envp) {
     struct options options;
-    if (options_init(&options, argc, argv) < 0) {
+    if (options_init(&options, argv) < 0) {
         sys_write(
             1,
             hc_STR_COMMA_LEN(

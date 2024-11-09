@@ -128,88 +128,84 @@ static int32_t finaliseOutput(void) {
     return status;
 }
 
-static int32_t run(int32_t argc, char **argv) {
+static int32_t run(char **argv) {
     bool outputOpen = false;
 
-    char prevOpt = '\0';
-    int32_t argI = 0;
-    while (--argc > 0) {
-        char *arg = argv[++argI];
-        switch (prevOpt) {
-            case 'o': {
-                if (outputOpen) finaliseOutput();
-                int32_t status = openOutput(arg);
-                if (status < 0) {
-                    debug_printNum("Failed to open output (", status, ")\n");
-                    return -1;
-                }
-                outputOpen = true;
-                break;
+    char curOpt;
+    int64_t argvIndex = 1;
+    argParse_START(argv, argvIndex, curOpt, optsDone)
+    argParse_FLAGS_TO_ARGS_DELIMITER
+        case 'o': {
+            if (outputOpen) finaliseOutput();
+            int32_t status = openOutput(ARG);
+            if (status < 0) {
+                debug_printNum("Failed to open output (", status, ")\n");
+                return -1;
             }
-            case 'a': {
-                if (!outputOpen) {
-                    debug_print("No output opened\n");
-                    return -1;
-                }
-                int32_t status = add(arg);
-                if (status < 0) {
-                    debug_printNum("Failed to add directory contents (", status, ")\n");
-                    return -1;
-                }
-                break;
-            }
-            case 'd': {
-                if (!outputOpen) {
-                    debug_print("No output opened\n");
-                    return -1;
-                }
-                int32_t nameLen = validateName(arg, tar_MAX_NAME_LEN);
-                if (nameLen < 0) {
-                    debug_print("Invalid name\n");
-                    return -1;
-                }
-                if (writeRecord(arg, nameLen, -1) < 0) {
-                    debug_print("Failed to create directory\n");
-                    return -1;
-                }
-                break;
-            }
-            case 'p': {
-                int64_t len = util_cstrLen(arg);
-                if (len > (int64_t)sizeof(prefix)) {
-                    debug_print("Invalid prefix\n");
-                    return -1;
-                }
-                hc_MEMCPY(&prefix[0], arg, (uint64_t)len);
-                prefixLen = (int32_t)len;
-                break;
-            }
-            case '-': {
-                prevOpt = '\0';
-                goto optsDone;
-            }
-            case '\0': {
-                if (arg[0] != '-') goto optsDone;
-                while (*++arg != '\0') {
-                    switch (*arg) {
-                        default: {
-                            prevOpt = *arg;
-                            if (arg[1] != '\0') goto optsDone;
-                        }
-                    }
-                }
-                continue;
-            }
-            default: goto optsDone;
+            outputOpen = true;
+            break;
         }
-        prevOpt = '\0';
-    }
-    optsDone:;
-    if (prevOpt != '\0') {
-        debug_print("Invalid option\n");
+        case 'a': {
+            if (!outputOpen) {
+                debug_print("No output opened\n");
+                return -1;
+            }
+            int32_t status = add(ARG);
+            if (status < 0) {
+                debug_printNum("Failed to add directory contents (", status, ")\n");
+                return -1;
+            }
+            break;
+        }
+        case 'd': {
+            if (!outputOpen) {
+                debug_print("No output opened\n");
+                return -1;
+            }
+            int32_t nameLen = validateName(ARG, tar_MAX_NAME_LEN);
+            if (nameLen < 0) {
+                debug_print("Invalid name\n");
+                return -1;
+            }
+            if (writeRecord(ARG, nameLen, -1) < 0) {
+                debug_print("Failed to create directory\n");
+                return -1;
+            }
+            break;
+        }
+        case 'p': {
+            int64_t len = util_cstrLen(ARG);
+            if (len > (int64_t)sizeof(prefix)) {
+                debug_print("Invalid prefix\n");
+                return -1;
+            }
+            hc_MEMCPY(&prefix[0], ARG, (uint64_t)len);
+            prefixLen = (int32_t)len;
+            break;
+        }
+    argParse_END(curOpt)
+
+    optsDone:
+    if (curOpt != '\0') {
+        #define _PRINT1 "Invalid option `"
+        #define _PRINT2 "` at position "
+        char print[
+            hc_STR_LEN(_PRINT1) +
+            hc_STR_LEN("x") +
+            hc_STR_LEN(_PRINT2) +
+            util_INT32_MAX_CHARS +
+            hc_STR_LEN("\n\0")
+        ];
+        char *pos = &print[sizeof(print)];
+        *--pos = '\0'; *--pos = '\n';
+        pos = util_intToStr(pos, argvIndex);
+        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT2), hc_STR_COMMA_LEN(_PRINT2));
+        *--pos = curOpt;
+        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT1), hc_STR_COMMA_LEN(_PRINT1));
+        debug_print(pos);
         return -1;
     }
-    if (argc != 0) {
+    if (argv[argvIndex] != NULL) {
         debug_print("Too many arguments\n");
         return -1;
     }
@@ -217,9 +213,9 @@ static int32_t run(int32_t argc, char **argv) {
     return 0;
 }
 
-int32_t start(int32_t argc, char **argv, char **envp) {
+int32_t start(hc_UNUSED int32_t argc, char **argv, char **envp) {
     if (init(envp) < 0) return 1;
-    if (run(argc, argv) < 0) {
+    if (run(argv) < 0) {
         debug_print("Usage: tar [-o OUTPUT_FILE | -p PREFIX | -d DIRECTORY_NAME | -a DIRECTORY_PATH]...\n");
         return 1;
     }

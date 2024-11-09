@@ -7,7 +7,7 @@ struct options {
     char __pad[6];
 };
 
-static int32_t options_init(struct options *self, int32_t argc, char **argv) {
+static int32_t options_init(struct options *self, char **argv) {
     *self = (struct options) {
         .multicastGroups = NULL,
         .interface = NULL,
@@ -16,75 +16,66 @@ static int32_t options_init(struct options *self, int32_t argc, char **argv) {
         .bindAddress = { 0, 0, 0, 0 },
     };
 
-    char prevOpt = '\0';
-    int32_t argI = 0;
-    while (--argc > 0) {
-        char *arg = argv[++argI];
-        switch (prevOpt) {
-            case 'm': {
-                self->multicastGroups = arg;
-                break;
-            }
-            case 'b': {
-                for (int32_t i = 0;;) {
-                    uint64_t octet;
-                    int32_t parsed = util_strToUint(arg, INT32_MAX, &octet);
-                    if (parsed <= 0 || octet > 255) goto optsDone;
-                    self->bindAddress[i] = (uint8_t)octet;
-
-                    if (++i == hc_ARRAY_LEN(self->bindAddress)) {
-                        if (arg[parsed] != '\0') goto optsDone;
-                        break;
-                    } else if (arg[parsed] != '.') goto optsDone;
-                    arg += parsed + 1;
-                }
-                break;
-            }
-            case 'p': {
-                uint64_t port;
-                int32_t parsed = util_strToUint(arg, INT32_MAX, &port);
-                if (parsed <= 0 || port > UINT16_MAX || arg[parsed] != '\0') goto optsDone;
-                self->port = (uint16_t)port;
-                break;
-            }
-            case 'i': {
-                int64_t ifLen = util_cstrLen(arg);
-                if (ifLen > IFNAMSIZ - 1) goto optsDone;
-                self->interface = arg;
-                self->interfaceSize = (int32_t)ifLen + 1;
-                break;
-            }
-            case '-': {
-                prevOpt = '\0';
-                goto optsDone;
-            }
-            case '\0': {
-                if (arg[0] != '-') goto optsDone;
-                while (*++arg != '\0') {
-                    switch (*arg) {
-                        default: {
-                            prevOpt = *arg;
-                            if (arg[1] != '\0') goto optsDone;
-                        }
-                    }
-                }
-                continue;
-            }
-            default: goto optsDone;
+    char curOpt;
+    int32_t argvIndex = 1;
+    argParse_START(argv, argvIndex, curOpt, optsDone)
+    argParse_FLAGS_TO_ARGS_DELIMITER
+        case 'm': {
+            self->multicastGroups = ARG;
+            break;
         }
-        prevOpt = '\0';
-    }
-    optsDone:;
-    if (prevOpt != '\0') {
-        struct iovec_const print[] = {
-            { hc_STR_COMMA_LEN("Invalid option `") },
-            { &prevOpt, 1 },
-            { hc_STR_COMMA_LEN("`\n") },
-        };
-        sys_writev(2, &print[0], hc_ARRAY_LEN(print));
+        case 'b': {
+            for (int32_t i = 0;;) {
+                uint64_t octet;
+                int32_t parsed = util_strToUint(ARG, INT32_MAX, &octet);
+                if (parsed <= 0 || octet > 255) goto optsDone;
+                self->bindAddress[i] = (uint8_t)octet;
+
+                if (++i == hc_ARRAY_LEN(self->bindAddress)) {
+                    if (ARG[parsed] != '\0') goto optsDone;
+                    break;
+                } else if (ARG[parsed] != '.') goto optsDone;
+                ARG += parsed + 1;
+            }
+            break;
+        }
+        case 'p': {
+            uint64_t port;
+            int32_t parsed = util_strToUint(ARG, INT32_MAX, &port);
+            if (parsed <= 0 || port > UINT16_MAX || ARG[parsed] != '\0') goto optsDone;
+            self->port = (uint16_t)port;
+            break;
+        }
+        case 'i': {
+            int64_t ifLen = util_cstrLen(ARG);
+            if (ifLen > IFNAMSIZ - 1) goto optsDone;
+            self->interface = ARG;
+            self->interfaceSize = (int32_t)ifLen + 1;
+            break;
+        }
+    argParse_END(curOpt)
+
+    optsDone:
+    if (curOpt != '\0') {
+        #define _PRINT1 "Invalid option `"
+        #define _PRINT2 "` at position "
+        char print[
+            hc_STR_LEN(_PRINT1) +
+            hc_STR_LEN("x") +
+            hc_STR_LEN(_PRINT2) +
+            util_INT32_MAX_CHARS +
+            hc_STR_LEN("\n")
+        ];
+        char *pos = &print[sizeof(print)];
+        *--pos = '\n';
+        pos = util_intToStr(pos, argvIndex);
+        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT2), hc_STR_COMMA_LEN(_PRINT2));
+        *--pos = curOpt;
+        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT1), hc_STR_COMMA_LEN(_PRINT1));
+        sys_write(2, pos, &print[sizeof(print)] - pos);
         return -1;
     }
-    if (argc != 0) {
+    if (argv[argvIndex] != NULL) {
         sys_write(2, hc_STR_COMMA_LEN("Too many arguments\n"));
         return -1;
     }

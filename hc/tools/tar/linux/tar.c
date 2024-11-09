@@ -13,6 +13,7 @@ static int32_t pageSize;
 #define allocator_PAGE_SIZE pageSize
 #include "hc/allocator.c"
 #include "hc/tar.h"
+#include "hc/argParse.h"
 
 #define write sys_write
 #define read sys_read
