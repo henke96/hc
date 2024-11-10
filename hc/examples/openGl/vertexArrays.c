@@ -18,7 +18,7 @@ static int32_t vertexArrays_init(void) {
     if (gl_getError() != gl_NO_ERROR) return -1;
 
     int32_t status;
-    gl_genBuffers(vertexArrays_NUM * vertexArrays_NUM_BUFFERS, &vertexArrays_buffers[0][0]);
+    gl_genBuffers((int32_t)vertexArrays_NUM * (int32_t)vertexArrays_NUM_BUFFERS, &vertexArrays_buffers[0][0]);
     if (gl_getError() != gl_NO_ERROR) {
         status = -2;
         goto cleanup_vertexArrays;
@@ -113,13 +113,13 @@ static int32_t vertexArrays_init(void) {
     return 0;
 
     cleanup_buffers:
-    gl_deleteBuffers(vertexArrays_NUM * vertexArrays_NUM_BUFFERS, &vertexArrays_buffers[0][0]);
+    gl_deleteBuffers((int32_t)vertexArrays_NUM * (int32_t)vertexArrays_NUM_BUFFERS, &vertexArrays_buffers[0][0]);
     cleanup_vertexArrays:
     gl_deleteVertexArrays(vertexArrays_NUM, &vertexArrays[0]);
     return status;
 }
 
 static void vertexArrays_deinit(void) {
-    gl_deleteBuffers(vertexArrays_NUM * vertexArrays_NUM_BUFFERS, &vertexArrays_buffers[0][0]);
+    gl_deleteBuffers((int32_t)vertexArrays_NUM * (int32_t)vertexArrays_NUM_BUFFERS, &vertexArrays_buffers[0][0]);
     gl_deleteVertexArrays(vertexArrays_NUM, &vertexArrays[0]);
 }
