@@ -20,7 +20,7 @@ tools="CC=clang LD=ld.lld AR=llvm-ar NM=llvm-nm STRIP=llvm-strip OBJCOPY=llvm-ob
 cp "$SCRIPT_DIR/files/linux/.config" .
 
 # Uncomment to modify kernel configuration:
-# make menuconfig $tools HOSTCC="$CC"; exit 1
+#make menuconfig $tools HOSTCC="$CC -I$OUT/ncurses/include -L$OUT/ncurses/lib"; exit 1
 
 make -j "$NUM_CPUS" -C ./usr gen_init_cpio CC="$CC" >/dev/null
 

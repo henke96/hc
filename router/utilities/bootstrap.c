@@ -40,6 +40,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     if (sys_setsid() < 0) return 1;
     if (sys_ioctl(0, TIOCSCTTY, 0) < 0) return 1;
     if (device != NULL && sys_mount(device, path, "iso9660", MS_RDONLY, NULL) < 0) return 1;
+    if (sys_chdir(path) < 0) return 1;
 
     static char buffer[
         hc_STR_LEN("PATH=\0") + PATH_MAX +
