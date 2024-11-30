@@ -1,15 +1,22 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/util.c"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/helpers/_start.c"
 
 int32_t start(int32_t argc, char **argv, char **envp) {
     if (argc < 2) {
-        sys_write(2, hc_STR_COMMA_LEN("Usage: env PROGRAM [ARG]...\n"));
+        debug_print("Usage: env PROGRAM [ARG]...\n");
         return 1;
     }
     char *path = util_getEnv(envp, "PATH");

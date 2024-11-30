@@ -67,18 +67,15 @@ static int32_t drm_init(struct drm *self, const char *driCardPath) {
     return status;
 }
 
-hc_UNUSED
 static int32_t drm_createDumbBuffer(struct drm *self, struct drm_mode_create_dumb *dumbBuffer) {
     return ioctl(self->cardFd, DRM_IOCTL_MODE_CREATE_DUMB, dumbBuffer);
 }
 
-hc_UNUSED
 static void drm_destroyDumbBuffer(struct drm *self, uint32_t handle) {
     struct drm_mode_destroy_dumb destroy = { .handle = handle };
     debug_CHECK(ioctl(self->cardFd, DRM_IOCTL_MODE_DESTROY_DUMB, &destroy), RES == 0);
 }
 
-hc_UNUSED
 static void *drm_mmapDumbBuffer(struct drm *self, uint32_t handle, int64_t length) {
     struct drm_mode_map_dumb mapDumpBuffer = { .handle = handle };
     int32_t status = ioctl(self->cardFd, DRM_IOCTL_MODE_MAP_DUMB, &mapDumpBuffer);
@@ -87,24 +84,20 @@ static void *drm_mmapDumbBuffer(struct drm *self, uint32_t handle, int64_t lengt
     return mmap(NULL, length, PROT_READ | PROT_WRITE, MAP_SHARED, self->cardFd, (int64_t)mapDumpBuffer.offset);
 }
 
-hc_UNUSED
 static int32_t drm_createFrameBuffer(struct drm *self, struct drm_mode_fb_cmd *frameBuffer) {
     return ioctl(self->cardFd, DRM_IOCTL_MODE_ADDFB, frameBuffer);
 }
 
-hc_UNUSED
 static void drm_destroyFrameBuffer(struct drm *self, uint32_t fbId) {
     debug_CHECK(ioctl(self->cardFd, DRM_IOCTL_MODE_RMFB, &fbId), RES == 0);
 }
 
 
-hc_UNUSED
 static void drm_markFrameBufferDirty(struct drm *self, uint32_t fbId) {
     struct drm_mode_fb_dirty_cmd fbDirty = { .fb_id = fbId };
     debug_CHECK(ioctl(self->cardFd, DRM_IOCTL_MODE_DIRTYFB, &fbDirty), RES == 0 || ix_ERRNO(RES) == ENOSYS);
 }
 
-hc_UNUSED
 static int32_t drm_setCrtc(struct drm *self, int32_t modeIndex, uint32_t fbId) {
     struct drm_mode_crtc setCrtc = {
         .set_connectors_ptr = &self->connector.connector_id,
@@ -117,7 +110,6 @@ static int32_t drm_setCrtc(struct drm *self, int32_t modeIndex, uint32_t fbId) {
     return ioctl(self->cardFd, DRM_IOCTL_MODE_SETCRTC, &setCrtc);
 }
 
-hc_UNUSED
 static int32_t drm_pageFlip(struct drm *self, uint32_t fbId, uint32_t flags) {
     struct drm_mode_crtc_page_flip pageFlip = {
         .crtc_id = self->crtcId,
@@ -127,7 +119,6 @@ static int32_t drm_pageFlip(struct drm *self, uint32_t fbId, uint32_t flags) {
     return ioctl(self->cardFd, DRM_IOCTL_MODE_PAGE_FLIP, &pageFlip);
 }
 
-hc_UNUSED
 static int32_t drm_awaitPageFlipEvent(struct drm *self) {
     struct drm_event_vblank event;
     event.base.type = 0; // Make static analysis happy.
@@ -138,7 +129,6 @@ static int32_t drm_awaitPageFlipEvent(struct drm *self) {
     }
 }
 
-hc_UNUSED
 static int32_t drm_bestModeIndex(struct drm *self) {
     int32_t bestModeIndex = 0;
     uint16_t bestModeWidth = 0;

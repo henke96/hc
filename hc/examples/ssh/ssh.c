@@ -1,12 +1,19 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/mem.c"
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/util.c"
 #include "hc/linux/helpers/_start.c"
 
@@ -36,12 +43,12 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     };
     int32_t status = client_init(&client, addr.sin_family);
     if (status < 0) {
-        debug_printNum("Failed to initialise client (", status, ")\n");
+        debug_printNum("Failed to initialise client", status);
         return 1;
     }
     status = client_connect(&client, &addr, sizeof(addr));
     if (status < 0) {
-        debug_printNum("Failed to connect to server (", status, ")\n");
+        debug_printNum("Failed to connect to server", status);
         return 1;
     }
     client_deinit(&client);

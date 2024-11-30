@@ -15,17 +15,29 @@ static int32_t graphics_init(struct graphics *self) {
 
     int32_t status = drm_init(&self->drm, "/dev/dri/card0");
     if (status < 0) {
-        debug_printNum("Failed to initialise DRM/KMS (", status, ")\n");
+        debug_printNum("Failed to initialise DRM/KMS", status);
         return -1;
     }
 
     int32_t modeIndex = drm_bestModeIndex(&self->drm);
-    struct iovec_const print[] = {
-        { hc_STR_COMMA_LEN("Selected mode \"") },
-        { self->drm.modeInfos[modeIndex].name, DRM_DISPLAY_MODE_LEN }
-    };
-    sys_writev(2, &print[0], hc_ARRAY_LEN(print));
-    debug_printNum("\" at ", self->drm.modeInfos[modeIndex].vrefresh, " Hz.\n");
+    {
+        char print[
+            hc_STR_LEN("Selected mode \"") +
+            DRM_DISPLAY_MODE_LEN +
+            hc_STR_LEN("\" at ") +
+            util_INT32_MAX_CHARS +
+            hc_STR_LEN(" Hz\n")
+        ];
+        char *pos = hc_ARRAY_END(print);
+        hc_PREPEND_STR(pos, " Hz\n");
+        pos = util_intToStr(pos, self->drm.modeInfos[modeIndex].vrefresh);
+        hc_PREPEND_STR(pos, "\" at ");
+        char *modeName = self->drm.modeInfos[modeIndex].name;
+        uint64_t modeNameLen = (uint64_t)util_cstrLen(modeName);
+        hc_PREPEND(pos, modeName, modeNameLen);
+        hc_PREPEND_STR(pos, "Selected mode \"");
+        debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
+    }
 
     // Setup frame buffer using the selected mode.
     struct drm_mode_create_dumb dumbBuffer = {
@@ -35,7 +47,7 @@ static int32_t graphics_init(struct graphics *self) {
     };
     status = drm_createDumbBuffer(&self->drm, &dumbBuffer);
     if (status < 0) {
-        debug_printNum("Failed to create dumb buffer (", status, ")\n");
+        debug_printNum("Failed to create dumb buffer", status);
         goto cleanup_drm;
     }
     self->frameBufferSize = (int64_t)dumbBuffer.size;
@@ -49,20 +61,20 @@ static int32_t graphics_init(struct graphics *self) {
     self->frameBufferInfo.handle = dumbBuffer.handle;
     status = drm_createFrameBuffer(&self->drm, &self->frameBufferInfo);
     if (status < 0) {
-        debug_printNum("Failed to create frame buffer (", status, ")\n");
+        debug_printNum("Failed to create frame buffer", status);
         goto cleanup_dumbBuffer;
     }
 
     status = drm_setCrtc(&self->drm, modeIndex, self->frameBufferInfo.fb_id);
     if (status < 0) {
-        debug_printNum("Failed to set CRTC (", status, ")\n");
+        debug_printNum("Failed to set CRTC", status);
         goto cleanup_frameBuffer;
     }
 
     // Map the frame buffer.
     self->frameBuffer = drm_mmapDumbBuffer(&self->drm, self->frameBufferInfo.handle, self->frameBufferSize);
     if ((ssize_t)self->frameBuffer < 0) {
-        debug_printNum("Failed to map frame buffer (", status, ")\n");
+        debug_printNum("Failed to map frame buffer", status);
         goto cleanup_frameBuffer;
     }
     return 0;

@@ -1,13 +1,14 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/util.c"
 #include "hc/math.c"
 #include "hc/mem.c"
 #include "hc/compilerRt/mem.c"
 #include "hc/freebsd/freebsd.h"
 #include "hc/freebsd/libc.so.7.h"
+#define ix_ERRNO(RES) errno
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/freebsd/_start.c"
-#include "hc/freebsd/debug.c"
 
 static int64_t tests_currentNs(void) {
     struct timespec timespec = {0};

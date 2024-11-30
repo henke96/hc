@@ -1,11 +1,11 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/util.c"
 #include "hc/math.c"
 #include "hc/mem.c"
 #include "hc/compilerRt/mul128.c"
 #include "hc/wasm/wasi/wasi.h"
-#include "hc/wasm/wasi/debug.c"
+#include "hc/wasm/wasi/util.c"
+#include "hc/debug.c"
 
 static int64_t tests_currentNs(void) {
     int64_t timestamp;

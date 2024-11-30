@@ -1,11 +1,10 @@
 #include "hc/hc.h"
 #include "hc/math.c"
 #include "hc/util.c"
-#include "hc/debug.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/windows/windows.h"
 #include "hc/windows/util.c"
-#include "hc/windows/debug.c"
+#include "hc/debug.c"
 #include "hc/windows/_start.c"
 #include "hc/tar.h"
 

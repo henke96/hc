@@ -178,7 +178,7 @@ static int32_t client_waitForMessage(struct client *self, uint8_t **message) {
         int32_t size = client_nextMessage(self, message);
         if (size > 0) return size;
         if (size < 0) {
-            debug_printNum("Error waiting for message (", size, ")\n");
+            debug_printNum("Error waiting for message", size);
             return -1;
         }
         size = client_receive(self);
@@ -616,7 +616,7 @@ static int32_t client_connect(struct client *self, void *sockaddr, int32_t socka
     // Perform key exchange.
     status = _client_doKeyExchange(self, serverMessage, serverMessageSize);
     if (status < 0) {
-        debug_printNum("Key exchange failed (", status, ")\n");
+        debug_printNum("Key exchange failed", status);
         return -5;
     }
 

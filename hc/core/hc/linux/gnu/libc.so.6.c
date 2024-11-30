@@ -21,3 +21,5 @@ hc_EXPORT void fstatat(void) {}
 hc_EXPORT void ioctl(void) {}
 hc_EXPORT void read(void) {}
 hc_EXPORT void ppoll(void) {}
+hc_EXPORT void write(void) {}
+hc_EXPORT void abort(void) {}

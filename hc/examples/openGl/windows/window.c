@@ -87,7 +87,7 @@ static int64_t _window_proc(
             };
             int32_t status = wgl_createContext(&window.wgl, window.dc, &formatAttributes[0], &contextAttributes[0]);
             if (status < 0) {
-                debug_printNum("Failed to create context (", status, ")\n");
+                debug_printNum("Failed to create context", status);
                 goto cleanup_dc;
             }
             debug_CHECK(wgl_swapInterval(&window.wgl, 0), RES == 1);
@@ -98,7 +98,7 @@ static int64_t _window_proc(
             debug_CHECK(QueryPerformanceCounter(&initTime), RES != 0);
             status = game_init((uint64_t)initTime * window.timestampMult);
             if (status < 0) {
-                debug_printNum("Failed to initialise game (", status, ")\n");
+                debug_printNum("Failed to initialise game", status);
                 goto cleanup_context;
             }
             window.initialised = true;

@@ -1,16 +1,23 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/util.c"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/util.c"
 #include "hc/linux/helpers/_start.c"
 
 int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     if (argc != 2) {
-        sys_write(2, hc_STR_COMMA_LEN("Usage: bootstrap DEVICE|DIRECTORY\n"));
+        debug_print("Usage: bootstrap DEVICE|DIRECTORY\n");
         return 1;
     }
 
@@ -27,8 +34,8 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         if (sys_umount2(path, 0) == 0) return 0;
     }
 
-    int64_t pathLen = util_cstrLen(path);
-    if (pathLen > (PATH_MAX - (int64_t)hc_STR_LEN("/downloads\0"))) return 1;
+    uint64_t pathLen = (uint64_t)util_cstrLen(path);
+    if (pathLen > (PATH_MAX - hc_STR_LEN("/downloads\0"))) return 1;
 
     if (sys_setsid() < 0) return 1;
     if (sys_ioctl(0, TIOCSCTTY, 0) < 0) return 1;
@@ -40,21 +47,21 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         hc_STR_LEN("NUM_CPUS=\0") + util_UINT64_MAX_CHARS +
         PATH_MAX
     ];
-    char *pos = &buffer[sizeof(buffer)];
-    pos = hc_MEMCPY(pos - hc_STR_LEN("/bin\0"), hc_STR_COMMA_LEN("/bin\0"));
-    pos = hc_MEMCPY(pos - pathLen, path, (uint64_t)pathLen);
-    pos = hc_MEMCPY(pos - hc_STR_LEN("PATH="), hc_STR_COMMA_LEN("PATH="));
+    char *pos = hc_ARRAY_END(buffer);
+    hc_PREPEND_STR(pos, "/bin\0");
+    hc_PREPEND(pos, path, pathLen);
+    hc_PREPEND_STR(pos, "PATH=");
     char *pathEnv = pos;
-    pos = hc_MEMCPY(pos - hc_STR_LEN("/downloads\0"), hc_STR_COMMA_LEN("/downloads\0"));
-    pos = hc_MEMCPY(pos - pathLen, path, (uint64_t)pathLen);
-    pos = hc_MEMCPY(pos - hc_STR_LEN("DOWNLOADS="), hc_STR_COMMA_LEN("DOWNLOADS="));
+    hc_PREPEND_STR(pos, "/downloads\0");
+    hc_PREPEND(pos, path, pathLen);
+    hc_PREPEND_STR(pos, "DOWNLOADS=");
     char *downloadsEnv = pos;
-    *--pos = '\0';
+    hc_PREPEND_STR(pos, "\0");
     pos = util_uintToStr(pos, (uint64_t)util_getCpuCount());
-    pos = hc_MEMCPY(pos - hc_STR_LEN("NUM_CPUS="), hc_STR_COMMA_LEN("NUM_CPUS="));
+    hc_PREPEND_STR(pos, "NUM_CPUS=");
     char *numCpusEnv = pos;
-    pos = hc_MEMCPY(pos - hc_STR_LEN("/bin/sh\0"), hc_STR_COMMA_LEN("/bin/sh\0"));
-    pos = hc_MEMCPY(pos - pathLen, path, (uint64_t)pathLen);
+    hc_PREPEND_STR(pos, "/bin/sh\0");
+    hc_PREPEND(pos, path, pathLen);
     char *shPath = pos;
     const char *shArgv[] = { shPath, NULL };
     const char *shEnvp[] = { "HOME=/", "TERM=linux", pathEnv, downloadsEnv, numCpusEnv, NULL };

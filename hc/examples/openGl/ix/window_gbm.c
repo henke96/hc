@@ -1,7 +1,7 @@
 static int32_t window_gbm_init(void **eglWindow) {
     int32_t status = drm_init(&window.gbm.drm, "/dev/dri/card0");
     if (status < 0) {
-        debug_printNum("Failed to initialise DRM/KMS (", status, ")\n");
+        debug_printNum("Failed to initialise DRM/KMS", status);
         return -1;
     }
     window.gbm.drmModeIndex = drm_bestModeIndex(&window.gbm.drm);
@@ -20,7 +20,7 @@ static int32_t window_gbm_init(void **eglWindow) {
         &window_contextAttributes[0]
     );
     if (status < 0) {
-        debug_printNum("Failed to initialise EGL context (", status, ")\n");
+        debug_printNum("Failed to initialise EGL context", status);
         goto cleanup_gbm;
     }
     window.gbm.gbmFormat = (uint32_t)status;
@@ -87,7 +87,7 @@ static int32_t window_gbm_run(void) {
 
     int32_t status = drm_setCrtc(&window.gbm.drm, window.gbm.drmModeIndex, (uint32_t)fbId);
     if (status < 0) {
-        debug_printNum("Failed to set CRTC (", status, ")\n");
+        debug_printNum("Failed to set CRTC", status);
         return -4;
     }
 

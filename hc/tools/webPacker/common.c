@@ -41,7 +41,7 @@ static int32_t handleInclude(char *startPattern, char *endPattern, bool asBase64
         asBase64
     );
     if (status < 0) {
-        debug_printNum("Failed to handle include (", status, ")\n");
+        debug_printNum("Failed to handle include", status);
         return -1;
     }
     return 0;
@@ -59,14 +59,14 @@ int32_t start(int32_t argc, char **argv, char **envp) {
     int32_t status;
     status = init(&argv[3]);
     if (status < 0) {
-        debug_printNum("Failed to initialise (", status, ")\n");
+        debug_printNum("Failed to initialise", status);
         status = 1;
         goto cleanup_alloc;
     }
 
     status = replaceWithFile(0, 0, inputName, (int32_t)inputNameLen, false);
     if (status < 0) {
-        debug_printNum("Failed to read input (", status, ")\n");
+        debug_printNum("Failed to read input", status);
         status = 1;
         goto cleanup_init;
     }
@@ -96,7 +96,7 @@ int32_t start(int32_t argc, char **argv, char **envp) {
 
     status = writeToFile(argv[1], buffer, bufferSize);
     if (status != 0) {
-        debug_printNum("Failed to write output (", status, ")\n");
+        debug_printNum("Failed to write output", status);
         status = 1;
     }
 

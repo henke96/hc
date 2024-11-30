@@ -95,7 +95,7 @@ static void dhcpClient_onTimerFd(void) {
     } else {
         // Either we had no leased IP, or we failed to renew it.
         if (dhcpClient.leasedIp != 0) {
-            sys_write(2, hc_STR_COMMA_LEN("Lost IP lease\n"));
+            debug_print("Lost IP lease\n");
 
             // Remove the IP.
             struct addrRequest {
@@ -278,23 +278,18 @@ static void dhcpClient_onFd(void) {
             if (mem_compare(&dhcpClient.leasedIp, &header->yourIp[0], 4) != 0) {
                 hc_MEMCPY(&dhcpClient.leasedIp, &header->yourIp[0], 4);
 
-                char printBuffer[18];
-                char *pos = util_intToStr(&printBuffer[18], dhcpClient.leasedIpNetmask);
-                *--pos = '/';
+                char print[hc_STR_LEN("New IP leased: 255.255.255.255/32\n")];
+                char *pos = hc_ARRAY_END(print);
+                pos = util_intToStr(pos, dhcpClient.leasedIpNetmask);
+                hc_PREPEND_STR(pos, "/");
                 pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[3]);
-                *--pos = '.';
+                hc_PREPEND_STR(pos, ".");
                 pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[2]);
-                *--pos = '.';
+                hc_PREPEND_STR(pos, ".");
                 pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[1]);
-                *--pos = '.';
+                hc_PREPEND_STR(pos, ".");
                 pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[0]);
-
-                struct iovec_const print[] = {
-                    { hc_STR_COMMA_LEN("New IP leased: ") },
-                    { pos, (int64_t)(&printBuffer[18] - pos) },
-                    { hc_STR_COMMA_LEN("\n") }
-                };
-                sys_writev(2, &print[0], hc_ARRAY_LEN(print));
+                debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
             }
 
             // Add the address.

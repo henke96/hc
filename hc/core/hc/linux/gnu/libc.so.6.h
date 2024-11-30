@@ -29,3 +29,5 @@ int32_t fstatat(int32_t fd, const char *path, struct stat *stat, uint32_t flags)
 int32_t ioctl(int32_t fd, uint64_t request, ...);
 int64_t read(int32_t fd, void *buffer, int64_t size);
 int32_t ppoll(struct pollfd *fds, nfds_t nfds, const struct timespec *timeout, const void *sigmask); // TODO sigmask
+int64_t write(int32_t fd, const void *buffer, int64_t size);
+noreturn void abort(void);

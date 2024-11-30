@@ -53,7 +53,6 @@ static void gbm_deinit(struct gbm *self) {
     debug_CHECK(dlclose(self->dlHandle), RES == 0);
 }
 
-hc_UNUSED
 static void *gbm_surfaceCreate(
     struct gbm *self,
     uint32_t width,
@@ -64,27 +63,22 @@ static void *gbm_surfaceCreate(
     return self->gbmSurfaceCreate(self->device, width, height, format, flags);
 }
 
-hc_UNUSED
 static void gbm_surfaceDestroy(struct gbm *self, void *surface) {
     self->gbmSurfaceDestroy(surface);
 }
 
-hc_UNUSED
 static void *gbm_surfaceLockFrontBuffer(struct gbm *self, void *surface) {
     return self->gbmSurfaceLockFrontBuffer(surface);
 }
 
-hc_UNUSED
 static void gbm_surfaceReleaseBuffer(struct gbm *self, void *surface, void *bo) {
     self->gbmSurfaceReleaseBuffer(surface, bo);
 }
 
-hc_UNUSED
 static void *gbm_boGetUserData(struct gbm *self, void *bo) {
     return self->gbmBoGetUserData(bo);
 }
 
-hc_UNUSED
 static void gbm_boSetUserData(
     struct gbm *self,
     void *bo,
@@ -94,12 +88,10 @@ static void gbm_boSetUserData(
     self->gbmBoSetUserData(bo, data, destroy);
 }
 
-hc_UNUSED
 static uint32_t gbm_boGetStride(struct gbm *self, void *bo) {
     return self->gbmBoGetStride(bo);
 }
 
-hc_UNUSED
 static uint32_t gbm_boGetHandle(struct gbm *self, void *bo) {
     return self->gbmBoGetHandle(bo);
 }

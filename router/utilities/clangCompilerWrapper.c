@@ -19,10 +19,10 @@ int32_t start(int32_t argc, char **argv, char **envp) {
     newArgv[0] = argv[0];
     newArgv[1] = "-Wno-unused-command-line-argument";
     char dynamicLinkerArg[hc_STR_LEN("-Wl,-dynamic-linker=") + PATH_MAX + hc_STR_LEN("/lib/libc.so\0")];
-    char *pos = &dynamicLinkerArg[sizeof(dynamicLinkerArg)];
-    pos = hc_MEMCPY(pos - hc_STR_LEN("/lib/libc.so\0"), hc_STR_COMMA_LEN("/lib/libc.so\0"));
-    pos = hc_MEMCPY(pos - pathLen, &path[0], (uint64_t)pathLen);
-    pos = hc_MEMCPY(pos - hc_STR_LEN("-Wl,-dynamic-linker="), hc_STR_COMMA_LEN("-Wl,-dynamic-linker="));
+    char *pos = hc_ARRAY_END(dynamicLinkerArg);
+    hc_PREPEND_STR(pos, "/lib/libc.so\0");
+    hc_PREPEND(pos, &path[0], (uint32_t)pathLen);
+    hc_PREPEND_STR(pos, "-Wl,-dynamic-linker=");
     newArgv[2] = pos;
     for (int64_t i = 1; i < argc; ++i) {
         newArgv[i + 2] = argv[i];

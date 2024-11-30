@@ -1,13 +1,21 @@
 #include "hc/hc.h"
 #include "hc/util.c"
-#include "hc/debug.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/linux/helpers/sys_clone_func.c"
 #include "hc/linux/helpers/sys_clone3_func.c"
+
 
 #define ITERATIONS 10000000
 
@@ -72,7 +80,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     if (ret < 0) return 1;
 
     // Start child2 thread.
-    ret = sys_clone_func(flags, &stack2[sizeof(stack2)], NULL, 0, &child2Done, thread, (void *)"child2");
+    ret = sys_clone_func(flags, hc_ARRAY_END(stack2), NULL, 0, &child2Done, thread, (void *)"child2");
     if (ret < 0) return 1;
 
     for (int32_t i = 0; i < ITERATIONS; ++i) {
@@ -86,6 +94,6 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
 
     waitChild(&child1Done);
     waitChild(&child2Done);
-    debug_printNum("Counter: ", counter, "\n");
+    debug_printNum("Counter", counter);
     return 0;
 }

@@ -1,11 +1,18 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/math.c"
 #include "hc/util.c"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/linux/helpers/sys_clone3_func.c"
 
@@ -17,16 +24,16 @@ static int32_t initialise(void) {
     // Disable memory overcommit.
     int32_t fd = sys_openat(-1, "/proc/sys/vm/overcommit_memory", O_WRONLY, 0);
     if (fd < 0) return -2;
-    int64_t num = sys_write(fd, "2", 1);
+    int32_t status = util_writeAll(fd, hc_STR_COMMA_LEN("2"));
     if (sys_close(fd) != 0) return -3;
-    if (num != 1) return -4;
+    if (status < 0) return -4;
 
     // Panic if we run out of memory anyway.
     fd = sys_openat(-1, "/proc/sys/vm/panic_on_oom", O_WRONLY, 0);
     if (fd < 0) return -5;
-    num = sys_write(fd, hc_STR_COMMA_LEN("2"));
+    status = util_writeAll(fd, hc_STR_COMMA_LEN("2"));
     if (sys_close(fd) != 0) return -6;
-    if (num != 1) return -7;
+    if (status < 0) return -7;
 
     if (sys_mount("", "/sys", "sysfs", 0, NULL) < 0) return -8;
     if (sys_mount("", "/dev", "devtmpfs", 0, NULL) < 0) return -9;
@@ -45,7 +52,7 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
     uint32_t rebootCmd = LINUX_REBOOT_CMD_HALT;
     int32_t status = initialise();
     if (status < 0) {
-        debug_printNum("Failed to initialise (", status, ")\n");
+        debug_printNum("Failed to initialise", status);
         goto halt;
     }
 
@@ -68,22 +75,24 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
         int32_t pid = sys_wait4(-1, &status, 0, &rusage);
         if (pid < 0) goto halt;
 
-        #define PID_END util_INT32_MAX_CHARS
-        #define STATUS_END (PID_END + util_INT32_MAX_CHARS)
-        #define MAXRSS_END (STATUS_END + util_INT64_MAX_CHARS)
-        char *pidStr = util_intToStr(&buffer[PID_END], pid);
-        char *statusStr = util_intToStr(&buffer[STATUS_END], status);
-        char *maxRssStr = util_intToStr(&buffer[MAXRSS_END], rusage.ru_maxrss);
-        struct iovec_const iov[] = {
-            { hc_STR_COMMA_LEN("Pid ") },
-            { pidStr, (int64_t)(&buffer[PID_END] - pidStr) },
-            { hc_STR_COMMA_LEN(" exited (status=") },
-            { statusStr, (int64_t)(&buffer[STATUS_END] - statusStr) },
-            { hc_STR_COMMA_LEN(", maxRss=") },
-            { maxRssStr, (int64_t)(&buffer[MAXRSS_END] - maxRssStr) },
-            { hc_STR_COMMA_LEN(")\n") }
-        };
-        sys_writev(2, &iov[0], hc_ARRAY_LEN(iov));
+        char print[
+            hc_STR_LEN("Pid ") +
+            util_INT32_MAX_CHARS +
+            hc_STR_LEN(" exited (status=") +
+            util_INT32_MAX_CHARS +
+            hc_STR_LEN(", maxRss=") +
+            util_INT64_MAX_CHARS +
+            hc_STR_LEN(")\n")
+        ];
+        char *pos = hc_ARRAY_END(print);
+        hc_PREPEND_STR(pos, ")\n");
+        pos = util_intToStr(pos, rusage.ru_maxrss);
+        hc_PREPEND_STR(pos, ", maxRss=");
+        pos = util_intToStr(pos, status);
+        hc_PREPEND_STR(pos, " exited (status=");
+        pos = util_intToStr(pos, pid);
+        hc_PREPEND_STR(pos, "Pid ");
+        if (util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos) < 0) goto halt;
 
         if (pid == routerPid) {
             if (status == 0) rebootCmd = LINUX_REBOOT_CMD_POWER_OFF;

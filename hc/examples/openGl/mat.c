@@ -20,21 +20,18 @@ static void mat_init(float *mat) {
     mat[15] = 1.0f;
 }
 
-hc_UNUSED
 static void mat_scale(float *mat, float x, float y, float z) {
     mat[0] *= x;
     mat[5] *= y;
     mat[10] *= z;
 }
 
-hc_UNUSED
 static void mat_translate(float *mat, float x, float y, float z) {
     mat[12] += x;
     mat[13] += y;
     mat[14] += z;
 }
 
-hc_UNUSED
 static void mat_rotateX(float *mat, uint32_t pitchAngle) {
     float sin = trig_sin(pitchAngle);
     float cos = trig_cos(pitchAngle);
@@ -59,7 +56,6 @@ static void mat_rotateX(float *mat, uint32_t pitchAngle) {
     mat[14] = cos * temp2 + sin * temp1;
 }
 
-hc_UNUSED
 static void mat_rotateY(float *mat, uint32_t yawAngle) {
     float sin = trig_sin(yawAngle);
     float cos = trig_cos(yawAngle);
@@ -84,7 +80,6 @@ static void mat_rotateY(float *mat, uint32_t yawAngle) {
     mat[14] = cos * temp2 - sin * temp1;
 }
 
-hc_UNUSED
 static void mat_rotateZ(float *mat, uint32_t rollAngle) {
     float sin = trig_sin(rollAngle);
     float cos = trig_cos(rollAngle);

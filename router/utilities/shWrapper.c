@@ -20,11 +20,11 @@ int32_t start(int32_t argc, char **argv, char **envp) {
     newArgv[0] = &path[0];
     newArgv[1] = "-c";
     char shCommandArg[PATH_MAX + hc_STR_LEN(" \"$@\"\0")];
-    char *pos = &shCommandArg[sizeof(shCommandArg)];
-    pos = hc_MEMCPY(pos - hc_STR_LEN(" \"$@\"\0"), hc_STR_COMMA_LEN(" \"$@\"\0"));
+    char *pos = hc_ARRAY_END(shCommandArg);
+    hc_PREPEND_STR(pos, " \"$@\"\0");
     char *command = &path[pathLen + 1];
-    int64_t commandLen = util_cstrLen(command);
-    pos = hc_MEMCPY(pos - commandLen, command, (uint64_t)commandLen);
+    uint64_t commandLen = (uint64_t)util_cstrLen(command);
+    hc_PREPEND(pos, command, commandLen);
     newArgv[2] = pos;
     for (int64_t i = 0; i < argc; ++i) {
         newArgv[i + 3] = argv[i];

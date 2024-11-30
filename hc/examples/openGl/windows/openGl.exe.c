@@ -1,12 +1,11 @@
 #include "hc/hc.h"
 #include "hc/util.c"
 #include "hc/gl.h"
-#include "hc/debug.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/windows/wgl.h"
 #include "hc/windows/windows.h"
 #include "hc/windows/util.c"
-#include "hc/windows/debug.c"
+#include "hc/debug.c"
 #include "hc/windows/wgl.c"
 
 #define game_EXPORT static
@@ -24,7 +23,7 @@ void noreturn _start(void) {
     AttachConsole(ATTACH_PARENT_PROCESS);
     int32_t status = window_init();
     if (status < 0) {
-        debug_printNum("Failed to initialise window (", status, ")\n");
+        debug_printNum("Failed to initialise window", status);
         ExitProcess(1);
     }
 

@@ -57,26 +57,24 @@ static int32_t options_init(struct options *self, char **argv) {
 
     optsDone:
     if (curOpt != '\0') {
-        #define _PRINT1 "Invalid option `"
-        #define _PRINT2 "` at position "
         char print[
-            hc_STR_LEN(_PRINT1) +
+            hc_STR_LEN("Invalid option `") +
             hc_STR_LEN("x") +
-            hc_STR_LEN(_PRINT2) +
+            hc_STR_LEN("` at position ") +
             util_INT32_MAX_CHARS +
             hc_STR_LEN("\n")
         ];
-        char *pos = &print[sizeof(print)];
-        *--pos = '\n';
+        char *pos = hc_ARRAY_END(print);
+        hc_PREPEND_STR(pos, "\n");
         pos = util_intToStr(pos, argvIndex);
-        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT2), hc_STR_COMMA_LEN(_PRINT2));
+        hc_PREPEND_STR(pos, "` at position ");
         *--pos = curOpt;
-        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT1), hc_STR_COMMA_LEN(_PRINT1));
-        sys_write(2, pos, &print[sizeof(print)] - pos);
+        hc_PREPEND_STR(pos, "Invalid option `");
+        debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
         return -1;
     }
     if (argv[argvIndex] != NULL) {
-        sys_write(2, hc_STR_COMMA_LEN("Too many arguments\n"));
+        debug_print("Too many arguments\n");
         return -1;
     }
     return 0;

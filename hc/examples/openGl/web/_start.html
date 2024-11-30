@@ -16,7 +16,34 @@
             let wasmMemoryU32;
             let wasmMemoryF32;
             let wasmExports;
+            let consoleBuffer = new Uint8Array(0);
 
+            function writeConsoleLine(start) {
+                for (let i = start; i < consoleBuffer.byteLength; ++i) {
+                    if (consoleBuffer[i] === 10) {
+                        console.log(textDecoder.decode(consoleBuffer.subarray(start, ++i)));
+                        return i;
+                    }
+                }
+                return null;
+            }
+            function writeConsole(buffer, size) {
+                let newBuffer = new Uint8Array(consoleBuffer.byteLength + size);
+                newBuffer.set(consoleBuffer, 0);
+                newBuffer.set(wasmMemoryU8.subarray(buffer, buffer + size), consoleBuffer.byteLength);
+                consoleBuffer = newBuffer;
+
+                let start = 0;
+                for (;;) {
+                    let newStart = writeConsoleLine(start);
+                    if (newStart === null) break;
+                    start = newStart;
+                }
+
+                newBuffer = new Uint8Array(consoleBuffer.byteLength - start);
+                newBuffer.set(consoleBuffer.subarray(start, consoleBuffer.byteLength));
+                consoleBuffer = newBuffer;
+            }
             function glPush(object) {
                 return glObjects.push(object) - 1;
             }
@@ -36,25 +63,12 @@
 
                 let importObject = {
                     env: {
-                        debug_printNum: (pre, num, post) => {
-                            let preEnd, postEnd;
-                            for (preEnd = pre; wasmMemoryU8[preEnd]; ++preEnd);
-                            for (postEnd = post; wasmMemoryU8[postEnd]; ++postEnd);
-                            console.log(textDecoder.decode(wasmMemoryU8.subarray(pre, preEnd)) + num + textDecoder.decode(wasmMemoryU8.subarray(post, postEnd)));
-                        },
-                        debug_fail: (res, expression, file, line) => {
-                            let wasmMemoryU8 = new Uint8Array(wasmExports.memory.buffer);
-                            let expressionEnd, fileEnd;
-                            for (expressionEnd = expression; wasmMemoryU8[expressionEnd]; ++expressionEnd);
-                            for (fileEnd = file; wasmMemoryU8[fileEnd]; ++fileEnd);
-                            throw (
-                                textDecoder.decode(wasmMemoryU8.subarray(file, fileEnd)) +
-                                ":" +
-                                line +
-                                " fail: " +
-                                textDecoder.decode(wasmMemoryU8.subarray(expression, expressionEnd)) +
-                                " = " + res
-                            );
+                        util_writeAll: (fd, buffer, size) => {
+                            switch (fd) {
+                                case 1:
+                                case 2: writeConsole(buffer, size); break;
+                                default: throw "Invalid fd";
+                            }
                         },
                         window_width: () => canvas.width,
                         window_height: () => canvas.height,

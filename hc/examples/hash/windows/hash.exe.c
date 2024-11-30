@@ -1,12 +1,11 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/util.c"
 #include "hc/math.c"
 #include "hc/mem.c"
 #include "hc/compilerRt/mem.c"
 #include "hc/windows/windows.h"
 #include "hc/windows/util.c"
-#include "hc/windows/debug.c"
+#include "hc/debug.c"
 #include "hc/windows/_start.c"
 
 #include "hc/crypto/sha512.c"
@@ -15,9 +14,7 @@
 
 #include "../common.c"
 
-static void *fileHandle;
-
-static int32_t init(char *file) {
+static int32_t openStream(char *file, util_STREAM_T *stream) {
     void *heap = GetProcessHeap();
     if (heap == NULL) return -1;
 
@@ -41,7 +38,7 @@ static int32_t init(char *file) {
         return -1;
     }
 
-    fileHandle = CreateFileW(
+    *stream = CreateFileW(
         utf16,
         GENERIC_READ,
         FILE_SHARE_READ,
@@ -51,22 +48,11 @@ static int32_t init(char *file) {
         NULL
     );
     debug_CHECK(HeapFree(heap, 0, utf16), RES != 0);
-    if (fileHandle == INVALID_HANDLE_VALUE) return -1;
+    if (*stream == INVALID_HANDLE_VALUE) return -1;
 
     return 0;
 }
 
-static void deinit(void) {
-    debug_CHECK(CloseHandle(fileHandle), RES != 0);
-}
-
-static int32_t readIntoBuffer(void) {
-    uint32_t numRead;
-    if (ReadFile(fileHandle, &buffer[0], sizeof(buffer), &numRead, NULL) == 0) return -1;
-    return (int32_t)numRead;
-}
-
-static int32_t printBuffer(int32_t size) {
-    void *outHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-    return util_writeAll(outHandle, &buffer[0], size);
+static void closeStream(util_STREAM_T stream) {
+    debug_CHECK(CloseHandle(stream), RES != 0);
 }

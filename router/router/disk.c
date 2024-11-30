@@ -68,7 +68,7 @@ static void disk_unmount(void) {
     for (;;) {
         int32_t status = sys_umount2("/disk", 0);
         if (status == 0) break;
-        debug_printNum("Failed to unmount /disk (", status, ")\n");
+        debug_printNum("Failed to unmount /disk", status);
         struct timespec sleep = { .tv_sec = 1 };
         CHECK(sys_clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep, NULL), RES == 0);
     }

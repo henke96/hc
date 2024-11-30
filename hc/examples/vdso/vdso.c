@@ -1,11 +1,18 @@
 #include "hc/hc.h"
 #include "hc/elf.h"
 #include "hc/util.c"
-#include "hc/debug.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/util.c"
 #include "hc/linux/vdso.c"
 #include "hc/linux/helpers/_start.c"
@@ -38,14 +45,17 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
     }
 
     // Print results.
-    char result[34] =        "With vDSO:                       \n";
-    char resultSyscall[34] = "With syscall:                    \n";
-    util_uintToStr(&result[sizeof(result) - 1], count);
-    util_uintToStr(&resultSyscall[sizeof(resultSyscall) - 1], countSyscall);
-    struct iovec_const print[] = {
-        { .iov_base = &result[0], .iov_len = sizeof(result) },
-        { .iov_base = &resultSyscall[0], .iov_len = sizeof(resultSyscall) }
-    };
-    sys_writev(2, &print[0], hc_ARRAY_LEN(print));
+    char print[
+        hc_STR_LEN("With vDSO:     ") + util_UINT64_MAX_CHARS +
+        hc_STR_LEN("\nWith syscall: ") + util_UINT64_MAX_CHARS +
+        hc_STR_LEN("\n")
+    ];
+    char *pos = hc_ARRAY_END(print);
+    hc_PREPEND_STR(pos, "\n");
+    pos = util_uintToStr(pos, count);
+    hc_PREPEND_STR(pos, "\nWith syscall: ");
+    pos = util_uintToStr(pos, countSyscall);
+    hc_PREPEND_STR(pos, "With vDSO:     ");
+    debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
     return 0;
 }

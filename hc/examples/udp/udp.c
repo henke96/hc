@@ -3,7 +3,15 @@
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/argParse.h"
 
@@ -37,12 +45,7 @@ static int32_t join_multicast(int32_t fd, char *groups, int32_t ifIndex) {
 int32_t start(hc_UNUSED int32_t argc, char **argv, hc_UNUSED char **envp) {
     struct options options;
     if (options_init(&options, argv) < 0) {
-        sys_write(
-            1,
-            hc_STR_COMMA_LEN(
-                "\nUsage: udp [-b ADDRESS] [-p PORT] [-i INTERFACE] [-m GROUPS]\n"
-            )
-        );
+        debug_print("\nUsage: udp [-b ADDRESS] [-p PORT] [-i INTERFACE] [-m GROUPS]\n");
         return 1;
     }
 
@@ -61,7 +64,7 @@ int32_t start(hc_UNUSED int32_t argc, char **argv, hc_UNUSED char **envp) {
     if (options.interface != NULL) {
         status = sys_setsockopt(fd, SOL_SOCKET, SO_BINDTODEVICE, options.interface, options.interfaceSize);
         if (status < 0) {
-            debug_print("Failed to bind to device\n");
+            debug_print("Failed to bind device\n");
             return 1;
         }
 
@@ -79,7 +82,7 @@ int32_t start(hc_UNUSED int32_t argc, char **argv, hc_UNUSED char **envp) {
     hc_MEMCPY(&addr.sin_addr[0], &options.bindAddress[0], sizeof(addr.sin_addr));
     status = sys_bind(fd, &addr, sizeof(addr));
     if (status < 0) {
-        debug_print("Failed to bind to address\n");
+        debug_print("Failed to bind address\n");
         return 1;
     }
 
@@ -100,7 +103,12 @@ int32_t start(hc_UNUSED int32_t argc, char **argv, hc_UNUSED char **envp) {
             return 1;
         }
         totalRead += (uint64_t)numRead;
-        debug_printNum("Total received: ", (int64_t)totalRead, "\n");
+        char print[hc_STR_LEN("Total received: ") + util_UINT64_MAX_CHARS + hc_STR_LEN("\n")];
+        char *pos = hc_ARRAY_END(print);
+        hc_PREPEND_STR(pos, "\n");
+        pos = util_uintToStr(pos, totalRead);
+        hc_PREPEND_STR(pos, "Total received: ");
+        debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
     }
     return 0;
 }

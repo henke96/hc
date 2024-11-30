@@ -63,18 +63,19 @@ static const char *window_platforms[] = {
     [window_X11] = "X11",
     [window_GBM] = "GBM"
 };
+#define window_platforms_MAX_LEN hc_STR_LEN("X11")
 
 #include "window_x11.c"
 #include "window_gbm.c"
 
-static int32_t window_init(char **envp) {
+static int32_t window_start(char **envp) {
     window.pointerGrabbed = false;
     window.width = 640;
     window.height = 480;
 
     int32_t status = egl_init(&window.egl, "libEGL.so.1");
     if (status < 0) {
-        debug_printNum("Failed to initialise EGL (", status, ")\n");
+        debug_printNum("Failed to initialise EGL", status);
         return -1;
     }
 
@@ -85,13 +86,19 @@ static int32_t window_init(char **envp) {
             case window_GBM: status = window_gbm_init(&eglWindow); break;
             default: hc_UNREACHABLE;
         }
-        struct iovec_const print[] = {
-            { hc_STR_COMMA_LEN("Using platform ") },
-            { window_platforms[platform], util_cstrLen(window_platforms[platform]) },
-            { hc_STR_COMMA_LEN("\n") },
-        };
-        if (status < 0) print[0] = (struct iovec_const) { hc_STR_COMMA_LEN("Failed using platform ") };
-        writev(2, &print[0], hc_ARRAY_LEN(print));
+        char print[
+            hc_MAX(hc_STR_LEN("Using platform "), hc_STR_LEN("Failed using platform ")) +
+            window_platforms_MAX_LEN +
+            hc_STR_LEN("\n")
+        ];
+        char *pos = hc_ARRAY_END(print);
+        hc_PREPEND_STR(pos, "\n");
+        const char *platformName = window_platforms[platform];
+        uint64_t platformNameLen = (uint64_t)util_cstrLen(platformName);
+        hc_PREPEND(pos, platformName, platformNameLen);
+        if (status < 0) hc_PREPEND_STR(pos, "Failed using platform ");
+        else            hc_PREPEND_STR(pos, "Using platform ");
+        debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
         if (status == 0) {
             window.platform = platform;
             goto initialisedPlatform;
@@ -104,7 +111,7 @@ static int32_t window_init(char **envp) {
     // Create EGL surface.
     status = egl_createSurface(&window.egl, eglWindow);
     if (status < 0) {
-        debug_printNum("Failed to create EGL surface (", status, ")\n");
+        debug_printNum("Failed to create EGL surface", status);
         goto cleanup_platform;
     }
 
@@ -113,7 +120,7 @@ static int32_t window_init(char **envp) {
     // Load OpenGL functions.
     status = gl_init(&window.egl);
     if (status < 0) {
-        debug_printNum("Failed to initialise GL (", status, ")\n");
+        debug_printNum("Failed to initialise GL", status);
         goto cleanup_eglSurface;
     }
 
@@ -123,11 +130,24 @@ static int32_t window_init(char **envp) {
     uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
     status = game_init(initTimestamp);
     if (status < 0) {
-        debug_printNum("Failed to initialise game (", status, ")\n");
+        debug_printNum("Failed to initialise game", status);
         goto cleanup_eglSurface;
+    }
+
+    // Run game.
+    switch (window.platform) {
+        case window_X11: status = window_x11_run(); break;
+        case window_GBM: status = window_gbm_run(); break;
+        default: hc_UNREACHABLE;
+    }
+    if (status < 0) {
+        debug_printNum("Error running game", status);
+        goto cleanup_game;
     }
     return 0;
 
+    cleanup_game:
+    game_deinit();
     cleanup_eglSurface:
     egl_destroySurface(&window.egl);
     cleanup_platform:
@@ -139,25 +159,6 @@ static int32_t window_init(char **envp) {
     cleanup_egl:
     egl_deinit(&window.egl);
     return -1;
-}
-
-static int32_t window_run(void) {
-    switch (window.platform) {
-        case window_X11: return window_x11_run();
-        case window_GBM: return window_gbm_run();
-        default: hc_UNREACHABLE;
-    }
-}
-
-static void window_deinit(void) {
-    game_deinit();
-    egl_destroySurface(&window.egl);
-    switch (window.platform) {
-        case window_X11: window_x11_deinit(); break;
-        case window_GBM: window_gbm_deinit(); break;
-        default: hc_UNREACHABLE;
-    }
-    egl_deinit(&window.egl);
 }
 
 static int32_t window_width(void) {

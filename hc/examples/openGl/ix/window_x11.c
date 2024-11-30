@@ -150,7 +150,7 @@ static int32_t window_x11_setup(uint32_t visualId) {
 
         struct x11_genericResponse *generic = (void *)&window.x11.client.buffer[window.x11.client.bufferPos];
         if (generic->type == x11_TYPE_ERROR) {
-            debug_printNum("X11 request failed (seq=", (int32_t)generic->sequenceNumber, "\n");
+            debug_printNum("X11 request failed", generic->extra);
             return -4;
         }
 
@@ -227,8 +227,7 @@ static int32_t window_x11_setup(uint32_t visualId) {
                 }
                 case 11: {
                     // TODO: Find MODE SWITCH modifier.
-                    hc_UNUSED
-                    struct x11_getModifierMappingResponse *response = (void *)generic;
+                    hc_UNUSED struct x11_getModifierMappingResponse *response = (void *)generic;
 
                     // Done.
                     x11Client_ackMessage(&window.x11.client, msgSize);
@@ -257,7 +256,7 @@ static int32_t window_x11_init(void **eglWindow, char **envp) {
         &window_contextAttributes[0]
     );
     if (status < 0) {
-        debug_printNum("Failed to initialise EGL context (", status, ")\n");
+        debug_printNum("Failed to initialise EGL context", status);
         return -1;
     }
     uint32_t eglVisualId = (uint32_t)status;
@@ -296,13 +295,13 @@ static int32_t window_x11_init(void **eglWindow, char **envp) {
         status = x11Client_init(&window.x11.client, AF_UNIX, &serverAddr, sizeof(serverAddr), &entry);
     }
     if (status < 0) {
-        debug_printNum("Failed to initialise x11Client (", status, ")\n");
+        debug_printNum("Failed to initialise x11Client", status);
         goto cleanup_eglContext;
     }
 
     status = window_x11_setup(eglVisualId);
     if (status < 0) {
-        debug_printNum("X11 setup failed (", status, ")\n");
+        debug_printNum("X11 setup failed", status);
         goto cleanup_x11Client;
     }
 
@@ -517,7 +516,7 @@ static int32_t window_x11_run(void) {
                     int32_t type = generic->type & x11_TYPE_MASK;
                     switch (type) {
                         case x11_TYPE_ERROR: {
-                            debug_printNum("X11 request failed (code=", (int32_t)generic->extra, "\n");
+                            debug_printNum("X11 request failed", generic->extra);
                             return -4; // For now we always exit on X11 errors.
                         }
                         case x11_configureNotify_TYPE: {

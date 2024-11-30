@@ -1,5 +1,4 @@
 #include "hc/hc.h"
-#include "hc/debug.h"
 #include "hc/mem.c"
 #include "hc/math.c"
 #include "hc/util.c"
@@ -8,7 +7,15 @@
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/linux/helpers/sys_clone3_func.c"
 
@@ -96,7 +103,7 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
         event.data.fd = 0;
         CHECK(sys_epoll_pwait(epollFd, &event, 1, -1, NULL), RES == 1);
         if (event.data.fd == acpi.netlinkFd) break;
-        if (event.data.fd == hostapd.pidFd || event.data.fd == telnetServer.pidFd) debug_abort();
+        if (event.data.fd == hostapd.pidFd || event.data.fd == telnetServer.pidFd) util_abort();
 
         if (event.data.fd == ksmb.netlinkFd) ksmb_onNetlinkFd();
         else if (event.data.fd == dhcpClient.fd) dhcpClient_onFd();

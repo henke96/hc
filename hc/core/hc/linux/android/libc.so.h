@@ -21,3 +21,8 @@ int32_t pthread_attr_setdetachstate(struct pthread_attr_t *attr, int32_t state);
 void *malloc(uint64_t size);
 
 int32_t clock_gettime(int32_t clock, struct timespec *time);
+int32_t printf(const char *fmt, ...);
+int32_t *__errno(void);
+noreturn void abort(void);
+int64_t read(int32_t fd, void *buffer, int64_t size);
+int64_t write(int32_t fd, const void *buffer, int64_t size);

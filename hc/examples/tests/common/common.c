@@ -17,10 +17,24 @@
     int64_t startTime = tests_currentNs(); \
     FN(); \
     int64_t duration = tests_currentNs() - startTime; \
-    debug_print(#FN); \
-    if (duration >= 100000000) debug_printNum(" took ", (duration + 500000) / 1000000, " ms\n"); \
-    else if (duration >= 100000) debug_printNum(" took ", (duration + 500) / 1000, " us\n"); \
-    else debug_printNum(" took ", duration, " ns\n"); \
+    char *unit; \
+    if (duration >= 100000000) { \
+        unit = " ms\n"; \
+        duration = (duration + 500000) / 1000000; \
+    } else if (duration >= 100000) { \
+        unit = " us\n"; \
+        duration = (duration + 500) / 1000; \
+    } else unit = " ns\n"; \
+    char print[ \
+        hc_STR_LEN(#FN " took ") + \
+        util_INT64_MAX_CHARS + \
+        hc_STR_LEN(" xx\n") \
+    ]; \
+    char *pos = hc_ARRAY_END(print); \
+    hc_PREPEND(pos, unit, hc_STR_LEN(" xx\n")); \
+    pos = util_intToStr(pos, duration); \
+    hc_PREPEND_STR(pos, #FN " took "); \
+    if (util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos) < 0) util_abort(); \
 }
 
 static uint64_t tests_level = 0;
@@ -54,5 +68,5 @@ static void common_tests(void) {
     TIME(poly1305_tests)
     TIME(aes_tests)
 
-    debug_print("All tests passed!\n");
+    if (util_writeAll(util_STDERR, hc_STR_COMMA_LEN("All tests passed!\n")) < 0) util_abort();
 }

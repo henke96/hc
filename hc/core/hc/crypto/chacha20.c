@@ -63,7 +63,6 @@ static void chacha20_init(union chacha20 *self) {
     self->u64[1] = 0x6b20657479622d32;
 }
 
-hc_UNUSED
 static void chacha20_initIetf(union chacha20 *self, const void *key, uint32_t blockCounter, uint32_t nonceSender, uint64_t nonce) {
     chacha20_init(self);
     hc_MEMCPY(&self->ietf.key[0], key, chacha20_KEY_SIZE);
@@ -72,7 +71,6 @@ static void chacha20_initIetf(union chacha20 *self, const void *key, uint32_t bl
     self->ietf.nonce = nonce;
 }
 
-hc_UNUSED
 static void chacha20_initOrig(union chacha20 *self, const void *key, uint64_t blockCounter, uint64_t nonce) {
     chacha20_init(self);
     hc_MEMCPY(&self->orig.key[0], key, chacha20_KEY_SIZE);

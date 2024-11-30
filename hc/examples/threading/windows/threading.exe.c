@@ -1,10 +1,9 @@
 #include "hc/hc.h"
 #include "hc/util.c"
-#include "hc/debug.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/windows/windows.h"
 #include "hc/windows/util.c"
-#include "hc/windows/debug.c"
+#include "hc/debug.c"
 #include "hc/windows/_start.c"
 
 #define ITERATIONS 10000000
@@ -63,6 +62,6 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
 
     debug_CHECK(WaitForSingleObjectEx(child1Handle, INFINITE, 0), RES == 0);
     debug_CHECK(WaitForSingleObjectEx(child2Handle, INFINITE, 0), RES == 0);
-    debug_printNum("Counter: ", counter, "\n");
+    debug_printNum("Counter", counter);
     return 0;
 }

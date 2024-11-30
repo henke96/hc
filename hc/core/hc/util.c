@@ -1,11 +1,11 @@
-hc_UNUSED
+#define util_MAX_UTF8_PER_UTF16 3
+
 static ssize_t util_cstrLen(const char *cstring) {
     const char *c = cstring;
     for (; *c != '\0'; ++c);
     return c - cstring;
 }
 
-hc_UNUSED
 static int32_t util_cstrCmp(const char *left, const char *right) {
     for (;;) {
         int32_t diff = *left - *right;
@@ -15,12 +15,10 @@ static int32_t util_cstrCmp(const char *left, const char *right) {
     }
 }
 
-hc_UNUSED
 static void util_strToUtf16(uint16_t *dest, char *src, ssize_t size) {
     for (ssize_t i = 0; i < size; ++i) *dest++ = (uint16_t)*src++;
 }
 
-hc_UNUSED
 static char *util_getEnv(char **envp, const char *name) {
     for (; *envp != NULL; ++envp) {
         char *env = *envp;
@@ -41,7 +39,7 @@ static char *util_getEnv(char **envp, const char *name) {
 // Writes max 20 characters.
 // `bufferEnd` points 1 past where last digit is written.
 // Returns pointer to first character of result.
-hc_UNUSED static char *util_intToStr(char *bufferEnd, int64_t number) {
+static char *util_intToStr(char *bufferEnd, int64_t number) {
     uint64_t n = number < 0 ? -((uint64_t)number) : (uint64_t)number;
     do {
         *--bufferEnd = (char)('0' + n % 10);
@@ -55,7 +53,7 @@ hc_UNUSED static char *util_intToStr(char *bufferEnd, int64_t number) {
 // Writes max 20 characters.
 // `bufferEnd` points 1 past where last digit is written.
 // Returns pointer to first character of result.
-hc_UNUSED static char *util_uintToStr(char *bufferEnd, uint64_t number) {
+static char *util_uintToStr(char *bufferEnd, uint64_t number) {
     do {
         *--bufferEnd = (char)('0' + number % 10);
         number /= 10;
@@ -70,7 +68,7 @@ static const uint8_t util_hexTable[16] = "0123456789ABCDEF";
 // Writes max 16 characters.
 // `bufferEnd` points 1 past where last digit is written.
 // Returns pointer to first character of result.
-hc_UNUSED static char *util_uintToHex(char *bufferEnd, uint64_t number) {
+static char *util_uintToHex(char *bufferEnd, uint64_t number) {
     do {
         *--bufferEnd = util_hexTable[number & 0xF];
         *--bufferEnd = util_hexTable[(number >> 4) & 0xF];
@@ -81,7 +79,7 @@ hc_UNUSED static char *util_uintToHex(char *bufferEnd, uint64_t number) {
 
 // Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
 // The result is stored in `*number` if successful.
-hc_UNUSED static int32_t util_strToUint(const void *buffer, int32_t maxChars, uint64_t *number) {
+static int32_t util_strToUint(const void *buffer, int32_t maxChars, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
     for (; i < maxChars; ++i) {
@@ -98,7 +96,7 @@ hc_UNUSED static int32_t util_strToUint(const void *buffer, int32_t maxChars, ui
 
 // Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
 // The result is stored in `*number` if successful.
-hc_UNUSED static int32_t util_strToInt(const void *buffer, int32_t maxChars, int64_t *number) {
+static int32_t util_strToInt(const void *buffer, int32_t maxChars, int64_t *number) {
     if (maxChars <= 0) return 0;
 
     uint64_t negative = ((const char *)buffer)[0] == '-';
@@ -123,7 +121,7 @@ hc_UNUSED static int32_t util_strToInt(const void *buffer, int32_t maxChars, int
 
 // Returns number of characters in the parsed number (max `maxChars`), 0 if parsing failed, or -1 on overflow.
 // The result is stored in `*number` if successful.
-hc_UNUSED static int32_t util_hexToUint(const void *buffer, int32_t maxChars, uint64_t *number) {
+static int32_t util_hexToUint(const void *buffer, int32_t maxChars, uint64_t *number) {
     uint64_t result = 0;
     int32_t i = 0;
     for (; i < maxChars; ++i) {

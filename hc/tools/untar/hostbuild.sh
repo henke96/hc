@@ -6,9 +6,15 @@ root_dir="$script_dir/../.."
 name=untar
 
 . "$root_dir/core/shell/hostarch.sh"
-if test "$hostarch" != "x86_64"; then export NO_X86_64=1; fi
-if test "$hostarch" != "aarch64"; then export NO_AARCH64=1; fi
-if test "$hostarch" != "riscv64"; then export NO_RISCV64=1; fi
+export NO_X86_64=1
+export NO_AARCH64=1
+export NO_RISCV64=1
+case "$hostarch" in
+    x86_64) export NO_X86_64= ;;
+    aarch64) export NO_AARCH64= ;;
+    riscv64) export NO_RISCV64= ;;
+    *) exit 1 ;;
+esac
 
 export NO_LINUX=1
 export NO_FREEBSD=1

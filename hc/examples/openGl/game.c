@@ -9,7 +9,7 @@ static struct {
     float perspectiveMatrix[16];
     float orthographicMatrix[16];
     uint64_t prevFpsCountTime;
-    int64_t frameCounter;
+    uint64_t frameCounter;
     uint32_t cameraYaw;
     int32_t cameraPitch;
     uint32_t triangleYaw;
@@ -56,7 +56,13 @@ game_EXPORT void game_draw(uint64_t timestamp, bool drawFrame) {
     ++game.frameCounter;
     uint64_t nextFpsCountTime = game.prevFpsCountTime + 1000000000;
     if (timestamp >= nextFpsCountTime) {
-        debug_printNum("FPS: ", game.frameCounter, "\n");
+        char print[hc_STR_LEN("FPS: ") + util_UINT64_MAX_CHARS + hc_STR_LEN("\n")];
+        char *pos = hc_ARRAY_END(print);
+        hc_PREPEND_STR(pos, "\n");
+        pos = util_uintToStr(pos, game.frameCounter);
+        hc_PREPEND_STR(pos, "FPS: ");
+        debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
+
         game.prevFpsCountTime = nextFpsCountTime;
         game.frameCounter = 0;
     }
@@ -79,13 +85,37 @@ game_EXPORT void game_onMouseMove(int64_t deltaX, int64_t deltaY, hc_UNUSED uint
 }
 
 game_EXPORT void game_onKeyDown(int32_t key, uint64_t timestamp) {
-    debug_printNum("Key down: ", key, "\n");
-    debug_printNum("At: ", (int64_t)timestamp, "\n");
+    char print[
+        hc_STR_LEN("Key down: ") +
+        util_INT32_MAX_CHARS +
+        hc_STR_LEN(", at: ") +
+        util_UINT64_MAX_CHARS +
+        hc_STR_LEN("\n")
+    ];
+    char *pos = hc_ARRAY_END(print);
+    hc_PREPEND_STR(pos, "\n");
+    pos = util_uintToStr(pos, timestamp);
+    hc_PREPEND_STR(pos, ", at: ");
+    pos = util_intToStr(pos, key);
+    hc_PREPEND_STR(pos, "Key down: ");
+    debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
 }
 
 game_EXPORT void game_onKeyUp(int32_t key, uint64_t timestamp) {
-    debug_printNum("Key up: ", key, "\n");
-    debug_printNum("At: ", (int64_t)timestamp, "\n");
+    char print[
+        hc_STR_LEN("Key up: ") +
+        util_INT32_MAX_CHARS +
+        hc_STR_LEN(", at: ") +
+        util_UINT64_MAX_CHARS +
+        hc_STR_LEN("\n")
+    ];
+    char *pos = hc_ARRAY_END(print);
+    hc_PREPEND_STR(pos, "\n");
+    pos = util_uintToStr(pos, timestamp);
+    hc_PREPEND_STR(pos, ", at: ");
+    pos = util_intToStr(pos, key);
+    hc_PREPEND_STR(pos, "Key up: ");
+    debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
 }
 
 game_EXPORT int32_t game_init(uint64_t timestamp) {

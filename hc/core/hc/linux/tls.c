@@ -1,6 +1,5 @@
 // Thread local storage helpers.
 
-hc_UNUSED
 static struct elf_programHeader *tls_findProgramHeader(const uint64_t *auxv) {
     struct elf_programHeader *programHeaders = NULL;
     uint64_t programHeadersLength = 0;
@@ -39,7 +38,7 @@ static struct elf_programHeader *tls_findProgramHeader(const uint64_t *auxv) {
 // at least `tls_AREA_SIZE(tlsProgramHeader->segmentMemorySize)` bytes long.
 // Bytes at `tlsProgramHeader->segmentFileSize` and after must be zero.
 // Returns the thread pointer for the area.
-hc_UNUSED static uint64_t tls_initArea(struct elf_programHeader *tlsProgramHeader, void *tlsArea) {
+static uint64_t tls_initArea(struct elf_programHeader *tlsProgramHeader, void *tlsArea) {
     hc_MEMCPY(tlsArea, (void *)tlsProgramHeader->virtualAddress, tlsProgramHeader->segmentFileSize);
 #if hc_X86_64
     uint64_t threadPointer = (uint64_t)tlsArea + math_ALIGN_FORWARD(tlsProgramHeader->segmentMemorySize, tlsProgramHeader->segmentAlignment);

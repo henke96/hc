@@ -67,7 +67,6 @@ static void _sha512_blocks(uint64_t *state, const void *in, ssize_t numBlocks) {
     } while (--numBlocks);
 }
 
-hc_UNUSED
 static void sha512_init(struct sha512 *self) {
     self->state[0] = 0x6a09e667f3bcc908;
     self->state[1] = 0xbb67ae8584caa73b;
@@ -81,7 +80,6 @@ static void sha512_init(struct sha512 *self) {
     self->bufferSize = 0;
 }
 
-hc_UNUSED
 static void sha512_init384(struct sha512 *self) {
     self->state[0] = 0xcbbb9d5dc1059ed8;
     self->state[1] = 0x629a292a367cd507;

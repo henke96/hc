@@ -1,20 +1,24 @@
 #include "hc/hc.h"
 #include "hc/util.c"
-#include "hc/debug.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/helpers/_start.c"
 #include "hc/linux/helpers/sys_clone3_exit.c"
 #include "hc/ix/drm.h"
-
 #define openat sys_openat
 #define mmap sys_mmap
 #define ioctl sys_ioctl
-#define read sys_read
 #define close sys_close
-#define ix_ERRNO(RET) (-RET)
 #include "hc/ix/drm.c"
 
 #include "graphics.c"
@@ -30,7 +34,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     if (argc == 2) {
         // Parse TTY_NUM argument.
         if (util_strToUint(argv[1], 100, &ttyNumber) <= 0 || ttyNumber < 1 || ttyNumber > 63) {
-            sys_write(2, hc_STR_COMMA_LEN("Invalid tty argument\n"));
+            debug_print("Invalid tty argument\n");
             return 1;
         }
         char ttyPath[10] = "/dev/tty\0\0";
@@ -49,14 +53,14 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         // Open tty.
         ttyFd = sys_openat(-1, &ttyPath[0], O_RDWR, 0);
         if (ttyFd < 0) {
-            sys_write(2, hc_STR_COMMA_LEN("Failed to open tty\n"));
+            debug_print("Failed to open tty\n");
             return 1;
         }
 
         // Set the tty as our controlling terminal.
         status = sys_ioctl(ttyFd, TIOCSCTTY, 0);
         if (status < 0) {
-            sys_write(2, hc_STR_COMMA_LEN("Failed to set controlling terminal\n"));
+            debug_print("Failed to set controlling terminal\n");
             return 1;
         }
 
@@ -96,7 +100,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     }
 
     struct graphics graphics;
-    int64_t frameCounter = 0;
+    uint64_t frameCounter = 0;
     struct timespec prev = {0};
 
     if (active) {
@@ -121,7 +125,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
             if (info.ssi_signo == SIGUSR1) {
                 if (active) return 1;
                 active = true;
-                sys_write(2, hc_STR_COMMA_LEN("Acquired!\n"));
+                debug_print("Acquired!\n");
 
                 // Initialise graphics.
                 if (graphics_init(&graphics) < 0) return 1;
@@ -135,7 +139,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
                 if (status < 0) return 1;
 
                 active = false;
-                sys_write(2, hc_STR_COMMA_LEN("Released!\n"));
+                debug_print("Released!\n");
             }
         }
         if (!active) continue; // Skip drawing if not active.
@@ -145,7 +149,12 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         struct timespec now = {0};
         debug_CHECK(sys_clock_gettime(CLOCK_MONOTONIC, &now), RES == 0);
         if (now.tv_sec > prev.tv_sec) {
-            debug_printNum("FPS: ", frameCounter, "\n");
+            char print[hc_STR_LEN("FPS: ") + util_UINT64_MAX_CHARS + hc_STR_LEN("\n")];
+            char *pos = hc_ARRAY_END(print);
+            hc_PREPEND_STR(pos, "\n");
+            pos = util_uintToStr(pos, frameCounter);
+            hc_PREPEND_STR(pos, "FPS: ");
+            debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
             frameCounter = 0;
             prev = now;
         }

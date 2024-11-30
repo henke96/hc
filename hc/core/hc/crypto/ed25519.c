@@ -900,7 +900,6 @@ static void _ed25519_hram(uint8_t *hram, const void *signature, const void *publ
     sha512_finish(&sha512, hram);
 }
 
-hc_UNUSED
 static void ed25519_public(void *publicOut, const void *secret) {
     uint64_t a[5];
     uint8_t extSecret[sha512_HASH_SIZE];
@@ -913,7 +912,6 @@ static void ed25519_public(void *publicOut, const void *secret) {
     ed25519_ge_pack(publicOut, &A);
 }
 
-hc_UNUSED
 static void ed25519_sign(void *signatureOut, const void *message, ssize_t messageSize, const void *secret, const void *public) {
     uint8_t extSecret[sha512_HASH_SIZE];
     _ed25519_extSecret(&extSecret[0], secret);
@@ -952,7 +950,7 @@ static void ed25519_sign(void *signatureOut, const void *message, ssize_t messag
 }
 
 // Returns 0 if valid.
-hc_UNUSED static int32_t ed25519_verify(const void *message, ssize_t messageSize, const void *public, const void *signature) {
+static int32_t ed25519_verify(const void *message, ssize_t messageSize, const void *public, const void *signature) {
     struct ed25519_ge A;
     if ((*(const uint8_t *)(signature + 63) & 224) || !ed25519_ge_unpackNegativeVartime(&A, public)) return 1;
 
@@ -977,7 +975,7 @@ hc_UNUSED static int32_t ed25519_verify(const void *message, ssize_t messageSize
 }
 
 // X25519 basepoint scalar multiplication.
-hc_UNUSED static void ed25519_x25519Basepoint(void *publicOut, const void *secret) {
+static void ed25519_x25519Basepoint(void *publicOut, const void *secret) {
     // Load and clamp.
     uint64_t s[5];
     uint8_t ec[32];

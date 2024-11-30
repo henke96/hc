@@ -1,7 +1,5 @@
-static int32_t init(char *file);
-static void deinit(void);
-static int32_t readIntoBuffer(void);
-static int32_t printBuffer(int32_t size);
+static int32_t openStream(char *file, util_STREAM_T *stream);
+static void closeStream(util_STREAM_T stream);
 
 static char buffer[65536] hc_ALIGNED(16);
 
@@ -40,11 +38,12 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
         sha512_init(&hashState.sha512);
     } else return 2;
 
-    if (init(argv[2]) < 0) return 3;
+    util_STREAM_T inStream;
+    if (openStream(argv[2], &inStream) < 0) return 3;
 
     int32_t status = 4;
     for (;;) {
-        int32_t numRead = readIntoBuffer();
+        ssize_t numRead = util_read(inStream, &buffer[0], sizeof(buffer));
         if (numRead <= 0) {
             if (numRead < 0) goto cleanup;
             break;
@@ -73,10 +72,10 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     }
     int32_t hexSize = 2 * hashSize;
     buffer[hexSize] = '\n';
-    if (printBuffer(hexSize + 1) < 0) goto cleanup;
+    if (util_writeAll(util_STDOUT, &buffer[0], hexSize + 1) < 0) goto cleanup;
 
     status = 0;
     cleanup:
-    deinit();
+    closeStream(inStream);
     return status;
 }

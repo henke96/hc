@@ -132,14 +132,12 @@ static void wgl_deinit(struct wgl *self) {
     debug_CHECK(FreeLibrary(self->dlHandle), RES != 0);
 }
 
-hc_UNUSED
 static void *wgl_getProcAddress(struct wgl *self, const char *procName) {
     void *proc = self->wglGetProcAddress(procName);
     if (proc == NULL) proc = GetProcAddress(self->dlHandle, procName);
     return proc;
 }
 
-hc_UNUSED
 static int32_t wgl_swapInterval(struct wgl *self, int32_t interval) {
     return self->wglSwapIntervalEXT(interval);
 }

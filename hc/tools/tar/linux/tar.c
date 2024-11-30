@@ -1,11 +1,18 @@
 #include "hc/hc.h"
 #include "hc/math.c"
 #include "hc/util.c"
-#include "hc/debug.h"
 #include "hc/compilerRt/mem.c"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
-#include "hc/linux/debug.c"
+static noreturn void abort(void) {
+    sys_kill(sys_getpid(), SIGABRT);
+    sys_exit_group(137);
+}
+#define write sys_write
+#define read sys_read
+#define ix_ERRNO(RET) (-RET)
+#include "hc/ix/util.c"
+#include "hc/debug.c"
 #include "hc/linux/util.c"
 #include "hc/linux/heap.c"
 #include "hc/linux/helpers/_start.c"
@@ -14,11 +21,6 @@ static int32_t pageSize;
 #include "hc/allocator.c"
 #include "hc/tar.h"
 #include "hc/argParse.h"
-
-#define write sys_write
-#define read sys_read
-#define ix_ERRNO(RET) (-RET)
-#include "hc/ix/util.c"
 
 #include "../common.c"
 

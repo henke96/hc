@@ -7,7 +7,7 @@
 static const uint64_t curve25519_zero[5] = {0};
 
 // Load 32 byte number from `in` into `a`.
-hc_UNUSED static void curve25519_load(uint64_t *a, const void *in) {
+static void curve25519_load(uint64_t *a, const void *in) {
     a[0] = mem_loadU64(in) & 0x7FFFFFFFFFFFF;
     a[1] = (mem_loadU64(in + 6) >> 3) & 0x7FFFFFFFFFFFF;
     a[2] = (mem_loadU64(in + 12) >> 6) & 0x7FFFFFFFFFFFF;
@@ -16,7 +16,7 @@ hc_UNUSED static void curve25519_load(uint64_t *a, const void *in) {
 }
 
 // Store fully reduced `a` as 32 byte number into `out`.
-hc_UNUSED static void curve25519_store(void *out, uint64_t *a) {
+static void curve25519_store(void *out, uint64_t *a) {
     mem_storeU64(&out[0], a[0] | (a[1] << 51));
     mem_storeU64(&out[8], (a[1] >> 13) | (a[2] << 38));
     mem_storeU64(&out[16], (a[2] >> 26) | (a[3] << 25));
@@ -24,7 +24,7 @@ hc_UNUSED static void curve25519_store(void *out, uint64_t *a) {
 }
 
 // Fully reduce `a`.
-hc_UNUSED static void curve25519_reduce(uint64_t *a) {
+static void curve25519_reduce(uint64_t *a) {
     a[1] += a[0] >> 51;
     a[0] &= 0x7FFFFFFFFFFFF;
     a[2] += a[1] >> 51;
@@ -86,7 +86,7 @@ hc_UNUSED static void curve25519_reduce(uint64_t *a) {
 }
 
 // Conditionally swap `a` and `b`, depending on if `shouldSwap` is 1 or 0.
-hc_UNUSED static void curve25519_cSwap(uint64_t *a, uint64_t *b, uint64_t shouldSwap) {
+static void curve25519_cSwap(uint64_t *a, uint64_t *b, uint64_t shouldSwap) {
     uint64_t swap = -shouldSwap;
     for (int32_t i = 0; i < 5; ++i) {
         uint64_t x = swap & (a[i] ^ b[i]);
@@ -95,7 +95,6 @@ hc_UNUSED static void curve25519_cSwap(uint64_t *a, uint64_t *b, uint64_t should
     }
 }
 
-hc_UNUSED
 static void curve25519_add(uint64_t *out, const uint64_t *a, const uint64_t *b) {
     out[0] = a[0] + b[0];
     out[1] = a[1] + b[1] + (out[0] >> 51);
@@ -118,7 +117,6 @@ static hc_INLINE void curve25519_addNoReduce(uint64_t *out, const uint64_t *a, c
     out[4] = a[4] + b[4];
 }
 
-hc_UNUSED
 static void curve25519_sub(uint64_t *out, const uint64_t *a, const uint64_t *b) {
     out[0] = a[0] + 0x0FFFFFFFFFFFDA - b[0];
     out[1] = a[1] + 0x0FFFFFFFFFFFFE - b[1] + (out[0] >> 51);
@@ -149,7 +147,6 @@ static hc_INLINE void curve25519_subNoReduceFourP(uint64_t *out, const uint64_t 
     out[4] = a[4] + 0x1FFFFFFFFFFFFC - b[4];
 }
 
-hc_UNUSED
 static void curve25519_mulScalar(uint64_t *out, const uint64_t *a, uint64_t scalar) {
     uint128_t x = hc_MUL128_64x64(a[0], scalar);
     out[0] = (uint64_t)x & 0x7FFFFFFFFFFFF;
@@ -164,7 +161,6 @@ static void curve25519_mulScalar(uint64_t *out, const uint64_t *a, uint64_t scal
     out[0] += (uint64_t)(x >> 51) * 19;
 }
 
-hc_UNUSED
 static void curve25519_mul(uint64_t *out, const uint64_t *a, const uint64_t *b) {
     uint64_t r0 = b[0];
     uint64_t r1 = b[1];
@@ -217,7 +213,6 @@ static void curve25519_mul(uint64_t *out, const uint64_t *a, const uint64_t *b) 
     out[4] = r4;
 }
 
-hc_UNUSED
 static void curve25519_squareN(uint64_t *out, const uint64_t *a, uint64_t n) {
     uint64_t r0 = a[0];
     uint64_t r1 = a[1];
@@ -286,7 +281,7 @@ static void _curve25519_pow11PowTwo250mtwo0(uint64_t *a, uint64_t *b, const uint
 }
 
 // Calculate inverse of z: z^(p - 2) = z^(2^255 - 21)
-hc_UNUSED static void curve25519_invert(uint64_t *out, const uint64_t *z) {
+static void curve25519_invert(uint64_t *out, const uint64_t *z) {
     uint64_t a[5], b[5];
     /* 2^11 and 2^250 - 2^0 */ _curve25519_pow11PowTwo250mtwo0(&a[0], &b[0], z);
     /* 2^255 - 2^5 */ curve25519_squareN(&b[0], &b[0], 5);
@@ -294,7 +289,7 @@ hc_UNUSED static void curve25519_invert(uint64_t *out, const uint64_t *z) {
 }
 
 // Calculate z^((p-5)/8) = z^(2^252 - 3)
-hc_UNUSED static void curve25519_powTwo252m3(uint64_t *out, const uint64_t *z) {
+static void curve25519_powTwo252m3(uint64_t *out, const uint64_t *z) {
     uint64_t a[5], b[5];
     /* 2^11 and 2^250 - 2^0 */ _curve25519_pow11PowTwo250mtwo0(&a[0], &b[0], z);
     /* 2^252 - 2^2 */ curve25519_squareN(&b[0], &b[0], 2);

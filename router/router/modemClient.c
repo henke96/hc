@@ -54,7 +54,7 @@ static void modemClient_init(struct modemClient *self, const char *path) {
 static void modemClient_disconnect(struct modemClient *self) {
     if (self->fd > 0) {
         sys_write(self->fd, hc_STR_COMMA_LEN("\x1b")); // Attempt to exit potential `> `-mode by sending escape.
-        debug_printNum("AT disconnect (", modemClient_pendingCmdTag(self), ")\n");
+        debug_printNum("AT disconnect", modemClient_pendingCmdTag(self));
 
         debug_CHECK(sys_close(self->fd), RES == 0);
         self->fd = -1;
@@ -240,7 +240,7 @@ static void modemClient_onFd(struct modemClient *self) {
 
         // Error.
         if (lineLength == 5 && mem_compare(&bufferLineStart[0], hc_STR_COMMA_LEN("ERROR")) == 0) {
-            sys_write(2, hc_STR_COMMA_LEN("AT error\n"));
+            debug_print("AT error\n");
             goto out_fail;
         }
 

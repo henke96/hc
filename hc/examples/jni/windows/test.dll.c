@@ -1,10 +1,9 @@
 #include "hc/hc.h"
 #include "hc/jni.h"
-#include "hc/debug.h"
 #include "hc/windows/windows.h"
 #include "hc/util.c"
 #include "hc/windows/util.c"
-#include "hc/windows/debug.c"
+#include "hc/debug.c"
 
 #include "../common.c"
 

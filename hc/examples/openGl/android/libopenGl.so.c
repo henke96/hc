@@ -3,7 +3,6 @@
 #include "hc/gl.h"
 #include "hc/jni.h"
 #include "hc/util.c"
-#include "hc/debug.h"
 #include "hc/linux/linux.h"
 #include "hc/linux/sys.c"
 #include "hc/linux/helpers/sys_clone_func.c"
@@ -12,13 +11,17 @@
 #include "hc/linux/android/libandroid.so.h"
 #include "hc/linux/android/liblog.so.h"
 #include "hc/linux/android/libdl.so.h"
-#include "hc/linux/android/debug.c"
+#define ix_ERRNO(RET) (*__errno())
+#include "hc/ix/util.c"
+#include "hc/debug.c"
+
 #include "hc/linux/android/nativeGlue.c"
+
 #include "hc/ix/egl.c"
 
 // TODO: Implement input
-hc_UNUSED static void game_onKeyDown(int32_t key, uint64_t timestamp);
-hc_UNUSED static void game_onKeyUp(int32_t key, uint64_t timestamp);
+static void game_onKeyDown(int32_t key, uint64_t timestamp);
+static void game_onKeyUp(int32_t key, uint64_t timestamp);
 #define game_EXPORT static
 #define gl_GET_PROC_ADDR(LOADER_PTR, FUNC) egl_getProcAddress(LOADER_PTR, FUNC)
 #include "../shared/gl.c"
@@ -54,7 +57,7 @@ static int32_t app_init(void) {
 
     int32_t status = egl_init(&app.egl, "libEGL.so");
     if (status < 0) {
-        debug_printNum("Failed to initialise EGL (", status, ")\n");
+        debug_printNum("Failed to initialise EGL", status);
         return -1;
     }
     return 0;
@@ -87,13 +90,13 @@ static int32_t app_initEgl(void) {
         &contextAttributes[0]
     );
     if (status < 0) {
-        debug_printNum("Failed to initialise EGL context (", status, ")\n");
+        debug_printNum("Failed to initialise EGL context", status);
         return -1;
     }
 
     status = egl_createSurface(&app.egl, app.window);
     if (status != 0) {
-        debug_printNum("Failed to setup EGL surface (", status, ")\n");
+        debug_printNum("Failed to setup EGL surface", status);
         return -1;
     }
 
@@ -102,15 +105,9 @@ static int32_t app_initEgl(void) {
     if (
         egl_querySurface(&app.egl, egl_WIDTH, &app.width) != 1 ||
         egl_querySurface(&app.egl, egl_HEIGHT, &app.height) != 1
-    ) {
-        debug_print("Failed to query EGL surface\n");
-        return -1;
-    }
+    ) return -1;
 
-    if (gl_init(&app.egl) != 0) {
-        debug_print("Failed to load OpenGL functions\n");
-        return -1;
-    }
+    if (gl_init(&app.egl) != 0) return -1;
 
     return 0;
 }
@@ -152,7 +149,7 @@ static int32_t appThread(void *looper, hc_UNUSED void *arg) {
                         uint64_t initTimestamp = (uint64_t)initTimespec.tv_sec * 1000000000 + (uint64_t)initTimespec.tv_nsec;
                         int32_t status = game_init(initTimestamp);
                         if (status < 0) {
-                            debug_printNum("Failed to initialise game (", status, ")\n");
+                            debug_printNum("Failed to initialise game", status);
                             return -5;
                         }
                         app.running = true;
@@ -245,5 +242,5 @@ void ANativeActivity_onCreate(struct ANativeActivity *activity, hc_UNUSED void *
         .appThreadFunc = appThread,
         .appThreadArg = NULL
     };
-    if (nativeGlue_init(activity, &appInfo) != 0) debug_abort();
+    if (nativeGlue_init(activity, &appInfo) != 0) util_abort();
 }

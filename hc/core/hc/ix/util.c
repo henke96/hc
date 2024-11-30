@@ -1,4 +1,12 @@
-hc_UNUSED
+typedef int32_t util_STREAM_T;
+#define util_STDIN 0
+#define util_STDOUT 1
+#define util_STDERR 2
+
+static noreturn void util_abort(void) {
+    abort();
+}
+
 static int32_t util_writeAll(int32_t fd, const void *buffer, int64_t size) {
     int64_t remaining = size;
     while (remaining > 0) {
@@ -13,7 +21,14 @@ static int32_t util_writeAll(int32_t fd, const void *buffer, int64_t size) {
     return 0;
 }
 
-hc_UNUSED
+static int64_t util_read(int32_t fd, void *buffer, int64_t size) {
+    for (;;) {
+        int64_t numRead = read(fd, buffer, size);
+        if (numRead >= 0) return numRead;
+        if (ix_ERRNO(numRead) != EINTR) return -1;
+    }
+}
+
 // Read `size` bytes, or until EOF. Returns number of bytes read.
 static int64_t util_readAll(int32_t fd, void *buffer, int64_t size) {
     int64_t remaining = size;

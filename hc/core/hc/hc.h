@@ -36,8 +36,12 @@ _Static_assert(sizeof(enum {A}) == 4, "enum not 4 bytes");
 #define hc_STR(X) #X
 #define hc_XSTR(X) hc_STR(X)
 #define hc_ARRAY_LEN(ARRAY) (sizeof(ARRAY) / sizeof((ARRAY)[0]))
+#define hc_ARRAY_END(ARRAY) &ARRAY[sizeof(ARRAY)]
 #define hc_STR_LEN(STR) (hc_ARRAY_LEN(STR) - 1)
 #define hc_STR_COMMA_LEN(STR) (STR), hc_STR_LEN(STR)
+#define hc_PREPEND_STR(PTR, STR) (PTR -= hc_STR_LEN(STR), hc_MEMCPY(PTR, hc_STR_COMMA_LEN(STR)))
+#define hc_PREPEND(PTR, BUF, SIZE) (PTR -= SIZE, hc_MEMCPY(PTR, BUF, SIZE))
+#define hc_MAX(A, B) ((A > B) ? (A) : (B))
 
 // Attributes
 #define hc_WEAK __attribute__((weak))

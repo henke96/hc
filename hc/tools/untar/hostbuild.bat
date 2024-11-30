@@ -8,9 +8,12 @@ set "name=untar"
 
 call "%root_dir%\core\shell\hostarch.bat"
 if not errorlevel 0 ( exit /b ) else if errorlevel 1 exit /b
-if not "%hostarch%" == "x86_64" set "NO_X86_64=1"
-if not "%hostarch%" == "aarch64" set "NO_AARCH64=1"
-if not "%hostarch%" == "riscv64" set "NO_RISCV64=1"
+set "NO_X86_64=1"
+set "NO_AARCH64=1"
+set "NO_RISCV64=1"
+if "%hostarch%" == "x86_64" set "NO_X86_64="
+if "%hostarch%" == "aarch64" set "NO_AARCH64="
+if "%hostarch%" == "riscv64" set "NO_RISCV64="
 
 set "NO_LINUX=1"
 set "NO_FREEBSD=1"

@@ -139,7 +139,7 @@ static int32_t run(char **argv) {
             if (outputOpen) finaliseOutput();
             int32_t status = openOutput(ARG);
             if (status < 0) {
-                debug_printNum("Failed to open output (", status, ")\n");
+                debug_printNum("Failed to open output", status);
                 return -1;
             }
             outputOpen = true;
@@ -152,7 +152,7 @@ static int32_t run(char **argv) {
             }
             int32_t status = add(ARG);
             if (status < 0) {
-                debug_printNum("Failed to add directory contents (", status, ")\n");
+                debug_printNum("Failed to add directory contents", status);
                 return -1;
             }
             break;
@@ -187,22 +187,20 @@ static int32_t run(char **argv) {
 
     optsDone:
     if (curOpt != '\0') {
-        #define _PRINT1 "Invalid option `"
-        #define _PRINT2 "` at position "
         char print[
-            hc_STR_LEN(_PRINT1) +
+            hc_STR_LEN("Invalid option `") +
             hc_STR_LEN("x") +
-            hc_STR_LEN(_PRINT2) +
+            hc_STR_LEN("` at position ") +
             util_INT32_MAX_CHARS +
-            hc_STR_LEN("\n\0")
+            hc_STR_LEN("\n")
         ];
-        char *pos = &print[sizeof(print)];
-        *--pos = '\0'; *--pos = '\n';
+        char *pos = hc_ARRAY_END(print);
+        hc_PREPEND_STR(pos, "\n");
         pos = util_intToStr(pos, argvIndex);
-        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT2), hc_STR_COMMA_LEN(_PRINT2));
+        hc_PREPEND_STR(pos, "` at position ");
         *--pos = curOpt;
-        pos = hc_MEMCPY(pos - hc_STR_LEN(_PRINT1), hc_STR_COMMA_LEN(_PRINT1));
-        debug_print(pos);
+        hc_PREPEND_STR(pos, "Invalid option `");
+        debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
         return -1;
     }
     if (argv[argvIndex] != NULL) {
