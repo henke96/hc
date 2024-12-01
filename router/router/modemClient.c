@@ -291,35 +291,40 @@ static void modemClient_onFd(struct modemClient *self) {
             if (smsLength != 2 || mem_compare(&bufferLineStart[smsContentIndex], hc_STR_COMMA_LEN("00690070")) != 0) continue;
 
             // Respond with DHCP IP.
-            char *pos = util_intToStr(&buffer[4096], dhcpClient.leasedIpNetmask);
-            *--pos = '/';
-            pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[3]);
-            *--pos = '.';
-            pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[2]);
-            *--pos = '.';
-            pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[1]);
-            *--pos = '.';
-            pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[0]);
-            int32_t sendSmsLength = (int32_t)(&buffer[4096] - pos);
+            char printIp[
+                util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
+                util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
+                util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
+                util_UINT8_MAX_CHARS + hc_STR_LEN("/") +
+                util_UINT8_MAX_CHARS
+            ];
+            char *pos = hc_ARRAY_END(printIp);
+            pos = util_uintToStr(pos, dhcpClient.leasedIpNetmask);
+            hc_PREPEND_STR(pos, "/");
+            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[3]);
+            hc_PREPEND_STR(pos, ".");
+            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[2]);
+            hc_PREPEND_STR(pos, ".");
+            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[1]);
+            hc_PREPEND_STR(pos, ".");
+            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[0]);
+            int32_t sendSmsLength = (int32_t)(hc_ARRAY_END(printIp) - pos);
 
             // Convert to UCS2 + hex encoding.
-            uint16_t *ucs2Pos = (uint16_t *)hc_ASSUME_ALIGNED(pos - sendSmsLength, 2);
-            util_strToUtf16(ucs2Pos, pos, sendSmsLength);
-            char *ucs2HexPos = (char *)(ucs2Pos - sendSmsLength);
-            for (uint16_t i = 0; i < sendSmsLength; ++i) {
-                uint16_t ch = ucs2Pos[i];
+            char printIpUcs2Hex[sizeof(printIp) * 4];
+            for (int32_t i = 0; i < sendSmsLength; ++i) {
                 int32_t hexI = 4 * i;
-                ucs2HexPos[hexI] = util_hexTable[ch >> 12];
-                ucs2HexPos[hexI + 1] = util_hexTable[(ch >> 8) & 0xF];
-                ucs2HexPos[hexI + 2] = util_hexTable[(ch >> 4) & 0xF];
-                ucs2HexPos[hexI + 3] = util_hexTable[ch & 0xF];
+                printIpUcs2Hex[hexI] = '0';
+                printIpUcs2Hex[hexI + 1] = '0';
+                printIpUcs2Hex[hexI + 2] = util_hexTable[(pos[i] >> 4) & 0xF];
+                printIpUcs2Hex[hexI + 3] = util_hexTable[pos[i] & 0xF];
             }
 
             if (
                 modemClient_queueSms(
                     self,
                     &bufferLineStart[senderNumberIndex], (uint8_t)(senderNumberEnd - senderNumberIndex),
-                    ucs2HexPos, (uint16_t)(4 * sendSmsLength)
+                    &printIpUcs2Hex[0], (uint16_t)(4 * sendSmsLength)
                 ) < 0
             ) goto out_fail;
             continue;

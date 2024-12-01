@@ -8,14 +8,14 @@
     #define debug_CHECK(EXPR, COND) EXPR
 #endif
 
-static noreturn void debug_fail(int64_t res, const char *expression, const char *file, int32_t line) {
+static noreturn void debug_fail(int64_t res, const char *expression, const char *file, uint32_t line) {
     util_STREAM_T stderr = util_STDERR;
     util_writeAll(stderr, file, util_cstrLen(file));
     {
         char print[hc_STR_LEN(":") + util_INT32_MAX_CHARS + hc_STR_LEN(" fail: ")];
         char *pos = hc_ARRAY_END(print);
         hc_PREPEND_STR(pos, " fail: ");
-        pos = util_intToStr(pos, line);
+        pos = util_uintToStr(pos, line);
         hc_PREPEND_STR(pos, ":");
         util_writeAll(stderr, pos, hc_ARRAY_END(print) - pos);
     }

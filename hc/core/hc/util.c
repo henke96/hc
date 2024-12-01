@@ -32,6 +32,10 @@ static char *util_getEnv(char **envp, const char *name) {
     return NULL;
 }
 
+#define util_INT8_MAX_CHARS 4
+#define util_UINT8_MAX_CHARS 3
+#define util_INT16_MAX_CHARS 6
+#define util_UINT16_MAX_CHARS 5
 #define util_INT32_MAX_CHARS 11
 #define util_UINT32_MAX_CHARS 10
 #define util_INT64_MAX_CHARS 20

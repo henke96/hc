@@ -7,9 +7,9 @@ struct dhcpClient {
     int32_t dnsIp; // 0 if none.
     uint32_t currentIdentifier;
     uint32_t leasedIp; // Currently leased ip, 0 if none.
-    int32_t leasedIpNetmask; // 0 if none.
     uint32_t renewServerIp; // The server to renew the lease from.
-    char __pad[4];
+    uint8_t leasedIpNetmask; // 0 if none.
+    char __pad[7];
 };
 
 static struct dhcpClient dhcpClient = { 0 };
@@ -271,24 +271,33 @@ static void dhcpClient_onFd(void) {
 
             uint32_t netmask;
             hc_MEMCPY(&netmask, &subnetMask[1], 4);
-            dhcpClient.leasedIpNetmask = hc_POPCOUNT32(netmask);
+            dhcpClient.leasedIpNetmask = (uint8_t)hc_POPCOUNT32(netmask);
 
             // Record new IP lease and renew-server.
             hc_MEMCPY(&dhcpClient.renewServerIp, &header->serverIp, 4);
             if (mem_compare(&dhcpClient.leasedIp, &header->yourIp[0], 4) != 0) {
                 hc_MEMCPY(&dhcpClient.leasedIp, &header->yourIp[0], 4);
 
-                char print[hc_STR_LEN("New IP leased: 255.255.255.255/32\n")];
+                char print[
+                    hc_STR_LEN("IP leased: ") +
+                    util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
+                    util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
+                    util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
+                    util_UINT8_MAX_CHARS + hc_STR_LEN("/") +
+                    util_UINT8_MAX_CHARS + hc_STR_LEN("\n")
+                ];
                 char *pos = hc_ARRAY_END(print);
-                pos = util_intToStr(pos, dhcpClient.leasedIpNetmask);
+                hc_PREPEND_STR(pos, "\n");
+                pos = util_uintToStr(pos, dhcpClient.leasedIpNetmask);
                 hc_PREPEND_STR(pos, "/");
-                pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[3]);
+                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[3]);
                 hc_PREPEND_STR(pos, ".");
-                pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[2]);
+                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[2]);
                 hc_PREPEND_STR(pos, ".");
-                pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[1]);
+                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[1]);
                 hc_PREPEND_STR(pos, ".");
-                pos = util_intToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[0]);
+                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[0]);
+                hc_PREPEND_STR(pos, "IP leased: ");
                 debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
             }
 
@@ -308,7 +317,7 @@ static void dhcpClient_onFd(void) {
                     },
                     .addrMsg = {
                         .ifa_family = AF_INET,
-                        .ifa_prefixlen = (uint8_t)dhcpClient.leasedIpNetmask,
+                        .ifa_prefixlen = dhcpClient.leasedIpNetmask,
                         .ifa_index = dhcp_IFINDEX
                     },
                     .addrAttr = {
