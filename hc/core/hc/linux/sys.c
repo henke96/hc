@@ -1135,8 +1135,8 @@ static hc_INLINE int32_t sys_execveat(int32_t fd, const char *filename, const ch
     return (int32_t)ret;
 }
 
-static hc_INLINE int32_t sys_wait4(int32_t pid, int32_t *status, int32_t options, struct rusage *rusage) {
-    sys_SYSCALL4(sys_NR_wait4, pid, status, options, rusage)
+static hc_INLINE int32_t sys_waitid(int32_t type, int32_t id, struct siginfo *info, int32_t options, struct rusage *rusage) {
+    sys_SYSCALL5(sys_NR_waitid, type, id, info, options, rusage)
     return (int32_t)ret;
 }
 

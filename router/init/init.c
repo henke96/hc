@@ -58,7 +58,6 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
 
     struct clone_args args = {
         .flags = CLONE_VM | CLONE_VFORK,
-        .exit_signal = SIGCHLD,
         .stack = &buffer[0],
         .stack_size = sizeof(buffer)
     };
@@ -70,15 +69,19 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
 
     // Wait for children.
     for (;;) {
+        struct siginfo info;
+        // Make static analysis happy.
+        info.si_status = 0;
+        info.si_code = 0;
         struct rusage rusage;
-        rusage.ru_maxrss = 0;
-        int32_t pid = sys_wait4(-1, &status, 0, &rusage);
-        if (pid < 0) goto halt;
+        rusage.ru_maxrss = 0; // Make static analysis happy.
+        status = sys_waitid(P_ALL, 0, &info, WEXITED | __WALL, &rusage);
+        if (status < 0) goto halt;
 
         char print[
             hc_STR_LEN("Pid ") +
             util_INT32_MAX_CHARS +
-            hc_STR_LEN(" exited (status=") +
+            hc_MAX(hc_STR_LEN(" exited (status="), hc_STR_LEN(" killed (signal=")) +
             util_INT32_MAX_CHARS +
             hc_STR_LEN(", maxRss=") +
             util_INT64_MAX_CHARS +
@@ -88,14 +91,18 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
         hc_PREPEND_STR(pos, ")\n");
         pos = util_intToStr(pos, rusage.ru_maxrss);
         hc_PREPEND_STR(pos, ", maxRss=");
-        pos = util_intToStr(pos, status);
-        hc_PREPEND_STR(pos, " exited (status=");
-        pos = util_intToStr(pos, pid);
+        pos = util_intToStr(pos, info.si_status);
+        if (info.si_code == CLD_EXITED) {
+            hc_PREPEND_STR(pos, " exited (status=");
+        } else {
+            hc_PREPEND_STR(pos, " killed (signal=");
+        }
+        pos = util_intToStr(pos, info.si_pid);
         hc_PREPEND_STR(pos, "Pid ");
         if (util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos) < 0) goto halt;
 
-        if (pid == routerPid) {
-            if (status == 0) rebootCmd = LINUX_REBOOT_CMD_POWER_OFF;
+        if (info.si_pid == routerPid && info.si_code == CLD_EXITED && info.si_status == 0) {
+            rebootCmd = LINUX_REBOOT_CMD_POWER_OFF;
             goto halt;
         }
     }

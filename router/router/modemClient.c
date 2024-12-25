@@ -268,11 +268,9 @@ static void modemClient_onFd(struct modemClient *self) {
             // Find SMS length (by locating last comma).
             int32_t smsLengthIndex = lineLength;
             for (;;) { // We know there is atleast one comma in the line, so skip checks.
-                if (bufferLineStart[smsLengthIndex - 1] == ',') goto foundSmsLength;
+                if (bufferLineStart[smsLengthIndex - 1] == ',') break;
                 --smsLengthIndex;
             }
-            goto out_fail; // Not found.
-            foundSmsLength:;
 
             uint64_t smsLength;
             int32_t parsed = util_strToUint(&bufferLineStart[smsLengthIndex], lineLength - smsLengthIndex, &smsLength);

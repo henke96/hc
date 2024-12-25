@@ -989,6 +989,16 @@ hc_ALIGNED(8)
 #define SI_DETHREAD -7 // sent by execve() killing subsidiary threads
 #define SI_ASYNCNL -60 // sent by glibc async name lookup completion
 
+/*
+ * SIGCHLD si_codes
+ */
+#define CLD_EXITED 1 // child has exited
+#define CLD_KILLED 2 // child was killed
+#define CLD_DUMPED 3 // child terminated abnormally
+#define CLD_TRAPPED 4 // traced child has trapped
+#define CLD_STOPPED 5 // child has stopped
+#define CLD_CONTINUED 6 // stopped child has continued
+
 struct sigaction {
     union {
         void (*sa_handler)(int32_t sig);
@@ -1695,6 +1705,11 @@ struct rusage {
 #define __WNOTHREAD 0x20000000 /* Don't wait on children of other threads in this group */
 #define __WALL 0x40000000 /* Wait on all children, regardless of type */
 #define __WCLONE 0x80000000 /* Wait only on non-SIGCHLD children */
+
+#define P_ALL 0
+#define P_PID 1
+#define P_PGID 2
+#define P_PIDFD 3
 
 // netlink.h
 #define NETLINK_ROUTE 0 /* Routing/device hook */

@@ -55,7 +55,6 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
         // Run program.
         struct clone_args cloneArgs = {
             .flags = CLONE_VM | CLONE_VFORK,
-            .exit_signal = SIGCHLD,
             .stack = &run_stack[0],
             .stack_size = sizeof(run_stack)
         };
@@ -63,33 +62,28 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, char **envp) {
         if (programPid < 0) return 1;
 
         // Wait for program.
-        int32_t status = 0; // Make static analysis happy.
-        if (sys_wait4(programPid, &status, 0, NULL) < 0) return 1;
+        struct siginfo info;
+        info.si_status = 0; // Make static analysis happy.
+        if (sys_waitid(P_PID, programPid, &info, WEXITED | __WALL, NULL) < 0) return 1;
 
         char *printStr;
         uint64_t printStrLen;
         if (run_execErrno != 0) {
-            status = run_execErrno;
+            info.si_status = run_execErrno;
             printStr = FAILED_RUN;
             printStrLen = hc_STR_LEN(FAILED_RUN);
         } else {
-            int32_t signal = status & 0x7F;
-            if (signal != 0) {
-                status = -signal;
-            } else {
-                status = (status & 0xFF00) >> 8;
-            }
             printStr = SUCCESSFUL_RUN;
             printStrLen = hc_STR_LEN(SUCCESSFUL_RUN);
         }
         char print[
-            hc_MAX(hc_STR_LEN(SUCCESSFUL_RUN), hc_STR_LEN(FAILED_RUN)) + 
+            hc_MAX(hc_STR_LEN(SUCCESSFUL_RUN), hc_STR_LEN(FAILED_RUN)) +
             util_INT32_MAX_CHARS +
             hc_STR_LEN("\n")
         ];
         char *pos = hc_ARRAY_END(print);
         hc_PREPEND_STR(pos, "\n");
-        pos = util_intToStr(pos, status);
+        pos = util_intToStr(pos, info.si_status);
         hc_PREPEND(pos, printStr, printStrLen);
         if (util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos) < 0) return 1;
         continue;
