@@ -1180,8 +1180,8 @@ static hc_INLINE int32_t sys_reboot(uint32_t magic1, uint32_t magic2, uint32_t c
     return (int32_t)ret;
 }
 
-static hc_INLINE int32_t sys_mount(const char *dev_name, const char *dir_name, const char *type, uint64_t flags, const void *data) {
-    sys_SYSCALL5(sys_NR_mount, dev_name, dir_name, type, flags, data)
+static hc_INLINE int32_t sys_mount(const char *devname, const char *dirname, const char *type, uint64_t flags, const void *data) {
+    sys_SYSCALL5(sys_NR_mount, devname, dirname, type, flags, data)
     return (int32_t)ret;
 }
 
