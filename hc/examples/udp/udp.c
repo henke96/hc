@@ -45,7 +45,15 @@ static int32_t join_multicast(int32_t fd, char *groups, int32_t ifIndex) {
 int32_t start(hc_UNUSED int32_t argc, char **argv, hc_UNUSED char **envp) {
     struct options options;
     if (options_init(&options, argv) < 0) {
-        debug_print("\nUsage: udp [-b ADDRESS] [-p PORT] [-i INTERFACE] [-m GROUPS]\n");
+        debug_print(
+            "\nUsage: udp [OPTION]...\n"
+            "Options:\n"
+            "    -b, --bind <bind-address>\n"
+            "    -p, --port <bind-port>\n"
+            "    -i, --interface <bind-interface>\n"
+            "    -m, --multicast-groups <groups>\n"
+            "        comma-separated list of multicast groups to join\n"
+        );
         return 1;
     }
 

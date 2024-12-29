@@ -19,6 +19,21 @@ static int32_t options_init(struct options *self, char **argv) {
     char curOpt;
     int32_t argvIndex = 1;
     argParse_START(argv, argvIndex, curOpt, optsDone)
+        case '-': {
+            if (ARG[1] == '\0') {
+                ++argvIndex;
+                goto optsDone;
+            }
+            if (util_cstrCmp(&ARG[1], "multicast-groups") == 0) ARG = "-m";
+            else if (util_cstrCmp(&ARG[1], "bind") == 0) ARG = "-b";
+            else if (util_cstrCmp(&ARG[1], "port") == 0) ARG = "-p";
+            else if (util_cstrCmp(&ARG[1], "interface") == 0) ARG = "-i";
+            else {
+                curOpt = '-';
+                goto optsDone;
+            }
+            break;
+        }
     argParse_FLAGS_TO_ARGS_DELIMITER
         case 'm': {
             self->multicastGroups = ARG;

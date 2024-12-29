@@ -134,6 +134,14 @@ static int32_t run(char **argv) {
     char curOpt;
     int64_t argvIndex = 1;
     argParse_START(argv, argvIndex, curOpt, optsDone)
+        case '-': {
+            if (ARG[1] == '\0') {
+                ++argvIndex;
+                goto optsDone;
+            }
+            curOpt = '-';
+            goto optsDone;
+        }
     argParse_FLAGS_TO_ARGS_DELIMITER
         case 'o': {
             if (outputOpen) finaliseOutput();

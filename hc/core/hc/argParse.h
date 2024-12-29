@@ -1,9 +1,5 @@
 #define argParse_START(ARGV, ARGV_INDEX, CUR_OPT, DONE_LABEL) \
     for (CUR_OPT = '\0';; ++ARGV_INDEX) { \
-        if (CUR_OPT == '-') { \
-            CUR_OPT = '\0'; \
-            goto DONE_LABEL; \
-        } \
         char *ARG = ARGV[ARGV_INDEX]; \
         if (ARG == NULL) { \
             if (CUR_OPT != '\0') --ARGV_INDEX; \
