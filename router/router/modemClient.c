@@ -8,8 +8,8 @@ struct modemClient_constant {
     uint16_t constantLength;
     const char *constant;
 } hc_PACKED(1);
-// Disable echo, set sms to text mode, enable extended sms info.
-#define modemClient_INIT_CMD "ATE0;+CMGF=1;+CSDH=1;+CSCS=\"UCS2\"\r"
+// Disable echo, set sms to text mode, enable extended sms info, set charset, set SIM message storage.
+#define modemClient_INIT_CMD "ATE0;+CMGF=1;+CSDH=1;+CSCS=\"UCS2\";+CPMS=\"SM\",\"SM\",\"SM\"\r"
 // Delete all messages except unread, list all messages.
 #define modemClient_SMS_POLL_CMD "AT+CMGD=,3;+CMGL=\"REC UNREAD\"\r"
 
@@ -211,9 +211,10 @@ static void modemClient_onFd(struct modemClient *self) {
     int32_t lineLength;
     for (;; lineStart += lineLength + 1) {
         char *bufferLineStart = &self->buffer[lineStart];
+        int32_t remainingBuffer = self->receivedSize - lineStart;
 
         // Find line length, excluding new line.
-        for (lineLength = 0; lineLength < self->receivedSize - lineStart; ++lineLength) {
+        for (lineLength = 0; lineLength < remainingBuffer; ++lineLength) {
             if (bufferLineStart[lineLength] == '\n') goto foundLine;
         }
         if (lineLength != 2 || bufferLineStart[0] != '>' || bufferLineStart[1] != ' ') goto out; // No line found.
@@ -278,7 +279,7 @@ static void modemClient_onFd(struct modemClient *self) {
             int32_t smsContentIndex = lineLength + 1;
 
             // Check if we have received the whole SMS and newline. Very ugly check..
-            if (smsLength > (uint64_t)((self->receivedSize - smsContentIndex - 1) / 4)) goto out; // Nope.
+            if (smsLength > (uint64_t)((remainingBuffer - smsContentIndex - 1) / 4)) goto out; // Nope.
 
             uint64_t smsSize = smsLength * 4; // UCS2 + hex encoding (ex: "ab" => "00610062").
 
