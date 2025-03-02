@@ -4,18 +4,14 @@ SCRIPT_DIR="$(cd -- "${0%/*}/" && pwd)"
 . "$SCRIPT_DIR/../../../hc/core/shell/recipe.sh"
 
 . "$SCRIPT_DIR/../files/urls"
-sha512="2ac51f7654a44adf3ee5a5e32cecd7f129e423bdf3074c60b22a7acdba131e7dd0bb2964c107a06ae133f51836272be166f5da1f996f67ceb6c22e2636117beb"
+sha512="a32632e072e535bf164503cf9992a4da7ea971e80f8f84ead4e7bc8899a92c27e4670bdebef1de0187596672e44af7b96078888e0cd4eefa3e3f551344d434d8"
 
 DEPENDENCIES="../make ../xz"
 
 recipe_start
 export PATH="$OUT/make/bin:$OUT/xz/bin:$PATH"
 xz -d -c "$(recipe_download "$url_e2fsprogs" "$sha512")" | tar xf -
-cd ./e2fsprogs-1.47.1
-
-# https://www.spinics.net/lists/linux-ext4/msg95502.html
-sed -e 's/#define llseek lseek/#define my_llseek lseek/' lib/blkid/llseek.c > sed.temp
-mv sed.temp lib/blkid/llseek.c
+cd ./e2fsprogs-1.47.2
 
 ./configure --prefix="$OUT/$SCRIPT_NAME" --disable-testio-debug --disable-backtrace --disable-debugfs --disable-imager --disable-resizer --disable-defrag --disable-uuidd --disable-mmp --disable-tdb --disable-bmap-stats --disable-nls --disable-fuse2fs --without-libiconv-prefix --without-libintl-prefix --without-libarchive --with-udev-rules-dir=no --with-crond-dir=no --with-systemd-unit-dir=no >/dev/null
 make -j "$NUM_CPUS" install E2SCRUB_DIR= >/dev/null

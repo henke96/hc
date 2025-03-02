@@ -87,7 +87,7 @@ xorriso -as mkisofs -V ROUTER -o router.iso -J --norock -append_partition 2 0xef
 "downloads/bison-3.8.2.tar.xz=$(recipe_download "$url_bison" "d4d23af6671406e97257892f90651b67f2ab95219831372be032190b7156c10a3435d457857e677445df8b2327aacccc15344acbbc3808a6f332a93cce23b444")" \
 "downloads/bzip2-1.0.8.tar.gz=$(recipe_download "$url_bzip2" "083f5e675d73f3233c7930ebe20425a533feedeaaa9d8cc86831312a6581cefbe6ed0d08d2fa89be81082f2a5abdabca8b3c080bf97218a1bd59dc118a30b9f3")" \
 "downloads/diffutils-3.10.tar.xz=$(recipe_download "$url_diffutils" "219d2c815a120690c6589846271e43aee5c96c61a7ee4abbef97dfcdb3d6416652ed494b417de0ab6688c4322540d48be63b5e617beb6d20530b5d55d723ccbb")" \
-"downloads/e2fsprogs-1.47.1.tar.xz=$(recipe_download "$url_e2fsprogs" "2ac51f7654a44adf3ee5a5e32cecd7f129e423bdf3074c60b22a7acdba131e7dd0bb2964c107a06ae133f51836272be166f5da1f996f67ceb6c22e2636117beb")" \
+"downloads/e2fsprogs-1.47.2.tar.xz=$(recipe_download "$url_e2fsprogs" "a32632e072e535bf164503cf9992a4da7ea971e80f8f84ead4e7bc8899a92c27e4670bdebef1de0187596672e44af7b96078888e0cd4eefa3e3f551344d434d8")" \
 "downloads/elfutils-0.189.tar.bz2=$(recipe_download "$url_elfutils" "93a877e34db93e5498581d0ab2d702b08c0d87e4cafd9cec9d6636dfa85a168095c305c11583a5b0fb79374dd93bc8d0e9ce6016e6c172764bcea12861605b71")" \
 "downloads/findutils-4.9.0.tar.xz=$(recipe_download "$url_findutils" "ba4844f4403de0148ad14b46a3dbefd5a721f6257c864bf41a6789b11705408524751c627420b15a52af95564d8e5b52f0978474f640a62ab86a41d20cf14be9")" \
 "downloads/flex-2.6.4.tar.gz=$(recipe_download "$url_flex" "e9785f3d620a204b7d20222888917dc065c2036cae28667065bf7862dfa1b25235095a12fd04efdbd09bfd17d3452e6b9ef953a8c1137862ff671c97132a082e")" \
