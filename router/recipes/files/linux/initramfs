@@ -11,17 +11,17 @@ dir /devpts 0755 0 0
 
 dir /lib 0755 0 0
 dir /lib/firmware 0755 0 0
-file /lib/firmware/iwlwifi-cc-a0-77.ucode ../../linux-firmware/bin/iwlwifi-cc-a0-77.ucode 0755 0 0
-file /lib/firmware/regulatory.db ../../wireless-regdb/bin/regulatory.db 0755 0 0
+file /lib/firmware/iwlwifi-cc-a0-77.ucode ${OUT}/linux-firmware/bin/iwlwifi-cc-a0-77.ucode 0755 0 0
+file /lib/firmware/regulatory.db ${OUT}/wireless-regdb/bin/regulatory.db 0755 0 0
 
-file /init ../../init_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_init 0755 0 0
-file /router ../../router_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_router 0755 0 0
-file /hostapd ../../hostapd_${ARCH}/hostapd 0755 0 0
+file /init ${OUT}/init_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_init 0755 0 0
+file /router ${OUT}/router_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_router 0755 0 0
+file /hostapd ${OUT}/hostapd_${ARCH}/hostapd 0755 0 0
 
-file /bootstrap ../../utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_bootstrap 0755 0 0
-file /shell ../../utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_shell 0755 0 0
+file /bootstrap ${OUT}/utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_bootstrap 0755 0 0
+file /shell ${OUT}/utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_shell 0755 0 0
 
 slink /usr / 0755 0 0
 dir /bin 0755 0 0
-file /bin/env ../../utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_env 0755 0 0
-file /bin/sh ../../utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_sh 0755 0 0
+file /bin/env ${OUT}/utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_env 0755 0 0
+file /bin/sh ${OUT}/utilities_${ARCH}/${DEBUG_PREFIX}${ARCH}-linux_sh 0755 0 0

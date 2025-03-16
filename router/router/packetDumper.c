@@ -4,10 +4,13 @@ struct packetDumper {
     int32_t clientFd; // -1 if not dumping.
     int32_t packetFd; // -1 if not dumping.
     int32_t ifIndex;
+    uint16_t port;
+    char __pad[6];
 };
 
-static void packetDumper_init(struct packetDumper *self, int32_t ifIndex) {
+static void packetDumper_init(struct packetDumper *self, int32_t ifIndex, uint16_t port) {
     self->ifIndex = ifIndex;
+    self->port = port;
     self->clientFd = -1;
     self->packetFd = -1;
 
@@ -16,7 +19,7 @@ static void packetDumper_init(struct packetDumper *self, int32_t ifIndex) {
 
     struct sockaddr_in listenAddr = {
         .sin_family = AF_INET,
-        .sin_port = hc_BSWAP16((uint16_t)ifIndex), // Bind to the ifIndex as port..
+        .sin_port = hc_BSWAP16(self->port),
         .sin_addr = { 10, 123, 0, 1 }
     };
     CHECK(sys_bind(self->listenFd, &listenAddr, sizeof(listenAddr)), RES == 0);
@@ -78,9 +81,9 @@ static void packetDumper_onListenFd(struct packetDumper *self, int32_t epollFd) 
         { 0x45, 14, 0, 0x00001fff },
         { 0xb1, 0, 0, 0x0000000e },
         { 0x48, 0, 0, 0x0000000e },
-        { 0x15, 10, 0, (uint32_t)self->ifIndex },
+        { 0x15, 10, 0, self->port },
         { 0x48, 0, 0, 0x00000010 },
-        { 0x15, 8, 9, (uint32_t)self->ifIndex },
+        { 0x15, 8, 9, self->port },
         { 0x15, 0, 8, 0x00000011 },
         { 0x28, 0, 0, 0x00000014 },
         { 0x45, 6, 0, 0x00001fff },

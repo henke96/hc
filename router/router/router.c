@@ -44,6 +44,7 @@ static void epollAdd(int32_t epollFd, int32_t fd) {
 #include "acpi.c"
 #include "config.c"
 #include "dhcpClient.c"
+struct dhcpClient wanDhcpClient;
 #include "dhcpServer.c"
 #include "iptables.c"
 #include "packetDumper.c"
@@ -62,20 +63,38 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
     ksmb_init();
     config_init();
 
+    iptables_configure();
     config_configure();
     hostapd_init();
 
-    dhcpClient_init();
-    iptables_configure();
+    dhcpClient_init(&wanDhcpClient, config_WAN_IF_INDEX, 100);
+    struct dhcpClient usbDhcpClient = {
+        .fd = -1,
+        .timerFd = -1   
+    };
+    struct packetDumper usbDumper = {
+        .listenFd = -1,
+        .clientFd = -1,
+        .packetFd = -1
+    };
+    // TODO: Get rid of sleep..
+    struct timespec sleep = { .tv_sec = 5 };
+    CHECK(sys_clock_nanosleep(CLOCK_MONOTONIC, 0, &sleep, NULL), RES == 0);
+    int32_t usbIfIndex = config_getIfIndex("usb0");
+    if (usbIfIndex >= 0) {
+        config_setFlags(usbIfIndex, IFF_UP, IFF_UP);
+        dhcpClient_init(&usbDhcpClient, usbIfIndex, 101);
+        packetDumper_init(&usbDumper, usbIfIndex, 101);
+    }
+
+    struct packetDumper wanDumper;
+    packetDumper_init(&wanDumper, config_WAN_IF_INDEX, 100);
+    struct packetDumper lanDumper;
+    packetDumper_init(&lanDumper, config_LAN_IF_INDEX, 102);
 
     struct dhcpServer dhcpServer;
     uint8_t lanIp[4] hc_ALIGNED(4) = { 10, 123, 0, 1 };
     dhcpServer_init(&dhcpServer, config_LAN_IF_INDEX, *(uint32_t *)&lanIp[0]);
-
-    struct packetDumper wanDumper;
-    packetDumper_init(&wanDumper, config_WAN_IF_INDEX);
-    struct packetDumper lanDumper;
-    packetDumper_init(&lanDumper, config_LAN_IF_INDEX);
 
     struct modemClient modemClient;
     modemClient_init(&modemClient, "/dev/ttyUSB2");
@@ -88,11 +107,16 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
     epollAdd(epollFd, acpi.netlinkFd);
     epollAdd(epollFd, ksmb.netlinkFd);
     if (hostapd.pidFd > 0) epollAdd(epollFd, hostapd.pidFd);
-    epollAdd(epollFd, dhcpClient.fd);
-    epollAdd(epollFd, dhcpClient.timerFd);
-    epollAdd(epollFd, dhcpServer.fd);
+    epollAdd(epollFd, wanDhcpClient.fd);
+    epollAdd(epollFd, wanDhcpClient.timerFd);
+    if (usbDhcpClient.fd >= 0) {
+        epollAdd(epollFd, usbDhcpClient.fd);
+        epollAdd(epollFd, usbDhcpClient.timerFd);
+    }
+    if (usbDumper.listenFd >= 0) epollAdd(epollFd, usbDumper.listenFd);
     epollAdd(epollFd, wanDumper.listenFd);
     epollAdd(epollFd, lanDumper.listenFd);
+    epollAdd(epollFd, dhcpServer.fd);
     epollAdd(epollFd, modemClient.timerFd);
     epollAdd(epollFd, telnetServer.listenFd);
     epollAdd(epollFd, telnetServer.pidFd);
@@ -106,8 +130,10 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
         if (event.data.fd == hostapd.pidFd || event.data.fd == telnetServer.pidFd) util_abort();
 
         if (event.data.fd == ksmb.netlinkFd) ksmb_onNetlinkFd();
-        else if (event.data.fd == dhcpClient.fd) dhcpClient_onFd();
-        else if (event.data.fd == dhcpClient.timerFd) dhcpClient_onTimerFd();
+        else if (event.data.fd == wanDhcpClient.fd) dhcpClient_onFd(&wanDhcpClient);
+        else if (event.data.fd == wanDhcpClient.timerFd) dhcpClient_onTimerFd(&wanDhcpClient);
+        else if (event.data.fd == usbDhcpClient.fd) dhcpClient_onFd(&usbDhcpClient);
+        else if (event.data.fd == usbDhcpClient.timerFd) dhcpClient_onTimerFd(&usbDhcpClient);
         else if (event.data.fd == dhcpServer.fd) dhcpServer_onFd(&dhcpServer);
         else if (event.data.fd == wanDumper.listenFd) packetDumper_onListenFd(&wanDumper, epollFd);
         else if (event.data.fd == wanDumper.packetFd) packetDumper_onPacketFd(&wanDumper);
@@ -115,6 +141,9 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
         else if (event.data.fd == lanDumper.listenFd) packetDumper_onListenFd(&lanDumper, epollFd);
         else if (event.data.fd == lanDumper.packetFd) packetDumper_onPacketFd(&lanDumper);
         else if (event.data.fd == lanDumper.clientFd) packetDumper_onClientFd(&lanDumper);
+        else if (event.data.fd == usbDumper.listenFd) packetDumper_onListenFd(&usbDumper, epollFd);
+        else if (event.data.fd == usbDumper.packetFd) packetDumper_onPacketFd(&usbDumper);
+        else if (event.data.fd == usbDumper.clientFd) packetDumper_onClientFd(&usbDumper);
         else if (event.data.fd == modemClient.timerFd) modemClient_onTimerFd(&modemClient, epollFd);
         else if (event.data.fd == modemClient.fd) modemClient_onFd(&modemClient);
         else if (event.data.fd == telnetServer.listenFd) telnetServer_onListenFd(epollFd);
@@ -125,10 +154,12 @@ int32_t start(hc_UNUSED int32_t argc, hc_UNUSED char **argv, hc_UNUSED char **en
 
     telnetServer_deinit();
     modemClient_deinit(&modemClient);
+    dhcpServer_deinit(&dhcpServer);
     packetDumper_deinit(&lanDumper);
     packetDumper_deinit(&wanDumper);
-    dhcpServer_deinit(&dhcpServer);
-    dhcpClient_deinit();
+    if (usbDumper.listenFd >= 0) packetDumper_deinit(&usbDumper);
+    if (usbDhcpClient.fd >= 0) dhcpClient_deinit(&usbDhcpClient);
+    dhcpClient_deinit(&wanDhcpClient);
     hostapd_deinit();
     config_deinit();
     ksmb_deinit();

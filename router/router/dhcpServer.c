@@ -166,7 +166,7 @@ static void dhcpServer_onFd(struct dhcpServer *self) {
     hc_MEMCPY(&replyMsg.router[0], &self->serverIp, 4);
 
     hc_MEMCPY(&replyMsg.hdr.clientHwAddr[0], &header->clientHwAddr[0], 6);
-    if (dhcpClient.dnsIp != 0) hc_MEMCPY(&replyMsg.dns, &dhcpClient.dnsIp, sizeof(replyMsg.dns));
+    if (wanDhcpClient.dnsIp != 0) hc_MEMCPY(&replyMsg.dns, &wanDhcpClient.dnsIp, sizeof(replyMsg.dns));
 
     struct sockaddr_in destAddr = {
         .sin_family = AF_INET,

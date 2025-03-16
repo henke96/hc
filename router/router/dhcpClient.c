@@ -1,34 +1,44 @@
-#define dhcp_IFINDEX config_WAN_IF_INDEX
-
 struct dhcpClient {
-    struct ifreq ifreq; // ifr_name and ifr_addr.
     int32_t fd;
+    int32_t packetFd; // For sending discovers.
     int32_t timerFd;
     int32_t dnsIp; // 0 if none.
     uint32_t currentIdentifier;
     uint32_t leasedIp; // Currently leased ip, 0 if none.
     uint32_t renewServerIp; // The server to renew the lease from.
+    int32_t ifIndex;
+    uint32_t routePriority;
+    char ifName[IFNAMSIZ];
+    uint8_t ifMacAddress[6];
     uint8_t leasedIpNetmask; // 0 if none.
-    char __pad[7];
+    char __pad;
 };
 
-static struct dhcpClient dhcpClient = { 0 };
+static void dhcpClient_init(struct dhcpClient *self, int32_t ifIndex, uint32_t routePriority) {
+    self->dnsIp = 0;
+    self->currentIdentifier = 0;
+    self->leasedIp = 0;
+    self->renewServerIp = 0;
+    self->leasedIpNetmask = 0;
+    self->ifIndex = ifIndex;
+    self->routePriority = routePriority;
 
-static void dhcpClient_init(void) {
-    dhcpClient.fd = sys_socket(AF_INET, SOCK_DGRAM, 0);
-    CHECK(dhcpClient.fd, RES > 0);
+    self->fd = sys_socket(AF_INET, SOCK_DGRAM, 0);
+    CHECK(self->fd, RES > 0);
 
     // Populate interface name and MAC address.
-    dhcpClient.ifreq.ifr_ifindex = dhcp_IFINDEX;
-    CHECK(sys_ioctl(dhcpClient.fd, SIOCGIFNAME, &dhcpClient.ifreq), RES == 0);
-    CHECK(sys_ioctl(dhcpClient.fd, SIOCGIFHWADDR, &dhcpClient.ifreq), RES == 0);
+    struct ifreq ifreq = { .ifr_ifindex = self->ifIndex };
+    CHECK(sys_ioctl(self->fd, SIOCGIFNAME, &ifreq), RES == 0);
+    CHECK(sys_ioctl(self->fd, SIOCGIFHWADDR, &ifreq), RES == 0);
+    hc_MEMCPY(&self->ifName[0], &ifreq.ifr_name[0], sizeof(self->ifName));
+    hc_MEMCPY(&self->ifMacAddress[0], &ifreq.ifr_addr[2], sizeof(self->ifMacAddress));
 
     // Bind the socket to the interface.
-    CHECK(sys_setsockopt(dhcpClient.fd, SOL_SOCKET, SO_BINDTODEVICE, &dhcpClient.ifreq.ifr_name, IFNAMSIZ), RES == 0);
+    CHECK(sys_setsockopt(self->fd, SOL_SOCKET, SO_BINDTODEVICE, &self->ifName[0], IFNAMSIZ), RES == 0);
 
     // Allow sending/receiving multicast.
     int32_t broadcast = 1;
-    CHECK(sys_setsockopt(dhcpClient.fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)), RES == 0);
+    CHECK(sys_setsockopt(self->fd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast)), RES == 0);
 
     // Bind to any IP, port 68.
     struct sockaddr_in addr = {
@@ -36,19 +46,23 @@ static void dhcpClient_init(void) {
         .sin_port = hc_BSWAP16(68),
         .sin_addr = { 0, 0, 0, 0 }
     };
-    CHECK(sys_bind(dhcpClient.fd, &addr, sizeof(addr)), RES == 0);
+    CHECK(sys_bind(self->fd, &addr, sizeof(addr)), RES == 0);
+
+    // Create packet socket for sending discovers.
+    self->packetFd = sys_socket(AF_PACKET, SOCK_DGRAM, 0);
+    CHECK(self->packetFd, RES > 0);
 
     // Create timer fd, and set initial timeout.
-    dhcpClient.timerFd = sys_timerfd_create(CLOCK_MONOTONIC, 0);
-    CHECK(dhcpClient.timerFd, RES > 0);
+    self->timerFd = sys_timerfd_create(CLOCK_MONOTONIC, 0);
+    CHECK(self->timerFd, RES > 0);
 
     struct itimerspec timeout = { .it_value = { .tv_sec = 10 } };
-    CHECK(sys_timerfd_settime(dhcpClient.timerFd, 0, &timeout, NULL), RES == 0);
+    CHECK(sys_timerfd_settime(self->timerFd, 0, &timeout, NULL), RES == 0);
 }
 
-static void dhcpClient_onTimerFd(void) {
+static void dhcpClient_onTimerFd(struct dhcpClient *self) {
     uint64_t expirations = 0;
-    CHECK(sys_read(dhcpClient.timerFd, &expirations, sizeof(expirations)), RES == sizeof(expirations));
+    CHECK(sys_read(self->timerFd, &expirations, sizeof(expirations)), RES == sizeof(expirations));
     debug_ASSERT(expirations == 1);
 
     struct {
@@ -64,7 +78,7 @@ static void dhcpClient_onTimerFd(void) {
             .opcode = dhcp_BOOTREQUEST,
             .hwAddrType = dhcp_ETHERNET,
             .hwAddrLen = 6,
-            .identifier = hc_BSWAP32(++dhcpClient.currentIdentifier),
+            .identifier = hc_BSWAP32(++self->currentIdentifier),
             .magicCookie = dhcp_MAGIC_COOKIE
         },
         .messageTypeOpt = {
@@ -78,24 +92,31 @@ static void dhcpClient_onTimerFd(void) {
         .paramRequestList = { dhcp_SUBNET_MASK, dhcp_ROUTER, dhcp_DNS },
         .endOpt = dhcp_END
     };
-    hc_MEMCPY(&requestMsg.hdr.clientHwAddr, &dhcpClient.ifreq.ifr_addr[2], 6);
+    hc_MEMCPY(&requestMsg.hdr.clientHwAddr, &self->ifMacAddress[0], sizeof(self->ifMacAddress));
 
-    struct sockaddr_in destAddr = {
-        .sin_family = AF_INET,
-        .sin_port = hc_BSWAP16(67),
-        .sin_addr = { 255, 255, 255, 255 }
-    };
-
-    if (dhcpClient.leasedIp != 0 && dhcpClient.renewServerIp != 0) {
+    if (self->leasedIp != 0 && self->renewServerIp != 0) {
         // Attempt to renew the leased IP once.
         requestMsg.messageType = dhcp_REQUEST;
-        hc_MEMCPY(&requestMsg.hdr.clientIp[0], &dhcpClient.leasedIp, 4);
-        hc_MEMCPY(&destAddr.sin_addr[0], &dhcpClient.renewServerIp, 4);
-        dhcpClient.renewServerIp = 0;
+        hc_MEMCPY(&requestMsg.hdr.clientIp[0], &self->leasedIp, 4);
+
+        struct sockaddr_in destAddr = {
+            .sin_family = AF_INET,
+            .sin_port = hc_BSWAP16(67)
+        };
+        hc_MEMCPY(&destAddr.sin_addr[0], &self->renewServerIp, 4);
+        debug_CHECK(
+            sys_sendto(self->fd, &requestMsg, sizeof(requestMsg), MSG_NOSIGNAL, &destAddr, sizeof(destAddr)),
+            RES == sizeof(requestMsg)
+        );
+        self->renewServerIp = 0;
     } else {
         // Either we had no leased IP, or we failed to renew it.
-        if (dhcpClient.leasedIp != 0) {
-            debug_print("Lost IP lease\n");
+        if (self->leasedIp != 0) {
+            char print[sizeof(self->ifName) + hc_STR_LEN(" lost IP lease\n")];
+            char *pos = hc_ARRAY_END(print);
+            hc_PREPEND_STR(pos, " lost IP lease\n");
+            hc_PREPEND(pos, &self->ifName[0], (size_t)util_cstrLen(&self->ifName[0]));
+            debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
 
             // Remove the IP.
             struct addrRequest {
@@ -112,37 +133,94 @@ static void dhcpClient_onTimerFd(void) {
                 },
                 .addrMsg = {
                     .ifa_family = AF_INET,
-                    .ifa_index = dhcp_IFINDEX
+                    .ifa_index = self->ifIndex
                 },
                 .addrAttr = {
                     .nla_len = sizeof(request.addrAttr) + sizeof(request.address),
                     .nla_type = IFA_LOCAL
                 }
             };
-            hc_MEMCPY(&request.address, &dhcpClient.leasedIp, 4);
+            hc_MEMCPY(&request.address, &self->leasedIp, 4);
             struct iovec_const iov[] = { { &request, sizeof(request) } };
             netlink_talk(config.rtnetlinkFd, &iov[0], hc_ARRAY_LEN(iov));
-            dhcpClient.leasedIp = 0;
+            self->leasedIp = 0;
         }
         requestMsg.messageType = dhcp_DISCOVER;
         requestMsg.hdr.flags = hc_BSWAP16(0x8000); // Request broadcast responses.
+
+        struct {
+            uint8_t versionIhl;
+            uint8_t dscpEcn;
+            uint16_t totalLength;
+            uint16_t identification;
+            uint16_t flagsFragmentOffset;
+            uint8_t timeToLive;
+            uint8_t protocol;
+            uint16_t checksum;
+            uint32_t sourceAddress;
+            uint32_t destinationAddress;
+            struct {
+                uint16_t sourcePort;
+                uint16_t destinationPort;
+                uint16_t length;
+                uint16_t checksum;
+            } udp;
+        } ipUdpHeader = {
+            .versionIhl = 0x45,
+            .dscpEcn = 0,
+            .totalLength = hc_BSWAP16(sizeof(ipUdpHeader) + sizeof(requestMsg)),
+            .identification = 0,
+            .flagsFragmentOffset = hc_BSWAP16(2 << 13), // DF
+            .timeToLive = 64,
+            .protocol = 17, // UDP
+            .checksum = hc_BSWAP16(0x39d6), // Pre-calculated.
+            .sourceAddress = 0,
+            .destinationAddress = 0xFFFFFFFF,
+            .udp = {
+                .sourcePort = hc_BSWAP16(68),
+                .destinationPort = hc_BSWAP16(67),
+                .length = hc_BSWAP16(sizeof(ipUdpHeader.udp) + sizeof(requestMsg)),
+                .checksum = 0 // UDP checksum is optional for IPv4.
+            }
+        };
+
+        struct sockaddr_ll addr = {
+            .sll_family = AF_PACKET,
+            .sll_protocol = hc_BSWAP16(ETH_P_IP),
+            .sll_ifindex = self->ifIndex,
+            .sll_halen = 6,
+            .sll_addr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }
+        };
+        struct iovec_const iov[] = {
+            { .iov_base = &ipUdpHeader, .iov_len = sizeof(ipUdpHeader) },
+            { .iov_base = &requestMsg, .iov_len = sizeof(requestMsg) }
+        };
+        struct msghdr_const sendMsghdr = {
+            .msg_name = &addr,
+            .msg_namelen = sizeof(addr),
+            .msg_iov = &iov[0],
+            .msg_iovlen = hc_ARRAY_LEN(iov)
+        };
+        debug_CHECK(
+            sys_sendmsg(self->packetFd, &sendMsghdr, MSG_NOSIGNAL),
+            RES == (int64_t)sizeof(ipUdpHeader) + sizeof(requestMsg)
+        );
     }
-    debug_CHECK(sys_sendto(dhcpClient.fd, &requestMsg, sizeof(requestMsg), MSG_NOSIGNAL, &destAddr, sizeof(destAddr)), RES == sizeof(requestMsg));
 
     // Set timeout to 10 seconds.
     struct itimerspec timeout = { .it_value = { .tv_sec = 10 } };
-    CHECK(sys_timerfd_settime(dhcpClient.timerFd, 0, &timeout, NULL), RES == 0);
+    CHECK(sys_timerfd_settime(self->timerFd, 0, &timeout, NULL), RES == 0);
 }
 
-static void dhcpClient_onFd(void) {
-    int64_t numRead = sys_read(dhcpClient.fd, &buffer[0], sizeof(buffer));
+static void dhcpClient_onFd(struct dhcpClient *self) {
+    int64_t numRead = sys_read(self->fd, &buffer[0], sizeof(buffer));
     debug_ASSERT(numRead > 0);
     if (numRead < (int64_t)sizeof(struct dhcp_header)) return;
     void *end = &buffer[numRead];
     struct dhcp_header *header = (void *)&buffer[0];
 
     // Make sure the packet is for us.
-    if (mem_compare(&header->clientHwAddr, &dhcpClient.ifreq.ifr_addr[2], 6) != 0) return;
+    if (mem_compare(&header->clientHwAddr, &self->ifMacAddress[0], sizeof(self->ifMacAddress)) != 0) return;
 
     // Find DHCP options.
     struct dhcp_option *messageType = NULL;
@@ -204,7 +282,7 @@ static void dhcpClient_onFd(void) {
                     .opcode = dhcp_BOOTREQUEST,
                     .hwAddrType = dhcp_ETHERNET,
                     .hwAddrLen = 6,
-                    .identifier = hc_BSWAP32(dhcpClient.currentIdentifier),
+                    .identifier = hc_BSWAP32(self->currentIdentifier),
                     .flags = hc_BSWAP16(0x8000), // Request broadcast responses.
                     .magicCookie = dhcp_MAGIC_COOKIE
                 },
@@ -234,7 +312,7 @@ static void dhcpClient_onFd(void) {
             };
             hc_MEMCPY(&requestMsg.leaseTime, &leaseTime[1], sizeof(requestMsg.leaseTime));
             hc_MEMCPY(&requestMsg.serverId, &header->serverIp, sizeof(requestMsg.serverId));
-            hc_MEMCPY(&requestMsg.hdr.clientHwAddr, &dhcpClient.ifreq.ifr_addr[2], 6);
+            hc_MEMCPY(&requestMsg.hdr.clientHwAddr, &self->ifMacAddress[0], sizeof(self->ifMacAddress));
             hc_MEMCPY(&requestMsg.requestedIp, &header->yourIp, sizeof(requestMsg.requestedIp));
 
             struct sockaddr_in destAddr = {
@@ -242,24 +320,24 @@ static void dhcpClient_onFd(void) {
                 .sin_port = hc_BSWAP16(67),
                 .sin_addr = { 255, 255, 255, 255 }
             };
-            debug_CHECK(sys_sendto(dhcpClient.fd, &requestMsg, sizeof(requestMsg), MSG_NOSIGNAL, &destAddr, sizeof(destAddr)), RES == sizeof(requestMsg));
+            debug_CHECK(sys_sendto(self->fd, &requestMsg, sizeof(requestMsg), MSG_NOSIGNAL, &destAddr, sizeof(destAddr)), RES == sizeof(requestMsg));
 
             // Set timeout to 10 seconds.
             struct itimerspec timeout = { .it_value = { .tv_sec = 10 } };
-            CHECK(sys_timerfd_settime(dhcpClient.timerFd, 0, &timeout, NULL), RES == 0);
+            CHECK(sys_timerfd_settime(self->timerFd, 0, &timeout, NULL), RES == 0);
             break;
         }
         case dhcp_NAK: {
             // Something didn't succeed, retry in a few seconds.
             struct itimerspec timeout = { .it_value = { .tv_sec = 5 } };
-            CHECK(sys_timerfd_settime(dhcpClient.timerFd, 0, &timeout, NULL), RES == 0);
+            CHECK(sys_timerfd_settime(self->timerFd, 0, &timeout, NULL), RES == 0);
             break;
         }
         case dhcp_ACK: {
             if (subnetMask == NULL || router == NULL || leaseTime == NULL) return;
             if (dns != NULL) {
-                hc_MEMCPY(&dhcpClient.dnsIp, &dns[1], 4);
-            } else dhcpClient.dnsIp = 0;
+                hc_MEMCPY(&self->dnsIp, &dns[1], 4);
+            } else self->dnsIp = 0;
 
             uint32_t leaseTimeValue;
             hc_MEMCPY(&leaseTimeValue, &leaseTime[1], 4);
@@ -267,19 +345,20 @@ static void dhcpClient_onFd(void) {
 
             // Set timeout to half of the lease time, rounded up.
             struct itimerspec timeout = { .it_value = { .tv_sec = (leaseTimeValue + 1) / 2 } };
-            CHECK(sys_timerfd_settime(dhcpClient.timerFd, 0, &timeout, NULL), RES == 0);
+            CHECK(sys_timerfd_settime(self->timerFd, 0, &timeout, NULL), RES == 0);
 
             uint32_t netmask;
             hc_MEMCPY(&netmask, &subnetMask[1], 4);
-            dhcpClient.leasedIpNetmask = (uint8_t)hc_POPCOUNT32(netmask);
+            self->leasedIpNetmask = (uint8_t)hc_POPCOUNT32(netmask);
 
             // Record new IP lease and renew-server.
-            hc_MEMCPY(&dhcpClient.renewServerIp, &header->serverIp, 4);
-            if (mem_compare(&dhcpClient.leasedIp, &header->yourIp[0], 4) != 0) {
-                hc_MEMCPY(&dhcpClient.leasedIp, &header->yourIp[0], 4);
+            hc_MEMCPY(&self->renewServerIp, &header->serverIp, 4);
+            if (mem_compare(&self->leasedIp, &header->yourIp[0], 4) != 0) {
+                hc_MEMCPY(&self->leasedIp, &header->yourIp[0], 4);
 
                 char print[
-                    hc_STR_LEN("IP leased: ") +
+                    sizeof(self->ifName) +
+                    hc_STR_LEN(" leased IP: ") +
                     util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
                     util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
                     util_UINT8_MAX_CHARS + hc_STR_LEN(".") +
@@ -288,16 +367,17 @@ static void dhcpClient_onFd(void) {
                 ];
                 char *pos = hc_ARRAY_END(print);
                 hc_PREPEND_STR(pos, "\n");
-                pos = util_uintToStr(pos, dhcpClient.leasedIpNetmask);
+                pos = util_uintToStr(pos, self->leasedIpNetmask);
                 hc_PREPEND_STR(pos, "/");
-                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[3]);
+                pos = util_uintToStr(pos, ((uint8_t *)&self->leasedIp)[3]);
                 hc_PREPEND_STR(pos, ".");
-                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[2]);
+                pos = util_uintToStr(pos, ((uint8_t *)&self->leasedIp)[2]);
                 hc_PREPEND_STR(pos, ".");
-                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[1]);
+                pos = util_uintToStr(pos, ((uint8_t *)&self->leasedIp)[1]);
                 hc_PREPEND_STR(pos, ".");
-                pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[0]);
-                hc_PREPEND_STR(pos, "IP leased: ");
+                pos = util_uintToStr(pos, ((uint8_t *)&self->leasedIp)[0]);
+                hc_PREPEND_STR(pos, " leased IP: ");
+                hc_PREPEND(pos, &self->ifName[0], (size_t)util_cstrLen(&self->ifName[0]));
                 debug_CHECK(util_writeAll(util_STDERR, pos, hc_ARRAY_END(print) - pos), RES == 0);
             }
 
@@ -317,8 +397,8 @@ static void dhcpClient_onFd(void) {
                     },
                     .addrMsg = {
                         .ifa_family = AF_INET,
-                        .ifa_prefixlen = dhcpClient.leasedIpNetmask,
-                        .ifa_index = dhcp_IFINDEX
+                        .ifa_prefixlen = self->leasedIpNetmask,
+                        .ifa_index = self->ifIndex
                     },
                     .addrAttr = {
                         .nla_len = sizeof(request.addrAttr) + sizeof(request.address),
@@ -337,6 +417,8 @@ static void dhcpClient_onFd(void) {
                     struct rtmsg routeMsg;
                     struct nlattr gatewayAttr;
                     uint8_t gateway[4];
+                    struct nlattr priorityAttr;
+                    uint32_t priority;
                 };
                 struct routeRequest request = {
                     .hdr = {
@@ -354,7 +436,12 @@ static void dhcpClient_onFd(void) {
                     .gatewayAttr = {
                         .nla_len = sizeof(request.gatewayAttr) + sizeof(request.gateway),
                         .nla_type = RTA_GATEWAY
-                    }
+                    },
+                    .priorityAttr = {
+                        .nla_len = sizeof(request.priorityAttr) + sizeof(request.priority),
+                        .nla_type = RTA_PRIORITY
+                    },
+                    .priority = self->routePriority
                 };
                 hc_MEMCPY(&request.gateway, &router[1], sizeof(request.gateway));
                 struct iovec_const iov[] = { { &request, sizeof(request) } };
@@ -366,7 +453,7 @@ static void dhcpClient_onFd(void) {
     }
 }
 
-static void dhcpClient_deinit(void) {
-    debug_CHECK(sys_close(dhcpClient.timerFd), RES == 0);
-    debug_CHECK(sys_close(dhcpClient.fd), RES == 0);
+static void dhcpClient_deinit(struct dhcpClient *self) {
+    debug_CHECK(sys_close(self->timerFd), RES == 0);
+    debug_CHECK(sys_close(self->fd), RES == 0);
 }

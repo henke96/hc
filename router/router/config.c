@@ -89,6 +89,29 @@ static void config_setMaster(int32_t ifIndex, int32_t masterIfIndex, uint32_t fl
     netlink_talk(config.rtnetlinkFd, &iov[0], hc_ARRAY_LEN(iov));
 }
 
+static void config_setFlags(int32_t ifIndex, uint32_t flags, uint32_t flagsMask) {
+    struct linkRequest {
+        struct nlmsghdr hdr;
+        struct ifinfomsg ifInfo;
+    };
+    struct linkRequest request = {
+        .hdr = {
+            .nlmsg_len = sizeof(request),
+            .nlmsg_type = RTM_NEWLINK,
+            .nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+        },
+        .ifInfo = {
+            .ifi_family = AF_UNSPEC,
+            .ifi_type = 0,
+            .ifi_index = ifIndex,
+            .ifi_flags = flags,
+            .ifi_change = flagsMask
+        }
+    };
+    struct iovec_const iov[] = { { &request, sizeof(request) } };
+    netlink_talk(config.rtnetlinkFd, &iov[0], hc_ARRAY_LEN(iov));
+}
+
 static void config_addWgRoute(void) {
     struct addRouteRequest {
         struct nlmsghdr hdr;
@@ -323,9 +346,24 @@ static void config_setWgDevice(void) {
     config_printWgPublicKey();
 }
 
+static int32_t config_getIfIndex(char *ifName) {
+    struct ifreq ifreq;
+    size_t nameSize = (size_t)util_cstrLen(ifName) + 1;
+    debug_ASSERT(nameSize <= IFNAMSIZ);
+    hc_MEMCPY(&ifreq.ifr_name[0], ifName, nameSize);
+    if (sys_ioctl(config.rtnetlinkFd, SIOCGIFINDEX, &ifreq) < 0) return -1;
+    return ifreq.ifr_ifindex;
+}
+
 static void config_configure(void) {
     // Don't respond to ARP on the wrong interface.
     int32_t fd = sys_openat(-1, "/proc/sys/net/ipv4/conf/all/arp_ignore", O_WRONLY, 0);
+    CHECK(fd, RES > 0);
+    CHECK(sys_write(fd, hc_STR_COMMA_LEN("1")), RES == 1);
+    debug_CHECK(sys_close(fd), RES == 0);
+
+    // Ignore routes over interfaces without link.
+    fd = sys_openat(-1, "/proc/sys/net/ipv4/conf/all/ignore_routes_with_linkdown", O_WRONLY, 0);
     CHECK(fd, RES > 0);
     CHECK(sys_write(fd, hc_STR_COMMA_LEN("1")), RES == 1);
     debug_CHECK(sys_close(fd), RES == 0);

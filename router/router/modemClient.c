@@ -298,15 +298,15 @@ static void modemClient_onFd(struct modemClient *self) {
                 util_UINT8_MAX_CHARS
             ];
             char *pos = hc_ARRAY_END(printIp);
-            pos = util_uintToStr(pos, dhcpClient.leasedIpNetmask);
+            pos = util_uintToStr(pos, wanDhcpClient.leasedIpNetmask);
             hc_PREPEND_STR(pos, "/");
-            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[3]);
+            pos = util_uintToStr(pos, ((uint8_t *)&wanDhcpClient.leasedIp)[3]);
             hc_PREPEND_STR(pos, ".");
-            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[2]);
+            pos = util_uintToStr(pos, ((uint8_t *)&wanDhcpClient.leasedIp)[2]);
             hc_PREPEND_STR(pos, ".");
-            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[1]);
+            pos = util_uintToStr(pos, ((uint8_t *)&wanDhcpClient.leasedIp)[1]);
             hc_PREPEND_STR(pos, ".");
-            pos = util_uintToStr(pos, ((uint8_t *)&dhcpClient.leasedIp)[0]);
+            pos = util_uintToStr(pos, ((uint8_t *)&wanDhcpClient.leasedIp)[0]);
             int32_t sendSmsLength = (int32_t)(hc_ARRAY_END(printIp) - pos);
 
             // Convert to UCS2 + hex encoding.

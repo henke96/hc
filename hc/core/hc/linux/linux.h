@@ -860,8 +860,8 @@ union sigval {
 
 struct siginfo {
     int32_t si_signo;
-    int32_t si_code;
     int32_t si_errno;
+    int32_t si_code;
     int32_t __pad;
     union {
         char __pad[128 - 16];
@@ -2952,6 +2952,7 @@ struct ipt_get_entries {
 
 // if_ether.h
 #define ETH_P_ALL 0x0003
+#define ETH_P_IP 0x0800
 
 // if_packet.h
 struct sockaddr_ll {
