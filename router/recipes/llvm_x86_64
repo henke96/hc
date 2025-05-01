@@ -63,11 +63,12 @@ cmake -S llvm -B build -G "Unix Makefiles" -Wno-dev \
 -DLLVM_TARGETS_TO_BUILD="X86" \
 -DLLVM_DEFAULT_TARGET_TRIPLE="x86_64-unknown-linux-musl" \
 -DDEFAULT_SYSROOT=".." -DCLANG_DEFAULT_RTLIB="compiler-rt" -DCLANG_DEFAULT_CXX_STDLIB="libc++" >/dev/null
-make -C build -j "$NUM_CPUS" install-clang install-lld install-llvm-ar >/dev/null
+make -C build -j "$NUM_CPUS" install-clang install-lld install-llvm-ar install-llvm-nm >/dev/null
 
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/clang-16"
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/lld"
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/llvm-ar"
+llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/llvm-nm"
 
 rm -rf "$PWD"
 recipe_finish

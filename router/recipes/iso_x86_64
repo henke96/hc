@@ -17,6 +17,7 @@ xorriso -as mkisofs -V ROUTER -o router.iso -J --norock -append_partition 2 0xef
 "bin/clang=$OUT/llvm_x86_64/bin/clang-16" \
 "bin/ld.lld=$OUT/llvm_x86_64/bin/lld" \
 "bin/ar=$OUT/llvm_x86_64/bin/llvm-ar" \
+"bin/nm=$OUT/llvm_x86_64/bin/llvm-nm" \
 "bin/coreutils=$OUT/coreutils_x86_64/bin/coreutils" \
 "bin/sh=$OUT/bash_x86_64/bin/bash" \
 "bin/gzip=$OUT/gzip_x86_64/gzip" \
@@ -69,6 +70,7 @@ xorriso -as mkisofs -V ROUTER -o router.iso -J --norock -append_partition 2 0xef
 "bin/ld=$OUT/utilities_x86_64/x86_64-linux_lldWrapper" \
 "bin/ldd=$OUT/utilities_x86_64/x86_64-linux_libcSoWrapper" \
 "lib/Scrt1.o=$OUT/musl_x86_64/lib/Scrt1.o" \
+"lib/crt1.o=$OUT/musl_x86_64/lib/crt1.o" \
 "lib/crti.o=$OUT/musl_x86_64/lib/crti.o" \
 "lib/crtn.o=$OUT/musl_x86_64/lib/crtn.o" \
 "lib/libc.so=$OUT/musl_x86_64/lib/libc.so" \
