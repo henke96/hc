@@ -21,7 +21,7 @@ chmod +x configure
 export CFLAGS="-I$OUT/ncurses/include"
 export LDFLAGS="-L$OUT/ncurses/lib"
 ./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --disable-nls --disable-all-programs --disable-widechar --enable-libuuid --enable-libblkid --enable-libmount --enable-libsmartcols --enable-libfdisk --enable-fdisks --enable-mount --enable-blkid --enable-wipefs --enable-fallocate --enable-lscpu --enable-lsfd --enable-kill --enable-more --disable-bash-completion --disable-makeinstall-chown --disable-makeinstall-setuid --without-libiconv-prefix --without-libintl-prefix --without-ncursesw --with-ncurses --without-readline >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

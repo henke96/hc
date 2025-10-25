@@ -14,7 +14,7 @@ xz -d -c "$(recipe_download "$url_e2fsprogs" "$sha512")" | tar xf -
 cd ./e2fsprogs-1.47.2
 
 ./configure --prefix="$OUT/$SCRIPT_NAME" --disable-testio-debug --disable-backtrace --disable-debugfs --disable-imager --disable-resizer --disable-defrag --disable-uuidd --disable-mmp --disable-tdb --disable-bmap-stats --disable-nls --disable-fuse2fs --without-libiconv-prefix --without-libintl-prefix --without-libarchive --with-udev-rules-dir=no --with-crond-dir=no --with-systemd-unit-dir=no >/dev/null
-make -j "$NUM_CPUS" install E2SCRUB_DIR= >/dev/null
+make -j "$PARALLEL" install E2SCRUB_DIR= >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

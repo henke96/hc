@@ -22,7 +22,7 @@ export CFLAGS="-target $arch-unknown-linux-musl"
 export LDFLAGS="-target $arch-unknown-linux-musl -Wl,--hash-style=gnu,-znow,-znorelro" # Override clang distro detection based flags.
 export LIBCC="$("$CC" $CFLAGS --print-libgcc-file-name)"
 ./configure --prefix= --target=$arch >/dev/null
-make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$PARALLEL" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
 rm "$OUT/$SCRIPT_NAME/lib/ld-musl-x86_64.so.1"
 
 cd ..
@@ -33,7 +33,7 @@ xz -d -c "$(recipe_download "$url_linux" "$sha512_linux")" | tar xf -
 cd ./linux-6.6
 
 export ARCH=$arch
-make -j "$NUM_CPUS" headers HOSTCC="$hostcc" >/dev/null
+make -j "$PARALLEL" headers HOSTCC="$hostcc" >/dev/null
 fails="$(cd usr && find include -type f -name "*.h" ! -exec sh -ec 'dest="$1/$2"; mkdir -p "${dest%/*}/"; cp "$2" "$dest"' sh "$OUT/$SCRIPT_NAME" {} \; -print)"
 test -z "$fails"
 

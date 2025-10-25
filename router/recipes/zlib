@@ -14,7 +14,7 @@ xz -d -c "$(recipe_download "$url_zlib" "$sha512")" | tar xf -
 cd ./zlib-1.3.1
 
 ./configure --prefix= >/dev/null
-make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$PARALLEL" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

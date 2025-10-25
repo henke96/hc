@@ -45,7 +45,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     static char buffer[
         hc_STR_LEN("PATH=\0") + PATH_MAX +
         hc_STR_LEN("DOWNLOADS=\0") + PATH_MAX +
-        hc_STR_LEN("NUM_CPUS=\0") + util_UINT64_MAX_CHARS +
+        hc_STR_LEN("PARALLEL=\0") + util_UINT64_MAX_CHARS +
         PATH_MAX
     ];
     char *pos = hc_ARRAY_END(buffer);
@@ -59,7 +59,7 @@ int32_t start(int32_t argc, char **argv, hc_UNUSED char **envp) {
     char *downloadsEnv = pos;
     hc_PREPEND_STR(pos, "\0");
     pos = util_uintToStr(pos, (uint64_t)util_getCpuCount());
-    hc_PREPEND_STR(pos, "NUM_CPUS=");
+    hc_PREPEND_STR(pos, "PARALLEL=");
     char *numCpusEnv = pos;
     hc_PREPEND_STR(pos, "/bin/sh\0");
     hc_PREPEND(pos, path, pathLen);

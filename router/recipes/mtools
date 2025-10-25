@@ -14,7 +14,7 @@ gzip -d -c "$(recipe_download "$url_mtools" "$sha512")" | tar xf -
 cd ./mtools-4.0.44
 
 ./configure --prefix="$OUT/$SCRIPT_NAME" >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

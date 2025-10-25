@@ -4,7 +4,7 @@ set -e
 script_dir="$(cd -- "${0%/*}/" && pwd)"
 
 test -n "$OUT" || { echo "Please set OUT"; exit 1; }
-NUM_CPUS="${NUM_CPUS:-1}"
+PARALLEL="${PARALLEL:-1}"
 
 cleanup() {
     set +e
@@ -52,8 +52,8 @@ qemu-system-x86_64 \
 -cpu host \
 -device qemu-xhci \
 -device usb-kbd \
--smp "$NUM_CPUS" \
--m "${NUM_CPUS}G" \
+-smp "$PARALLEL" \
+-m "${PARALLEL}G" \
 -enable-kvm $qemu_args \
 -drive format=raw,file=$OUT/disk2.img \
 -cdrom $OUT/iso_x86_64/router.iso \

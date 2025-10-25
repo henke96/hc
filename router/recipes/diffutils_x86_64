@@ -24,7 +24,7 @@ mv ./sed.temp ./configure
 chmod +x ./configure
 ./configure ac_cv_path_PR_PROGRAM="" --prefix= --host=$arch-unknown-linux-musl --disable-dependency-tracking --disable-threads --disable-rpath --disable-nls --without-libsigsegv-prefix --without-libiconv-prefix --without-libintl-prefix >/dev/null
 
-make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$PARALLEL" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/diff"
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/cmp"
 

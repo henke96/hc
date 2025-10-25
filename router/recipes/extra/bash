@@ -16,7 +16,7 @@ cd ./bash-5.2.21
 export CFLAGS="-I$OUT/ncurses/include"
 export LDFLAGS="-L$OUT/ncurses/lib"
 ./configure bash_cv_termcap_lib=libncurses --prefix="$OUT/$SCRIPT_NAME" --disable-nls --without-bash-malloc --without-libpth-prefix --without-libiconv-prefix --without-libintl-prefix >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 cat > "$OUT/$SCRIPT_NAME/bashrc" <<"end"
 HISTCONTROL=ignoreboth

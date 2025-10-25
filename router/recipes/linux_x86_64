@@ -22,11 +22,11 @@ cp "$SCRIPT_DIR/files/linux/.config" .
 # Uncomment to modify kernel configuration:
 #make menuconfig $tools HOSTCC="$CC -I$OUT/ncurses/include -L$OUT/ncurses/lib"; exit 1
 
-make -j "$NUM_CPUS" -C ./usr gen_init_cpio CC="$CC" >/dev/null
+make -j "$PARALLEL" -C ./usr gen_init_cpio CC="$CC" >/dev/null
 
 export DEBUG_PREFIX=
 ./usr/gen_init_cpio -t 0 "$SCRIPT_DIR/files/linux/initramfs" > ./initramfs.cpio
-make -j "$NUM_CPUS" $tools HOSTCC="$CC" >/dev/null
+make -j "$PARALLEL" $tools HOSTCC="$CC" >/dev/null
 mv arch/x86/boot/bzImage "$OUT/$SCRIPT_NAME/bootx64.efi"
 
 rm -rf "$PWD"

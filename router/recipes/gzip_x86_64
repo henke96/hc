@@ -19,7 +19,7 @@ export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -f
 export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -static -Wl,--gc-sections"
 ./configure --prefix= --uname=Linux --static >/dev/null
 
-make -j "$NUM_CPUS" all64 >/dev/null
+make -j "$PARALLEL" all64 >/dev/null
 mv ./minigzip64 "$OUT/$SCRIPT_NAME/gzip"
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/gzip"
 

@@ -15,7 +15,7 @@ cd ./flex-2.6.4
 
 # https://github.com/westes/flex/issues/428
 ./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --disable-nls --disable-libfl --without-libiconv-prefix --without-libintl-prefix CFLAGS="-g -O2 -D_GNU_SOURCE" >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

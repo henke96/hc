@@ -20,7 +20,7 @@ cat > ./libelf/libintl.h <<"end"
 end
 
 ./configure ac_cv_search__obstack_free= ac_cv_search_fts_close= ac_cv_search_argp_parse= --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --disable-demangler --disable-nls --without-valgrind --without-bzlib --without-lzma --without-zstd --without-libiconv-prefix --without-libintl-prefix --disable-debuginfod --disable-libdebuginfod --disable-symbol-versioning CFLAGS="-Wno-error -I$OUT/zlib/include" LDFLAGS="-L$OUT/zlib/lib -Wl,-rpath,$OUT/zlib/lib" >/dev/null
-make -C libelf -j "$NUM_CPUS" install libelf_so_DEPS= >/dev/null
+make -C libelf -j "$PARALLEL" install libelf_so_DEPS= >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

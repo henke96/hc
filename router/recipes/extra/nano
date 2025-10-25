@@ -16,7 +16,7 @@ cd ./nano-8.0
 export CFLAGS="-I$OUT/ncurses/include"
 export LDFLAGS="-L$OUT/ncurses/lib"
 ./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --disable-nls --disable-utf8 --without-libiconv-prefix --without-libintl-prefix >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 mkdir "$OUT/$SCRIPT_NAME/etc"
 echo "include $OUT/$SCRIPT_NAME/share/nano/*.nanorc" > "$OUT/$SCRIPT_NAME/etc/nanorc"

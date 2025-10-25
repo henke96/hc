@@ -25,7 +25,7 @@ chmod +x ./configure
 ./configure --prefix= --host=$arch-unknown-linux-musl --disable-dependency-tracking --disable-threads --disable-acl --disable-rpath --disable-xattr --disable-libsmack --disable-libcap --enable-single-binary=symlinks --disable-nls --with-openssl=no --without-libiconv-prefix --without-libgmp --without-selinux --without-libintl-prefix \
 --enable-no-install-program=[,b2sum,base32,base64,basenc,chcon,chgrp,chown,chroot,cksum,csplit,df,dir,dircolors,du,echo,expand,false,factor,fmt,fold,groups,hostid,id,join,kill,link,logname,md5sum,mkfifo,mknod,mktemp,nice,nohup,nproc,numfmt,od,paste,pathchk,pinky,pr,printenv,printf,ptx,pwd,readlink,realpath,runcon,seq,sha1sum,sha224sum,sha256sum,sha384sum,shred,shuf,split,stat,stdbuf,stty,sum,sync,tac,test,timeout,true,truncate,tsort,tty,unexpand,unlink,uptime,users,vdir,who,whoami,yes >/dev/null
 
-make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$PARALLEL" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/coreutils"
 
 rm -rf "$PWD"

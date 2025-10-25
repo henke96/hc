@@ -26,7 +26,7 @@ cmake -S llvm -B build -G "Unix Makefiles" -Wno-dev \
 -DLLVM_ENABLE_PROJECTS="clang;lld;lldb" \
 -DLLVM_TARGETS_TO_BUILD="AArch64;RISCV;WebAssembly;X86"
 
-make -C build -j "$NUM_CPUS" install
+make -C build -j "$PARALLEL" install
 
 rm -rf "$PWD"
 recipe_finish

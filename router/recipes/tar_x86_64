@@ -24,7 +24,7 @@ mv ./sed.temp ./configure
 chmod +x ./configure
 ./configure --prefix= --host=$arch-unknown-linux-musl --disable-dependency-tracking --disable-acl --disable-rpath --disable-nls --without-posix-acls --without-selinux --with-rmt=/bin/rmt --without-xattrs --without-libiconv-prefix --without-libintl-prefix >/dev/null
 
-make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$PARALLEL" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/tar"
 
 rm -rf "$PWD"

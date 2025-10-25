@@ -19,7 +19,7 @@ arch=x86_64
 export CC=clang
 export CFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -Os -ffunction-sections -fno-asynchronous-unwind-tables"
 export LDFLAGS="-target $arch-unknown-linux-musl --sysroot $OUT/musl_$arch -L$OUT/libnl3_x86_64/lib -static -Wl,--gc-sections"
-make -C hostapd -j "$NUM_CPUS" install BINDIR= DESTDIR="$OUT/$SCRIPT_NAME" LIBNL_INC="$OUT/libnl3_x86_64/include/libnl3" >/dev/null
+make -C hostapd -j "$PARALLEL" install BINDIR= DESTDIR="$OUT/$SCRIPT_NAME" LIBNL_INC="$OUT/libnl3_x86_64/include/libnl3" >/dev/null
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/hostapd"
 touch -t 197001010000 "$OUT/$SCRIPT_NAME/hostapd"
 

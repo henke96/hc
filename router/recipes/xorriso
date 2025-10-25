@@ -34,7 +34,7 @@ sed -e 's/  cmp_node_name);/cmp_node_name_tiebreak);/' ./libisofs/ecma119_tree.c
 mv ./sed.temp ./libisofs/ecma119_tree.c
 
 ./configure --prefix="$OUT/$SCRIPT_NAME" --disable-dependency-tracking --enable-shared=no --enable-static=no --disable-debug --disable-libreadline --disable-libedit --disable-libacl --disable-xattr --disable-zlib --disable-libbz2 --disable-external-filters --disable-launch-frontend >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

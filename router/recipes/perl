@@ -14,7 +14,7 @@ xz -d -c "$(recipe_download "$url_perl" "$sha512")" | tar xf -
 cd ./perl-5.38.2
 
 ./Configure -des -Dinstallusrbinperl=n -Dusenm=false -Dplibpth=" " -Dman1dir=none -Dman3dir=none -Dprefix="$OUT/$SCRIPT_NAME" >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

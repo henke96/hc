@@ -15,7 +15,7 @@ gzip -d -c "$(recipe_download "$url" "$sha512")" | tar xf -
 cd "./$pkg"
 
 ./configure --prefix="$OUT/$SCRIPT_NAME" --disable-nls --disable-dependency-tracking --without-libiconv-prefix --without-libintl-prefix
-make -j "$NUM_CPUS" install
+make -j "$PARALLEL" install
 
 rm -rf "$PWD"
 recipe_finish

@@ -14,8 +14,8 @@ xz -d -c "$(recipe_download "$url_bc" "$sha512")" | tar xf -
 cd ./bc-6.7.5
 
 ./configure.sh --prefix="$OUT/$SCRIPT_NAME" --bc-only --disable-extra-math --disable-generated-tests --disable-history --disable-man-pages --disable-nls --disable-strip >/dev/null
-make -j "$NUM_CPUS" >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

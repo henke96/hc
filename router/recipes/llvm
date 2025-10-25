@@ -51,7 +51,7 @@ cmake -S llvm -B build -G "Unix Makefiles" -Wno-dev \
 -DRUNTIMES_x86_64-unknown-linux-musl_COMPILER_RT_BUILD_LIBFUZZER=OFF \
 -DRUNTIMES_x86_64-unknown-linux-musl_COMPILER_RT_BUILD_XRAY=OFF \
 -DRUNTIMES_x86_64-unknown-linux-musl_COMPILER_RT_BUILD_SANITIZERS=OFF >/dev/null
-make -C build -j "$NUM_CPUS" install-runtimes install-x86-resource-headers/fast install-utility-resource-headers/fast install-builtins-x86_64-unknown-linux-musl/fast install-clang/fast install-lld/fast install-llvm-ar/fast install-llvm-nm/fast install-llvm-strip/fast install-llvm-objcopy/fast install-llvm-objdump/fast install-llvm-readobj/fast install-llvm-readelf/fast install-llvm-tblgen/fast install-clang-tblgen/fast >/dev/null
+make -C build -j "$PARALLEL" install-runtimes install-x86-resource-headers/fast install-utility-resource-headers/fast install-builtins-x86_64-unknown-linux-musl/fast install-clang/fast install-lld/fast install-llvm-ar/fast install-llvm-nm/fast install-llvm-strip/fast install-llvm-objcopy/fast install-llvm-objdump/fast install-llvm-readobj/fast install-llvm-readelf/fast install-llvm-tblgen/fast install-clang-tblgen/fast >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

@@ -14,7 +14,7 @@ gzip -d -c "$(recipe_download "$url_ncurses" "$sha512")" | tar xf -
 cd ./ncurses-6.5
 
 ./configure --prefix="$OUT/$SCRIPT_NAME" --without-debug --enable-overwrite --disable-widec --disable-stripping >/dev/null
-make -j "$NUM_CPUS" install >/dev/null
+make -j "$PARALLEL" install >/dev/null
 
 rm -rf "$PWD"
 recipe_finish

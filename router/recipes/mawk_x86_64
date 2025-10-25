@@ -24,7 +24,7 @@ mv ./sed.temp ./configure
 chmod +x ./configure
 ./configure --prefix= --host=$arch-unknown-linux-musl --with-build-cc=cc --disable-dependency-tracking >/dev/null
 
-make -j "$NUM_CPUS" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
+make -j "$PARALLEL" install DESTDIR="$OUT/$SCRIPT_NAME" >/dev/null
 llvm-objcopy --strip-sections "$OUT/$SCRIPT_NAME/bin/mawk"
 
 rm -rf "$PWD"
