@@ -10,8 +10,6 @@
 #define config_WG_IF_INDEX 123
 // Try to use a port that is unlikely to be blocked by firewalls.
 #define config_WG_LISTEN_PORT 123
-// Generate with `echo <base64-public-key> | base64 --decode | xxd -i -c 256`
-#define config_WG_PEER1_PUBLIC_KEY { 0xb4, 0x9d, 0x1d, 0xd5, 0x50, 0x61, 0x5a, 0xa8, 0xf0, 0x49, 0xd0, 0x78, 0x66, 0x70, 0x09, 0xfc, 0x92, 0x56, 0xd2, 0xfa, 0x0c, 0x18, 0x29, 0x22, 0xa7, 0x7f, 0x5e, 0xff, 0x21, 0x71, 0x36, 0x5d }
 
 struct config {
     int32_t rtnetlinkFd;
@@ -257,21 +255,21 @@ static void config_setWgDevice(void) {
         uint16_t listenPort;
         char __pad[2];
         struct nlattr peersAttr;
-        // Peer1
-        struct nlattr peer1Attr;
-        struct nlattr peer1PublicKeyAttr;
-        uint8_t peer1PublicKey[32];
-        struct nlattr peer1AllowedIpsAttr;
-        struct nlattr peer1AllowedIpAttr;
-        struct nlattr peer1AllowedIpFamilyAttr;
-        uint16_t peer1AllowedIpFamily;
+        // Peer
+        struct nlattr peerAttr;
+        struct nlattr peerPublicKeyAttr;
+        uint8_t peerPublicKey[32];
+        struct nlattr peerAllowedIpsAttr;
+        struct nlattr peerAllowedIpAttr;
+        struct nlattr peerAllowedIpFamilyAttr;
+        uint16_t peerAllowedIpFamily;
         char __pad2[2];
-        struct nlattr peer1AllowedIpAddressAttr;
-        uint8_t peer1AllowedIpAddress[4];
-        struct nlattr peer1AllowedIpNetmaskAttr;
-        uint8_t peer1AllowedIpNetmask;
+        struct nlattr peerAllowedIpAddressAttr;
+        uint8_t peerAllowedIpAddress[4];
+        struct nlattr peerAllowedIpNetmaskAttr;
+        uint8_t peerAllowedIpNetmask;
         char __pad3[3];
-        uint32_t peer1End[]; // For use with offsetof()
+        uint32_t peerEnd[]; // For use with offsetof()
     };
     struct setDeviceRequest request = {
         .hdr = {
@@ -298,47 +296,52 @@ static void config_setWgDevice(void) {
         },
         .listenPort = config_WG_LISTEN_PORT,
         .peersAttr = {
-            .nla_len = offsetof(struct setDeviceRequest, peer1End) - offsetof(struct setDeviceRequest, peersAttr),
+            .nla_len = offsetof(struct setDeviceRequest, peerEnd) - offsetof(struct setDeviceRequest, peersAttr),
             .nla_type = WGDEVICE_A_PEERS | NLA_F_NESTED
         },
-        .peer1Attr = {
-            .nla_len = offsetof(struct setDeviceRequest, peer1End) - offsetof(struct setDeviceRequest, peer1Attr),
+        .peerAttr = {
+            .nla_len = offsetof(struct setDeviceRequest, peerEnd) - offsetof(struct setDeviceRequest, peerAttr),
             .nla_type = NLA_F_NESTED
         },
-        .peer1PublicKeyAttr = {
-            .nla_len = sizeof(request.peer1PublicKeyAttr) + sizeof(request.peer1PublicKey),
+        .peerPublicKeyAttr = {
+            .nla_len = sizeof(request.peerPublicKeyAttr) + sizeof(request.peerPublicKey),
             .nla_type = WGPEER_A_PUBLIC_KEY
         },
-        .peer1PublicKey = config_WG_PEER1_PUBLIC_KEY,
-        .peer1AllowedIpsAttr = {
-            .nla_len = offsetof(struct setDeviceRequest, peer1End) - offsetof(struct setDeviceRequest, peer1AllowedIpsAttr),
+        .peerAllowedIpsAttr = {
+            .nla_len = offsetof(struct setDeviceRequest, peerEnd) - offsetof(struct setDeviceRequest, peerAllowedIpsAttr),
             .nla_type = WGPEER_A_ALLOWEDIPS | NLA_F_NESTED
         },
-        .peer1AllowedIpAttr = {
-            .nla_len = offsetof(struct setDeviceRequest, peer1End) - offsetof(struct setDeviceRequest, peer1AllowedIpAttr),
+        .peerAllowedIpAttr = {
+            .nla_len = offsetof(struct setDeviceRequest, peerEnd) - offsetof(struct setDeviceRequest, peerAllowedIpAttr),
             .nla_type = NLA_F_NESTED
         },
-        .peer1AllowedIpFamilyAttr = {
-            .nla_len = sizeof(request.peer1AllowedIpFamilyAttr) + sizeof(request.peer1AllowedIpFamily),
+        .peerAllowedIpFamilyAttr = {
+            .nla_len = sizeof(request.peerAllowedIpFamilyAttr) + sizeof(request.peerAllowedIpFamily),
             .nla_type = WGALLOWEDIP_A_FAMILY
         },
-        .peer1AllowedIpFamily = AF_INET,
-        .peer1AllowedIpAddressAttr = {
-            .nla_len = sizeof(request.peer1AllowedIpAddressAttr) + sizeof(request.peer1AllowedIpAddress),
+        .peerAllowedIpFamily = AF_INET,
+        .peerAllowedIpAddressAttr = {
+            .nla_len = sizeof(request.peerAllowedIpAddressAttr) + sizeof(request.peerAllowedIpAddress),
             .nla_type = WGALLOWEDIP_A_IPADDR
         },
-        .peer1AllowedIpAddress = { 10, 123, 1, 1 },
-        .peer1AllowedIpNetmaskAttr = {
-            .nla_len = sizeof(request.peer1AllowedIpNetmaskAttr) + sizeof(request.peer1AllowedIpNetmask),
+        .peerAllowedIpAddress = { 10, 123, 1, 1 },
+        .peerAllowedIpNetmaskAttr = {
+            .nla_len = sizeof(request.peerAllowedIpNetmaskAttr) + sizeof(request.peerAllowedIpNetmask),
             .nla_type = WGALLOWEDIP_A_CIDR_MASK
         },
-        .peer1AllowedIpNetmask = 32
+        .peerAllowedIpNetmask = 32
     };
     // Read private key.
     int32_t fd = sys_openat(-1, "/disk/config/wg/key", O_RDONLY, 0);
     if (fd == -ENOENT) return;
     CHECK(fd, RES > 0);
     CHECK(sys_read(fd, &request.privateKey, sizeof(request.privateKey)), RES == sizeof(request.privateKey));
+    debug_CHECK(sys_close(fd), RES == 0);
+    // Read peer public key.
+    fd = sys_openat(-1, "/disk/config/wg/peer_pk", O_RDONLY, 0);
+    if (fd == -ENOENT) return;
+    CHECK(fd, RES > 0);
+    CHECK(sys_read(fd, &request.peerPublicKey, sizeof(request.peerPublicKey)), RES == sizeof(request.peerPublicKey));
     debug_CHECK(sys_close(fd), RES == 0);
     struct iovec_const iov[] = { { &request, sizeof(request) } };
     genetlink_talk(&iov[0], hc_ARRAY_LEN(iov));
